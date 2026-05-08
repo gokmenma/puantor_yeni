@@ -21,6 +21,11 @@ jobs:
           local-dir: ./
           server-dir: ./
           exclude: |
+            admin/**
+            admin
+            cgi-bin/**
+            logs/**
+            .well-known/**
             **/.git*
             **/.git*/**
             **/.github/**
