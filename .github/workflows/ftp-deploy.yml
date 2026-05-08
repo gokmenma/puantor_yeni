@@ -21,11 +21,6 @@ jobs:
           local-dir: ./
           server-dir: ./
           exclude: |
-            admin/**
-            admin
-            cgi-bin/**
-            logs/**
-            .well-known/**
             **/.git*
             **/.git*/**
             **/.github/**
@@ -41,6 +36,9 @@ jobs:
             **/uploads/**
             **/static/**
             **/dist/**
+            cgi-bin/**
+            logs/**
+            .well-known/**
           log-level: verbose
           dry-run: false
-          dangerous-clean-slate: false
+          dangerous-clean-slate: true
