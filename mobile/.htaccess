@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Eğer gerçek bir dosya veya klasör varsa doğrudan onu yükle
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Geri kalan tüm istekleri index.php'ye temiz yönlendirme ile aktar
+RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]

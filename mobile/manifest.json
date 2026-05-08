@@ -1,0 +1,25 @@
+{
+    "name": "Puantor Premium",
+    "short_name": "Puantor",
+    "description": "Premium Puantaj ve Personel Takip Sistemi",
+    "start_url": "index.php",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#206bc4",
+    "orientation": "portrait",
+    "scope": "./",
+    "icons": [
+      {
+        "src": "../static/png/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "../static/png/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ]
+}

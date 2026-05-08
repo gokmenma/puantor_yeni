@@ -1,0 +1,14 @@
+Array
+(
+    [time] => 2026-05-07 13:19:41
+    [POST] => Array
+        (
+            [id] => cEMbgvCgKkFa%2FD3t27xvSxninptSvDbQOIgG94tJIA%3D%3D
+            [month] => 
+            [year] => 
+        )
+
+    [SESSION] => 
+    [TARGET_PATH] => C:\xampp\htdocs\puantoryeni\mobile\api\bordro/../../../api/bordro/detail.php
+    [TARGET_EXISTS] => 1
+)

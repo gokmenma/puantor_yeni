@@ -1,0 +1,114 @@
+.collapse-button {
+  display: inline-block;
+  cursor: pointer;
+  width: 22px;
+  height: 18px;
+  left: 250px;
+  top: 10px;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+}
+
+.collapse-button span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background-color: #999;
+  position: absolute;
+  border-radius: 6px;
+  left: 0;
+  transition: all 0.3s ease-in-out;
+}
+
+
+
+.collapse-button span:nth-child(1) {
+  top: 0;
+}
+
+.collapse-button span:nth-child(2) {
+  top: 8px;
+}
+
+.collapse-button span:nth-child(3) {
+  top: 16px;
+}
+
+.collapse-button.active span:nth-child(1) {
+  transform: rotate(45deg);
+  top: 10px;
+}
+
+.collapse-button.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.collapse-button.active span:nth-child(3) {
+  transform: rotate(-45deg);
+  top: 10px;
+}
+
+.collapse-button.active {
+  left: 60px;
+  transition: all 0.3s ease-in-out;
+}
+
+#navbar {
+  /* width: 236px; */
+  transition: width 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+.page-wrapper {
+  transition: width 0.3s ease, margin-left 0.3s ease;
+}
+
+#navbar.collapsed {
+  width: 55px;
+}
+
+.nav-link-title {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+  white-space: nowrap;
+}
+
+#navbar.collapsed .nav-link-title {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+#navbar.collapsed .navbar-brand {
+  justify-content: left !important;
+  width: 50px !important;
+  transition: width 0.3s ease-in-out;
+}
+
+.page-wrapper.page-collapse {
+  transition: width 0.3s ease, margin-left 0.3s ease;
+  margin-left: 55px !important;
+}
+#navbar .navbar-brand img {
+    max-width: 100%; 
+   
+}
+#navbar .icon{
+    font-size: 20px;
+    transition: font-size 0.3s ease-in-out;
+}
+#navbar.collapsed .icon{
+    font-size: 22px;
+    transition: font-size 0.3s ease-in-out;
+}
+
+#navbar.collapsed .navbar-brand img {
+    max-width: 150px !important; /* Collapsed olduğunda direkt 150px genişliğe düşecek */
+    margin-left: 12px; /* Gerekirse margin ayarla */
+}
+/* 576'dan küçükse #navbar width 100% olsun */
+@media (max-width: 576px) {
+  #navbar {
+    width: 100%;
+  }
+}
+

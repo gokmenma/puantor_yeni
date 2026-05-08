@@ -1,0 +1,20 @@
+Array
+(
+    [time] => 2026-05-07 20:16:51
+    [post] => Array
+        (
+            [action] => saveSupportTicket
+            [subject] => dsfas
+            [message] => fasdfadsf
+        )
+
+    [session_exists] => 
+    [session_user] => 
+    [session_firm] => 
+    [root] => C:\xampp\htdocs\puantoryeni
+    [target] => C:\xampp\htdocs\puantoryeni\mobile\api\supports/../../../api/supports/tickets.php
+    [target_exists] => 1
+    [api_output] => {"status":"success","message":"Destek talebiniz ba\u015far\u0131yla olu\u015fturuldu."}
+)
+
+====================
