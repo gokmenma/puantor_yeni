@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -21,21 +21,19 @@ jobs:
           local-dir: ./
           server-dir: ./
           exclude: |
-            **/.env
-            **/.env.example
             **/.git*
             **/.git*/**
             **/.github/**
-            **/.gitignore
-            **/.gitkeep
             **/.agent/**
             **/.vscode/**
-            .vscode
-            .agent
+            **/vendor/**
+            **/node_modules/**
+            **/.env*
             **/README.md
             **/database.sql
             **/Database/db.php
-       
-          log-level: standard
+            **/scratch/**
+            **/uploads/**
+          log-level: verbose
           dry-run: false
           dangerous-clean-slate: false
