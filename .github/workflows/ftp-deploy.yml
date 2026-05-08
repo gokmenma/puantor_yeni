@@ -34,6 +34,8 @@ jobs:
             **/Database/db.php
             **/scratch/**
             **/uploads/**
+            **/static/**
+            **/dist/**
           log-level: verbose
           dry-run: false
           dangerous-clean-slate: false
