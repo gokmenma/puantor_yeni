@@ -1,4 +1,8 @@
 <?php
+error_reporting(0);
+ini_set('display_errors', 0);
+ob_start();
+
 !defined('ROOT') ? define('ROOT', $_SERVER["DOCUMENT_ROOT"]) : '';
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/Model/Puantaj.php';

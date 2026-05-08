@@ -78,7 +78,7 @@ if ($view == 'personnel') {
     $active_month = ($year == date('Y')) ? date('n') : 12;
     $active_lastDay = Date::lastDay($active_month, $year);
     $active_firstDay = Date::firstDay($active_month, $year);
-    $active_persons = $personModel->getPersonIdByFirmCurrentMonth($firm_id, $active_lastDay);
+    $active_persons = $personModel->getPersonIdByFirmCurrentMonth($firm_id, $active_firstDay, $active_lastDay);
     
     $active_total_gelir = 0;
     $active_total_gider = 0;
@@ -129,7 +129,8 @@ if ($view == 'personnel') {
       for($m = 12; $m >= 1; $m--): 
         if ($year == $current_year && $m > $current_month) continue;
         $lastDay = Date::lastDay($m, $year);
-        $person_count = count($personModel->getPersonIdByFirmCurrentMonth($firm_id, $lastDay));
+        $firstDay = Date::firstDay($m, $year);
+        $person_count = count($personModel->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $lastDay));
         $is_active = ($m == $current_month && $year == $current_year);
       ?>
         <a href="index.php?route=payroll&view=personnel&year=<?php echo $year; ?>&month=<?php echo $m; ?>" 
@@ -155,7 +156,7 @@ if ($view == 'personnel') {
     <?php
     $lastDay = Date::lastDay($month, $year);
     $firstDay = Date::firstDay($month, $year);
-    $persons = $personModel->getPersonIdByFirmCurrentMonth($firm_id, $lastDay);
+    $persons = $personModel->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $lastDay);
     
     // Toplam Hakediş ve Kesinti Hesapla (Özet Kartı İçin)
     $total_all_gelir = 0;

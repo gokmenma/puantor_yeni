@@ -60,6 +60,7 @@ public static function encrypt($data)
 public static function decrypt($data)
 {
     if (empty($data)) return '';
+    $data = urldecode($data);
     $method = "AES-256-GCM";
     $key = hash('sha256', 'mysecretkey', true);
     

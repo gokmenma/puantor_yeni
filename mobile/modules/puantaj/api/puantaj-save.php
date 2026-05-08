@@ -9,6 +9,7 @@ try {
     require_once ROOT . "/Model/Persons.php";
     require_once ROOT . "/Model/Wages.php";
     require_once ROOT . "/Model/SettingsModel.php";
+    require_once ROOT . "/Model/ActivityLogModel.php";
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -20,9 +21,9 @@ try {
     }
 
     $person_id = intval($_POST['person_id'] ?? 0);
-    $date = $_POST['date'] ?? '';
-    $date = str_replace('-', '', $date); // Strip hyphens to match desktop database format (e.g. 20260506)
-    $type_id = intval($_POST['type_id'] ?? 0); // 1: G, 2: X, 3: İ, 4: R
+    $date = $_POST['date'] ?? ''; // Gelen format: 2026-05-08
+    $type_id = intval($_POST['type_id'] ?? 0);
+    $project_id = intval($_POST['project_id'] ?? 0);
 
     if (!$person_id || !$date || !$type_id) {
         echo json_encode(['status' => 'error', 'message' => 'Eksik parametreler']);
@@ -34,6 +35,9 @@ try {
     $wagesModel = new Wages();
     $settingsModel = new SettingsModel();
 
+    // Veritabanında mevcut kaydı bulmak için merkezi modeli kullan
+    $id = $puantajObj->getPuantajId($person_id, $date, $project_id);
+
     $work_hour = $settingsModel->getSettings("work_hour")->set_value ?? 8;
     $work_hour = floatval(str_replace(',', '.', $work_hour));
     if ($work_hour <= 0) $work_hour = 8;
@@ -41,28 +45,16 @@ try {
     $daily_wage_obj = $personModel->getDailyWages($person_id);
     $ucret = floatval(($daily_wage_obj->daily_wages ?? 0)) / $work_hour;
 
-    $id = $puantajObj->getPuantajId($person_id, $date);
-
     $defined_wage = $wagesModel->getWageByPersonIdAndDate($person_id, $date)->amount ?? 0;
     $daily_wages = (($defined_wage > 0) ? ($defined_wage / $work_hour) : $ucret);
 
     $puantaj_turu = $puantajObj->getPuantajTuruById($type_id);
     if ($puantaj_turu->Turu != 'Saatlik') {
         $saat = $puantajObj->getPuantajSaatiByfirm($type_id);
-        $tutar = floatval($saat) * $daily_wages;
     } else {
         $saat = $puantaj_turu->PuantajSaati;
-        $tutar = floatval($saat) * $daily_wages;
     }
-
-    // Varsayılan Proje tayini
-    $project_id = intval($_POST['project_id'] ?? 0);
-    if (!$project_id) {
-        $project_id = $puantajObj->getPuantajProjectId($person_id, $date);
-    }
-    if (!$project_id) {
-        $project_id = intval($personModel->getPersonByField($person_id, 'project_id') ?? 0);
-    }
+    $tutar = floatval($saat) * $daily_wages;
 
     $firm_id = $_SESSION['firm_id'] ?? 0;
 
@@ -72,7 +64,7 @@ try {
         'person' => $person_id,
         'project_id' => $project_id,
         'puantaj_id' => $type_id,
-        'gun' => $date,
+        'gun' => $date, // Standart tireli formatta kaydediyoruz
         'saat' => $saat,
         'tutar' => $tutar,
         "description" => "Mobil Hızlı Giriş",
@@ -80,8 +72,12 @@ try {
     ];
 
     $puantajObj->saveWithAttr($data);
+    
+    // Log kaydı
+    $person_name = $personModel->getPersonByField($person_id, 'full_name');
+    ActivityLogModel::log($firm_id, $_SESSION['user']->id, 'Puantaj', 'Mobil Giriş', "$person_name için $date tarihli puantaj kaydedildi.");
+
     echo json_encode(['status' => 'success', 'message' => 'Puantaj başarıyla kaydedildi']);
 } catch (Exception $e) {
-    http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }

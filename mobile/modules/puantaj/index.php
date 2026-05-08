@@ -18,22 +18,22 @@ $firm_id = $_SESSION['firm_id'] ?? 0;
 $selected_date = $_GET['date'] ?? date('Y-m-d');
 $selected_project_id = intval($_GET['project_id'] ?? 0);
 
-$persons = $personsModel->getPersonsByFirm($firm_id);
+// Masaüstü ile %100 aynı personelleri getirmek için ortak fonksiyonu kullanıyoruz
+$first_day_ymd = date('Ymd', strtotime($selected_date . ' -0 days'));
+$last_day_ymd = date('Ymd', strtotime(date('Y-m-t', strtotime($selected_date))));
 
-if ($selected_project_id > 0) {
-    $filtered_persons = [];
-    foreach ($persons as $person) {
-        $is_member = ($projectsModel->isExistPersonInProject($selected_project_id, $person->id) > 0);
-        $is_default_project = (isset($person->project_id) && intval($person->project_id) == $selected_project_id);
-        if ($is_member || $is_default_project) {
-            $filtered_persons[] = $person;
-        }
-    }
-    $persons = $filtered_persons;
-}
+// Masaüstü listesi bu fonksiyonu kullanır:
+$persons_ids = $personsModel->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day_ymd, $last_day_ymd, 0, 0);
 
-// Puantaj Türlerini dinamik olarak veritabanından çekelim!
 $conn = $puantajModel->getDb();
+
+$persons = [];
+foreach ($persons_ids as $p_id) {
+    $person = $personsModel->find($p_id->id);
+    if ($person) {
+        $persons[] = $person;
+    }
+}
 $stmt = $conn->prepare("SELECT * FROM puantajturu ORDER BY Turu, PuantajSaati ASC");
 $stmt->execute();
 $puantaj_types = $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -128,8 +128,19 @@ $is_today_or_future = ($selected_date >= $today);
             if ($start_dt && $selected_date < $start_dt) continue;
             if ($end_dt && $selected_date > $end_dt) continue;
 
-            $current_status_id = $puantajModel->getPuantajTuruId($person->id, str_replace('-', '', $selected_date));
-            $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, str_replace('-', '', $selected_date));
+            // Veri çekme mantığını esnetiyoruz: Hem tireli hem tiresiz formatı kontrol et
+            $date_dash = $selected_date; // 2026-05-08
+            $date_nodash = str_replace('-', '', $selected_date); // 20260508
+            
+            $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_dash, $selected_project_id);
+            if (empty($current_status_id)) {
+                $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_nodash, $selected_project_id);
+            }
+
+            $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_dash, $selected_project_id);
+            if (empty($puantaj_project_id)) {
+                $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_nodash, $selected_project_id);
+            }
             
             $is_disabled = false;
             $disabled_project_name = '';
@@ -502,41 +513,52 @@ function selectTypeOption(element) {
     currentSelectedTypeId = element.getAttribute('data-type-id');
     
     // Seçim yapınca direkt atama yapsın!
-    saveSelectedPuantaj();
+    saveSelectedPuantaj(element);
 }
 
-function saveSelectedPuantaj() {
+function saveSelectedPuantaj(selectedOption) {
     if (!currentSelectedPersonId || !currentSelectedTypeId) {
-        bootstrap.Modal.getInstance(document.getElementById('puantajModal')).hide();
+        var modalEl = document.getElementById('puantajModal');
+        var modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
         return;
     }
     
-    const selectedOption = document.querySelector(`.type-option-row[data-type-id="${currentSelectedTypeId}"]`);
     const typeCode = selectedOption.getAttribute('data-type-code');
     const typeLabel = selectedOption.getAttribute('data-type-label');
     const typeColor = selectedOption.getAttribute('data-type-color');
     const typeTextColor = selectedOption.getAttribute('data-type-text-color');
     
-    const date = '<?php echo $selected_date; ?>';
+    // Merkezi API ile uyumlu tireli tarih formatı
+    const serverDate = '<?php echo $selected_date; ?>'; 
+    
+    const payload = {};
+    payload[currentSelectedPersonKey] = {};
+    payload[currentSelectedPersonKey][serverDate] = {
+        puantajId: currentSelectedTypeId,
+        project_id: <?php echo (int)$selected_project_id; ?>
+    };
     
     const badge = document.getElementById(`status-badge-${currentSelectedPersonId}`);
     const originalContent = badge.outerHTML;
     
     badge.innerText = "...";
-    badge.className = "avatar avatar-md rounded-circle font-weight-bold";
     badge.style.backgroundColor = '#f1f5f9';
     badge.style.color = '#94a3b8';
     
-    bootstrap.Modal.getInstance(document.getElementById('puantajModal')).hide();
+    var modalEl = document.getElementById('puantajModal');
+    var modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
     
+    // Mobil subdomain kısıtlaması nedeniyle yerel API'yi kullanıyoruz
     jQuery.ajax({
-        url: '/modules/puantaj/api/puantaj-save.php',
+        url: 'modules/puantaj/api/puantaj-save.php',
         method: 'POST',
         data: {
             person_id: currentSelectedPersonId,
-            date: date,
+            date: serverDate,
             type_id: currentSelectedTypeId,
-            project_id: '<?php echo $selected_project_id; ?>'
+            project_id: <?php echo (int)$selected_project_id; ?>
         },
         dataType: 'json',
         success: function(response) {
@@ -555,9 +577,9 @@ function saveSelectedPuantaj() {
                 alert('Hata: ' + response.message);
             }
         },
-        error: function(xhr, status, error) {
+        error: function(xhr) {
             badge.outerHTML = originalContent;
-            alert('Sunucu hatası (' + xhr.status + '): ' + xhr.responseText);
+            alert('Bağlantı hatası: ' + xhr.status + "\nYanıt: " + xhr.responseText);
         }
     });
 }
@@ -565,106 +587,52 @@ function saveSelectedPuantaj() {
 function setAll(typeCode) {
     const typeOption = document.querySelector(`.type-option-row[data-type-code="${typeCode}"]`);
     if (!typeOption) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: `"${typeCode}" puantaj türü sistemde bulunamadı.`
-        });
+        alert('Hata: Tür bulunamadı.');
         return;
     }
     
-    Swal.fire({
-        title: 'Emin misiniz?',
-        text: `Tüm personelleri "${typeCode}" olarak işaretlemek üzeresiniz.`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Evet, İşaretle',
-        cancelButtonText: 'Vazgeç'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const typeId = typeOption.getAttribute('data-type-id');
-            const typeColor = typeOption.getAttribute('data-type-color');
-            const typeTextColor = typeOption.getAttribute('data-type-text-color');
-            const date = '<?php echo $selected_date; ?>';
-            const rows = document.querySelectorAll('.person-row');
-            
-            Swal.fire({
-                title: 'İşleniyor...',
-                html: 'Puantajlar kaydediliyor, lütfen bekleyin. <br><b>0</b> / ' + rows.length,
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
+    if(!confirm('Tüm personelleri "' + typeCode + '" olarak işaretlemek istediğinize emin misiniz?')) return;
 
-            let completed = 0;
-            const total = rows.length;
-            
-            if (total === 0) {
-                Swal.fire('Uyarı', 'Listede personel bulunamadı.', 'warning');
-                return;
+    const typeId = typeOption.getAttribute('data-type-id');
+    const typeColor = typeOption.getAttribute('data-type-color');
+    const typeTextColor = typeOption.getAttribute('data-type-text-color');
+    const serverDate = '<?php echo $selected_date; ?>';
+    const rows = document.querySelectorAll('.person-row');
+    
+    const payload = {};
+    rows.forEach(row => {
+        if (row.getAttribute('data-is-disabled') === 'true') return;
+        const personKey = row.getAttribute('data-person-key');
+        payload[personKey] = {};
+        payload[personKey][serverDate] = {
+            puantajId: typeId,
+            project_id: <?php echo (int)$selected_project_id; ?>
+        };
+        
+        const personId = row.getAttribute('data-person-id');
+        const badge = document.getElementById(`status-badge-${personId}`);
+        if(badge) badge.innerText = "...";
+    });
+
+    jQuery.ajax({
+        url: '../api/puantaj.php',
+        method: 'POST',
+        data: {
+            action: 'savePuantaj',
+            data: JSON.stringify(payload)
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success' || response.status === 'info') {
+                location.reload(); // Toplu işlemden sonra en güvenlisi sayfayı yenilemek
+            } else {
+                alert('Hata: ' + response.message);
             }
-
-            rows.forEach(row => {
-                if (row.getAttribute('data-is-disabled') === 'true') {
-                    completed++;
-                    Swal.getHtmlContainer().querySelector('b').innerText = completed;
-                    if (completed === total) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Başarılı',
-                            text: 'Puantaj başarıyla güncellendi',
-                            confirmButtonText: 'OK'
-                        });
-                        setTimeout(() => {
-                            document.querySelectorAll('.person-row.saved').forEach(r => r.classList.remove('saved'));
-                        }, 2000);
-                    }
-                    return;
-                }
-                const personId = row.getAttribute('data-person-id');
-                const badge = document.getElementById(`status-badge-${personId}`);
-                
-                jQuery.ajax({
-                    url: '/modules/puantaj/api/puantaj-save.php',
-                    method: 'POST',
-                    data: {
-                        person_id: personId,
-                        date: date,
-                        type_id: typeId,
-                        project_id: '<?php echo $selected_project_id; ?>'
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            badge.style.backgroundColor = typeColor;
-                            badge.style.color = typeTextColor;
-                            badge.className = "avatar avatar-md rounded-circle font-weight-bold";
-                            badge.innerText = typeCode;
-                            
-                            row.setAttribute('data-current-type-id', typeId);
-                            row.classList.add('saved');
-                        }
-                    },
-                    complete: function() {
-                        completed++;
-                        Swal.getHtmlContainer().querySelector('b').innerText = completed;
-                        
-                        if (completed === total) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Başarılı',
-                                text: 'Puantaj başarıyla güncellendi',
-                                confirmButtonText: 'OK'
-                            });
-                            setTimeout(() => {
-                                document.querySelectorAll('.person-row.saved').forEach(r => r.classList.remove('saved'));
-                            }, 2000);
-                        }
-                    }
-                });
-            });
+        },
+        error: function(xhr) {
+            alert('Bağlantı hatası: ' + xhr.status);
         }
     });
 }
+</script>
 </script>

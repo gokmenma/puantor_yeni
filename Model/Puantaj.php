@@ -102,31 +102,48 @@ class Puantaj extends Model
     //puantaj gununden puantaj tablosundaki id'yi çekiyoruz
     public function getPuantajId($person_id, $date, $project_id = null)
     {
+        $date_dash = (strpos($date, '-') !== false) ? $date : substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
+        $date_nodash = str_replace('-', '', $date);
+
         if ($project_id !== null && $project_id !== "" && $project_id > 0) {
-            $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and gun = ? and project_id = ?");
-            $sql->execute([$person_id, $date, $project_id]);
+            $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and project_id = ?");
+            $sql->execute([$person_id, $date_dash, $date_nodash, $project_id]);
         } else {
-            // Eğer proje seçili değilse (0 veya boş), ya projesi olmayan kaydı bul ya da herhangi bir kaydı bul?
-            // Kullanıcı "proje olmadan da ekleyebilmeliyim" dediği için projesi 0 olanlara bakıyoruz.
-            $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and gun = ? and (project_id = 0 OR project_id IS NULL)");
-            $sql->execute([$person_id, $date]);
+            $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and (project_id = 0 OR project_id IS NULL)");
+            $sql->execute([$person_id, $date_dash, $date_nodash]);
         }
         return $sql->fetch(PDO::FETCH_OBJ)->id ?? 0;
     }
 
     //Puantaj tablosundan kayıtlı puantaj turu id'sini bul
-    public function getPuantajTuruId($person_id, $date)
+    public function getPuantajTuruId($person_id, $date, $project_id = null)
     {
-        $sql = $this->db->prepare("SELECT puantaj_id FROM puantaj WHERE person = ? and gun = ?");
-        $sql->execute([$person_id, $date]);
+        $date_dash = (strpos($date, '-') !== false) ? $date : substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
+        $date_nodash = str_replace('-', '', $date);
+
+        if ($project_id !== null && $project_id > 0) {
+            $sql = $this->db->prepare("SELECT puantaj_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and project_id = ?");
+            $sql->execute([$person_id, $date_dash, $date_nodash, $project_id]);
+        } else {
+            $sql = $this->db->prepare("SELECT puantaj_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and (project_id = 0 OR project_id IS NULL)");
+            $sql->execute([$person_id, $date_dash, $date_nodash]);
+        }
         return $sql->fetch(PDO::FETCH_OBJ)->puantaj_id ?? '';
     }
 
     //Puantaj tablosundan kayıtlı proje id'sini bul
-    public function getPuantajProjectId($person_id, $date)
+    public function getPuantajProjectId($person_id, $date, $project_id = null)
     {
-        $sql = $this->db->prepare("SELECT project_id FROM puantaj WHERE person = ? and gun = ?");
-        $sql->execute([$person_id, $date]);
+        $date_dash = (strpos($date, '-') !== false) ? $date : substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
+        $date_nodash = str_replace('-', '', $date);
+
+        if ($project_id !== null && $project_id > 0) {
+            $sql = $this->db->prepare("SELECT project_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and project_id = ?");
+            $sql->execute([$person_id, $date_dash, $date_nodash, $project_id]);
+        } else {
+            $sql = $this->db->prepare("SELECT project_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and (project_id = 0 OR project_id IS NULL)");
+            $sql->execute([$person_id, $date_dash, $date_nodash]);
+        }
         return $sql->fetch(PDO::FETCH_OBJ)->project_id ?? 0;
     }
 

@@ -1,14 +1,41 @@
 Array
 (
-    [time] => 2026-05-07 13:19:41
+    [time] => 2026-05-08 22:25:18
     [POST] => Array
         (
-            [id] => cEMbgvCgKkFa%2FD3t27xvSxninptSvDbQOIgG94tJIA%3D%3D
+            [id] => 7U5JitUDaQ1W32-OOv4OtL3NQ9dO8IrhYvIXvoAbYA**
             [month] => 
             [year] => 
         )
 
-    [SESSION] => 
+    [SESSION] => Array
+        (
+            [user] => stdClass Object
+                (
+                    [id] => 172
+                    [user_type] => 2
+                    [parent_id] => 0
+                    [firm_id] => 94
+                    [full_name] => Mehmet Ali Gokmen
+                    [email] => beyzade83@gmail.com
+                    [password] => $2y$10$Y/.3H5pw6.ZwFDW06t8iBeWxPzU7jGHrnoL4fzpIJNFE/0B9MkvA.
+                    [phone] => 
+                    [job] => 
+                    [title] => 
+                    [user_roles] => 1
+                    [status] => 1
+                    [is_main_user] => 1
+                    [sicil_no] => 
+                    [yetkinlik_no] => 
+                    [session_token] => 64fd076211c7e135c1613f5f17f064bb11a325fb350c003896bd1b33f1f45c51
+                    [activate_token] => 8VP8aPVETVM0DkMjNSAnR2ZckiCukrzDLBRSkNdCLEREtCoH1lI%3D
+                    [remember_token] => 
+                    [created_at] => 2025-06-24 22:54:59
+                )
+
+            [firm_id] => 94
+        )
+
     [TARGET_PATH] => C:\xampp\htdocs\puantoryeni\mobile\api\bordro/../../../api/bordro/detail.php
     [TARGET_EXISTS] => 1
 )
