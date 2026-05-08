@@ -103,7 +103,8 @@ class Persons extends Model
                 AND STR_TO_DATE(job_start_date, "%d.%m.%Y") <= ? 
                 AND deleted_at IS NULL
                 AND (
-                    EXISTS (SELECT 1 FROM project_person WHERE person_id = p.id)
+                    (p.job_end_date IS NULL OR p.job_end_date = "")
+                    OR EXISTS (SELECT 1 FROM project_person WHERE person_id = p.id)
                     OR EXISTS (SELECT 1 FROM puantaj WHERE person = p.id AND gun >= ? AND gun <= ?)
                     OR STR_TO_DATE(job_start_date, "%d.%m.%Y") >= STR_TO_DATE(?, "%Y%m%d")
                 )';
