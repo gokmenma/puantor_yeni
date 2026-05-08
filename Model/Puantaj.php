@@ -100,10 +100,17 @@ class Puantaj extends Model
         return $sql->fetch(PDO::FETCH_OBJ);
     }
     //puantaj gununden puantaj tablosundaki id'yi çekiyoruz
-    public function getPuantajId($person_id, $date)
+    public function getPuantajId($person_id, $date, $project_id = null)
     {
-        $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and gun = ?");
-        $sql->execute([$person_id, $date]);
+        if ($project_id !== null && $project_id !== "" && $project_id > 0) {
+            $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and gun = ? and project_id = ?");
+            $sql->execute([$person_id, $date, $project_id]);
+        } else {
+            // Eğer proje seçili değilse (0 veya boş), ya projesi olmayan kaydı bul ya da herhangi bir kaydı bul?
+            // Kullanıcı "proje olmadan da ekleyebilmeliyim" dediği için projesi 0 olanlara bakıyoruz.
+            $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and gun = ? and (project_id = 0 OR project_id IS NULL)");
+            $sql->execute([$person_id, $date]);
+        }
         return $sql->fetch(PDO::FETCH_OBJ)->id ?? 0;
     }
 

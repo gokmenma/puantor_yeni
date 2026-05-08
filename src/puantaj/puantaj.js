@@ -5,6 +5,7 @@ const project_id = $("#projects option:selected").val(); //Proje id'si
 //********************************************** */
 listItems.click(function () {
   const clickedCells = $("table td.clicked");
+  const current_project_id = $("#projects option:selected").val();
 
   const avatar = $(this).find(".avatar");
   const avatarText = avatar.text();
@@ -14,14 +15,14 @@ listItems.click(function () {
   const calismaTuru = avatar.attr("data-tooltip");
 
   clickedCells.each(function () {
-    clickedCells.text(avatarText);
-    clickedCells.css("color", avatarColor);
-    clickedCells.attr("data-id", avatarDataid);
-    clickedCells.attr("data-change", true);
-    clickedCells.attr("data-tooltip", calismaTuru);
-    clickedCells.attr("data-project", project_id);
-
-    clickedCells.css("background-color", avatarBgColor);
+    let cell = $(this);
+    cell.text(avatarText);
+    cell.css("color", avatarColor);
+    cell.attr("data-id", avatarDataid);
+    cell.attr("data-change", "true");
+    cell.attr("data-tooltip", calismaTuru);
+    cell.attr("data-project", current_project_id);
+    cell.css("background-color", avatarBgColor);
   });
   clickedCells.removeClass("clicked");
   $("#modal-default").modal("hide");
@@ -65,11 +66,11 @@ $(document).keydown(function (event) {
     // .clicked sınıfına sahip tüm td elemanlarını seç ve içeriğini temizle
     $("td.clicked").each(function () {
       $(this).attr("data-id", 0);
-
       $(this).empty();
-      $(this).toggleClass("clicked");
+      $(this).attr("data-change", "true");
       $(this).css("background-color", "white");
-      $(this).removeAttr("data-tooltip", "");
+      $(this).removeAttr("data-tooltip");
+      $(this).removeClass("clicked");
     });
   }
 });
@@ -108,93 +109,64 @@ $(document).keydown(function (event) {
   }
 });
 
-//********************************************** */
 function puantaj_olustur() {
   var project_id = $("#projects option:selected").val();
   var year = $("#year").val();
   var month = $("#months").val().padStart(2, "0");
+  
+  // Kaydet butonunu bul ve kilitle
+  var saveBtn = $('button[onclick="puantaj_olustur()"]');
+  var originalBtnHtml = saveBtn.html();
+  saveBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Kaydediliyor...');
 
-  //preloader göster
-  $(".preloader").fadeIn();
-  // JSON verisini saklamak için bir nesne oluştur
   var jsonData = {};
-  // Tablodaki her satırı döngü ile işle
-  $("table tbody tr").each(function (index) {
-    var row = $(this);
-    var employeeData = {}; // Her çalışan için bir nesne oluştur
 
-    // Ad, soyad ve ünvan bilgisini al
-    var person_id = row.find("td:first").data("id");
-    var position = project_id;
-
-    // Tarihler için döngü yap
-    //gt = greater then
-    row.find("td:gt(2)").each(function (index, td) {
-      var date =
-        year +
-        month +
-        $("table thead tr:eq(1) th")
-          .eq(index + 3)
-          .text(); // İndeks + 2, 2. indeksten başlamasını sağlar
-      var puantajId = $(this).attr("data-id") ? $(this).attr("data-id") : ""; // Durum bilgisini al
-      //console.log(person_id + "--" + date + "--" + puantajId); //
-
-      // var key = person_id + " : " + position;
-      var key = person_id;
-      if (jsonData[key] && jsonData[key][date]) {
-        jsonData[key][date].puantajId = puantajId;
-        jsonData[key][date].project = project_id;
-      } else {
-        // Anahtar veya tarih yoksa, yeni bir tarih nesnesi oluşturun
-        if (!jsonData[key]) jsonData[key] = {};
-        //puantaj değeri varsa puantaj ve proje id'sini ekle
-        if (puantajId != "") {
-          //var olan kayıt değiştirilmişse, puantaj id ve proje id'sini ekle
-          if ($(this).attr("data-change") == "true") {
-            //  $(this).attr("data-project", project_id);
-            projeAdi = $("#projects option:selected").text().trim();
-            // $(this).css("background-color", "#bbb");
-            // $(this).css("color", "#666");
-            if (projeAdi == "Proje Seçiniz") {
-              projeAdi = $("#myFirm option:selected").text().trim();
-            }
-            $(this).attr("data-tooltip", projeAdi);
-            jsonData[key][date] = {
-              puantajId: puantajId,
-              project_id: project_id
-            };
-          } else {
-            // değişiklik yapılmamışsa sadece kendi kayıtlarını al
-            jsonData[key][date] = {
-              puantajId: puantajId,
-              project_id: $(this).attr("data-project")
-            };
-            //console.log(person_id + "--" + date + "--" + puantajId); //
-          }
-        } else {
-          jsonData[key][date] = { puantajId: puantajId, project_id: "" };
-        }
-      }
-
-      $(this).attr("data-change", "false");
-    });
+  // Gün numaralarını al (2. satırdaki th'ler)
+  var headDates = [];
+  $("#puantajTable thead tr").eq(1).find("th.head-date").each(function() {
+    var day = $(this).text().trim();
+    if(day) headDates.push(day.padStart(2, "0"));
   });
 
-  // JSON verisini konsolda göster
-  // console.log(JSON.stringify(jsonData, null, 2));
+  // Tablodaki her satırı döngü ile işle
+  $("#puantajTable tbody tr").each(function (rowIndex) {
+    var row = $(this);
+    var person_id = row.find("td[data-id]").first().attr("data-id");
+    
+    if (!person_id) return;
 
-  var data = {
-    action: "puantaj",
-    project_id: project_id,
-    data: JSON.stringify(jsonData)
-  };
+    row.find("td").each(function(tdIdx) {
+        var td = $(this);
+        if (!td.hasClass("gun") && !td.hasClass("noselect")) return;
+        if (td.text().trim() === "---") return;
+
+        var dateIdx = tdIdx - 3; 
+        if (dateIdx < 0 || dateIdx >= headDates.length) return;
+
+        var date = year + month + headDates[dateIdx];
+        var puantajId = td.attr("data-id") || "";
+
+        if (!jsonData[person_id]) jsonData[person_id] = {};
+
+        if (td.attr("data-change") === "true") {
+            jsonData[person_id][date] = {
+                puantajId: puantajId,
+                project_id: project_id
+            };
+            td.attr("data-change", "false");
+        } else if (puantajId !== "") {
+            jsonData[person_id][date] = {
+                puantajId: puantajId,
+                project_id: td.attr("data-project") || project_id
+            };
+        }
+    });
+  });
 
   let formData = new FormData();
   formData.append("action", "savePuantaj");
   formData.append("project_id", project_id);
   formData.append("data", JSON.stringify(jsonData));
-
-  
 
   fetch("api/puantaj.php", {
     method: "POST",
@@ -202,26 +174,19 @@ function puantaj_olustur() {
   })
     .then((response) => response.json())
     .then((data) => {
-      $(".preloader").fadeOut();
-      // console.log(data);
-      if (data.status == "success") {
-        //console.log(data.error_wages);
-
-        title = "Başarılı";
-      } else {
-        title = "Hata";
-      }
-      //preloader gizle
+      // Butonu eski haline getir
+      saveBtn.prop('disabled', false).html(originalBtnHtml);
 
       Swal.fire({
-        title: "Başarılı",
+        title: data.status == "success" ? "Başarılı" : (data.status == "info" ? "Bilgi" : "Hata"),
         html: data.message,
-        icon: "success"
+        icon: data.status == "success" ? "success" : (data.status == "info" ? "info" : "error")
       });
+    })
+    .catch((error) => {
+      saveBtn.prop('disabled', false).html(originalBtnHtml);
+      Swal.fire("Hata", "Sistem hatası oluştu: " + error, "error");
     });
-
-  //preloader gizle
-  $(".preloader").fadeOut();
 }
 
 $(document).ready(function () {

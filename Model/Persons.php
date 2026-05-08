@@ -62,21 +62,32 @@ class Persons extends Model
     }
     
     
-    public function getPersonIdByFirmCurrentMonth($firm_id, $first_day, $last_day)
+    public function getPersonIdByFirmCurrentMonth($firm_id, $first_day, $last_day, $show_all = false)
     {
         // Mavi Yaka personellerin listede görünmesi için ya bir projeye atanmış olmaları 
         // ya da bu ay içinde puantaj kayıtlarının olması gerekir.
-        // Beyaz Yaka personeller her zaman görünür.
-        $query = $this->db->prepare('SELECT id FROM persons p 
-                                    WHERE firm_id = ? 
-                                    AND STR_TO_DATE(job_start_date, "%d.%m.%Y") <= ? 
-                                    AND deleted_at IS NULL
-                                    AND (
-                                        p.wage_type = 1 
-                                        OR EXISTS (SELECT 1 FROM project_person WHERE person_id = p.id)
-                                        OR EXISTS (SELECT 1 FROM puantaj WHERE person = p.id AND gun >= ? AND gun <= ?)
-                                    )');
-        $query->execute([$firm_id, $last_day, $first_day, $last_day]);
+        // EĞER $show_all true ise (Personelleri Güncelle tıklandıysa) bu kontrolü atla.
+        $sql = 'SELECT id FROM persons p 
+                WHERE firm_id = ? 
+                AND STR_TO_DATE(job_start_date, "%d.%m.%Y") <= ? 
+                AND deleted_at IS NULL';
+        
+        if (!$show_all) {
+            $sql .= ' AND (
+                        p.wage_type = 1 
+                        OR EXISTS (SELECT 1 FROM puantaj WHERE person = p.id AND gun >= ? AND gun <= ?)
+                        OR STR_TO_DATE(job_start_date, "%d.%m.%Y") >= STR_TO_DATE(?, "%Y%m%d")
+                    )';
+        }
+
+        $query = $this->db->prepare($sql);
+        
+        if (!$show_all) {
+            $query->execute([$firm_id, $last_day, $first_day, $last_day, $first_day]);
+        } else {
+            $query->execute([$firm_id, $last_day]);
+        }
+        
         return $query->fetchAll(PDO::FETCH_OBJ);
     }
     public function getPersonIdByFirmBlueCollar($firm_id)
@@ -85,10 +96,18 @@ class Persons extends Model
         $query->execute([$firm_id,2]);
         return $query->fetchAll(PDO::FETCH_OBJ);
     }
-    public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $last_day, $job_group = 0, $team_id = 0)
+    public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group = 0, $team_id = 0)
     {
-        $sql = 'SELECT id FROM persons WHERE firm_id = ? AND wage_type = ? AND STR_TO_DATE(job_start_date, "%d.%m.%Y") <= ? and deleted_at IS NULL';
-        $params = [$firm_id, 2, $last_day];
+        $sql = 'SELECT id FROM persons p 
+                WHERE firm_id = ? AND wage_type = ? 
+                AND STR_TO_DATE(job_start_date, "%d.%m.%Y") <= ? 
+                AND deleted_at IS NULL
+                AND (
+                    EXISTS (SELECT 1 FROM project_person WHERE person_id = p.id)
+                    OR EXISTS (SELECT 1 FROM puantaj WHERE person = p.id AND gun >= ? AND gun <= ?)
+                    OR STR_TO_DATE(job_start_date, "%d.%m.%Y") >= STR_TO_DATE(?, "%Y%m%d")
+                )';
+        $params = [$firm_id, 2, $last_day, $first_day, $last_day, $first_day];
 
         if ($job_group > 0) {
             $sql .= ' AND job_group = ?';

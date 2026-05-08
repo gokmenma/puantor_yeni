@@ -33,9 +33,32 @@ $month = isset($_POST['months']) ? $_POST['months'] : date('m');
 $firstDay = Date::firstDay($month, $year);
 $last_day = Date::Ymd(Date::lastDay($month, $year));
 $project_id = isset($_POST['projects']) ? $_POST['projects'] : 0;
+$action = $_POST['action'] ?? '';
+
+// Personelleri Güncelle işlemi için auto-assignment mantığı
+if ($action == 'update_personnel' && $project_id > 0) {
+    // Bu dönemde bu projede puantajı olan ama projeye atanmamış personelleri bul ve ata
+    $p_sql = "SELECT DISTINCT person FROM puantaj WHERE project_id = ? AND gun >= ? AND gun <= ?";
+    $p_q = $personObj->getDb()->prepare($p_sql);
+    $p_q->execute([$project_id, $firstDay, $last_day]);
+    $p_list = $p_q->fetchAll(PDO::FETCH_OBJ);
+    foreach ($p_list as $p_item) {
+        if ($projects->isExistPersonInProject($project_id, $p_item->person) == 0) {
+            $projects->addPersontoProject([
+                'project_id' => $project_id,
+                'person_id' => $p_item->person,
+                'state' => 1,
+                'user_id' => $_SESSION['user']->id
+            ]);
+        }
+    }
+}
+
 if ($project_id == 0 || $project_id == '') {
-    // Proje id boş ise Firma id'sine göre tüm personelleri getirir
-    $persons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $last_day);
+    // Proje id boş ise Firma id'sine göre personelleri getirir
+    // Personelleri Güncelle veya Hesapla butonu tıklandıysa tüm personelleri getirir (yeni eklenenleri yakalamak veya hesaplamak için)
+    $show_all = ($action == 'update_personnel' || $action == 'payroll_calculate');
+    $persons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $last_day, $show_all);
 } else {
     // Proje id dolu ise projeye ait personelleri getirir
     $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $last_day);
@@ -184,25 +207,8 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                 // Personel Beyaz Yaka ise
                                 if (isset($_POST["action"]) && ($_POST["action"] == 'payroll_calculate' || $_POST["action"] == 'update_personnel')) {
                                     
-                                    // Eğer update_personnel işlemi ise ve proje seçili ise
-                                    if ($_POST["action"] == 'update_personnel' && $project_id > 0) {
-                                        // Bu dönemde puantajı olan ama projeye atanmamış personelleri bul ve ata
-                                        // Bu mantık aslında model tarafında olmalı ama şimdilik burada hızlıca çözüyoruz
-                                        $p_sql = "SELECT DISTINCT person FROM puantaj WHERE project_id = ? AND gun >= ? AND gun <= ?";
-                                        $p_q = $personObj->getDb()->prepare($p_sql);
-                                        $p_q->execute([$project_id, $firstDay, $lastDay]);
-                                        $p_list = $p_q->fetchAll(PDO::FETCH_OBJ);
-                                        foreach ($p_list as $p_item) {
-                                            if ($projects->isExistPersonInProject($project_id, $p_item->person) == 0) {
-                                                $projects->addPersontoProject([
-                                                    'project_id' => $project_id,
-                                                    'person_id' => $p_item->person,
-                                                    'state' => 1,
-                                                    'user_id' => $_SESSION['user']->id
-                                                ]);
-                                            }
-                                        }
-                                    }
+                                    // Beyaz Yaka hesaplama (Eskiden burada olan update_personnel mantığı yukarı taşındı)
+
 
                                     if ($person->wage_type == 1) {
                                         // Eylül 2024 Maaş şeklinde açıklama oluştur

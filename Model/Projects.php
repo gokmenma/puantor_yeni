@@ -122,16 +122,18 @@ class Projects extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
-    public function getPersonIdByFromProjectCurrentMonth($project_id, $last_day, $job_group = 0, $team_id = 0)
+    public function getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group = 0, $team_id = 0)
     {
         $sql = 'SELECT id
                         FROM persons p
                         WHERE wage_type = 2
-                        AND (SELECT person_id
-                                FROM project_person 
-                                WHERE project_id = ? and person_id = p.id) 
+                        AND (
+                            EXISTS (SELECT 1 FROM project_person WHERE project_id = ? and person_id = p.id) 
+                            OR EXISTS (SELECT 1 FROM puantaj WHERE project_id = ? AND person = p.id AND gun >= ? AND gun <= ?)
+                            OR STR_TO_DATE(job_start_date, "%d.%m.%Y") >= STR_TO_DATE(?, "%Y%m%d")
+                        )
                         AND STR_TO_DATE(job_start_date, "%d.%m.%Y") <= ? and deleted_at IS NULL';
-        $params = [$project_id, $last_day];
+        $params = [$project_id, $project_id, $first_day, $last_day, $first_day, $last_day];
 
         if ($job_group > 0) {
             $sql .= ' AND job_group = ?';

@@ -39,6 +39,6 @@ jobs:
             cgi-bin/**
             logs/**
             .well-known/**
-          log-level: verbose
+          log-level: standard
           dry-run: false
-          dangerous-clean-slate: true
+          dangerous-clean-slate: false

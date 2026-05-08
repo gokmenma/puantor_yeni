@@ -34,11 +34,14 @@ $team_id = isset($_POST['team_id']) ? $_POST['team_id'] : 0;
 
 if ($project_id == 0 || $project_id == '') {
     // Proje id boş ise Firma id'sine göre tüm mavi yakalı, işe başlama tarihi o ayın son gününden önce olan personelleri getirir
-    $persons = $personObj->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $last_day, $job_group, $team_id);
+    // Akıllı görünürlük: Yeni başlayanlar veya bu ay puantajı olanlar her zaman görünür
+    $first_day = Date::firstDay($month, $year);
+    $persons = $personObj->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group, $team_id);
 } else {
     // Proje id dolu ise projeye ait, işe başlama tarihi o ayın son gününden önce olan mavi yakalı personelleri getirir
-    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $last_day, $job_group, $team_id);
-
+    // Akıllı görünürlük: Projeye atanmış olanlar veya bu ay bu projede puantajı olanlar
+    $first_day = Date::firstDay($month, $year);
+    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group, $team_id);
 }
 // Ayın son gününü bulma
 $days = Date::daysInMonth($month, $year);
@@ -407,9 +410,12 @@ $dates = Date::generateDates($year, $month, $days);
                                 $person = $personObj->find($item->id);
                                 $id = Security::encrypt($person->id);
 
-                                //Personelin işten ayrılma tarihi firstDay'den küçükse personeli getirme
-                                if ($person->job_end_date >= Date::firstDay($month, $year)) {
-                                    continue;
+                                // Personelin işten ayrılma tarihi bu ayın başından önceyse personeli getirme
+                                if ($person->job_end_date != null && $person->job_end_date != '') {
+                                    $job_end_date_ymd = Date::Ymd($person->job_end_date);
+                                    if ($job_end_date_ymd < Date::firstDay($month, $year)) {
+                                        continue;
+                                    }
                                 }
 
                                 ?>

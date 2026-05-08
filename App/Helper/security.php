@@ -40,44 +40,42 @@ class Security
         return password_verify($password, $hash);
     }
 
-    //encrypt//encrypt
-//encrypt
 public static function encrypt($data)
 {
     if (empty($data)) {
-        return ''; // veya uygun bir hata mesajı döndürebilirsiniz
+        return '';
     }
 
     $method = "AES-256-GCM";
     $key = hash('sha256', 'mysecretkey', true);
-    $iv = openssl_random_pseudo_bytes(12); // GCM için 12 byte IV kullanılır
+    $iv = openssl_random_pseudo_bytes(12);
     $tag = null;
     $encrypted_data = openssl_encrypt($data, $method, $key, OPENSSL_RAW_DATA, $iv, $tag);
-    //içinde + varsa onu değiştir
-    $result = str_replace('+', '-', $encrypted_data);
-    $result = str_replace('/', '_', $encrypted_data);
-    $result = str_replace('=', '*', $encrypted_data);
+    
+    // Combine IV, Tag, and Encrypted Data, then encode to URL-safe Base64
     $result = base64_encode($iv . $tag . $encrypted_data);
-    return rawurlencode($result); // URL kodlaması ekle
+    return strtr($result, '+/=', '-_*');
 }
 
-    public static function decrypt($data)
-    {
-        if (empty($data)) return '';
-        $method = "AES-256-GCM";
-        $key = hash('sha256', 'mysecretkey', true);
-        $data = rawurldecode($data); // URL kodlamasını çöz
-        $data = base64_decode($data); // base64 kodlamasını çöz
-        
-        if (strlen($data) < 28) {
-            return false;
-        }
-        
-        $iv = substr($data, 0, 12); // GCM için 12 byte IV kullanılır
-        $tag = substr($data, 12, 16); // 16 byte authentication tag
-        $encrypted_data = substr($data, 28); // IV (12 byte) + Tag (16 byte) sonrası şifreli veri
-        return openssl_decrypt($encrypted_data, $method, $key, OPENSSL_RAW_DATA, $iv, $tag);
+public static function decrypt($data)
+{
+    if (empty($data)) return '';
+    $method = "AES-256-GCM";
+    $key = hash('sha256', 'mysecretkey', true);
+    
+    // Reverse URL-safe Base64
+    $data = strtr($data, '-_*', '+/=');
+    $data = base64_decode($data);
+    
+    if (strlen($data) < 28) {
+        return false;
     }
+    
+    $iv = substr($data, 0, 12);
+    $tag = substr($data, 12, 16);
+    $encrypted_data = substr($data, 28);
+    return openssl_decrypt($encrypted_data, $method, $key, OPENSSL_RAW_DATA, $iv, $tag);
+}
 
     public static function safeDecrypt($data)
     {

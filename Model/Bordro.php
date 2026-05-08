@@ -387,21 +387,6 @@ class Bordro extends Model
         $sql2 = $this->db->prepare("DELETE FROM puantaj WHERE (person = :person_id OR person = :enc_id) AND gun >= :start_date AND gun <= :end_date");
         $sql2->execute([':person_id' => $person_id, ':enc_id' => $encrypted_id, ':start_date' => $firstDay, ':end_date' => $lastDay]);
 
-        // Personeli projelerden çıkar
-        if (!empty($projects_to_remove)) {
-            foreach ($projects_to_remove as $p_id) {
-                if ($p_id > 0) {
-                    // Ham ID ile sil
-                    $projectsObj->deletePersonFromProjects($person_id, $p_id);
-                    // Şifreli ID ile sil (Eğer şifreli kaydedildiyse)
-                    if (!empty($encrypted_id)) {
-                        $sql_del_enc = $this->db->prepare("DELETE FROM project_person WHERE person_id = ? AND project_id = ?");
-                        $sql_del_enc->execute([$encrypted_id, $p_id]);
-                    }
-                }
-            }
-        }
-
         return true;
     }
 }
