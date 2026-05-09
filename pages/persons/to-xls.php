@@ -35,7 +35,7 @@ $headers = [
     'B1' => 'Adı Soyadı',
     'C1' => 'Firma Adı',
     'D1' => 'Ücret Türü',
-    'E1' => 'Sigorta No',
+    'E1' => 'İşe Giriş Tarihi',
     'F1' => 'Telefon',
     'G1' => 'Adres',
     'H1' => 'Günlük/Aylık Ücreti',
@@ -59,7 +59,7 @@ foreach ($persons as $person) {
     $sheet->setCellValue('B' . $row, $person->full_name);
     $sheet->setCellValue('C' . $row, $company_name);
     $sheet->setCellValue('D' . $row, $wage_type);
-    $sheet->setCellValue('E' . $row, $person->sigorta_no);
+    $sheet->setCellValue('E' . $row, $person->job_start_date ?? '-');
     $sheet->setCellValue('F' . $row, $person->phone);
     $sheet->setCellValue('G' . $row, $person->address);
     $sheet->setCellValue('H' . $row, $person->daily_wages);

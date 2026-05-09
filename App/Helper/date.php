@@ -76,6 +76,9 @@ class Date
 
     public static function isWeekend($date)
     {
+        if ($date === null || $date === '') {
+            $date = date('Y-m-d');
+        }
         $dateTime = new \DateTime($date);
         $dayOfWeek = $dateTime->format('N');
         return ($dayOfWeek == 7);
@@ -83,11 +86,17 @@ class Date
 
     public static function isDate($date)
     {
+        if ($date === null || $date === '') {
+            return false;
+        }
         return strtotime($date);
     }
 
     public static function isBetween($date, $startDate, $endDate)
     {
+        if ($date === null || $startDate === null || $endDate === null) {
+            return false;
+        }
         $date = strtotime($date);
         $startDate = strtotime($startDate);
         $endDate = strtotime($endDate);
@@ -103,6 +112,9 @@ class Date
 
     public static function gunAdi($gun)
     {
+        if ($gun === null || $gun === '') {
+            $gun = date('Y-m-d');
+        }
         $gun = date('D', strtotime($gun));
         $gunler = array(
             'Mon' => 'Pzt',
@@ -184,8 +196,11 @@ class Date
      */
     public static function getDateDiff($date1, $date2 = '')
     {
+        if ($date1 === null || $date1 === '') {
+            $date1 = date('Y-m-d H:i:s');
+        }
         //date2 boş ise bugünün tarihi alınır
-        if ($date2 == '') {
+        if ($date2 === null || $date2 === '') {
             $date2 = date('Y-m-d H:i:s');
         }
         $datetime1 = new \DateTime($date1);

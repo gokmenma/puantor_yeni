@@ -46,10 +46,23 @@ if ($_POST['action'] == 'savePuantaj') {
                 continue;
             }
 
+            $person_info = $person->find($person_id);
+            $start_date_ymd = ($person_info && !empty($person_info->job_start_date)) ? Date::Ymd($person_info->job_start_date) : '';
+            $end_date_ymd = ($person_info && !empty($person_info->job_end_date)) ? Date::Ymd($person_info->job_end_date) : '';
+
             $ucret_base = ($person_data->daily_wages ?? 0) / $work_hour;
 
             foreach ($person_item as $puantaj_key => $puantaj_item) {
-            $current_p_id = ($puantaj_item['project_id'] !== "" && $puantaj_item['project_id'] !== null) ? $puantaj_item['project_id'] : null;
+                // Arka plan kontrolü: İşe giriş tarihinden önce veya işten ayrılış tarihinden sonra ise işlem yapma
+                $current_day_ymd = Date::Ymd($puantaj_key);
+                if (!empty($start_date_ymd) && $current_day_ymd < $start_date_ymd) {
+                    continue;
+                }
+                if (!empty($end_date_ymd) && $current_day_ymd > $end_date_ymd) {
+                    continue;
+                }
+
+                $current_p_id = ($puantaj_item['project_id'] !== "" && $puantaj_item['project_id'] !== null) ? $puantaj_item['project_id'] : null;
                 $id = $puantajObj->getPuantajId($person_id, $puantaj_key, $current_p_id);
 
                 if ($puantaj_item['puantajId'] == 0) {

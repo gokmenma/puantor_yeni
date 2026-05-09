@@ -79,7 +79,7 @@ $company = new CompanyHelper();
                                 <th>Adı Soyadı</th>
                                 <th>Firma Adı</th>
                                 <th>Ücret Türü</th>
-                                <th>Sigorta No</th>
+                                <th>İşe Giriş Tarihi</th>
                                 <th>Telefon</th>
                                 <th>Adres</th>
                                 <th>Günlük/Aylık Ücretİ</th>
@@ -110,7 +110,7 @@ $company = new CompanyHelper();
                                                 class="nav-item route-link"><?php echo $person->full_name; ?></a></td>
                                         <td><?php echo $company->getcompanyName($person->company_id ) ?? 0; ?></td>
                                         <td <?php echo $wage_type_color; ?>><?php echo $wage_type; ?></td>
-                                        <td><?php echo $person->sigorta_no; ?></td>
+                                        <td><?php echo $person->job_start_date ?? '-'; ?></td>
                                         <td><?php echo $person->phone; ?></td>
                                         <td><?php echo $person->address; ?></td>
                                         <td><?php echo Helper::formattedMoney($person->daily_wages ?? 0); ?></td>

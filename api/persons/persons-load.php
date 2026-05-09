@@ -57,34 +57,48 @@ if ($_POST["action"] == "persons-load-from-xls") {
                 
                 $row_errors = [];
 
-                //Kuralları geçen kayıtların eklenmesi sağlanır
-                //full_name en az 3 karakter olmalı
-                $fullName = trim($row["A"]);
-                if (strlen($fullName) < 3 || strlen($fullName) > 50) {
-                    $row_errors[] = "Ad Soyad 3-50 karakter arasında olmalıdır.";
-                }
-
-                //kimlik_no 11 karakter olmalı
+                //Kuralları geçen kayıtl                //kimlik_no 11 karakter olmalı
                 $tcNo = str_replace(' ', '', trim((string)$row["B"]));
                 if (strlen($tcNo) != 11 || !is_numeric($tcNo)) {
                     $row_errors[] = "Kimlik No 11 haneli ve sayısal olmalıdır. (Girilen: $tcNo)";
                 }
 
-                //job_start_date tarih formatında olmalı
-                if (!Date::isDate($row["C"])) {
-                    $row_errors[] = "İşe Başlama Tarihi tarih formatında olmalıdır. (Girilen: ".$row["C"].")";
+                // Mevcut personel kontrolü (TC Kimlik ile)
+                $existingPerson = null;
+                $personId = 0;
+                if (strlen($tcNo) == 11 && is_numeric($tcNo)) {
+                    $existingPerson = $Persons->getPersonByKimlikNo($tcNo);
+                    $personId = $existingPerson ? $existingPerson->id : 0;
                 }
 
-                //iban_number 26 karakter olmalı
+                //full_name kontrolü: yeni kayıtsa zorunlu, mevcutsa boş bırakılabilir
+                $fullName = trim($row["A"]);
+                if (empty($fullName) && !$existingPerson) {
+                    $row_errors[] = "Yeni personel eklemek için Ad Soyad alanı zorunludur.";
+                } else if (!empty($fullName) && (strlen($fullName) < 3 || strlen($fullName) > 50)) {
+                    $row_errors[] = "Ad Soyad 3-50 karakter arasında olmalıdır.";
+                }
+
+                //job_start_date kontrolü: yeni kayıtsa zorunlu, mevcutsa boş bırakılabilir
+                $job_start = trim((string)$row["C"]);
+                if (empty($job_start) && !$existingPerson) {
+                    $row_errors[] = "Yeni personel eklemek için İşe Başlama Tarihi zorunludur.";
+                } else if (!empty($job_start) && !Date::isDate($job_start)) {
+                    $row_errors[] = "İşe Başlama Tarihi tarih formatında olmalıdır. (Girilen: ".$job_start.")";
+                }
+
+                //iban_number kontrolü: TR dahil 26 karakter olmalı (boş bırakılırsa mevcut olan korunur)
                 $iban = str_replace(' ', '', trim((string)$row["D"]));
-                if (strlen($iban) != 26) {
+                if (!empty($iban) && strlen($iban) != 26) {
                     $row_errors[] = "Iban Numarası TR dahil 26 karakter olmalıdır. (Girilen: $iban)";
                 }
 
-                //daily_wages sayısal olmalı
+                //daily_wages kontrolü: yeni kayıtsa zorunlu, mevcutsa boş bırakılabilir
                 require_once ROOT . '/App/Helper/helper.php';
                 $wage = \App\Helper\Helper::standardizeWage($row["E"]);
-                if ($wage == 0 && trim((string)$row["E"]) !== '0' && trim((string)$row["E"]) !== '') {
+                if (empty(trim((string)$row["E"])) && !$existingPerson) {
+                    $row_errors[] = "Yeni personel eklemek için Günlük/Aylık Ücret alanı zorunludur.";
+                } else if (!empty(trim((string)$row["E"])) && $wage == 0 && trim((string)$row["E"]) !== '0') {
                     $row_errors[] = "Günlük/Aylık Ücret sayısal olmalıdır. (Girilen: ".$row["E"].")";
                 }
 
@@ -94,24 +108,30 @@ if ($_POST["action"] == "persons-load-from-xls") {
                     continue;
                 }
 
-                // Mevcut personel kontrolü (TC Kimlik ile)
-                $existingPerson = $Persons->getPersonByKimlikNo($tcNo);
-                $personId = $existingPerson ? $existingPerson->id : 0;
+                $raw_wage_type = isset($row["H"]) ? trim((string)$row["H"]) : '';
+                $wage_type_val = 2; // Default to Mavi Yaka (2)
+                if (!empty($raw_wage_type)) {
+                    if (stripos($raw_wage_type, 'beyaz') !== false || $raw_wage_type === '1') {
+                        $wage_type_val = 1;
+                    } else if (stripos($raw_wage_type, 'mavi') !== false || $raw_wage_type === '2') {
+                        $wage_type_val = 2;
+                    }
+                }
 
                 $data = [
                     "id" => $personId,
-                    "full_name" => Security::escape($row["A"]),
+                    "full_name" => (isset($row["A"]) && trim((string)$row["A"]) !== "") ? Security::escape($row["A"]) : ($existingPerson ? $existingPerson->full_name : ""),
                     "kimlik_no" => Security::encrypt($tcNo),
-                    "job_start_date" => Date::dmY($row["C"], "d.m.Y"),
-                    "iban_number" => Security::encrypt($iban),
-                    "daily_wages" => Security::escape($wage),
-                    "phone" => Security::escape($row["F"]),
-                    "email" => Security::escape($row["G"]),
-                    "wage_type" => Security::escape($row["H"]),
-                    "address" => Security::escape($row["I"]),
-                    "description" => Security::escape($row["J"]),
-                    "ekip" => isset($row["L"]) ? Security::escape(trim($row["L"])) : null,
-                    "job" => isset($row["M"]) ? Security::escape(trim($row["M"])) : null,
+                    "job_start_date" => (isset($row["C"]) && trim((string)$row["C"]) !== "") ? Date::dmY($row["C"], "d.m.Y") : ($existingPerson ? $existingPerson->job_start_date : ""),
+                    "iban_number" => (isset($row["D"]) && trim((string)$row["D"]) !== "") ? Security::encrypt($iban) : ($existingPerson ? $existingPerson->iban_number : ""),
+                    "daily_wages" => (isset($row["E"]) && trim((string)$row["E"]) !== "") ? Security::escape($wage) : ($existingPerson ? $existingPerson->daily_wages : 0),
+                    "phone" => (isset($row["F"]) && trim((string)$row["F"]) !== "") ? Security::escape($row["F"]) : ($existingPerson ? $existingPerson->phone : ""),
+                    "email" => (isset($row["G"]) && trim((string)$row["G"]) !== "") ? Security::escape($row["G"]) : ($existingPerson ? $existingPerson->email : ""),
+                    "wage_type" => !empty($raw_wage_type) ? $wage_type_val : ($existingPerson ? $existingPerson->wage_type : 2),
+                    "address" => (isset($row["I"]) && trim((string)$row["I"]) !== "") ? Security::escape($row["I"]) : ($existingPerson ? $existingPerson->address : ""),
+                    "description" => (isset($row["J"]) && trim((string)$row["J"]) !== "") ? Security::escape($row["J"]) : ($existingPerson ? $existingPerson->description : ""),
+                    "ekip" => (isset($row["L"]) && trim((string)$row["L"]) !== "") ? Security::escape(trim($row["L"])) : ($existingPerson ? $existingPerson->ekip : null),
+                    "job" => (isset($row["M"]) && trim((string)$row["M"]) !== "") ? Security::escape(trim($row["M"])) : ($existingPerson ? $existingPerson->job : null),
                     "firm_id" => $firm_id,
                 ];
 

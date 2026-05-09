@@ -25,7 +25,7 @@ $activeWorksheet->setCellValue('D1', 'İban Numarası');
 $activeWorksheet->setCellValue('E1', 'Telefon');
 $activeWorksheet->setCellValue('F1', 'Email Adresi');
 $activeWorksheet->setCellValue('G1', 'Günlük/Aylık Ücret');
-$activeWorksheet->setCellValue('H1', 'Beyaz/Mavi Yaka');
+$activeWorksheet->setCellValue('H1', 'Beyaz Yaka/Mavi Yaka');
 $activeWorksheet->setCellValue('I1', 'Adresi');
 $activeWorksheet->setCellValue('J1', 'Açıklama');
 
