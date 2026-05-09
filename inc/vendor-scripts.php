@@ -35,7 +35,8 @@ if (
     $page == 'missions/headers/manage' || $page == 'missions/headers/list' ||
     $page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage' ||
     $page == 'defines/project-status/list' ||
-    $page == 'todos/list'
+    $page == 'todos/list' ||
+    $page == "users/manage"
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }
@@ -227,4 +228,4 @@ if ($page == 'home') {
 if ($page == 'puantaj/list') {
     echo '<script src="./src/puantaj/puantaj.js?v=' . time() . '"></script>';
 }
-?>
+?>

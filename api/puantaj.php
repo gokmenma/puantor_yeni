@@ -112,10 +112,10 @@ if ($_POST['action'] == 'savePuantaj') {
         $message = "İşlem tamamlandı fakat $error_count hata oluştu." . $message;
     } else if ($save_count > 0) {
         $status = 'success';
-        $message = "$save_count kayıt başarıyla işlendi.";
+        $message = "$save_count değişiklik başarıyla kaydedildi.";
     } else {
         $status = 'info';
-        $message = "Değişiklik saptanmadı veya kaydedilecek veri bulunamadı.";
+        $message = "Herhangi bir değişiklik yapılmadı veya kaydedilecek veri bulunamadı.";
     }
 
     echo json_encode(['status' => $status, 'message' => $message]);

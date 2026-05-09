@@ -282,6 +282,14 @@ $projectNamesCache[0] = "Proje Yok";
         background-color: #bbb !important;
 
     }
+
+    .animate-pulse {
+        animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: .8; transform: scale(1.08); }
+    }
  
 </style>
 
@@ -351,21 +359,59 @@ $projectNamesCache[0] = "Proje Yok";
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <div class="accordion-item">
+                    <div class="accordion-item border-0" style="background: transparent;">
                         <h2 class="accordion-header" id="heading-1">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapse-1" aria-expanded="false">
-                                <h3 class="card-title">Puantaj +</h3>
+                            <button class="accordion-button collapsed p-2" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-1" aria-expanded="false" style="background: transparent; box-shadow: none;">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-blue-lt text-blue d-flex align-items-center justify-content-center me-2 animate-pulse" style="width: 32px; height: 32px; border-radius: 8px;">
+                                        <i class="ti ti-info-circle fs-2"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="card-title mb-0" style="font-size: 14px; font-weight: 700; color: #1e293b;">Puantaj İpuçları & Kısayollar</h3>
+                                        <small class="text-blue d-block font-weight-semibold" style="font-size: 11px; cursor: pointer;">
+                                            <i class="ti ti-help me-1"></i>Kullanım ipuçlarını ve kısayolları görmek için tıklayın!
+                                        </small>
+                                    </div>
+                                </div>
                             </button>
                         </h2>
-                        <div id="collapse-1" class="accordion-collapse collapse" data-bs-parent="#accordion-example">
-                            <div class="accordion-body pt-0">
-                                <strong>Tek tek seçim</strong> yapmak için ilgili alanlara tıklayınız! <br>
-                                <strong>Çoklu seçim </strong> seçim yapmak için ilgili alanların üzerinde mouse basılı
-                                şekilde tıklayınız!<br>
-                                <strong>Seçim yaptıktan</strong> sonra puantaj türü listesinin açılmasını istiyorsanız
-                                ctrl tuşu basılı şekilde seçim yapın
-
+                        <div id="collapse-1" class="accordion-collapse collapse" data-bs-parent="#heading-1">
+                            <div class="accordion-body pt-3 pb-2 ps-2" style="font-size: 13px; line-height: 1.6; color: #475569;">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="mb-2 d-flex align-items-start">
+                                            <i class="ti ti-pointer text-blue me-2 mt-1 fs-3"></i>
+                                            <span><strong>Tek Tek Seçim:</strong> İstediğiniz hücrenin üzerine tek tıklayarak seçebilirsiniz.</span>
+                                        </div>
+                                        <div class="mb-2 d-flex align-items-start">
+                                            <i class="ti ti-mouse text-blue me-2 mt-1 fs-3"></i>
+                                            <span><strong>Çoklu Seçim:</strong> Sol tıklayıp basılı tutarak fareyi hücreler üzerinde sürükleyebilirsiniz.</span>
+                                        </div>
+                                        <div class="mb-2 d-flex align-items-start">
+                                            <i class="ti ti-arrows-down text-blue me-2 mt-1 fs-3"></i>
+                                            <span><strong>Tüm Sütunu Seçme:</strong> En üstteki <strong>tarih sayısına</strong> veya <strong>gün adına</strong> tıklayarak tüm personellerin o günkü hücresini seçebilirsiniz.</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-2 d-flex align-items-start">
+                                            <i class="ti ti-keyboard text-purple me-2 mt-1 fs-3"></i>
+                                            <span><strong>Hızlı Menü (Ctrl):</strong> Seçim yaparken <strong>Ctrl</strong> tuşunu basılı tutarsanız, seçimi bıraktığınızda tür menüsü otomatik açılır.</span>
+                                        </div>
+                                        <div class="mb-2 d-flex align-items-start">
+                                            <i class="ti ti-trash text-danger me-2 mt-1 fs-3"></i>
+                                            <span><strong>Puantaj Silme (Delete):</strong> İlgili hücreleri seçip klavyeden <strong>Delete</strong> tuşuna basın ve ardından <strong>Kaydet</strong> butonuna tıklayın.</span>
+                                        </div>
+                                        <div class="mb-2 d-flex align-items-start">
+                                            <i class="ti ti-x text-warning me-2 mt-1 fs-3"></i>
+                                            <span><strong>Seçimleri Temizleme (Esc):</strong> Sarı renkli seçili hücreleri iptal etmek için klavyeden <strong>ESC</strong> tuşuna basabilirsiniz.</span>
+                                        </div>
+                                        <div class="mb-0 d-flex align-items-start">
+                                            <i class="ti ti-device-floppy text-success me-2 mt-1 fs-3"></i>
+                                            <span><strong>Hızlı Kaydet (Ctrl+S):</strong> Çalışmalarınızı anında kaydetmek için klavyeden <strong>Ctrl + S</strong> tuş kombinasyonunu kullanabilirsiniz.</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

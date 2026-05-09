@@ -50,6 +50,18 @@ $(document).on("click", "#kullanici_kaydet", function () {
   }
 
   var formData = new FormData(form[0]);
+
+  // If DataTable is present, collect checked checkboxes from non-visible pages
+  if ($.fn.DataTable && $.fn.DataTable.isDataTable('#responsible-persons-table')) {
+      var dt = $('#responsible-persons-table').DataTable();
+      dt.$('input[type="checkbox"]:checked').each(function() {
+          // Only append if it is NOT currently in the DOM (already caught by FormData)
+          if (!$.contains(document, this)) {
+              formData.append(this.name, this.value);
+          }
+      });
+  }
+
   formData.append("id", id);
   formData.append("action", "userSave");
 

@@ -33,7 +33,7 @@ $teamsHelper = new Teams();
 // Load job groups for quick lookup
 $all_job_groups = [];
 try {
-    $q_jg = $personsObj->db->prepare("SELECT id, group_name FROM job_groups WHERE firm_id = ?");
+    $q_jg = $personsObj->getDb()->prepare("SELECT id, group_name FROM job_groups WHERE firm_id = ?");
     $q_jg->execute([$_SESSION['firm_id']]);
     foreach ($q_jg->fetchAll(PDO::FETCH_OBJ) as $jg) {
         $all_job_groups[$jg->id] = $jg->group_name;
@@ -43,7 +43,7 @@ try {
 // Load person-projects mappings for quick lookup
 $all_person_projects = [];
 try {
-    $q_pp = $personsObj->db->prepare("
+    $q_pp = $personsObj->getDb()->prepare("
         SELECT pp.person_id, p.project_name 
         FROM project_person pp 
         JOIN projects p ON pp.project_id = p.id 
@@ -127,27 +127,31 @@ try {
                                                 <div class="card-header bg-light py-2">
                                                     <h4 class="card-title mb-0">Sorumlu Olduğu Personeller ve Yetkili Modüller</h4>
                                                 </div>
-                                                <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
-                                                    <table class="table card-table table-vcenter table-hover text-nowrap">
+                                                <div class="table-responsive">
+                                                    <table id="responsible-persons-table" class="table card-table table-vcenter table-hover text-nowrap datatable">
                                                         <thead class="sticky-top bg-white" style="z-index: 10;">
                                                             <tr>
-                                                                <th style="width: 50%;">Personel Adı Soyadı / Görevi</th>
-                                                                <th class="text-center" style="width: 16%;">
+                                                                <th style="width: 40px;" class="text-center no-export"><input type="checkbox" class="form-check-input select-all-persons-modules" data-tooltip="Tümünü Seç / Kaldır"></th>
+                                                                <th>Personel Adı Soyadı</th>
+                                                                <th>Görevi / Meslek</th>
+                                                                <th>Ekibi</th>
+                                                                <th>Projeleri</th>
+                                                                <th class="text-center" style="width: 100px;">
                                                                     <label class="form-check mb-0 d-inline-flex align-items-center cursor-pointer" data-tooltip="Tüm personeller için Puantaj modülünü seç/kaldır">
                                                                         <input type="checkbox" class="form-check-input me-2 check-all-module" data-target="puantaj-checkbox" checked>
                                                                         <span class="font-weight-bold">Puantaj</span>
                                                                     </label>
                                                                 </th>
-                                                                <th class="text-center" style="width: 16%;">
+                                                                <th class="text-center" style="width: 100px;">
                                                                     <label class="form-check mb-0 d-inline-flex align-items-center cursor-pointer" data-tooltip="Tüm personeller için Bordro modülünü seç/kaldır">
                                                                         <input type="checkbox" class="form-check-input me-2 check-all-module" data-target="bordro-checkbox" checked>
                                                                         <span class="font-weight-bold">Bordro</span>
                                                                     </label>
                                                                 </th>
-                                                                <th class="text-center" style="width: 16%;">
+                                                                <th class="text-center" style="width: 100px;">
                                                                     <label class="form-check mb-0 d-inline-flex align-items-center cursor-pointer" data-tooltip="Tüm personeller için Personel Listesi modülünü seç/kaldır">
                                                                         <input type="checkbox" class="form-check-input me-2 check-all-module" data-target="personel-checkbox" checked>
-                                                                        <span class="font-weight-bold">Personel Listesi</span>
+                                                                        <span class="font-weight-bold">Personel</span>
                                                                     </label>
                                                                 </th>
                                                             </tr>
@@ -176,37 +180,39 @@ try {
                                                                 }
                                                                 ?>
                                                                 <tr>
+                                                                    <td class="text-center">
+                                                                        <input type="checkbox" class="form-check-input person-all-modules-checkbox" data-tooltip="Bu personel için tüm modülleri seç/kaldır" <?php echo ($has_puantaj && $has_bordro && $has_personel) ? 'checked' : ''; ?>>
+                                                                    </td>
                                                                     <td>
-                                                                        <div class="font-weight-medium text-dark"><?php echo $person->full_name; ?></div>
-                                                                        <div class="mt-1 d-flex flex-wrap gap-1 align-items-center">
-                                                                            <!-- Görevi / Meslek -->
-                                                                            <?php if (!empty($person->job)): ?>
-                                                                                <span class="badge bg-blue-lt py-1 px-2 d-inline-flex align-items-center" style="font-size: 11px;" title="Görevi"><i class="ti ti-briefcase me-1" style="font-size: 12px;"></i><?php echo $person->job; ?></span>
-                                                                            <?php endif; ?>
-                                                                            
-                                                                            <!-- İş Grubu -->
-                                                                            <?php 
-                                                                            $jg_id = $person->job_group ?? '';
-                                                                            $jg_name = isset($all_job_groups[$jg_id]) ? $all_job_groups[$jg_id] : '';
-                                                                            if (!empty($jg_name)): ?>
-                                                                                <span class="badge bg-azure-lt py-1 px-2 d-inline-flex align-items-center" style="font-size: 11px;" title="İş Grubu"><i class="ti ti-users me-1" style="font-size: 12px;"></i><?php echo $jg_name; ?></span>
-                                                                            <?php endif; ?>
-
-                                                                            <!-- Ekip -->
-                                                                            <?php 
-                                                                            $team_name = !empty($person->ekip) ? $person->ekip : (!empty($person->team_id) ? $teamsHelper->getTeamName($person->team_id) : '');
-                                                                            if (!empty($team_name)): ?>
-                                                                                <span class="badge bg-orange-lt py-1 px-2 d-inline-flex align-items-center" style="font-size: 11px;" title="Ekip"><i class="ti ti-binary me-1" style="font-size: 12px;"></i><?php echo $team_name; ?></span>
-                                                                            <?php endif; ?>
-
-                                                                            <!-- Atandığı Projeler -->
+                                                                        <div class="font-weight-bold text-dark"><?php echo $person->full_name; ?></div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php if (!empty($person->job)): ?>
+                                                                            <span class="badge bg-blue-lt py-1 px-2"><i class="ti ti-briefcase me-1"></i><?php echo $person->job; ?></span>
+                                                                        <?php else: ?>
+                                                                            <span class="text-muted small">-</span>
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php 
+                                                                        $team_name = !empty($person->ekip) ? $person->ekip : (!empty($person->team_id) ? $teamsHelper->getTeamName($person->team_id) : '');
+                                                                        if (!empty($team_name)): ?>
+                                                                            <span class="badge bg-orange-lt py-1 px-2"><i class="ti ti-binary me-1"></i><?php echo $team_name; ?></span>
+                                                                        <?php else: ?>
+                                                                            <span class="text-muted small">-</span>
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="d-flex flex-wrap gap-1">
                                                                             <?php 
                                                                             $p_list = isset($all_person_projects[$person->id]) ? $all_person_projects[$person->id] : [];
                                                                             if (!empty($p_list)): 
                                                                                 foreach ($p_list as $p_name): ?>
-                                                                                    <span class="badge bg-purple-lt py-1 px-2 d-inline-flex align-items-center" style="font-size: 11px;" title="Atandığı Proje"><i class="ti ti-building me-1" style="font-size: 12px;"></i><?php echo $p_name; ?></span>
+                                                                                    <span class="badge bg-purple-lt py-1 px-2"><i class="ti ti-building me-1"></i><?php echo $p_name; ?></span>
                                                                                 <?php endforeach; 
-                                                                            endif; ?>
+                                                                            else: ?>
+                                                                                <span class="text-muted small">-</span>
+                                                                            <?php endif; ?>
                                                                         </div>
                                                                     </td>
                                                                     <td class="text-center">
@@ -227,11 +233,46 @@ try {
                                         </div>
                                     </div>
                                     <script>
-                                        $(document).ready(function() {
-                                            $(document).on('change', '.check-all-module', function() {
-                                                var targetClass = $(this).data('target');
-                                                $('.' + targetClass).prop('checked', this.checked);
-                                            });
+                                        $(window).on('load', function() {
+                                            // DataTable is initialized by the global app.js, we just get the API instance
+                                            if ($.fn.DataTable && $.fn.DataTable.isDataTable('#responsible-persons-table')) {
+                                                const respTable = $('#responsible-persons-table').DataTable();
+
+                                                // 1. Master Toggle for specific individual module columns
+                                                $(document).on('change', '.check-all-module', function() {
+                                                    var targetClass = $(this).data('target');
+                                                    respTable.$('.' + targetClass).prop('checked', this.checked);
+                                                    
+                                                    // Refresh all persons grouped checkbox state
+                                                    respTable.$('tr').each(function(){
+                                                        const $r = $(this);
+                                                        const all = $r.find('.puantaj-checkbox').prop('checked') && 
+                                                                    $r.find('.bordro-checkbox').prop('checked') && 
+                                                                    $r.find('.personel-checkbox').prop('checked');
+                                                        $r.find('.person-all-modules-checkbox').prop('checked', all);
+                                                    });
+                                                });
+
+                                                // 2. Global Master Toggle for everything
+                                                $(document).on('change', '.select-all-persons-modules', function() {
+                                                    respTable.$('input[type="checkbox"]').prop('checked', this.checked);
+                                                });
+
+                                                // 3. Individual Person Row Multi-Select toggle
+                                                $(document).on('change', '.person-all-modules-checkbox', function() {
+                                                    const $row = $(this).closest('tr');
+                                                    $row.find('.puantaj-checkbox, .bordro-checkbox, .personel-checkbox').prop('checked', this.checked);
+                                                });
+
+                                                // 4. Auto update individual row master when subcheckboxes toggle
+                                                $(document).on('change', '.puantaj-checkbox, .bordro-checkbox, .personel-checkbox', function() {
+                                                    const $row = $(this).closest('tr');
+                                                    const all = $row.find('.puantaj-checkbox').prop('checked') && 
+                                                                $row.find('.bordro-checkbox').prop('checked') && 
+                                                                $row.find('.personel-checkbox').prop('checked');
+                                                    $row.find('.person-all-modules-checkbox').prop('checked', all);
+                                                });
+                                            }
                                         });
                                     </script>
                                 </div>

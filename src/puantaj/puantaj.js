@@ -109,6 +109,15 @@ $(document).keydown(function (event) {
   }
 });
 
+//Ctrl + S tuşuna basıldığında kaydet butonunu çalıştırır
+$(document).keydown(function (event) {
+  // Ctrl + S kontrolü
+  if ((event.ctrlKey || event.metaKey) && (event.keyCode === 83)) {
+    event.preventDefault(); // Tarayıcı kaydet penceresini engelle
+    puantaj_olustur();
+  }
+});
+
 function puantaj_olustur() {
   var project_id = $("#projects option:selected").val();
   var year = $("#year").val();
@@ -146,19 +155,14 @@ function puantaj_olustur() {
         var date = year + month + headDates[dateIdx];
         var puantajId = td.attr("data-id") || "";
 
-        if (!jsonData[person_id]) jsonData[person_id] = {};
-
         if (td.attr("data-change") === "true") {
+            if (!jsonData[person_id]) jsonData[person_id] = {};
             jsonData[person_id][date] = {
                 puantajId: puantajId,
                 project_id: project_id
             };
+            // Not: Başarı durumuna göre temizleme fetch .then() içine alınabilir ancak mevcut yapı korunmuştur
             td.attr("data-change", "false");
-        } else if (puantajId !== "") {
-            jsonData[person_id][date] = {
-                puantajId: puantajId,
-                project_id: td.attr("data-project") || project_id
-            };
         }
     });
   });

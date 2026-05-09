@@ -177,11 +177,21 @@ class Persons extends Model
         }
 
         $user_id = $_SESSION["user"]->id;
-        $stmt = $this->db->prepare('SELECT id, responsible_persons FROM users WHERE id = ?');
-        $stmt->execute([$user_id]);
-        $u = $stmt->fetch(PDO::FETCH_OBJ);
+        try {
+            $stmt = $this->db->prepare('SELECT id, responsible_persons FROM users WHERE id = ?');
+            $stmt->execute([$user_id]);
+            $u = $stmt->fetch(PDO::FETCH_OBJ);
 
-        if (!$u || empty($u->responsible_persons)) {
+            if (!$u || empty($u->responsible_persons)) {
+                return $results;
+            }
+        } catch (PDOException $e) {
+            // Self-healing migration: Try to add the column automatically if it is missing
+            try {
+                $this->db->exec("ALTER TABLE users ADD COLUMN responsible_persons LONGTEXT NULL;");
+            } catch (PDOException $alterEx) {
+                // If alter fails (permissions, etc.), just gracefully return original results
+            }
             return $results;
         }
 
