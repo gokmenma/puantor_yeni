@@ -71,7 +71,12 @@ function swalAlert(title = "Uyarı!", text, icon = "warning") {
 }
 
 //Yüklenen dosya veritabanına kaydedilecek
-$(document).on("click", "#personsLoadButton", function () {
+$(document).on("click", "#personsLoadButton", function (e) {
+  e.preventDefault();
+  if ($(this).hasClass("disabled")) {
+    return false;
+  }
+
   var file = $("#persons-load-file")[0].files[0];
   if (!file) {
     swalAlert("Uyarı!", "Lütfen bir dosya seçin.", "warning");
@@ -97,7 +102,12 @@ $(document).on("click", "#personsLoadButton", function () {
     "<span class='spinner-border spinner-border-sm me-2' role='status' aria-hidden='true'></span>"
   );
   $("#personsLoadButton").prepend(spinner);
-  $("#personsLoadButton").prop("disabled", true);
+
+  // Tüm butonları ve dosya seçme inputunu devre dışı bırak
+  $("#personsLoadButton").addClass("disabled");
+  $("a[href*='person-load-from.xls']").addClass("disabled");
+  $(".clear").addClass("disabled");
+  $("#persons-load-file").prop("disabled", true);
 
   var form = $("#personsLoadForm");
   var formData = new FormData(form[0]);
@@ -122,7 +132,12 @@ $(document).on("click", "#personsLoadButton", function () {
         });
         $("#persons-load-file").val("");
         $("#result tbody").html("");
-        $("#personsLoadButton").prop("disabled", false);
+        
+        // Butonları ve inputu tekrar aktif et
+        $("#personsLoadButton").removeClass("disabled");
+        $("a[href*='person-load-from.xls']").removeClass("disabled");
+        $(".clear").removeClass("disabled");
+        $("#persons-load-file").prop("disabled", false);
         $("#personsLoadButton .spinner-border").remove();
       } else {
         swal.fire({
@@ -131,14 +146,24 @@ $(document).on("click", "#personsLoadButton", function () {
           icon: "error",
           confirmButtonText: "Tamam"
         });
-        $("#personsLoadButton").prop("disabled", false);
+        
+        // Butonları ve inputu tekrar aktif et
+        $("#personsLoadButton").removeClass("disabled");
+        $("a[href*='person-load-from.xls']").removeClass("disabled");
+        $(".clear").removeClass("disabled");
+        $("#persons-load-file").prop("disabled", false);
         $("#personsLoadButton .spinner-border").remove();
       }
     })
     .catch((error) => {
       console.error("Error:", error);
       swalAlert("Hata!", error.message, "error");
-      $("#personsLoadButton").prop("disabled", false);
+      
+      // Butonları ve inputu tekrar aktif et
+      $("#personsLoadButton").removeClass("disabled");
+      $("a[href*='person-load-from.xls']").removeClass("disabled");
+      $(".clear").removeClass("disabled");
+      $("#persons-load-file").prop("disabled", false);
       $("#personsLoadButton .spinner-border").remove();
     });
 });

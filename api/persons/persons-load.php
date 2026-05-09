@@ -1,11 +1,23 @@
 <?php
-define('ROOT', $_SERVER["DOCUMENT_ROOT"]);
+if (!defined('ROOT')) {
+    define('ROOT', dirname(__DIR__, 2));
+}
 
 require_once ROOT . '/Model/Persons.php';
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/App/Helper/date.php';
 require_once ROOT . '/App/Helper/security.php';
-require ROOT . '/vendor/autoload.php';
+
+$autoload_path = ROOT . '/vendor/autoload.php';
+if (!file_exists($autoload_path)) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        "status" => "error",
+        "message" => "Sunucuda gerekli kütüphaneler (vendor/autoload.php) bulunamadı. Lütfen sunucuda 'composer install' komutunu çalıştırın veya yereldeki 'vendor' klasörünü sunucuya yükleyin."
+    ]);
+    exit;
+}
+require $autoload_path;
 
 
 $firm_id = $_SESSION['firm_id'];
@@ -99,7 +111,6 @@ if ($_POST["action"] == "persons-load-from-xls") {
                     "address" => Security::escape($row["I"]),
                     "description" => Security::escape($row["J"]),
                     "ekip" => isset($row["L"]) ? Security::escape(trim($row["L"])) : null,
-                    "team_id" => isset($row["L"]) ? Security::escape(trim($row["L"])) : null,
                     "job" => isset($row["M"]) ? Security::escape(trim($row["M"])) : null,
                     "firm_id" => $firm_id,
                 ];

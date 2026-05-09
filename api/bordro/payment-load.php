@@ -7,7 +7,16 @@ require_once '../../Model/Auths.php';
 
 $firm_id = $_SESSION['firm_id'];
 
-require ROOT . '/vendor/autoload.php';
+$autoload_path = ROOT . '/vendor/autoload.php';
+if (!file_exists($autoload_path)) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        "status" => "error",
+        "message" => "Sunucuda gerekli kütüphaneler (vendor/autoload.php) bulunamadı. Lütfen sunucuda 'composer install' komutunu çalıştırın veya yereldeki 'vendor' klasörünü sunucuya yükleyin."
+    ]);
+    exit;
+}
+require $autoload_path;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;

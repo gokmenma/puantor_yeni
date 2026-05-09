@@ -31,26 +31,24 @@ $Auths->checkAuthorize('upload_payment_permission');
     <form action="" method="post" id="personsLoadForm">
 
 
-        <div class="row mt-3">
-            <div class="col-md-9">
-                <label for="file" class="form-label">Dosya:</label>
-                <input type="file" name="persons-load-file" id="persons-load-file" class="form-control">
+        <div class="row g-3 align-items-end mt-3">
+            <div class="col-md-6 col-lg-7">
+                <label for="persons-load-file" class="form-label fw-semibold">Dosya Seçin:</label>
+                <input type="file" name="persons-load-file" id="persons-load-file" class="form-control shadow-sm">
             </div>
 
-            <div class="col-md-3 me-auto mt-auto d-flex">
-
-
-                <label for="" class="form-label"></label>
-                <a href="#" class="btn btn-primary me-2" id="personsLoadButton" data-tooltip="Personlleri yükleyin">
-                    <i class="ti ti-file-excel icon"></i> Yükle
-                </a>
-                <label for="İndir"></label>
-                <a href="pages/persons/xls/person-load-from.xls" class="btn me-2" data-tooltip="Yüklenecek Şablonu indirin">
-                    <i class="ti ti-file-excel icon"></i> Örnek Dosya İndir
-                </a>
-                <a href="#" class="btn btn-ghost-danger me-2 clear" data-tooltip="Formu Temizleyin">
-                    <i class="ti ti-trash icon"></i> Temizle
-                </a>
+            <div class="col-md-6 col-lg-5">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a href="#" class="btn btn-primary d-inline-flex align-items-center" id="personsLoadButton" data-tooltip="Personelleri yükleyin">
+                        <i class="ti ti-upload icon me-1"></i> Yükle
+                    </a>
+                    <a href="pages/persons/xls/person-load-from.xls" class="btn btn-outline-secondary d-inline-flex align-items-center" data-tooltip="Yüklenecek Şablonu indirin">
+                        <i class="ti ti-download icon me-1"></i> Örnek Dosya İndir
+                    </a>
+                    <a href="#" class="btn btn-ghost-danger d-inline-flex align-items-center clear" data-tooltip="Formu Temizleyin">
+                        <i class="ti ti-trash icon me-1"></i> Temizle
+                    </a>
+                </div>
             </div>
         </div>
         <div class="card mt-3">

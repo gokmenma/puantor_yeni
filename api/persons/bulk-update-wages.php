@@ -2,7 +2,16 @@
 
 session_start();
 define('ROOT', dirname(__DIR__, 2));
-require ROOT . '/vendor/autoload.php';
+$autoload_path = ROOT . '/vendor/autoload.php';
+if (!file_exists($autoload_path)) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        "status" => "error",
+        "message" => "Sunucuda gerekli kütüphaneler (vendor/autoload.php) bulunamadı. Lütfen sunucuda 'composer install' komutunu çalıştırın veya yereldeki 'vendor' klasörünü sunucuya yükleyin."
+    ]);
+    exit;
+}
+require $autoload_path;
 require_once ROOT . '/Model/Persons.php';
 require_once ROOT . '/App/Helper/helper.php';
 
