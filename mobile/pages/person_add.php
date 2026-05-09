@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_person'])) {
         </div>
         <div class="col-6">
           <div class="form-floating">
-            <input type="date" name="job_start_date" class="form-control" id="floatingStartDate" value="<?php echo date('Y-m-d'); ?>" placeholder="Giriş Tarihi">
+            <input type="text" name="job_start_date" class="form-control flatpickr" id="floatingStartDate" value="<?php echo date('d.m.Y'); ?>" placeholder="Giriş Tarihi" readonly>
             <label for="floatingStartDate">Giriş Tarihi</label>
           </div>
         </div>

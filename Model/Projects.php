@@ -141,8 +141,9 @@ class Projects extends Model
             $params[] = $job_group;
         }
 
-        if ($team_id > 0) {
-            $sql .= ' AND team_id = ?';
+        if (!empty($team_id)) {
+            $sql .= ' AND (p.team_id = ? OR p.ekip = ?)';
+            $params[] = $team_id;
             $params[] = $team_id;
         }
 

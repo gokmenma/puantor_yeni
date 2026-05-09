@@ -188,6 +188,11 @@ switch ($route) {
         $page_file = "modules/supports/ticket-view.php";
         $active_page = "more";
         break;
+    case 'settings':
+        $title = "Ayarlar";
+        $page_file = "modules/settings/index.php";
+        $active_page = "more";
+        break;
     case 'more':
         $title = "Daha Fazla";
         $page_file = "modules/more/index.php";

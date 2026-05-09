@@ -70,8 +70,9 @@ if ($_POST["action"] == "persons-load-from-xls") {
                 }
 
                 //daily_wages sayısal olmalı
-                $wage = str_replace(',', '.', $row["E"]); // Virgülü noktaya çevir
-                if (!is_numeric($wage)) {
+                require_once ROOT . '/App/Helper/helper.php';
+                $wage = \App\Helper\Helper::standardizeWage($row["E"]);
+                if ($wage == 0 && trim((string)$row["E"]) !== '0' && trim((string)$row["E"]) !== '') {
                     $row_errors[] = "Günlük/Aylık Ücret sayısal olmalıdır. (Girilen: ".$row["E"].")";
                 }
 
@@ -97,6 +98,9 @@ if ($_POST["action"] == "persons-load-from-xls") {
                     "wage_type" => Security::escape($row["H"]),
                     "address" => Security::escape($row["I"]),
                     "description" => Security::escape($row["J"]),
+                    "ekip" => isset($row["L"]) ? Security::escape(trim($row["L"])) : null,
+                    "team_id" => isset($row["L"]) ? Security::escape(trim($row["L"])) : null,
+                    "job" => isset($row["M"]) ? Security::escape(trim($row["M"])) : null,
                     "firm_id" => $firm_id,
                 ];
 

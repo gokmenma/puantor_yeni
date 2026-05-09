@@ -1,4 +1,5 @@
 <?php
+ob_start();
 !defined("ROOT") ? define("ROOT", dirname(dirname(__DIR__))) : null;
 require_once "../../Database/require.php";
 require_once "../../Model/Persons.php";
@@ -9,12 +10,11 @@ require_once "../../Model/Auths.php";
 require_once "../../App/Helper/helper.php";
 require_once "../../Model/Projects.php";
 
-
 use App\Helper\Security;
 use App\Helper\Helper;
 
-file_put_contents(ROOT . "/debug_api.log", date("Y-m-d H:i:s") . " - Action: " . ($_POST["action"] ?? "none") . " - User: " . ($_SESSION["user"]->id ?? "none") . "\n", FILE_APPEND);
-
+// Silently log or ignore if log fails
+@file_put_contents(ROOT . "/debug_api.log", date("Y-m-d H:i:s") . " - Action: " . ($_POST["action"] ?? "none") . " - User: " . ($_SESSION["user"]->id ?? "none") . "\n", FILE_APPEND);
 
 $Puantaj = new Puantaj();
 $Bordro = new Bordro();
@@ -46,14 +46,7 @@ if ($_POST["action"] == "savePerson") {
         $job_group = $db->lastInsertId();
     }
 
-    $team_id = $_POST["team_id"];
-    // Eğer ekip sayısal değilse (yeni bir tag girilmişse) yeni ekip oluştur
-    if (!empty($team_id) && !is_numeric($team_id)) {
-        $db = $Persons->getDb();
-        $stmt = $db->prepare("INSERT INTO teams (firm_id, team_name) VALUES (?, ?)");
-        $stmt->execute([$_SESSION["firm_id"], $team_id]);
-        $team_id = $db->lastInsertId();
-    }
+    $team_val = !empty($_POST["team_id"]) ? $_POST["team_id"] : null;
 
     $data = [
         "id" => $id,
@@ -64,7 +57,8 @@ if ($_POST["action"] == "savePerson") {
         "address" => Security::escape($_POST["address"]),
         "job" => $_POST["job"],
         "job_group" => $job_group,
-        "team_id" => $team_id,
+        "team_id" => $team_val,
+        "ekip" => $team_val,
         "firm_id" => $_SESSION["firm_id"],
         "wage_type" => $_POST["wage_type"],
         "iban_number" => Security::encrypt($_POST["iban_number"]),
@@ -126,31 +120,109 @@ if ($_POST["action"] == "savePerson") {
 }
 
 if ($_POST["action"] == "deletePerson") {
-
-    //personel silme yetkisi var mı kontrol et
-    $Auths->hasPermissionReturn('personnel_delete');
-
-    $id = ($_POST["id"]);
-    $person = $Persons->find(Security::decrypt($id));
-
-    //İşlem yapan kullanıcı ile personelin firm id'si aynı olmalı
-    $Auths->checkFirmReturn();
+    ob_clean();
+    $log_file = __DIR__ . "/delete_debug.log";
+    @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Delete started - ID: " . ($_POST["id"] ?? "MISSING") . "\n", FILE_APPEND);
+    
     try {
+        //personel silme yetkisi var mı kontrol et
+        $Auths->hasPermissionReturn('personnel_delete');
+        @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Permission OK\n", FILE_APPEND);
 
-        // burada personelin işlemlerinin de silinmesi için kontrol eklenecek
+        $id = $_POST["id"];
+        $decrypted_id = Security::decrypt($id);
+        @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Decrypted ID: " . ($decrypted_id ?: "FAILED") . "\n", FILE_APPEND);
+        
+        if (!$decrypted_id) {
+             throw new Exception("Geçersiz personel ID.");
+        }
+
+        $person = $Persons->find($decrypted_id);
+        @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Person found: " . ($person ? "YES" : "NO") . "\n", FILE_APPEND);
+        
+        if (!$person) {
+            throw new Exception("Personel bulunamadı.");
+        }
+
+        //İşlem yapan kullanıcı ile personelin firm id'si aynı olmalı
+        $session_firm_id = $_SESSION['firm_id'] ?? ($_SESSION['user']->firm_id ?? 0);
+        
+        if ($person->firm_id != $session_firm_id) {
+             @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Firm mismatch: Person Firm: " . $person->firm_id . " vs Session Firm: " . $session_firm_id . " - UserID: " . ($_SESSION['user']->id ?? 'unknown') . "\n", FILE_APPEND);
+            throw new Exception("Bu personeli silme yetkiniz yok. (Firma Uyuşmazlığı)");
+        }
+
         $Persons->softDelete($id);
+        @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Soft delete OK\n", FILE_APPEND);
+        
         $status = "success";
         $message = "Personel başarıyla silindi.";
     } catch (Exception $e) {
         $status = "error";
         $message = $e->getMessage();
-        file_put_contents(ROOT . "/debug_api.log", date("Y-m-d H:i:s") . " - Error: " . $message . "\n", FILE_APPEND);
+        @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Error: " . $message . "\n", FILE_APPEND);
     }
-    $res = [
+    
+    echo json_encode([
         "status" => $status,
         "message" => $message
-    ];
-    echo json_encode($res);
+    ]);
+    ob_end_flush();
+    exit;
+}
+
+if ($_POST["action"] == "bulkDeletePersons") {
+    ob_clean();
+    $log_file = __DIR__ . "/delete_debug.log";
+    @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Bulk delete started\n", FILE_APPEND);
+    
+    try {
+        //personel silme yetkisi var mı kontrol et
+        $Auths->hasPermissionReturn('personnel_delete');
+        @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Permission OK\n", FILE_APPEND);
+
+        $ids = $_POST["ids"] ?? [];
+        if (empty($ids) || !is_array($ids)) {
+            throw new Exception("Lütfen silmek istediğiniz personelleri seçin.");
+        }
+
+        $session_firm_id = $_SESSION['firm_id'] ?? ($_SESSION['user']->firm_id ?? 0);
+        $deleted_count = 0;
+
+        foreach ($ids as $id) {
+            $decrypted_id = Security::decrypt($id);
+            if (!$decrypted_id) {
+                continue;
+            }
+
+            $person = $Persons->find($decrypted_id);
+            if (!$person) {
+                continue;
+            }
+
+            //İşlem yapan kullanıcı ile personelin firm id'si aynı olmalı
+            if ($person->firm_id != $session_firm_id) {
+                continue;
+            }
+
+            $Persons->softDelete($id);
+            $deleted_count++;
+        }
+
+        $status = "success";
+        $message = "Seçilen {$deleted_count} personel başarıyla silindi.";
+    } catch (Exception $e) {
+        $status = "error";
+        $message = $e->getMessage();
+        @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Bulk Error: " . $message . "\n", FILE_APPEND);
+    }
+    
+    echo json_encode([
+        "status" => $status,
+        "message" => $message
+    ]);
+    ob_end_flush();
+    exit;
 }
 
 

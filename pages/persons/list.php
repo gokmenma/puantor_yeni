@@ -31,6 +31,9 @@ $company = new CompanyHelper();
                 <div class="card-header">
                     <h3 class="card-title">Personel Listesi</h3>
                     <div class="d-flex col-auto ms-auto">
+                        <button type="button" id="btnDeleteSelected" class="btn btn-danger me-2 d-none">
+                            <i class="ti ti-trash icon me-2"></i> Seçilenleri Sil
+                        </button>
                         <a href="/pages/persons/to-pdf.php" target="_blank" class="btn btn-icon me-2" data-page=""
                             data-tooltip="Pdf'e Aktar">
                             <i class="ti ti-file-type-pdf icon"></i>
@@ -71,6 +74,7 @@ $company = new CompanyHelper();
                     <table class="table card-table table-hover text-nowrap datatable" id="persons">
                         <thead>
                             <tr>
+                                <th style="width: 2%" class="no-export" data-orderable="false"><input type="checkbox" class="form-check-input select-all-persons"></th>
                                 <th style="width:5%">Sıra</th>
                                 <th>Adı Soyadı</th>
                                 <th>Firma Adı</th>
@@ -99,6 +103,7 @@ $company = new CompanyHelper();
                                 ?>
                                 <?php if ($person->firm_id == $_SESSION["firm_id"]) { ?>
                                     <tr>
+                                        <td><input type="checkbox" class="form-check-input person-checkbox" value="<?php echo $id; ?>"></td>
                                         <td class="text-center"><?php echo $i; ?></td>
                                         <td> <a href="#" data-tooltip="Detay/Güncelle"
                                                 data-page="persons/manage&id=<?php echo $id ?>"
@@ -121,7 +126,7 @@ $company = new CompanyHelper();
                                                     <a class="dropdown-item route-link"
                                                         data-page="persons/manage&id=<?php echo $id ?>" href="#">
                                                         <i class="ti ti-edit icon me-3"></i> Detay/Güncelle
-                                                    </a>
+                                                     </a>
 
                                                     <a class="dropdown-item delete-person" data-id="<?php echo $id ?>"
                                                         href="#">

@@ -86,6 +86,44 @@ class Helper
         return str_replace(['.', ','], ['', '.'], $value);
     }
 
+    // Gelen ücret bilgisini (Örn: 32.000 TL, 32.000,50, 32,000.50, 32 000) temizleyip sayısal değere dönüştürür
+    public static function standardizeWage($value)
+    {
+        if (empty($value)) {
+            return 0.00;
+        }
+        
+        // Remove spaces, "TL", currency symbols, and text
+        $value = str_ireplace(['tl', 'try', 'usd', 'eur', '$', '€', ' '], '', (string)$value);
+        $value = trim($value);
+
+        // If both dot and comma exist
+        if (strpos($value, '.') !== false && strpos($value, ',') !== false) {
+            if (strrpos($value, '.') < strrpos($value, ',')) {
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        } elseif (strpos($value, ',') !== false) {
+            // e.g. 32000,50 or 32,000
+            if (substr_count($value, ',') == 1 && strlen($value) - strrpos($value, ',') <= 3) {
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        } elseif (strpos($value, '.') !== false) {
+            // e.g. 32.000 or 32.50
+            if (substr_count($value, '.') == 1 && strlen($value) - strrpos($value, '.') == 4) {
+                $value = str_replace('.', '', $value);
+            } elseif (substr_count($value, '.') > 1) {
+                $value = str_replace('.', '', $value);
+            }
+        }
+        
+        return is_numeric($value) ? floatval($value) : 0.00;
+    }
+
     // Veritabanından gelen sayıdaki "." yı virgüle çevirir
     public static function moneyToNumber($value)
     {

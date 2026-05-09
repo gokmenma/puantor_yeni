@@ -122,8 +122,7 @@ class Model extends Db
 
     public function delete($id)
     {
-
-        $id = Security::decrypt($id);
+        $id = Security::safeDecrypt($id);
         $sql = $this->db->prepare("DELETE FROM $this->table WHERE $this->primaryKey = ?");
         $sql->execute(array($id));
 
@@ -136,7 +135,7 @@ class Model extends Db
     //Soft delete
     public function softDelete($id)
     {
-        $id = Security::decrypt($id);
+        $id = Security::safeDecrypt($id);
         $sql = $this->db->prepare("UPDATE $this->table SET deleted_at = NOW() WHERE $this->primaryKey = ?");
         $sql->execute(array($id));
 

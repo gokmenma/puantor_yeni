@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="col-6">
           <div class="form-floating">
-            <input type="date" name="job_start_date" class="form-control" id="floatingStartDate" placeholder="Giriş Tarihi" value="<?php echo htmlspecialchars($_POST['job_start_date'] ?? ''); ?>" required>
+            <input type="text" name="job_start_date" class="form-control flatpickr" id="floatingStartDate" placeholder="Giriş Tarihi" value="<?php echo htmlspecialchars($_POST['job_start_date'] ?? date('d.m.Y')); ?>" required readonly>
             <label for="floatingStartDate">Giriş Tarihi</label>
           </div>
         </div>

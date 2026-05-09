@@ -320,28 +320,40 @@ $(document).ready(function() {
             confirmButtonColor: '#d63f3f',
             confirmButtonText: 'Evet, Sil',
             cancelButtonText: 'Vazgeç',
-            reverseButtons: true
+            reverseButtons: true,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: 'api/persons/person.php',
+                    type: 'POST',
+                    data: {
+                        action: 'deletePerson',
+                        id: id
+                    },
+                    dataType: 'json'
+                }).then(res => {
+                    if (res.status === 'success') {
+                        return res;
+                    } else {
+                        throw new Error(res.message || 'Bir hata oluştu');
+                    }
+                }).catch(error => {
+                    Swal.showValidationMessage(`Hata: ${error.message || error.statusText}`);
+                });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
         }).then((result) => {
             if (result.isConfirmed) {
-                $.post('api/persons/person.php', {
-                    action: 'deletePerson',
-                    id: id
-                }, function(res) {
-                    if (res.status === 'success') {
-                        btn.closest('.person-item-wrapper').fadeOut(300, function() {
-                            $(this).remove();
-                        });
-                        Swal.fire({
-                            title: 'Silindi!',
-                            text: res.message,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        Swal.fire('Hata!', res.message, 'error');
-                    }
-                }, 'json');
+                btn.closest('.person-item-wrapper').fadeOut(300, function() {
+                    $(this).remove();
+                });
+                Swal.fire({
+                    title: 'Silindi!',
+                    text: result.value.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             } else {
                 // Reset swipe translation
                 btn.closest('.person-item-wrapper').find('.person-item-content').css('transform', 'translateX(0)');

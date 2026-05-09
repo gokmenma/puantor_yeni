@@ -20,6 +20,8 @@ $Auths->checkAuthorize('upload_payment_permission');
                     <ul class="mb-0">
                         <li><strong>TC Kimlik Kontrolü:</strong> Sistem, yüklediğiniz dosyadaki TC Kimlik numaralarını kontrol eder. Eğer personel sistemde kayıtlıysa bilgileri <strong>güncellenir</strong>, kayıtlı değilse <strong>yeni kayıt</strong> olarak eklenir.</li>
                         <li><strong>Projeler Sütunu:</strong> Şablona eklenen <strong>"Çalıştığı Projeler"</strong> (K Sütunu) alanına personelin çalıştığı projeleri virgül ile ayırarak yazabilirsiniz (Örn: Çamlıca Kule, İspir Site). Sistem bu projeleri otomatik olarak bulur veya yoksa yeni oluşturur.</li>
+                        <li><strong>Ekip Sütunu:</strong> Şablona eklenen <strong>"Ekip"</strong> (L Sütunu) alanına personelin ekibini yazabilirsiniz.</li>
+                        <li><strong>Meslek Sütunu:</strong> Şablona eklenen <strong>"Meslek"</strong> (M Sütunu) alanına personelin mesleğini/görevini yazabilirsiniz.</li>
                     </ul>
                 </div>
             </div>
@@ -74,6 +76,8 @@ $Auths->checkAuthorize('upload_payment_permission');
                                     <th>Adresi</th>
                                     <th>Açıklama</th>
                                     <th>Çalıştığı Projeler</th>
+                                    <th>Ekip</th>
+                                    <th>Meslek</th>
                                 </tr>
                             </thead>
                             <tbody>

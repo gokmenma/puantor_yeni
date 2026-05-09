@@ -108,12 +108,12 @@ $userId = $user->id ?? 0;
   <!-- Destek ve Ayarlar -->
   <h4 class="mb-2 ms-2 text-muted text-xs text-uppercase tracking-wide text-semibold">Destek & Sistem</h4>
   <div class="list-group list-group-mobile mb-4">
-    <a href="/index.php?p=settings/manage" class="list-group-item">
+    <a href="?route=settings" class="list-group-item">
       <div class="d-flex align-items-center gap-3">
         <div class="avatar avatar-sm rounded bg-secondary-lt">
           <i class="ti ti-settings text-secondary"></i>
         </div>
-        <span class="text-semibold text-sm">Firma Ayarları</span>
+        <span class="text-semibold text-sm">Ayarlar</span>
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>

@@ -85,7 +85,7 @@ $(document).on("click", ".delete-person", function () {
   //Tablo adı butonun içinde bulunduğu tablo
   let action = "deletePerson";
   let confirmMessage = "Personel silinecektir!";
-  let url = "/api/persons/person.php";
+  let url = "api/persons/person.php";
 
   deleteRecord(this, action, confirmMessage, url);
   // deleteRecord(this, action, confirmMessage, url);
@@ -119,7 +119,7 @@ $(document).on("click", ".delete-payment", async function () {
   //Tablo adı butonun içinde bulunduğu tablo
   let action = "deletePayment";
   let confirmMessage = type_name + " silinecektir!";
-  let url = "/api/persons/person.php?person_id=" + person_id  + "&type=" + type;
+  let url = "api/persons/person.php?person_id=" + person_id  + "&type=" + type;
 
   const result = await deleteRecordByReturn(this, action, confirmMessage, url);
 
@@ -218,4 +218,105 @@ $(document).on("click", "#btnSaveJobGroup", function () {
       console.error("Error:", error);
       Swal.fire("Hata!", "Bir hata oluştu.", "error");
     });
+});
+
+// Checkbox selection logic
+$(document).on("change", ".select-all-persons", function () {
+  var isChecked = $(this).prop("checked");
+  $(".person-checkbox").prop("checked", isChecked);
+  toggleBulkDeleteButton();
+});
+
+$(document).on("change", ".person-checkbox", function () {
+  var allChecked = $(".person-checkbox").length === $(".person-checkbox:checked").length;
+  $(".select-all-persons").prop("checked", allChecked);
+  toggleBulkDeleteButton();
+});
+
+function toggleBulkDeleteButton() {
+  var selectedCount = $(".person-checkbox:checked").length;
+  if (selectedCount > 0) {
+    $("#btnDeleteSelected").removeClass("d-none");
+    $("#btnDeleteSelected").html('<i class="ti ti-trash icon me-2"></i> Seçilenleri Sil (' + selectedCount + ')');
+  } else {
+    $("#btnDeleteSelected").addClass("d-none");
+  }
+}
+
+// Bulk delete action
+$(document).on("click", "#btnDeleteSelected", function () {
+  var selectedIds = [];
+  $(".person-checkbox:checked").each(function () {
+    selectedIds.push($(this).val());
+  });
+
+  if (selectedIds.length === 0) {
+    Swal.fire({
+      title: "Hata!",
+      text: "Lütfen silmek istediğiniz personelleri seçin.",
+      icon: "error"
+    });
+    return;
+  }
+
+  Swal.fire({
+    title: "Emin misiniz?",
+    html: "Seçilen <strong>" + selectedIds.length + "</strong> personel silinecektir!<br><span class=\"text-danger\">Bu işlem geri alınamaz!</span>",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Evet, Sil!",
+    cancelButtonText: "İptal"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Create FormData
+      var formData = new FormData();
+      formData.append("action", "bulkDeletePersons");
+      selectedIds.forEach(function (id) {
+        formData.append("ids[]", id);
+      });
+
+      // Show loading
+      Swal.fire({
+        title: "Siliniyor...",
+        text: "Lütfen bekleyin.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      fetch("api/persons/person.php", {
+        method: "POST",
+        body: formData
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            Swal.fire({
+              title: "Başarılı!",
+              text: data.message,
+              icon: "success"
+            }).then(() => {
+              location.reload();
+            });
+          } else {
+            Swal.fire({
+              title: "Hata!",
+              text: data.message,
+              icon: "error"
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          Swal.fire({
+            title: "Hata!",
+            text: "İşlem sırasında bir hata oluştu.",
+            icon: "error"
+          });
+        });
+    }
+  });
 });

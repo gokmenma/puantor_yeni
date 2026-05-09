@@ -73,7 +73,7 @@ if (isset($person->wage_type) && $person->wage_type == 1) {
                 </div>
                 <div class="col-md-2">
                     <input type="text" class="form-control flatpickr" name="job_start_date"
-                        value="<?php echo $person->job_start_date ?? ''; ?>" required>
+                        value="<?php echo $person->job_start_date ?? date('d.m.Y'); ?>" required>
                 </div>
                 <div class="col-md-2">
                     <input type="text" class="form-control flatpickr" name="job_end_date"
@@ -161,7 +161,7 @@ if (isset($person->wage_type) && $person->wage_type == 1) {
                     <label for="">Ekibi</label>
                 </div>
                 <div class="col-md-4">
-                    <?php echo $teamsHelper->teamsSelect("team_id", $person->team_id ?? ''); ?>
+                    <?php echo $teamsHelper->teamsSelect("team_id", $person->ekip ?? ($person->team_id ?? '')); ?>
                 </div>
             </div>
             <div class="row mt-2">
