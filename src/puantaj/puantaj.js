@@ -1,6 +1,4 @@
-const listgun = $(".gun"); //Puantaj tablosundaki seçim yapılacak günler
 const listItems = $(".modal .nav-item"); // Açılan Modaldeki puantaj türü seçenekleri
-const project_id = $("#projects option:selected").val(); //Proje id'si
 
 //********************************************** */
 listItems.click(function () {
@@ -29,7 +27,8 @@ listItems.click(function () {
 });
 
 //********************************************** */
-listgun.on("click", function (e) {
+// Sayfalama desteği için event delegation kullanıyoruz
+$(document).on("click", ".gun", function (e) {
   var background = $(this).css("background-color");
   //Başka projeden gelen veri varsa değişiklik yapma
   if (background === "rgb(187, 187, 187)") {
@@ -47,12 +46,17 @@ listgun.on("click", function (e) {
 //Tablonun 1. satırdaki gunadi classına sahip td elemanına basınca tüm kolona click classını ekler
 $(".head-date, .gunadi").on("click", function () {
   var index = $(this).index();
-  $("table tbody tr").each(function () {
+  
+  // DataTable nesnesini alıp sadece FILTRELENMIS satırları geziyoruz
+  var table = $("#puantajTable").DataTable();
+  var rows = table.rows({ search: 'applied' }).nodes(); 
+  
+  $(rows).each(function () {
     //eğer td --- farklı ise
     var td = $(this).find("td").eq(index);
 
     //td'nin değeri --- ise seçme
-    if (td.text() != "---") {
+    if (td.text().trim() != "---") {
       td.toggleClass("clicked");
     }
   });
@@ -77,27 +81,27 @@ $(document).keydown(function (event) {
 
 //mouse basılı tutulduğu zaman
 let isMouseDown = false;
-$(".gun:not(.selected)").mouseover(function (event) {
+// Dinamik yüklenen satırlar için event delegation
+$(document).on("mouseover", ".gun:not(.selected)", function (event) {
   if (isMouseDown) {
     $(this).addClass("clicked");
   }
 });
 
-$(".gun:not(.selected)")
-  .mousedown(function (event) {
-    if (event.which === 1) {
-      // Only execute the code if left mouse button is clicked
-      isMouseDown = true;
-      $(this).toggleClass("clicked");
-    }
-  })
-  .mouseup(function () {
-    isMouseDown = false;
+$(document).on("mousedown", ".gun:not(.selected)", function (event) {
+  if (event.which === 1) {
+    isMouseDown = true;
+    $(this).toggleClass("clicked");
+  }
+});
 
-    if ($(".gun.clicked").length > 0 && event.ctrlKey) {
-      $("#modal-default").modal("show");
-    }
-  });
+$(document).on("mouseup", ".gun:not(.selected)", function (event) {
+  isMouseDown = false;
+
+  if ($(".gun.clicked").length > 0 && event.ctrlKey) {
+    $("#modal-default").modal("show");
+  }
+});
 
 //Ecs tuşuna basıldığında seçili hücrelerdeki seçimleri iptal eder
 $(document).keydown(function (event) {
@@ -138,7 +142,11 @@ function puantaj_olustur() {
   });
 
   // Tablodaki her satırı döngü ile işle
-  $("#puantajTable tbody tr").each(function (rowIndex) {
+  // Sayfalama desteği: Tüm satırları DataTable cache'inden çekiyoruz
+  var table = $("#puantajTable").DataTable();
+  var rows = table.rows().nodes();
+
+  $(rows).each(function (rowIndex) {
     var row = $(this);
     var person_id = row.find("td[data-id]").first().attr("data-id");
     
@@ -180,8 +188,10 @@ function puantaj_olustur() {
       saveBtn.prop('disabled', false).html(originalBtnHtml);
 
       if (data.status == "success") {
-        // Kayıt başarılıysa tüm değişiklik bayraklarını sıfırla
-        $("td[data-change='true']").attr("data-change", "false");
+        // Tüm sayfalardaki (görünür veya gizli) bayrakları sıfırla
+        var table = $("#puantajTable").DataTable();
+        var rows = table.rows().nodes();
+        $(rows).find("td[data-change='true']").attr("data-change", "false");
       }
 
       Swal.fire({
@@ -196,21 +206,70 @@ function puantaj_olustur() {
     });
 }
 
+var lastValues = {};
+
+function storeLastValues() {
+  $("#projects, #year, #months, #job_groups, #team_id").each(function() {
+    lastValues[this.id] = $(this).val();
+  });
+}
+
 $(document).ready(function () {
+  // Mevcut değerleri kaydet
+  storeLastValues();
+
   $("#projects, #year, #months, #job_groups, #team_id").on("change select2:select", function () {
     Route();
   });
 });
 
 function Route() {
-  var form = $("#puantajInfoForm");
-  form.submit();
+  // DataTable cache'indeki tüm satırlardan değişmiş veri var mı diye bak
+  var table = $("#puantajTable").DataTable();
+  var rows = table.rows().nodes();
+  var hasUnsavedChanges = $(rows).find("td[data-change='true']").length > 0;
+
+  if (hasUnsavedChanges) {
+    Swal.fire({
+      title: 'Kaydedilmemiş Değişiklikler!',
+      text: "Yaptığınız değişiklikler kaydedilmedi. Farklı bir sayfaya/projeye geçerseniz bu verileriniz kaybolur. Devam etmek istediğinize emin misiniz?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, Çık',
+      cancelButtonText: 'Hayır, Sayfada Kal'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Kullanıcı devam etmek istedi. Bayrakları temizleyerek native uyarının çıkmasını engelle.
+        $(rows).find("td[data-change='true']").attr("data-change", "false");
+        $("#puantajInfoForm").submit();
+      } else {
+        // Kullanıcı vazgeçti. Dropdown'u eski haline çekmeliyiz ki kafa karışıklığı olmasın
+        $("#projects, #year, #months, #job_groups, #team_id").off("change select2:select");
+        
+        $("#projects").val(lastValues.projects).trigger("change");
+        $("#year").val(lastValues.year).trigger("change");
+        $("#months").val(lastValues.months).trigger("change");
+        $("#job_groups").val(lastValues.job_groups).trigger("change");
+        $("#team_id").val(lastValues.team_id).trigger("change");
+        
+        // Dinleyicileri geri yükle
+        $("#projects, #year, #months, #job_groups, #team_id").on("change select2:select", function () {
+          Route();
+        });
+      }
+    });
+  } else {
+    $("#puantajInfoForm").submit();
+  }
 }
 
-// Sayfadan ayrılırken kaydedilmemiş değişiklik kontrolü
+// Sekmeyi kapatma vb. durumlarda native uyarı hala geçerli koruma sağlar
 $(window).on('beforeunload', function() {
-    if ($('td[data-change="true"]').length > 0) {
-        // Modern tarayıcılar bu mesajı göstermez ancak native uyarı penceresini tetikler.
-        return "Sayfada kaydedilmemiş değişiklikleriniz var. Ayrılmak istediğinizden emin misiniz?";
+    var table = $("#puantajTable").DataTable();
+    var rows = table.rows().nodes();
+    if ($(rows).find("td[data-change='true']").length > 0) {
+        return "Sayfada kaydedilmemiş değişiklikleriniz var.";
     }
 });

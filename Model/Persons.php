@@ -115,8 +115,7 @@ class Persons extends Model
         }
 
         if (!empty($team_id)) {
-            $sql .= ' AND (p.team_id = ? OR p.ekip = ?)';
-            $params[] = $team_id;
+            $sql .= ' AND p.ekip = ?';
             $params[] = $team_id;
         }
 

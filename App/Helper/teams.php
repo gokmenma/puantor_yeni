@@ -10,23 +10,12 @@ class Teams extends Db
         try {
             $firm_id = $_SESSION['firm_id'];
             
-            // If $id is numeric, resolve it to the team name from teams table
-            if (!empty($id) && is_numeric($id)) {
-                $q = $this->db->prepare("SELECT team_name FROM teams WHERE id = ?");
-                $q->execute([$id]);
-                $r = $q->fetch(PDO::FETCH_OBJ);
-                if ($r) {
-                    $id = $r->team_name;
-                }
-            }
-            
-            // Fetch distinct teams from both persons table (ekip column) and teams table for compatibility
+            // Sadece persons tablosundaki ekip kolonunu kullan
             $query = $this->db->prepare("
                 SELECT DISTINCT ekip AS team_name FROM persons WHERE firm_id = ? AND deleted_at IS NULL AND ekip IS NOT NULL AND ekip != ''
-                UNION
-                SELECT team_name FROM teams WHERE firm_id = ? AND team_name IS NOT NULL AND team_name != ''
+                ORDER BY ekip ASC
             ");
-            $query->execute([$firm_id, $firm_id]);
+            $query->execute([$firm_id]);
             $results = $query->fetchAll(PDO::FETCH_OBJ);
 
             $select = '<select name="' . $name . '" class="form-select select2" id="' . $name . '" style="width:100%">';
@@ -38,29 +27,14 @@ class Teams extends Db
             $select .= '</select>';
             return $select;
         } catch (PDOException $e) {
-            return "Veritabanı hatası: " . $e->getMessage();
+            // Eğer hata olursa en azından dropdown boş gelmesin ve sistem çalışmaya devam etsin
+            return '<select name="' . $name . '" class="form-select" id="' . $name . '"><option value="">Ekip Seçiniz</option></select>';
         }
     }
 
     public function getTeamName($id)
     {
-        if (empty($id)) {
-            return "";
-        }
-        
-        // If it's a numeric ID, try to get from teams table, otherwise return the string itself
-        if (is_numeric($id)) {
-            try {
-                $query = $this->db->prepare("SELECT team_name FROM teams WHERE id = :id");
-                $query->execute(array("id" => $id));
-                $result = $query->fetch(PDO::FETCH_OBJ);
-                if ($result) {
-                    return $result->team_name;
-                }
-            } catch (PDOException $e) {
-                // Silently ignore DB errors
-            }
-        }
+        // Artık string (ekip ismi) tutulduğu için kendisini dönderiyoruz
         return $id;
     }
 }
