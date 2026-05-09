@@ -43,19 +43,20 @@ $activeWorksheet->fromArray($header, NULL, 'A1');
 //yarının tarihi 20241111 formatında yaz
 $start_date = Date::getTomorrowDate();
 
-foreach ($persons as $key => $person) {
+$row = 2;
+foreach ($persons as $person) {
     $bakiye = $bordro->getBalance($person->id) ?? 0;
 
     if ($bakiye > 0) {
-
-        $activeWorksheet->setCellValue('A' . ($key + 2), $person->full_name);
-        $activeWorksheet->setCellValue('B' . ($key + 2), '');
-        $activeWorksheet->setCellValue('C' . ($key + 2), '');
-        $activeWorksheet->setCellValue('D' . ($key + 2), '');
-        $activeWorksheet->setCellValue('E' . ($key + 2), '');
-        $activeWorksheet->setCellValue('F' . ($key + 2), Security::safeDecrypt($person->iban_number));
-        $activeWorksheet->setCellValue('G' . ($key + 2), Helper::formattedMoneyWithoutCurrency($bakiye));
-        $activeWorksheet->setCellValue('H' . ($key + 2), '');
+        $activeWorksheet->setCellValue('A' . $row, $person->full_name);
+        $activeWorksheet->setCellValue('B' . $row, Security::safeDecrypt($person->kimlik_no));
+        $activeWorksheet->setCellValue('C' . $row, '');
+        $activeWorksheet->setCellValue('D' . $row, '');
+        $activeWorksheet->setCellValue('E' . $row, '');
+        $activeWorksheet->setCellValue('F' . $row, Security::safeDecrypt($person->iban_number));
+        $activeWorksheet->setCellValue('G' . $row, Helper::formattedMoneyWithoutCurrency($bakiye));
+        $activeWorksheet->setCellValue('H' . $row, '');
+        $row++;
     }
 }
 

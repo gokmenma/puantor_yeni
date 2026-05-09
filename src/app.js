@@ -100,8 +100,12 @@ if ($(".datatable").length > 0) {
 
   //Puantaj tablosu için
   var puantaj_table = $("#puantajTable").DataTable({
-    ordering: false,
-
+    ordering: true,
+    order: [[0, "asc"]],
+    orderCellsTop: true,
+    columnDefs: [
+      { orderable: false, targets: "_all" }
+    ],
     layout: {
       bottomStart: "pageLength",
       bottom2Start: "info",
@@ -124,13 +128,9 @@ if ($(".datatable").length > 0) {
     initComplete: function (settings, json) {
       var api = this.api();
       var tableId = settings.sTableId;
-      $("#" + tableId + " thead").append('<tr class="search-input-row"></tr>');
 
       api.columns().every(function () {
         let column = this;
-        let title = api.column(0).header().textContent;
-        //0. kolonun title bilgisini al
-
         // 0, 1, 2 ve 3. kolonların index numarasına göre arama kutusu ekle
         if (column.index() >= 0 && column.index() <= 3) {
           // Create input element
@@ -148,10 +148,10 @@ if ($(".datatable").length > 0) {
           input.classList.add("form-control-sm");
           input.setAttribute("autocomplete", "off");
 
-          // Append input element to the existing row
+          // Append input element to the existing row (tr:eq(1) is the search row)
           $(
             "#" + tableId + " thead tr:eq(1) th:eq(" + column.index() + ")"
-          ).append(input);
+          ).html(input);
 
           // Event listener for user input
           $(input).on("keyup change", function () {
@@ -581,3 +581,22 @@ function addCustomValidationValidValue() {
     //     ]
     // });
 
+
+// Puantaj tablosunu manuel sıralamak için global fonksiyon
+window.sortPuantaj = function(colIndex) {
+    var table = $('#puantajTable').DataTable();
+    var currentOrder = table.order()[0];
+    var dir = 'asc';
+    
+    if (currentOrder && currentOrder[0] === colIndex) {
+        dir = currentOrder[1] === 'asc' ? 'desc' : 'asc';
+    }
+    
+    // Sıralamayı uygula
+    table.order([colIndex, dir]).draw();
+    
+    // Görsel sınıfları manuel yönet (DataTables bazen gecikebiliyor)
+    $('#puantajTable thead tr:eq(0) th').removeClass('sorting_asc sorting_desc');
+    var activeTh = $('#puantajTable thead tr:eq(0) th').eq(colIndex);
+    activeTh.addClass(dir === 'asc' ? 'sorting_asc' : 'sorting_desc');
+};

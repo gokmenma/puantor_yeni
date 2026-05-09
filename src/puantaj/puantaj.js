@@ -282,6 +282,8 @@ $(document).on("change", ".column-toggle-check", function() {
     } else {
         $("." + columnClass).hide();
     }
+    // DataTable yerleşimini yeniden hesapla
+    $("#puantajTable").DataTable().columns.adjust().draw();
 });
 
 // Dropdown içindeki tıklamalarda menünün kapanmasını engelle

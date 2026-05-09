@@ -12,7 +12,9 @@ $(document).on("click", "#kullanici_kaydet", function () {
         email: true
       },
       password: {
-        required: true
+        required: function() {
+          return $("#user_id").val() == "0";
+        }
       },
       user_roles: {
         required: true

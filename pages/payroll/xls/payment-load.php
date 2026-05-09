@@ -33,11 +33,13 @@ $activeWorksheet->setCellValue('C1', 'Ödeme Günü');
 $activeWorksheet->setCellValue('D1', 'Tutar');
 
 
-foreach ($persons as $key => $person) {
-    $activeWorksheet->setCellValue('A' . ($key + 2), $person->id);
-    $activeWorksheet->setCellValue('B' . ($key + 2), $person->full_name);
-    $activeWorksheet->setCellValue('C' . ($key + 2), date('d.m.Y'));
-    $activeWorksheet->setCellValue('D' . ($key + 2), 0);
+$rowNum = 2;
+foreach ($persons as $person) {
+    $activeWorksheet->setCellValue('A' . $rowNum, $person->id);
+    $activeWorksheet->setCellValue('B' . $rowNum, $person->full_name);
+    $activeWorksheet->setCellValue('C' . $rowNum, date('d.m.Y'));
+    $activeWorksheet->setCellValue('D' . $rowNum, 0);
+    $rowNum++;
 }
 
 //kolonları otomatik genişlet

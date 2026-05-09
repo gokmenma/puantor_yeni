@@ -7,13 +7,14 @@ require_once ROOT . "/App/Helper/date.php";
 
 
 use App\Helper\Date;
+use App\Helper\Security;
 
 
 $User = new UserModel();
 $Roles = new Roles();
 
 if ($_POST["action"] == "userSave") {
-    $id = $_POST["id"];
+    $id = Security::safeDecrypt($_POST["id"]);
     //Eğer kayıt yapan kullanıcı ana kullanıcı ise kend id'si, değilse parent_id'si alınır.
     $parent_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
     $lastInsertId = 0;
@@ -22,7 +23,7 @@ if ($_POST["action"] == "userSave") {
         //Email adresi ile kayıtlı ana kullanıcı varsa kayıt yapılmaz
         $user = $User->getUserByEmail($_POST["email"]);
         
-        if ($user && $user->parent_id == 0 && $user->id != $id) {
+        if ($user && $user->parent_id == 0 && (int)$user->id !== (int)$id) {
             $status = "error";
             $message = "Bu e-posta adresi ile zaten kayıtlı.";
             $res = [
@@ -44,7 +45,6 @@ if ($_POST["action"] == "userSave") {
             "firm_id" => $_SESSION["firm_id"],
             "full_name" => $_POST["full_name"],
             "email" => $_POST["email"],
-            "password" => password_hash($_POST['password'], PASSWORD_DEFAULT),
             "user_roles" => $_POST["user_roles"],
             "phone" => $_POST["phone"],
             "job" => $_POST["job"],
@@ -53,6 +53,10 @@ if ($_POST["action"] == "userSave") {
             "responsible_modules" => $responsible_modules,
             "status" => 1,
         ];
+
+        if (!empty($_POST['password'])) {
+            $data["password"] = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        }
   
 
         $lastInsertId = $User->saveWithAttr($data) ?? $id;
@@ -82,7 +86,7 @@ if ($_POST["action"] == "userSave") {
 if ($_POST["action"] == "deleteUser") {
     $id = $_POST["id"];
     try {
-        $user->delete($id);
+        $User->delete($id);
         $status = "success";
         $message = "Kullanıcı başarıyla silindi.";
     } catch (PDOException $e) {

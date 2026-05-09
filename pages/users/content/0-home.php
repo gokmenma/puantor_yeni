@@ -16,7 +16,7 @@ $userHelper = new UserHelper();; ?>
         <label for="" class="align-middle">Parola</label>
     </div>
     <div class="col-md-4">
-        <input type="password" autocomplete="off" class="form-control" name="password" value="" id="password" required>
+        <input type="password" autocomplete="off" class="form-control" name="password" value="" id="password">
     </div>
 
 </div>

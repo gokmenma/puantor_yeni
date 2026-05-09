@@ -223,7 +223,7 @@ if ($page == 'home') {
 
 
 
-<script src="./src/app.js" defer??></script>
+<script src="./src/app.js?v=<?php echo time(); ?>" defer></script>
 <?php 
 if ($page == 'puantaj/list') {
     echo '<script src="./src/puantaj/puantaj.js?v=' . time() . '"></script>';

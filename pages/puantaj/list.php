@@ -85,8 +85,17 @@ $projectNamesCache[0] = "Proje Yok";
     }
 
     .gunadi {
-        width: 40px !important;
-        max-width: 40px !important;
+        width: 35px !important;
+        min-width: 35px !important;
+        max-width: 35px !important;
+        text-align: center;
+    }
+
+    .head-date {
+        width: 35px !important;
+        min-width: 35px !important;
+        max-width: 35px !important;
+        text-align: center;
     }
 
     table.dataTable.table-sm>thead>tr>th:not(.sorting_disabled) {
@@ -99,6 +108,44 @@ $projectNamesCache[0] = "Proje Yok";
 
     .table {
         padding-bottom: 15px !important;
+        width: auto !important;
+        min-width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    /* DataTables sıralama ikonlarını gün sütunlarında gizle */
+    #puantajTable thead th.gunadi::before,
+    #puantajTable thead th.gunadi::after,
+    #puantajTable thead th.head-date::before,
+    #puantajTable thead th.head-date::after {
+        display: none !important;
+    }
+
+    #puantajTable thead th.gunadi,
+    #puantajTable thead th.head-date {
+        padding-right: 8px !important;
+        padding-left: 8px !important;
+        text-align: center !important;
+    }
+    
+    .table thead th input {
+        width: 100% !important;
+    }
+
+    /* İsim ve Unvan sütunları için genişlik */
+    #puantajTable th:nth-child(1), #puantajTable td:nth-child(1) { width: 180px !important; min-width: 180px !important; max-width: 250px !important; }
+    #puantajTable th:nth-child(2), #puantajTable td:nth-child(2) { width: 150px !important; min-width: 150px !important; max-width: 150px !important; }
+    #puantajTable .extra-grup { width: 120px !important; min-width: 120px !important; }
+    #puantajTable .extra-ekip { width: 120px !important; min-width: 120px !important; }
+    
+    table#puantajTable.table {
+        width: max-content !important;
+        min-width: 100% !important;
+        max-width: none !important;
+    }
+    
+    #puantajTable th, #puantajTable td {
+        box-sizing: border-box;
     }
 
     .table tbody tr td {
@@ -106,11 +153,22 @@ $projectNamesCache[0] = "Proje Yok";
         height: 45px !important;
         padding: 4px !important;
         vertical-align: middle !important;
+        text-align: center;
+    }
+
+    /* Gün hücrelerini her koşulda sabitle */
+    .gun, .gunadi, .head-date {
+        width: 35px !important;
+        min-width: 35px !important;
+        padding: 0 !important;
+        text-align: center !important;
+        overflow: hidden !important;
+        white-space: nowrap !important;
     }
 
     .table tr td,
     .table th {
-        border: 1px solid #e6e7e9 !important;
+        border: 1px solid #ddd !important;
     }
 
     .gun.clicked {
@@ -134,8 +192,6 @@ $projectNamesCache[0] = "Proje Yok";
         writing-mode: vertical-rl;
         transform: rotate(180deg);
         white-space: nowrap;
-    }
-
         height: 100px;
         width: 40px;
         min-width: 40px;
@@ -238,7 +294,7 @@ $projectNamesCache[0] = "Proje Yok";
         z-index: 100;
     }
 
-    table {
+    table:not(#puantajTable) {
         width: 100% !important;
     }
 
@@ -271,32 +327,69 @@ $projectNamesCache[0] = "Proje Yok";
         font-weight: 600;
     }
 
-    /* Sticky Header Pro Max */
-    .page-wrapper {
-        overflow: clip !important;
-    }
-
-    .table-responsive {
-        overflow-x: auto !important;
-        overflow-y: visible !important;
+    #puantajTable {
+        border-collapse: collapse !important;
     }
 
     #puantajTable thead th {
+        position: -webkit-sticky !important;
         position: sticky !important;
         background: #f8fafc !important;
-        z-index: 100 !important;
-        border-bottom: 1px solid #dee2e6 !important;
-        box-shadow: inset 0 -1px 0 #dee2e6;
+        z-index: 1000 !important;
+        border-bottom: 1px solid #ddd !important;
+        border-right: 1px solid #ddd !important;
     }
 
     #puantajTable thead tr:nth-child(1) th {
         top: 0 !important;
-        z-index: 101 !important;
+        z-index: 1001 !important;
     }
 
     #puantajTable thead tr:nth-child(2) th {
-        top: 41px !important; /* İlk satırın yüksekliği */
-        z-index: 100 !important;
+        top: 38px !important; 
+        z-index: 1000 !important;
+    }
+
+    .cursor-pointer {
+        cursor: pointer !important;
+    }
+
+    #puantajTable thead th.cursor-pointer:hover {
+        background-color: #f1f5f9 !important;
+    }
+
+    #puantajTable thead th.cursor-pointer {
+        position: relative;
+        padding-right: 20px !important;
+    }
+
+    #puantajTable thead th.cursor-pointer::after {
+        content: '↕';
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.3;
+        font-size: 0.8em;
+    }
+
+    #puantajTable thead th.sorting_asc::after {
+        content: '↑' !important;
+        opacity: 1 !important;
+        color: #206bc4;
+    }
+
+    #puantajTable thead th.sorting_desc::after {
+        content: '↓' !important;
+        opacity: 1 !important;
+        color: #206bc4;
+    }
+
+
+    /* Pazar günleri için soft kırmızı */
+    .bg-danger-lt {
+        background-color: #fee2e2 !important;
+        color: #b91c1c !important;
     }
 
 
@@ -488,40 +581,40 @@ $projectNamesCache[0] = "Proje Yok";
                     <table id="puantajTable" class="table card-table text-nowrap datatable">
                         <thead class="sticky">
                             <tr>
-                                <th class="ld">Adı Soyadı</th>
-                                <th class="ld">Unvanı</th>
-                                <th class="ld extra-column extra-grup" style="display:none">İş Grubu</th>
-                                <th class="ld extra-column extra-ekip" style="display:none">Ekip</th>
-                                <th style="display:none"></th>
+                                <th class="ld cursor-pointer" style="width: 180px !important;" onclick="sortPuantaj(0)">Adı Soyadı</th>
+                                <th class="ld cursor-pointer" style="width: 150px !important;" onclick="sortPuantaj(1)">Unvanı</th>
+                                <th class="ld extra-column extra-grup cursor-pointer" style="display:none; width: 120px !important;" onclick="sortPuantaj(2)">İş Grubu</th>
+                                <th class="ld extra-column extra-ekip cursor-pointer" style="display:none; width: 120px !important;" onclick="sortPuantaj(3)">Ekip</th>
 
                                 <?php foreach ($dates as $date): ?>
                                     <?php
-                                    $style = '';
-                                    if (Date::isWeekend($date)) {
-                                        $style = 'background-color:#99A98F;color:white';
+                                    $style = 'min-width: 35px !important;';
+                                    $isSunday = (date('N', strtotime($date)) == 7);
+                                    if ($isSunday) {
+                                        $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
+                                    } else if (Date::isWeekend($date)) {
+                                        $style .= 'background-color:#99A98F;color:white;';
                                     }
-                                    echo ' <th class="gunadi" style="' . $style . '">' . Date::gunadi($date);
-                                    '.</th>'
-                                        ?>
+                                    echo ' <th class="gunadi" style="' . $style . '">' . Date::gunadi($date) . '</th>';
+                                    ?>
                                 <?php endforeach; ?>
-
                             </tr>
-                            <tr>
 
-                                <th class="ld"></th>
-                                <th class="ld"></th>
-                                <th class="ld extra-column extra-grup" style="display:none"></th>
-                                <th class="ld extra-column extra-ekip" style="display:none"></th>
-                                <th class="ld" style="display:none">Seç</th>
-                                <?php
-                                foreach ($dates as $date):
-                                    $style = '';
-                                    if (Date::isWeekend($date)) {
-                                        $style = 'background-color:#99A98F;color:white';
+                            <tr>
+                                <th class="ld" style="width: 180px !important;"></th>
+                                <th class="ld" style="width: 150px !important;"></th>
+                                <th class="ld extra-column extra-grup" style="display:none; width: 120px !important;"></th>
+                                <th class="ld extra-column extra-ekip" style="display:none; width: 120px !important;"></th>
+
+                                <?php foreach ($dates as $date): ?>
+                                    <?php
+                                    $style = 'min-width: 35px !important;';
+                                    $isSunday = (date('N', strtotime($date)) == 7);
+                                    if ($isSunday) {
+                                        $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
                                     }
                                     echo '<th class="head-date" style="' . $style . '"><span>' . date('d', strtotime($date)) . '</span></th>';
                                     ?>
-
                                 <?php endforeach; ?>
                             </tr>
 
@@ -552,25 +645,21 @@ $projectNamesCache[0] = "Proje Yok";
 
                                 ?>
                                 <tr>
-                                    <td class="text-nowrap" style="" data-id="<?php echo $id ?>"><a class="btn-user-modal"
+                                    <td class="text-nowrap" style="width: 180px !important;" data-id="<?php echo $id ?>"><a class="btn-user-modal"
                                             type="button">
                                             <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
                                                 target="_blank"><?php echo $person->full_name ?></a></td>
 
-                                    <td class="text-nowrap" style="">
+                                    <td class="text-nowrap" style="width: 150px !important;">
                                         <?php echo $person->job ?>
                                     </td>
 
-                                    <td class="text-nowrap extra-column extra-grup" style="display:none">
+                                    <td class="text-nowrap extra-column extra-grup" style="display:none; width: 120px !important;">
                                         <?php echo $person->job_group ?>
                                     </td>
 
-                                    <td class="text-nowrap extra-column extra-ekip" style="display:none">
+                                    <td class="text-nowrap extra-column extra-ekip" style="display:none; width: 120px !important;">
                                         <?php echo $person->ekip ?>
-                                    </td>
-
-                                    <td class="text-nowrap" style="display:none">
-                                        <input type="checkbox" name="checkbox_name" value="checkbox_value">
                                     </td>
                                     <?php
                                     foreach ($dates as $date):
@@ -606,25 +695,25 @@ $projectNamesCache[0] = "Proje Yok";
                                                             $selected = "";
                                                         }
                                                     }
-                                                    echo "<td class='gun noselect $selected' data-tooltip ='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ";color:" . $color . "'>" . $puantajTuru->PuantajKod . "</td>";
+                                                    echo "<td class='gun noselect $selected' data-tooltip ='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ";color:" . $color . "; min-width: 35px !important;'>" . $puantajTuru->PuantajKod . "</td>";
                                                 } else {
-                                                    echo "<td class='gun noselect' data-change='false' data-project='0'></td>";
+                                                    echo "<td class='gun noselect' data-change='false' data-project='0' style='min-width: 35px !important;'></td>";
                                                 }
                                             } else {
                                                 if (Date::isWeekend($date)) {
                                                     // Hafta sonu varsayılan puantaj türü (53)
                                                     $weekendTuru = $allPuantajTurleri[53] ?? null;
                                                     if ($weekendTuru) {
-                                                        echo "<td class='gun noselect' data-tooltip='' data-change='false' data-project='' data-id='53' style='background:" . $weekendTuru->ArkaPlanRengi . ";color:" . $weekendTuru->FontRengi . "'>" . $weekendTuru->PuantajKod . "</td>";
+                                                        echo "<td class='gun noselect' data-tooltip='' data-change='false' data-project='' data-id='53' style='background:" . $weekendTuru->ArkaPlanRengi . ";color:" . $weekendTuru->FontRengi . "; min-width: 35px !important;'>" . $weekendTuru->PuantajKod . "</td>";
                                                     } else {
-                                                        echo "<td class='gun noselect' data-project=''></td>";
+                                                        echo "<td class='gun noselect' data-project='' style='min-width: 35px !important;'></td>";
                                                     }
                                                 } else {
-                                                    echo "<td class='gun noselect' data-project=''></td>";
+                                                    echo "<td class='gun noselect' data-project='' style='min-width: 35px !important;'></td>";
                                                 }
                                             }
                                         } else {
-                                            echo "<td class='noselect text-center' style='background:#ddd'>---</td>";
+                                            echo "<td class='noselect text-center' style='background:#ddd; min-width: 35px !important;'>---</td>";
                                         }
                                         ?>
 
