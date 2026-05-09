@@ -53,7 +53,8 @@ $i = 1;
 foreach ($persons as $person) {
     $wage_type = $person->wage_type == 1 ? 'Beyaz Yaka' : 'Mavi Yaka';
     $balance = $bordro->getBalance($person->id);
-    $company_name = $companyHelper->getcompanyName($person->company_id) ?? '-';
+    $compName = $companyHelper->getCompanyName($person->company_id);
+    $company_name = ($compName !== 'bilinmiyor' && $compName !== '') ? $compName : $companyHelper->getFirmName($person->firm_id);
 
     $sheet->setCellValue('A' . $row, $i++);
     $sheet->setCellValue('B' . $row, $person->full_name);

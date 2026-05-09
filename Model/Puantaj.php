@@ -204,4 +204,52 @@ class Puantaj extends Model
         return $sql->fetch(PDO::FETCH_OBJ)->total_balance ?? 0;
     }
 
+    /**
+     * Birden fazla personelin belirli tarih aralığındaki tüm puantaj kayıtlarını tek sorguda getirir.
+     * N+1 query problemini çözmek için toplu veri çekme.
+     * Dönen veri: [person_id][gun_tiresiz] = {puantaj_id, project_id, ...}
+     */
+    public function getAllPuantajForPersons($person_ids, $start_date, $end_date)
+    {
+        if (empty($person_ids)) return [];
+
+        // gun sütunu hem tireli (2026-05-09) hem tiresiz (20260509) formatta olabilir
+        $start_dash = (strpos($start_date, '-') !== false) ? $start_date : substr($start_date, 0, 4) . '-' . substr($start_date, 4, 2) . '-' . substr($start_date, 6, 2);
+        $start_nodash = str_replace('-', '', $start_date);
+        $end_dash = (strpos($end_date, '-') !== false) ? $end_date : substr($end_date, 0, 4) . '-' . substr($end_date, 4, 2) . '-' . substr($end_date, 6, 2);
+        $end_nodash = str_replace('-', '', $end_date);
+
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $sql = $this->db->prepare("SELECT * FROM puantaj WHERE person IN ($placeholders) AND ((gun >= ? AND gun <= ?) OR (gun >= ? AND gun <= ?))");
+        
+        $params = array_merge($person_ids, [$start_dash, $end_dash, $start_nodash, $end_nodash]);
+        $sql->execute($params);
+        $rows = $sql->fetchAll(PDO::FETCH_OBJ);
+
+        // person_id ve gun bazında indexle (tiresiz formatta normalize et)
+        $indexed = [];
+        foreach ($rows as $row) {
+            $gun = str_replace('-', '', $row->gun); // Normalize: tiresiz format
+            $indexed[$row->person][$gun] = $row;
+        }
+        return $indexed;
+    }
+
+    /**
+     * Tüm puantaj türlerini tek sorguda getirir (cache için).
+     * Dönen veri: [id] = {PuantajKod, ArkaPlanRengi, FontRengi, ...}
+     */
+    public function getAllPuantajTurleri()
+    {
+        $sql = $this->db->prepare("SELECT * FROM puantajturu");
+        $sql->execute();
+        $rows = $sql->fetchAll(PDO::FETCH_OBJ);
+
+        $indexed = [];
+        foreach ($rows as $row) {
+            $indexed[$row->id] = $row;
+        }
+        return $indexed;
+    }
+
 }

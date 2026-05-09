@@ -27,13 +27,7 @@ $persons_ids = $personsModel->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, 
 
 $conn = $puantajModel->getDb();
 
-$persons = [];
-foreach ($persons_ids as $p_id) {
-    $person = $personsModel->find($p_id->id);
-    if ($person) {
-        $persons[] = $person;
-    }
-}
+$persons = $persons_ids;
 $stmt = $conn->prepare("SELECT * FROM puantajturu ORDER BY Turu, PuantajSaati ASC");
 $stmt->execute();
 $puantaj_types = $stmt->fetchAll(PDO::FETCH_OBJ);

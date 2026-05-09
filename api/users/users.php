@@ -33,6 +33,10 @@ if ($_POST["action"] == "userSave") {
             exit;
         }
 
+        $responsible_projects = isset($_POST["responsible_projects"]) ? implode(',', $_POST["responsible_projects"]) : '';
+        $responsible_persons = isset($_POST["responsible_map"]) ? json_encode($_POST["responsible_map"], JSON_UNESCAPED_UNICODE) : '';
+        $responsible_modules = '';
+
         $data = [
             "id" => $id,
             "user_type" => $_SESSION["user"]->user_type,
@@ -42,8 +46,11 @@ if ($_POST["action"] == "userSave") {
             "email" => $_POST["email"],
             "password" => password_hash($_POST['password'], PASSWORD_DEFAULT),
             "user_roles" => $_POST["user_roles"],
-           "phone" => $_POST["phone"],
+            "phone" => $_POST["phone"],
             "job" => $_POST["job"],
+            "responsible_projects" => $responsible_projects,
+            "responsible_persons" => $responsible_persons,
+            "responsible_modules" => $responsible_modules,
             "status" => 1,
         ];
   

@@ -125,7 +125,7 @@ class Projects extends Model
     public function getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false)
     {
         $wage_type_sql = $include_white_collar ? 'wage_type IN (1, 2)' : 'wage_type = 2';
-        $sql = "SELECT id
+        $sql = "SELECT p.*
                         FROM persons p
                         WHERE $wage_type_sql
                         AND (

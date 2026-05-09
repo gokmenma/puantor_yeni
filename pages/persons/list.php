@@ -108,7 +108,10 @@ $company = new CompanyHelper();
                                         <td> <a href="#" data-tooltip="Detay/Güncelle"
                                                 data-page="persons/manage&id=<?php echo $id ?>"
                                                 class="nav-item route-link"><?php echo $person->full_name; ?></a></td>
-                                        <td><?php echo $company->getcompanyName($person->company_id ) ?? 0; ?></td>
+                                        <td><?php 
+                                             $compName = $company->getCompanyName($person->company_id);
+                                             echo ($compName !== 'bilinmiyor' && $compName !== '') ? $compName : $company->getFirmName($person->firm_id); 
+                                         ?></td>
                                         <td <?php echo $wage_type_color; ?>><?php echo $wage_type; ?></td>
                                         <td><?php echo $person->job_start_date ?? '-'; ?></td>
                                         <td><?php echo $person->phone; ?></td>

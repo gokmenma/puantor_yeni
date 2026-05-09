@@ -127,6 +127,14 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                 <i class="ti ti-checklist icon me-3"></i> Banka Listesi İndir
                             </a>
                         <?php } ?>
+                        <?php if ($Auths->hasPermission('income_expense_add_update')) { ?>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-income-modal">
+                                <i class="ti ti-circle-plus icon me-3 text-success"></i> Toplu Gelir Ekle
+                            </a>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wage-cut-modal">
+                                <i class="ti ti-circle-minus icon me-3 text-danger"></i> Toplu Kesinti Ekle
+                            </a>
+                        <?php } ?>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#" id="update_personnel">
                             <i class="ti ti-users-plus icon me-3"></i> Personelleri Güncelle
@@ -381,3 +389,5 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
 <?php include_once 'content/payment-modal.php'; ?>
 <?php include_once 'content/payment-load-modal.php'; ?>
 <?php include_once 'content/payroll-detail-modal.php'; ?>
+<?php include_once 'content/bulk-income-modal.php'; ?>
+<?php include_once 'content/bulk-wage-cut-modal.php'; ?>

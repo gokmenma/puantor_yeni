@@ -23,13 +23,7 @@ if ($selected_project_id > 0) {
     // Projeye ait personelleri getir (Desktop logic benzeri)
     $first_day = date('Ym01', strtotime($selected_date));
     $last_day = date('Ymt', strtotime($selected_date));
-    $person_ids_objs = $projectsModel->getPersonIdByFromProjectCurrentMonth($selected_project_id, $first_day, $last_day);
-    
-    $persons = [];
-    foreach ($person_ids_objs as $obj) {
-        $person = $personsModel->find($obj->id);
-        if ($person) $persons[] = $person;
-    }
+    $persons = $projectsModel->getPersonIdByFromProjectCurrentMonth($selected_project_id, $first_day, $last_day);
 } else {
     $persons = $personsModel->getPersonsByFirm($firm_id);
 }

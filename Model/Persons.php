@@ -36,7 +36,7 @@ class Persons extends Model
     {
         $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and deleted_at IS NULL');
         $query->execute([$firm_id]);
-        return $query->fetchAll(PDO::FETCH_OBJ);
+        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
 //Personelin ad soyadını getir
     public function getPersonName($person_id)
@@ -51,14 +51,14 @@ class Persons extends Model
     {
         $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and job_end_date IS NOT NULL');
         $query->execute([$_SESSION['firm_id']]);
-        return $query->fetchAll(PDO::FETCH_OBJ);
+        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
 
     public function getPersonIdByFirm($firm_id)
     {
         $query = $this->db->prepare('SELECT id FROM persons WHERE firm_id = ? and deleted_at IS NULL');
         $query->execute([$firm_id]);
-        return $query->fetchAll(PDO::FETCH_OBJ);
+        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
     
     
@@ -88,28 +88,26 @@ class Persons extends Model
             $query->execute([$firm_id, $last_day]);
         }
         
-        return $query->fetchAll(PDO::FETCH_OBJ);
+        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
     public function getPersonIdByFirmBlueCollar($firm_id)
     {
         $query = $this->db->prepare('SELECT id FROM persons WHERE firm_id = ? AND wage_type = ? and deleted_at IS NULL');
         $query->execute([$firm_id,2]);
-        return $query->fetchAll(PDO::FETCH_OBJ);
+        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
     public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false)
     {
         $wage_type_sql = $include_white_collar ? 'p.wage_type IN (1, 2)' : 'p.wage_type = 2';
-        $sql = "SELECT id FROM persons p 
+        $sql = "SELECT * FROM persons p 
                 WHERE firm_id = ? AND $wage_type_sql 
                 AND STR_TO_DATE(job_start_date, '%d.%m.%Y') <= ? 
                 AND deleted_at IS NULL
                 AND (
-                    (p.job_end_date IS NULL OR p.job_end_date = '')
-                    OR EXISTS (SELECT 1 FROM project_person WHERE person_id = p.id)
-                    OR EXISTS (SELECT 1 FROM puantaj WHERE person = p.id AND gun >= ? AND gun <= ?)
-                    OR STR_TO_DATE(job_start_date, '%d.%m.%Y') >= STR_TO_DATE(?, '%Y%m%d')
+                    p.job_end_date IS NULL OR p.job_end_date = ''
+                    OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?
                 )";
-        $params = [$firm_id, $last_day, $first_day, $last_day, $first_day];
+        $params = [$firm_id, $last_day, $first_day];
 
         if ($job_group > 0) {
             $sql .= ' AND job_group = ?';
@@ -124,7 +122,7 @@ class Persons extends Model
 
         $query = $this->db->prepare($sql);
         $query->execute($params);
-        return $query->fetchAll(PDO::FETCH_OBJ);
+        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
 
 
@@ -170,5 +168,52 @@ class Persons extends Model
             }
         }
         return null;
+    }
+
+    public function filterPersons($results)
+    {
+        if (!isset($_SESSION["user"])) {
+            return $results;
+        }
+
+        $user_id = $_SESSION["user"]->id;
+        $stmt = $this->db->prepare('SELECT id, responsible_persons FROM users WHERE id = ?');
+        $stmt->execute([$user_id]);
+        $u = $stmt->fetch(PDO::FETCH_OBJ);
+
+        if (!$u || empty($u->responsible_persons)) {
+            return $results;
+        }
+
+        $saved_map = json_decode($u->responsible_persons, true);
+        if (!is_array($saved_map) || empty($saved_map)) {
+            return $results;
+        }
+
+        $page = isset($_GET['p']) ? $_GET['p'] : '';
+
+        $module_key = null;
+        if (strpos($page, 'puantaj') !== false) {
+            $module_key = 'puantaj';
+        } elseif (strpos($page, 'payroll') !== false || strpos($page, 'bordro') !== false) {
+            $module_key = 'bordro';
+        } elseif (strpos($page, 'person') !== false) {
+            $module_key = 'personel';
+        }
+
+        if ($module_key !== null) {
+            $filtered = [];
+            foreach ($results as $row) {
+                $id = isset($row->id) ? $row->id : null;
+                if ($id !== null) {
+                    if (isset($saved_map[$id]) && in_array($module_key, $saved_map[$id])) {
+                        $filtered[] = $row;
+                    }
+                }
+            }
+            return $filtered;
+        }
+
+        return $results;
     }
 }

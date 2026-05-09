@@ -53,7 +53,27 @@ $days = Date::daysInMonth($month, $year);
 // Tarihleri oluşturma
 $dates = Date::generateDates($year, $month, $days);
 
-?>
+// ===== PERFORMANS OPTİMİZASYONU: Toplu veri çekme =====
+// Tüm person ID'lerini topla
+$person_ids = array_map(function($p) { return $p->id; }, $persons);
+
+// 1) Tüm personellerin aylık puantaj verilerini TEK sorguda çek
+$first_day_ymd = Date::Ymd(Date::firstDay($month, $year));
+$last_day_ymd = $last_day;
+// Hem tireli hem tiresiz formatta arama yapabilmek için geniş aralık
+$allPuantajData = $puantajObj->getAllPuantajForPersons($person_ids, $first_day_ymd, str_replace('-', '', $last_day_ymd));
+
+// 2) Tüm puantaj türlerini TEK sorguda çek ve cache'le
+$allPuantajTurleri = $puantajObj->getAllPuantajTurleri();
+
+// 3) Tüm proje isimlerini TEK sorguda çek ve cache'le
+$allProjects = $projects->getProjectsByFirm($firm_id);
+$projectNamesCache = [];
+foreach ($allProjects as $proj) {
+    $projectNamesCache[$proj->id] = $proj->project_name;
+}
+$projectNamesCache[0] = "Proje Yok";
+// ===== OPTİMİZASYON SONU =====?>
 <style>
     .gun {
         width: 35px;
@@ -410,9 +430,8 @@ $dates = Date::generateDates($year, $month, $days);
                         </thead>
                         <tbody>
                             <?php
-                            foreach ($persons as $item):
+                            foreach ($persons as $person):
 
-                                $person = $personObj->find($item->id);
                                 $id = Security::encrypt($person->id);
 
                                 // Personelin işten ayrılma tarihi bu ayın başından önceyse personeli getirme
@@ -422,6 +441,16 @@ $dates = Date::generateDates($year, $month, $days);
                                         continue;
                                     }
                                 }
+
+                                // İş başlama/bitiş tarihlerini döngü dışında bir kez hesapla
+                                $jobStartDate = str_replace('-', '', Date::Ymd($person->job_start_date));
+                                $jobEndDate = str_replace('-', '', Date::Ymd($person->job_end_date));
+                                if ($jobEndDate == '') {
+                                    $jobEndDate = 99999999;
+                                }
+
+                                // Bu personelin aylık puantaj verisini cache'den al
+                                $personPuantaj = $allPuantajData[$person->id] ?? [];
 
                                 ?>
                                 <tr>
@@ -434,46 +463,56 @@ $dates = Date::generateDates($year, $month, $days);
                                         <?php echo $person->job ?>
                                     </td>
 
-
-                                    <?php
-
-                                    ?>
-
                                     <td class="text-nowrap" style="display:none">
                                         <input type="checkbox" name="checkbox_name" value="checkbox_value">
                                     </td>
                                     <?php
                                     foreach ($dates as $date):
-                                        $jobStartDate = str_replace('-', '', Date::Ymd($person->job_start_date));
-                                        $jobEndDate = str_replace('-', '', Date::Ymd($person->job_end_date));
-                                        if ($jobEndDate == '') {
-                                            $jobEndDate = 99999999;
-                                        }
-                                        $month_date = $gun = $date;
-
-                                        ?>
-                                        <?php
+                                        $month_date = $date;
 
                                         if ($jobStartDate <= $month_date && $jobEndDate >= $month_date) {
-                                            $puantaj_id = $puantajObj->getPuantajTuruId($person->id, $gun);
-                                        }
-                                        $month_date = $gun = $date;
+                                            // Cache'den puantaj verisini al (tiresiz formatta)
+                                            $dateKey = str_replace('-', '', $date);
+                                            $puantajRecord = $personPuantaj[$dateKey] ?? null;
+                                            $puantaj_id = $puantajRecord->puantaj_id ?? '';
 
-                                        ?>
-                                        <?php
+                                            if ($puantaj_id >= 0 && $puantaj_id !== '') {
+                                                $puantaj_project = $puantajRecord->project_id ?? 0;
+                                                
+                                                // Cache'den puantaj türü bilgisini al
+                                                $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
+                                                // Cache'den proje adını al
+                                                $tooltip = $projectNamesCache[$puantaj_project] ?? "Proje Yok";
 
-                                        if ($jobStartDate <= $month_date && $jobEndDate >= $month_date) {
-                                            $puantaj_id = $puantajObj->getPuantajTuruId($person->id, $gun);
-
-
-                                            if ($puantaj_id >= 0) {
-
-                                                $puantaj_project = $puantajObj->getPuantajProjectId($person->id, $gun);
-                                                $puantajHelper->puantajClass($puantaj_id, $project_id, $puantaj_project);
+                                                if ($puantajTuru) {
+                                                    if ($puantajTuru->PuantajKod == "HT") {
+                                                        $backcolor = $puantajTuru->ArkaPlanRengi;
+                                                        $color = $puantajTuru->FontRengi;
+                                                        $selected = "";
+                                                    } else {
+                                                        if ($puantaj_project != $project_id) {
+                                                            $backcolor = "#bbb";
+                                                            $color = "#666";
+                                                            $selected = "selected";
+                                                        } else {
+                                                            $backcolor = $puantajTuru->ArkaPlanRengi;
+                                                            $color = $puantajTuru->FontRengi;
+                                                            $selected = "";
+                                                        }
+                                                    }
+                                                    echo "<td class='gun noselect $selected' data-tooltip ='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ";color:" . $color . "'>" . $puantajTuru->PuantajKod . "</td>";
+                                                } else {
+                                                    echo "<td class='gun noselect' data-change='false' data-project='0'></td>";
+                                                }
                                             } else {
-                                                echo '<script>console.log(' . $puantaj_id . ')</script>';
                                                 if (Date::isWeekend($date)) {
-                                                    $puantajHelper->puantajClass(53);
+                                                    // Hafta sonu varsayılan puantaj türü (53)
+                                                    $weekendTuru = $allPuantajTurleri[53] ?? null;
+                                                    if ($weekendTuru) {
+                                                        echo "<td class='gun noselect' data-tooltip='' data-change='false' data-project='' data-id='53' style='background:" . $weekendTuru->ArkaPlanRengi . ";color:" . $weekendTuru->FontRengi . "'>" . $weekendTuru->PuantajKod . "</td>";
+                                                    } else {
+                                                        echo "<td class='gun noselect' data-project=''></td>";
+                                                    }
                                                 } else {
                                                     echo "<td class='gun noselect' data-project=''></td>";
                                                 }

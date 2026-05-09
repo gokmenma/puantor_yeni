@@ -57,3 +57,20 @@ $userHelper = new UserHelper();; ?>
     </div>
 
 </div>
+
+<div class="row mb-3">
+    <div class="col-md-2">
+        <label for="responsible_projects" class="align-middle">Sorumlu Olduğu Projeler</label>
+    </div>
+    <div class="col-md-10">
+        <select class="form-control select2" name="responsible_projects[]" id="responsible_projects" multiple data-placeholder="Proje Seçiniz" style="width: 100%;">
+            <?php 
+            $selected_projects = !empty($user->responsible_projects) ? explode(',', $user->responsible_projects) : [];
+            foreach ($projects as $project) {
+                $selected = in_array($project->id, $selected_projects) ? 'selected' : '';
+                echo "<option value='{$project->id}' {$selected}>{$project->project_name}</option>";
+            }
+            ?>
+        </select>
+    </div>
+</div>
