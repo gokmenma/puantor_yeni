@@ -96,19 +96,20 @@ class Persons extends Model
         $query->execute([$firm_id,2]);
         return $query->fetchAll(PDO::FETCH_OBJ);
     }
-    public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group = 0, $team_id = 0)
+    public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false)
     {
-        $sql = 'SELECT id FROM persons p 
-                WHERE firm_id = ? AND wage_type = ? 
-                AND STR_TO_DATE(job_start_date, "%d.%m.%Y") <= ? 
+        $wage_type_sql = $include_white_collar ? 'p.wage_type IN (1, 2)' : 'p.wage_type = 2';
+        $sql = "SELECT id FROM persons p 
+                WHERE firm_id = ? AND $wage_type_sql 
+                AND STR_TO_DATE(job_start_date, '%d.%m.%Y') <= ? 
                 AND deleted_at IS NULL
                 AND (
-                    (p.job_end_date IS NULL OR p.job_end_date = "")
+                    (p.job_end_date IS NULL OR p.job_end_date = '')
                     OR EXISTS (SELECT 1 FROM project_person WHERE person_id = p.id)
                     OR EXISTS (SELECT 1 FROM puantaj WHERE person = p.id AND gun >= ? AND gun <= ?)
-                    OR STR_TO_DATE(job_start_date, "%d.%m.%Y") >= STR_TO_DATE(?, "%Y%m%d")
-                )';
-        $params = [$firm_id, 2, $last_day, $first_day, $last_day, $first_day];
+                    OR STR_TO_DATE(job_start_date, '%d.%m.%Y') >= STR_TO_DATE(?, '%Y%m%d')
+                )";
+        $params = [$firm_id, $last_day, $first_day, $last_day, $first_day];
 
         if ($job_group > 0) {
             $sql .= ' AND job_group = ?';

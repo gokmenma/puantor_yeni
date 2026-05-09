@@ -128,7 +128,7 @@ class Model extends Db
         $sql->execute(array($id));
 
         if ($sql->rowCount() === 0) {
-            return new \Exception('Kayıt bulunamadı veya silinemedi.');
+            throw new \Exception('Kayıt bulunamadı veya silinemedi.');
         }
         return true;
     }
@@ -141,7 +141,7 @@ class Model extends Db
         $sql->execute(array($id));
 
         if ($sql->rowCount() === 0) {
-            return new \Exception('Kayıt bulunamadı veya silinemedi.');
+            throw new \Exception('Kayıt bulunamadı veya silinemedi.');
         }
         return true;
     }

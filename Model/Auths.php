@@ -129,6 +129,10 @@ class Auths extends Model
     //Kullanıcının firm_id'si ve sessiondaki firmayı karşılaştır, eğer farklı ise false döner
     public function checkFirmReturn()
     {
+        if (isset($_SESSION['user']->is_main_user) && $_SESSION['user']->is_main_user == 1) {
+            return true;
+        }
+
         if ($_SESSION['user']->firm_id != $_SESSION['firm_id']) {
             $res = [
                 "status" => "error",

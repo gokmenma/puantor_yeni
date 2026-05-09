@@ -96,18 +96,12 @@ if ($_POST["action"] == "send_email_on_login") {
 if ($_POST["action"] == "homeSettings") {
 
     $work_hour = $_POST["work_hour"];
-    //$id = $Settings->getSettingIdByUserAndAction($_SESSION["user"]->id, "work_hour")->id ?? 0;
-    $id = $Settings->getSettings("work_hour")->id ?? 0;
+    $show_white_collar = isset($_POST["show_white_collar_in_puantaj"]) ? 1 : 0;
 
-    $data = [
-        "id" => $id,
-        "firm_id" => $_SESSION["firm_id"],
-        "user_id" => $_SESSION["user"]->id,
-        "set_name" => "work_hour",
-        "set_value" => $work_hour
-    ];
     try {
-        $lastInsertId = $Settings->saveWithAttr($data) ?? $id;
+        $Settings->upsertSetting("work_hour", $work_hour);
+        $Settings->upsertSetting("show_white_collar_in_puantaj", $show_white_collar);
+        
         $status = "success";
         $message = "Ayarlar başarıyla tamamlandı.";
     } catch (PDOException $e) {

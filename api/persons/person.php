@@ -1,5 +1,5 @@
 <?php
-define("ROOT", $_SERVER['DOCUMENT_ROOT']);
+!defined("ROOT") ? define("ROOT", dirname(dirname(__DIR__))) : null;
 require_once "../../Database/require.php";
 require_once "../../Model/Persons.php";
 require_once ROOT . "/Model/Bordro.php";
@@ -11,8 +11,10 @@ require_once "../../Model/Projects.php";
 
 
 use App\Helper\Security;
-use Random\Engine\Secure;
 use App\Helper\Helper;
+
+file_put_contents(ROOT . "/debug_api.log", date("Y-m-d H:i:s") . " - Action: " . ($_POST["action"] ?? "none") . " - User: " . ($_SESSION["user"]->id ?? "none") . "\n", FILE_APPEND);
+
 
 $Puantaj = new Puantaj();
 $Bordro = new Bordro();
@@ -139,9 +141,10 @@ if ($_POST["action"] == "deletePerson") {
         $Persons->softDelete($id);
         $status = "success";
         $message = "Personel başarıyla silindi.";
-    } catch (PDOException $e) {
+    } catch (Exception $e) {
         $status = "error";
         $message = $e->getMessage();
+        file_put_contents(ROOT . "/debug_api.log", date("Y-m-d H:i:s") . " - Error: " . $message . "\n", FILE_APPEND);
     }
     $res = [
         "status" => $status,

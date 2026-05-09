@@ -1,6 +1,6 @@
 <?php
 
-define("ROOT", $_SERVER['DOCUMENT_ROOT']);
+!defined("ROOT") ? define("ROOT", dirname(dirname(__DIR__))) : null;
 require_once ROOT."/Database/require.php";
 require_once ROOT. "/Model/PackageModel.php";
 

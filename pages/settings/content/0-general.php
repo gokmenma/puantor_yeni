@@ -1,8 +1,6 @@
 <?php
 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
-
-
-
+$show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
 ?>
 <div class="card-body">
 
@@ -18,17 +16,31 @@ $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
         </div>
         <?php if ($Auths->hasPermission("daily_working_hours_edit")) {
             ; ?>
-            <h3 class="card-title mt-1">Günlük Çalışma Saati</h3>
-            <p class="card-subtitle">Firmanızda günlük çalışma saatini belirleyebilrsiniz <br>
-                <small class="text-red">Tüm hesaplamalarda değişiklik yapacağı için alt kullanıcılara bu yetkiyi açmamanız
-                    gerekir</small>
+            <h3 class="card-title mt-1">Sistem Ayarları</h3>
+            <p class="card-subtitle">Firmanızın genel çalışma ve görünürlük ayarlarını buradan yönetebilirsiniz. <br>
+                <small class="text-red">Bu ayarlarda yapılacak değişiklikler tüm hesaplamaları etkileyebilir.</small>
             </p>
 
 
             <form action="" id="settingsHomeForm">
-                <div class="col-md-2">
-                    <input type="text" class="form-control" name="work_hour" placeholder="Örn:10"
-                        value="<?php echo $work_hour; ?>">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label">Günlük Çalışma Saati</label>
+                        <input type="text" class="form-control" name="work_hour" placeholder="Örn:10"
+                            value="<?php echo $work_hour; ?>">
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="form-label">Puantaj Görünürlük Ayarları</div>
+                        <div>
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="show_white_collar_in_puantaj" <?php echo $show_white_collar == 1 ? 'checked' : ''; ?>>
+                                <span class="form-check-label">Beyaz Yaka Personellerini Puantajda Göster</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </form>
         <?php } ?>

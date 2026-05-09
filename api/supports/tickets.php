@@ -1,5 +1,5 @@
 <?php
-//define("ROOT", $_SERVER['DOCUMENT_ROOT']);
+//!defined("ROOT") ? define("ROOT", dirname(dirname(__DIR__))) : null;
 use App\Helper\Security;
 
 require_once __DIR__ . '/../../Database/require.php';
