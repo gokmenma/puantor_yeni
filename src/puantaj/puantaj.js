@@ -161,8 +161,6 @@ function puantaj_olustur() {
                 puantajId: puantajId,
                 project_id: project_id
             };
-            // Not: Başarı durumuna göre temizleme fetch .then() içine alınabilir ancak mevcut yapı korunmuştur
-            td.attr("data-change", "false");
         }
     });
   });
@@ -180,6 +178,11 @@ function puantaj_olustur() {
     .then((data) => {
       // Butonu eski haline getir
       saveBtn.prop('disabled', false).html(originalBtnHtml);
+
+      if (data.status == "success") {
+        // Kayıt başarılıysa tüm değişiklik bayraklarını sıfırla
+        $("td[data-change='true']").attr("data-change", "false");
+      }
 
       Swal.fire({
         title: data.status == "success" ? "Başarılı" : (data.status == "info" ? "Bilgi" : "Hata"),
@@ -203,3 +206,11 @@ function Route() {
   var form = $("#puantajInfoForm");
   form.submit();
 }
+
+// Sayfadan ayrılırken kaydedilmemiş değişiklik kontrolü
+$(window).on('beforeunload', function() {
+    if ($('td[data-change="true"]').length > 0) {
+        // Modern tarayıcılar bu mesajı göstermez ancak native uyarı penceresini tetikler.
+        return "Sayfada kaydedilmemiş değişiklikleriniz var. Ayrılmak istediğinizden emin misiniz?";
+    }
+});

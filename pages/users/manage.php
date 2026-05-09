@@ -30,15 +30,18 @@ $Auths->checkFirm();
 require_once "App/Helper/teams.php";
 $teamsHelper = new Teams();
 
-// Load job groups for quick lookup
+// Load job groups for quick lookup using secure database access method
 $all_job_groups = [];
 try {
-    $q_jg = $personsObj->getDb()->prepare("SELECT id, group_name FROM job_groups WHERE firm_id = ?");
-    $q_jg->execute([$_SESSION['firm_id']]);
-    foreach ($q_jg->fetchAll(PDO::FETCH_OBJ) as $jg) {
-        $all_job_groups[$jg->id] = $jg->group_name;
+    if (isset($personsObj) && method_exists($personsObj, 'getDb')) {
+        $q_jg = $personsObj->getDb()->prepare("SELECT id, group_name FROM job_groups WHERE firm_id = ?");
+        $q_jg->execute([$_SESSION['firm_id']]);
+        foreach ($q_jg->fetchAll(PDO::FETCH_OBJ) as $jg) {
+            $all_job_groups[$jg->id] = $jg->group_name;
+        }
     }
 } catch (Exception $e) {}
+
 
 // Load person-projects mappings for quick lookup
 $all_person_projects = [];

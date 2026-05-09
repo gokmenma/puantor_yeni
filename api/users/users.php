@@ -22,7 +22,7 @@ if ($_POST["action"] == "userSave") {
         //Email adresi ile kayıtlı ana kullanıcı varsa kayıt yapılmaz
         $user = $User->getUserByEmail($_POST["email"]);
         
-        if ($user && $user->parent_id == 0) {
+        if ($user && $user->parent_id == 0 && $user->id != $id) {
             $status = "error";
             $message = "Bu e-posta adresi ile zaten kayıtlı.";
             $res = [
