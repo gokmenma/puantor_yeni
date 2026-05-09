@@ -131,12 +131,19 @@ if ($(".datatable").length > 0) {
         let title = api.column(0).header().textContent;
         //0. kolonun title bilgisini al
 
-        //0. ve 1. kolonun index numarasına göre arama kutusu ekle
-        if (column.index() == 0 || column.index() == 1) {
+        // 0, 1, 2 ve 3. kolonların index numarasına göre arama kutusu ekle
+        if (column.index() >= 0 && column.index() <= 3) {
           // Create input element
           let input = document.createElement("input");
           // Set placeholder based on column index
-          input.placeholder = column.index() === 0 ? "Adı Soyadı" : "Unvanı";
+          var placeholder = "";
+          switch(column.index()) {
+            case 0: placeholder = "Adı Soyadı"; break;
+            case 1: placeholder = "Unvanı"; break;
+            case 2: placeholder = "İş Grubu"; break;
+            case 3: placeholder = "Ekip"; break;
+          }
+          input.placeholder = placeholder;
           input.classList.add("form-control");
           input.classList.add("form-control-sm");
           input.setAttribute("autocomplete", "off");

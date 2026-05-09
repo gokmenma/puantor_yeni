@@ -157,7 +157,7 @@ function puantaj_olustur() {
         if (!td.hasClass("gun") && !td.hasClass("noselect")) return;
         if (td.text().trim() === "---") return;
 
-        var dateIdx = tdIdx - 3; 
+        var dateIdx = tdIdx - 5; 
         if (dateIdx < 0 || dateIdx >= headDates.length) return;
 
         var date = year + month + headDates[dateIdx];
@@ -272,4 +272,19 @@ $(window).on('beforeunload', function() {
     if ($(rows).find("td[data-change='true']").length > 0) {
         return "Sayfada kaydedilmemiş değişiklikleriniz var.";
     }
+});
+
+// Sütun göster/gizle (Bağımsız seçim)
+$(document).on("change", ".column-toggle-check", function() {
+    var columnClass = $(this).data("column");
+    if ($(this).is(":checked")) {
+        $("." + columnClass).show();
+    } else {
+        $("." + columnClass).hide();
+    }
+});
+
+// Dropdown içindeki tıklamalarda menünün kapanmasını engelle
+$(document).on("click", ".dropdown-menu-column-selector", function (e) {
+    e.stopPropagation();
 });

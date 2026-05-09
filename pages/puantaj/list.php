@@ -82,21 +82,16 @@ $projectNamesCache[0] = "Proje Yok";
         text-align: center;
         cursor: pointer;
         font-weight: 600;
-
     }
 
     .gunadi {
         width: 40px !important;
         max-width: 40px !important;
-
     }
 
     table.dataTable.table-sm>thead>tr>th:not(.sorting_disabled) {
         padding: 7px !important;
-       
     }
-
-
 
     .dataTables_wrapper .dataTables_filter {
         display: none;
@@ -104,8 +99,6 @@ $projectNamesCache[0] = "Proje Yok";
 
     .table {
         padding-bottom: 15px !important;
-        overflow: auto !important;
-
     }
 
     .table tbody tr td {
@@ -117,10 +110,8 @@ $projectNamesCache[0] = "Proje Yok";
 
     .table tr td,
     .table th {
-        border: 1px solid #ddd !important;
+        border: 1px solid #e6e7e9 !important;
     }
-
-
 
     .gun.clicked {
         background-color: #FFED00 !important;
@@ -140,6 +131,11 @@ $projectNamesCache[0] = "Proje Yok";
     }
 
     th.vertical {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        white-space: nowrap;
+    }
+
         height: 100px;
         width: 40px;
         min-width: 40px;
@@ -273,14 +269,49 @@ $projectNamesCache[0] = "Proje Yok";
     .head-title {
         font-size: 15px;
         font-weight: 600;
-
     }
-    table .sticky {
-        position: sticky;
-        top: 10;
-        z-index: 1000;
-        background-color: #bbb !important;
 
+    /* Sticky Header Pro Max */
+    .page-wrapper {
+        overflow: clip !important;
+    }
+
+    .table-responsive {
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+    }
+
+    #puantajTable thead th {
+        position: sticky !important;
+        background: #f8fafc !important;
+        z-index: 100 !important;
+        border-bottom: 1px solid #dee2e6 !important;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+
+    #puantajTable thead tr:nth-child(1) th {
+        top: 0 !important;
+        z-index: 101 !important;
+    }
+
+    #puantajTable thead tr:nth-child(2) th {
+        top: 41px !important; /* İlk satırın yüksekliği */
+        z-index: 100 !important;
+    }
+
+
+    .dropdown-menu-column-selector {
+        min-width: 180px;
+        padding: 0.5rem 0;
+        z-index: 1050; /* Dropdown'ın her şeyin üstünde olması için */
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .dropdown-item.cursor-pointer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0.5rem 1rem;
     }
 
     .animate-pulse {
@@ -426,9 +457,26 @@ $projectNamesCache[0] = "Proje Yok";
                     <button href="" type="button" class="btn btn-primary float-end" onclick="puantaj_olustur()">
                         <i class="ti ti-device-floppy icon me-2"></i> Kaydet
                     </button>
-                      <a class="btn btn-animate-icon btn-animate-icon-rotate" data-bs-toggle="modal" data-bs-target="#modal-statistics"><!-- Download SVG icon from http://tabler.io/icons/icon/x -->
-                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-dots-2"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 3v18h18" /><path d="M7 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M11 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M16 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M21 3l-6 1.5" /><path d="M14.113 6.65l2.771 3.695" /><path d="M16 12.5l-5 2" /></svg>
+                        <a class="btn btn-animate-icon btn-animate-icon-rotate" data-bs-toggle="modal" data-bs-target="#modal-statistics" title="İstatistikler">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-dots-2"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 3v18h18" /><path d="M7 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M11 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M16 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M21 3l-6 1.5" /><path d="M14.113 6.65l2.771 3.695" /><path d="M16 12.5l-5 2" /></svg>
                         </a>
+                        
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-icon dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Sütunları Göster/Gizle">
+                                <i class="ti ti-layout-columns icon"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-column-selector">
+                                <h6 class="dropdown-header">Sütun Görünümü</h6>
+                                <label class="dropdown-item cursor-pointer">
+                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-grup">
+                                    İş Grubu
+                                </label>
+                                <label class="dropdown-item cursor-pointer">
+                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-ekip">
+                                    Ekip
+                                </label>
+                            </div>
+                        </div>
                 <?php } ?>
 
                     </div>
@@ -442,6 +490,8 @@ $projectNamesCache[0] = "Proje Yok";
                             <tr>
                                 <th class="ld">Adı Soyadı</th>
                                 <th class="ld">Unvanı</th>
+                                <th class="ld extra-column extra-grup" style="display:none">İş Grubu</th>
+                                <th class="ld extra-column extra-ekip" style="display:none">Ekip</th>
                                 <th style="display:none"></th>
 
                                 <?php foreach ($dates as $date): ?>
@@ -460,6 +510,8 @@ $projectNamesCache[0] = "Proje Yok";
 
                                 <th class="ld"></th>
                                 <th class="ld"></th>
+                                <th class="ld extra-column extra-grup" style="display:none"></th>
+                                <th class="ld extra-column extra-ekip" style="display:none"></th>
                                 <th class="ld" style="display:none">Seç</th>
                                 <?php
                                 foreach ($dates as $date):
@@ -507,6 +559,14 @@ $projectNamesCache[0] = "Proje Yok";
 
                                     <td class="text-nowrap" style="">
                                         <?php echo $person->job ?>
+                                    </td>
+
+                                    <td class="text-nowrap extra-column extra-grup" style="display:none">
+                                        <?php echo $person->job_group ?>
+                                    </td>
+
+                                    <td class="text-nowrap extra-column extra-ekip" style="display:none">
+                                        <?php echo $person->ekip ?>
                                     </td>
 
                                     <td class="text-nowrap" style="display:none">
