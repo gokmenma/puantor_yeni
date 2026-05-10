@@ -249,14 +249,14 @@ body[data-bs-theme="dark"] .text-dark { color: #f4f6fa !important; }
 }
 .modal-content {
     border-radius: 24px !important;
-    max-height: 92vh;
     display: flex;
     flex-direction: column;
 }
 #projectModal .modal-body {
     flex: 1;
-    overflow-y: auto;
-    max-height: none !important; /* Override 80vh */
+    overflow-y: auto !important;
+    max-height: 70vh !important;
+    -webkit-overflow-scrolling: touch;
 }
 #projectModal .modal-footer {
     position: sticky;
@@ -268,20 +268,21 @@ body[data-bs-theme="dark"] .text-dark { color: #f4f6fa !important; }
 }
 
 @media (max-width: 576px) {
-    .modal-dialog {
-        margin: 12px; /* Restore horizontal padding from screen edges */
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: auto;
-        max-width: none;
+    .modal.show .modal-dialog {
+        display: flex;
+        align-items: flex-end;
+        min-height: calc(100% - 1rem);
+        margin: 0.75rem;
+        margin-bottom: 0;
     }
     .modal-content {
-        border-bottom-left-radius: 24px !important; /* Keep rounded corners on mobile if margin exists */
-        border-bottom-right-radius: 24px !important;
+        max-height: 90vh;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        width: 100%;
     }
     #projectModal .modal-body {
+        max-height: 65vh !important;
         padding-bottom: 2rem;
     }
 }
