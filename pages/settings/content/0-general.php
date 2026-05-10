@@ -38,6 +38,7 @@ $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set
                             <label class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="show_white_collar_in_puantaj" <?php echo $show_white_collar == 1 ? 'checked' : ''; ?>>
                                 <span class="form-check-label">Beyaz Yaka Personellerini Puantajda Göster</span>
+                                <small class="form-hint text-muted mt-1">Seçili olduğu takdirde aylık ücret yerine ay/gün olarak işlem yapılacaktır.</small>
                             </label>
                         </div>
                     </div>

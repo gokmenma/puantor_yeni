@@ -50,7 +50,8 @@ if ($_POST['action'] == 'savePuantaj') {
             $start_date_ymd = ($person_info && !empty($person_info->job_start_date)) ? Date::Ymd($person_info->job_start_date) : '';
             $end_date_ymd = ($person_info && !empty($person_info->job_end_date)) ? Date::Ymd($person_info->job_end_date) : '';
 
-            $ucret_base = ($person_data->daily_wages ?? 0) / $work_hour;
+            $effective_daily = (($person_info->wage_type ?? 0) == 1) ? (floatval($person_data->daily_wages ?? 0) / 30) : floatval($person_data->daily_wages ?? 0);
+            $ucret_base = $effective_daily / $work_hour;
 
             foreach ($person_item as $puantaj_key => $puantaj_item) {
                 // Arka plan kontrolü: İşe giriş tarihinden önce veya işten ayrılış tarihinden sonra ise işlem yapma
@@ -73,7 +74,12 @@ if ($_POST['action'] == 'savePuantaj') {
                 } else if (!empty($puantaj_item['puantajId'])) {
                     // Özel ücret kontrolü
                     $defined_wage = $wages->getWageByPersonIdAndDate($person_id, $puantaj_key)->amount ?? 0;
-                    $hourly_wage = ($defined_wage > 0) ? ($defined_wage / $work_hour) : $ucret_base;
+                    if ($defined_wage > 0) {
+                        $effective_defined = (($person_info->wage_type ?? 0) == 1) ? (floatval($defined_wage) / 30) : floatval($defined_wage);
+                        $hourly_wage = $effective_defined / $work_hour;
+                    } else {
+                        $hourly_wage = $ucret_base;
+                    }
 
                     $puantaj_turu = $puantajObj->getPuantajTuruById($puantaj_item['puantajId']);
                     if ($puantaj_turu && $puantaj_turu->Turu != 'Saatlik') {

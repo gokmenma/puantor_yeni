@@ -157,17 +157,19 @@ function puantaj_olustur() {
         if (!td.hasClass("gun") && !td.hasClass("noselect")) return;
         if (td.text().trim() === "---") return;
 
-        var dateIdx = tdIdx - 5; 
+        var dateIdx = tdIdx - 4; 
         if (dateIdx < 0 || dateIdx >= headDates.length) return;
 
         var date = year + month + headDates[dateIdx];
         var puantajId = td.attr("data-id") || "";
+        // Eğer hücrede tanımlı bir proje varsa onu kullan, yoksa global filtreyi kullan
+        var cell_project_id = td.attr("data-project") || project_id;
 
         if (td.attr("data-change") === "true") {
             if (!jsonData[person_id]) jsonData[person_id] = {};
             jsonData[person_id][date] = {
                 puantajId: puantajId,
-                project_id: project_id
+                project_id: cell_project_id
             };
         }
     });

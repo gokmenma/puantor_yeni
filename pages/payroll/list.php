@@ -224,8 +224,10 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                             $bordro->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 16")->execute([$person->id, $month, $year]);
                                             $bordro->connect()->prepare("UPDATE puantaj SET tutar = 0 WHERE person = ? AND gun >= ? AND gun <= ?")->execute([$person->id, $firstDay, $lastDay]);
 
-                                            if ($person->wage_type == 1) {
-                                                // BEYAZ YAKA HESAPLAMA
+                                            $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+
+                                            if ($person->wage_type == 1 && $show_white_collar != 1) {
+                                                // BEYAZ YAKA HESAPLAMA (SABİT MAAŞ)
                                                 $description = Date::monthName($month) . ' ' . $year . ' Maaş';
                                                 
                                                 $job_start = str_replace('.', '-', $person->job_start_date);
@@ -246,15 +248,22 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                                     $bordro->addPersonMonthlyIncome($person->id, $month, $year, $person->daily_wages, $description);
                                                 }
                                             } else {
-                                                // MAVİ YAKA HESAPLAMA
+                                                // MAVİ YAKA VEYA PUANTAJLI BEYAZ YAKA HESAPLAMA
                                                 $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
                                                 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
                                                 $work_hour = str_replace(',', '.', $work_hour);
-                                                $ucret = $person->daily_wages / $work_hour;
+                                                
+                                                $effective_base_wage = ($person->wage_type == 1) ? ($person->daily_wages / 30) : $person->daily_wages;
+                                                $ucret = $effective_base_wage / $work_hour;
 
                                                 foreach ($puantajRecords as $p_record) {
                                                     $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
-                                                    $current_daily_wage = (($defined_wage > 0) ? ($defined_wage / $work_hour) : $ucret);
+                                                    if ($defined_wage > 0) {
+                                                        $effective_defined_wage = ($person->wage_type == 1) ? ($defined_wage / 30) : $defined_wage;
+                                                        $current_daily_wage = $effective_defined_wage / $work_hour;
+                                                    } else {
+                                                        $current_daily_wage = $ucret;
+                                                    }
 
                                                     $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
                                                     if ($puantaj_turu->Turu != 'Saatlik') {

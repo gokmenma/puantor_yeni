@@ -52,8 +52,10 @@ try {
         $person_id = Security::decrypt($person_key);
         if (!$person_id) continue;
 
+        $person_info = $personModel->find($person_id);
         $daily_wage_obj = $personModel->getDailyWages($person_id);
-        $ucret_base = floatval(($daily_wage_obj->daily_wages ?? 0)) / $work_hour;
+        $effective_daily = (($person_info->wage_type ?? 0) == 1) ? (floatval($daily_wage_obj->daily_wages ?? 0) / 30) : floatval($daily_wage_obj->daily_wages ?? 0);
+        $ucret_base = $effective_daily / $work_hour;
 
         foreach ($person_item as $date => $puantaj_item) {
             $type_id = intval($puantaj_item['puantajId'] ?? 0);
@@ -64,7 +66,12 @@ try {
             $id = $puantajObj->getPuantajId($person_id, $date, $project_id);
 
             $defined_wage = $wagesModel->getWageByPersonIdAndDate($person_id, $date)->amount ?? 0;
-            $hourly_wage = (($defined_wage > 0) ? ($defined_wage / $work_hour) : $ucret_base);
+            if ($defined_wage > 0) {
+                $effective_defined = (($person_info->wage_type ?? 0) == 1) ? (floatval($defined_wage) / 30) : floatval($defined_wage);
+                $hourly_wage = $effective_defined / $work_hour;
+            } else {
+                $hourly_wage = $ucret_base;
+            }
 
             $puantaj_turu = $puantajObj->getPuantajTuruById($type_id);
             if ($puantaj_turu->Turu != 'Saatlik') {
