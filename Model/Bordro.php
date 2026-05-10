@@ -308,7 +308,7 @@ class Bordro extends Model
                                             FROM sqlmaas_gelir_kesinti
                                             WHERE person_id = :person_id 
                                              AND tutar > 0 
-                                            and gun >= :first_day and gun <= :last_day
+                                            AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) >= :first_day AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) <= :last_day
                                             AND kategori IN($gelir)
                                             GROUP BY puantaj_turu,turu");
         $sql->execute([
@@ -336,7 +336,7 @@ class Bordro extends Model
                                                 puantaj_turu
                                             FROM sqlmaas_gelir_kesinti 
                                             WHERE person_id = :person_id
-                                            and gun >= :first_day and gun <= :last_day
+                                            AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) >= :first_day AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) <= :last_day
                                             AND kategori IN($kesinti)
                                             GROUP BY kategori,turu");
         $sql->execute([
