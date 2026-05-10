@@ -103,6 +103,17 @@ $userId = $user->id ?? 0;
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
+
+    <a href="cari" class="list-group-item" data-id="cari">
+      <div class="d-flex align-items-center gap-1">
+        <i class="ti ti-grip-vertical text-muted drag-handle"></i>
+        <div class="avatar avatar-sm rounded bg-purple-lt me-2">
+          <i class="ti ti-user text-purple"></i>
+        </div>
+        <span class="text-semibold text-sm">Cari Takip</span>
+      </div>
+      <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
+    </a>
   </div>
 
   <!-- Destek ve Ayarlar -->

@@ -62,6 +62,7 @@ if ($_POST["action"] == "savePerson") {
         "firm_id" => $_SESSION["firm_id"],
         "wage_type" => $_POST["wage_type"],
         "iban_number" => Security::encrypt($_POST["iban_number"]),
+        "description" => $_POST["aciklama"] ?? '',
         // "salary" => $_POST["salary"],
         "daily_wages" => Helper::formattedMoneyToNumber($_POST["daily_wages"]),
         "job_start_date" => $_POST["job_start_date"],

@@ -224,7 +224,7 @@ body[data-bs-theme="dark"] .transaction-item-content {
 }
 .btn-swipe-delete {
     color: white;
-    width: 70px;
+    width: 60px;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -236,7 +236,7 @@ body[data-bs-theme="dark"] .transaction-item-content {
     font-weight: 600;
 }
 .btn-swipe-delete i {
-    font-size: 1.2rem;
+    font-size: 1rem;
     margin-bottom: 2px;
 }
 </style>
@@ -678,7 +678,7 @@ $(document).ready(function() {
     let touchStartX = 0;
     let touchMoveX = 0;
     let currentSwipeItem = null;
-    const swipeThreshold = 70;
+    const swipeThreshold = 60;
 
     $(document).on('touchstart', '.transaction-item-content', function(e) {
         touchStartX = e.originalEvent.touches[0].clientX;

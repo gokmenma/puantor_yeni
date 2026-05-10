@@ -22,15 +22,16 @@ $teamsHelper = new Teams();
 $firm_id = $_SESSION['firm_id'] ?? 0;
 $selected_date = $_GET['date'] ?? date('Y-m-d');
 $selected_project_id = intval($_GET['project_id'] ?? 0);
-$selected_job_group = intval($_GET['job_group'] ?? 0);
-$selected_team_id = intval($_GET['team_id'] ?? 0);
+$selected_job_group = $_GET['job_group'] ?? 0;
+$selected_team_id = $_GET['team_id'] ?? 0;
 $selected_collar_type = $_GET['collar_type'] ?? 'all'; // all, blue, white
 
-// Ayarlar: Beyaz yakalıları göster
-$showWhiteCollarSetting = $settingsModel->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+// Filtreye göre beyaz yakalıları dahil etme durumu
 $showWhiteCollar = ($selected_collar_type === 'white' || $selected_collar_type === 'all') ? 1 : 0;
-// Eğer genel ayar kapalıysa ve filtre 'all' ise sadece mavileri göster
-if ($showWhiteCollarSetting == 0 && $selected_collar_type === 'all') $showWhiteCollar = 0;
+// Eğer filtre 'all' ise ama sistem ayarı kapalıysa, sadece mavileri getir (Masaüstü davranışı)
+$showWhiteCollarSetting = $settingsModel->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+if ($selected_collar_type === 'all' && $showWhiteCollarSetting == 0) $showWhiteCollar = 0;
+
 
 // Masaüstü ile %100 aynı personelleri getirmek için ortak fonksiyonu kullanıyoruz
 $first_day_ymd = date('Ymd', strtotime($selected_date . ' -0 days'));
@@ -101,7 +102,7 @@ $is_today_or_future = ($selected_date >= $today);
     }
     .btn-swipe-clear {
         color: #d63f3f;
-        width: 70px;
+        width: 60px;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -121,27 +122,84 @@ $is_today_or_future = ($selected_date >= $today);
         background: #fee2e2;
     }
     .btn-swipe-clear i {
-        font-size: 1.2rem;
+        font-size: 1rem;
         margin-bottom: 2px;
     }
 
     /* Filtre Select Tweaks */
     #filterModal .form-select {
-        height: 42px;
-        font-size: 0.9rem;
+        height: 52px;
+        font-size: 0.88rem;
+        border-radius: 12px;
+        padding-top: 1.1rem;
     }
+
     #filterModal .btn-group .btn {
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         font-weight: 500;
-        padding: 10px;
+        padding: 8px;
+        border-radius: 10px !important;
     }
     #filterModal .btn-check:checked + .btn {
         background-color: var(--mobile-primary) !important;
         color: white !important;
+        font-weight: 600;
     }
+
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .person-row.saved { background-color: rgba(47, 179, 68, 0.04) !important; transition: background 0.3s; }
+
+    /* Floating Select2 Styling */
+    .form-floating-select2 {
+        position: relative;
+        height: 52px;
+    }
+    .form-floating-select2 .select2-container--default .select2-selection--single {
+        height: 52px !important;
+        padding-top: 1.1rem !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(0,0,0,0.08) !important;
+        background-color: #fff !important;
+    }
+    body[data-bs-theme="dark"] .form-floating-select2 .select2-container--default .select2-selection--single {
+        background-color: #1e293b !important;
+        border-color: rgba(255,255,255,0.08) !important;
+    }
+    .form-floating-select2 .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.4 !important;
+        padding-left: 12px !important;
+        padding-top: 6px !important;
+        font-size: 0.88rem !important;
+        font-weight: 500 !important;
+        color: var(--tblr-body-color) !important;
+    }
+    .form-floating-select2 .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 52px !important;
+    }
+    .form-floating-select2 label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 5;
+        height: 100%;
+        padding: 0.85rem 0.75rem;
+        pointer-events: none;
+        transform-origin: 0 0;
+        transition: opacity .1s ease-in-out, transform .1s ease-in-out;
+        color: rgba(var(--tblr-body-color-rgb), .5);
+        font-size: 0.82rem;
+        opacity: 1;
+        font-weight: 500;
+    }
+    .form-floating-select2.has-value label,
+    .form-floating-select2.is-focused label {
+        transform: scale(.8) translateY(-.5rem) translateX(.15rem);
+        opacity: .8;
+        color: var(--mobile-primary);
+    }
+
+
     
     /* Option styling */
     .type-option-row {
@@ -313,6 +371,10 @@ $is_today_or_future = ($selected_date >= $today);
 
     <div class="list-group list-group-mobile mb-5" id="puantajListContainer">
         <?php foreach ($persons as $person): 
+            // Collar Type Filtreleme (Model 'include' mantığında çalıştığı için burada net filtreleme yapıyoruz)
+            if ($selected_collar_type == 'blue' && $person->wage_type != 2) continue;
+            if ($selected_collar_type == 'white' && $person->wage_type != 1) continue;
+
             // İş başlama ve ayrılış tarihlerine göre filtreleme
             $start_dt = !empty($person->job_start_date) ? date('Y-m-d', strtotime($person->job_start_date)) : null;
             $end_dt = !empty($person->job_end_date) ? date('Y-m-d', strtotime($person->job_end_date)) : null;
@@ -515,46 +577,50 @@ $is_today_or_future = ($selected_date >= $today);
             </div>
             <div class="modal-body">
                 <form id="filterForm">
-                    <div class="mb-3">
-                        <label class="form-label text-xs font-weight-bold text-muted">PROJE</label>
-                        <select name="project_id" class="form-select border-0 bg-secondary-lt" style="border-radius: 12px;">
-                            <option value="0">Tüm Projeler</option>
+                    <div class="form-floating mb-3 form-floating-select2">
+                        <select name="project_id" class="form-select border-0 bg-secondary-lt" id="project_id" style="border-radius: 12px;">
+                            <option value="0" <?php echo ($selected_project_id == 0) ? 'selected' : ''; ?>>Tüm Projeler</option>
                             <?php foreach ($all_projects as $proj): ?>
                                 <option value="<?php echo $proj->id; ?>" <?php echo ($selected_project_id == $proj->id) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($proj->project_name); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <label for="project_id">PROJE</label>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-xs font-weight-bold text-muted">PERSONEL TİPİ</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.05em;">PERSONEL TİPİ</label>
+                        </div>
                         <div class="btn-group w-100" role="group">
                             <input type="radio" class="btn-check" name="collar_type" id="collar_all" value="all" <?php echo $selected_collar_type == 'all' ? 'checked' : ''; ?>>
-                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_all" style="border-radius: 12px 0 0 12px;">Hepsi</label>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_all">Hepsi</label>
 
                             <input type="radio" class="btn-check" name="collar_type" id="collar_blue" value="blue" <?php echo $selected_collar_type == 'blue' ? 'checked' : ''; ?>>
                             <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_blue">Mavi Yaka</label>
 
                             <input type="radio" class="btn-check" name="collar_type" id="collar_white" value="white" <?php echo $selected_collar_type == 'white' ? 'checked' : ''; ?>>
-                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_white" style="border-radius: 0 12px 12px 0;">Beyaz Yaka</label>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_white">Beyaz Yaka</label>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label text-xs font-weight-bold text-muted">İŞ GRUBU / GÖREV</label>
+
+                    <div class="form-floating mb-3 form-floating-select2">
                         <?php echo $jobsHelper->jobGroupsSelect('job_group', $selected_job_group); ?>
+                        <label for="job_group">İŞ GRUBU / GÖREV</label>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label text-xs font-weight-bold text-muted">EKİBİ</label>
+                    <div class="form-floating mb-3 form-floating-select2">
                         <?php echo $teamsHelper->teamsSelect('team_id', $selected_team_id); ?>
+                        <label for="team_id">EKİBİ</label>
                     </div>
 
                     <div class="mt-4">
-                        <button type="button" class="btn btn-primary w-100 py-2.5" onclick="applyFilters()" style="border-radius: 14px; font-weight: 600;">Filtreleri Uygula</button>
-                        <button type="button" class="btn btn-link w-100 mt-2 text-muted text-xs text-decoration-none" onclick="clearFilters()">Seçimleri Temizle</button>
+                        <button type="button" class="btn btn-primary w-100 py-2" onclick="applyFilters()" style="border-radius: 12px; font-weight: 600; font-size: 0.9rem;">Filtreleri Uygula</button>
+                        <button type="button" class="btn btn-link w-100 mt-1 text-muted text-decoration-none" onclick="clearFilters()" style="font-size: 0.75rem;">Seçimleri Temizle</button>
                     </div>
+
                 </form>
             </div>
         </div>
@@ -597,8 +663,9 @@ document.addEventListener('DOMContentLoaded', function() {
         onChange: function(selectedDates, dateStr, instance) {
             const dateParts = dateStr.split(".");
             const ymdDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-            const projId = '<?php echo $selected_project_id; ?>' || 0;
-            location.href = `puantaj?date=${ymdDate}&project_id=${projId}`;
+            const url = new URL(window.location.href);
+            url.searchParams.set('date', ymdDate);
+            location.href = url.toString();
         }
     });
 
@@ -606,7 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let touchStartX = 0;
     let touchMoveX = 0;
     let currentSwipeItem = null;
-    const swipeThreshold = 70;
+    const swipeThreshold = 60;
 
     $(document).on('touchstart', '.person-item-content', function(e) {
         touchStartX = e.originalEvent.touches[0].clientX;
@@ -967,4 +1034,47 @@ function saveSelectedPuantaj(selectedOption) {
     });
 }
 
+// Initialize filter modal selects when modal is about to be shown
+document.getElementById('filterModal').addEventListener('show.bs.modal', function () {
+    const $form = $(this);
+    
+    // Initial check for values before select2 replaces them
+    $form.find('select').each(function() {
+        if ($(this).val() && $(this).val() != "0") {
+            $(this).closest('.form-floating-select2').addClass('has-value');
+        } else {
+            $(this).closest('.form-floating-select2').removeClass('has-value');
+        }
+    });
+
+    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+
+        $('#job_group, #team_id, #project_id').select2({
+            dropdownParent: $('#filterModal'),
+            width: '100%'
+        }).on('select2:open', function() {
+            $(this).closest('.form-floating-select2').addClass('is-focused');
+        }).on('select2:close', function() {
+            $(this).closest('.form-floating-select2').removeClass('is-focused');
+            if ($(this).val() && $(this).val() != "0") {
+                $(this).closest('.form-floating-select2').addClass('has-value');
+            } else {
+                $(this).closest('.form-floating-select2').removeClass('has-value');
+            }
+        }).on('change', function() {
+            if ($(this).val() && $(this).val() != "0") {
+                $(this).closest('.form-floating-select2').addClass('has-value');
+            } else {
+                $(this).closest('.form-floating-select2').removeClass('has-value');
+            }
+        });
+
+        // Initial check for values
+        $('#job_group, #team_id, #project_id').each(function() {
+            if ($(this).val() && $(this).val() != "0") {
+                $(this).closest('.form-floating-select2').addClass('has-value');
+            }
+        });
+    }
+});
 </script>

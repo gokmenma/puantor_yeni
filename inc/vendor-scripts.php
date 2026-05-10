@@ -36,7 +36,7 @@ if (
     $page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage' ||
     $page == 'defines/project-status/list' ||
     $page == 'todos/list' ||
-    $page == "users/manage"
+    $page == "users/manage" || $page == "cari/list" || $page == "cari/movements"
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }

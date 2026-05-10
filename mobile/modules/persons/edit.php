@@ -1,4 +1,58 @@
 <?php
+ob_start();
+?>
+<style>
+/* Floating Select2 Styling */
+.form-floating-select2 {
+    position: relative;
+    height: 58px;
+}
+.form-floating-select2 .select2-container--default .select2-selection--single {
+    height: 58px !important;
+    padding-top: 1.25rem !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    background-color: #fff !important;
+}
+body[data-bs-theme="dark"] .form-floating-select2 .select2-container--default .select2-selection--single {
+    background-color: #1e293b !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+.form-floating-select2 .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5 !important;
+    padding-left: 12px !important;
+    padding-top: 8px !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+}
+.form-floating-select2 .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 58px !important;
+}
+.form-floating-select2 label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    height: 100%;
+    padding: 1rem 0.75rem;
+    pointer-events: none;
+    transform-origin: 0 0;
+    transition: opacity .1s ease-in-out, transform .1s ease-in-out;
+    color: rgba(var(--tblr-body-color-rgb), .65);
+    font-size: 0.9rem;
+    opacity: 1;
+}
+.form-floating-select2.has-value label,
+.form-floating-select2.is-focused label {
+    transform: scale(.85) translateY(-.6rem) translateX(.15rem);
+    opacity: .75;
+}
+/* Hide FAB dropdown caret */
+.mobile-fab.dropdown-toggle::after {
+    display: none !important;
+}
+</style>
+<?php
 // Puantor Mobil - Personel Düzenleme
 require_once ROOT . "/Model/Persons.php";
 require_once ROOT . "/Model/Projects.php";
@@ -14,6 +68,12 @@ require_once ROOT . "/App/Helper/date.php";
 use App\Helper\Security;
 use App\Helper\Helper;
 use App\Helper\Date;
+
+require_once ROOT . "/App/Helper/jobs.php";
+require_once ROOT . "/App/Helper/teams.php";
+
+$jobGroupsHelper = new Jobs();
+$teamsHelper = new Teams();
 
 $personsModel = new Persons();
 $projectsModel = new Projects();
@@ -76,6 +136,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_person'])) {
     $selectedProjects = $_POST['person_project'] ?? [];
     $primary_project_id = !empty($selectedProjects) ? $selectedProjects[0] : 0;
 
+    $job_group = $_POST['job_group'] ?? ($person->job_group ?? '');
+    // Eğer iş grubu sayısal değilse (yeni bir tag girilmişse) yeni grup oluştur
+    if (!empty($job_group) && !is_numeric($job_group)) {
+        $db = $personsModel->getDb();
+        $stmt = $db->prepare("INSERT INTO job_groups (firm_id, group_name) VALUES (?, ?)");
+        $stmt->execute([$firm_id, $job_group]);
+        $job_group = $db->lastInsertId();
+    }
+
+    $team_val = !empty($_POST['team_id']) ? $_POST['team_id'] : ($person->ekip ?? ($person->team_id ?? null));
+
     $data = [
         'id' => $id,
         'firm_id' => $firm_id,
@@ -88,6 +159,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_person'])) {
         'job_start_date' => !empty($_POST['job_start_date']) ? $_POST['job_start_date'] : null,
         'job_end_date' => !empty($_POST['job_end_date']) ? $_POST['job_end_date'] : null,
         'job' => $_POST['job'] ?? '',
+        'job_group' => $job_group,
+        'team_id' => $team_val,
+        'ekip' => $team_val,
+        'iban_number' => Security::encrypt($_POST['iban_number'] ?? ''),
+        'description' => $_POST['description'] ?? '',
         'project_id' => $primary_project_id,
         'address' => $_POST['address'] ?? ''
     ];
@@ -149,34 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
       </div>
     </div>
 
-    <!-- Üç Nokta Menü (Sekme Tetikleyiciler) -->
-    <div class="dropdown">
-      <button class="btn btn-icon btn-ghost-secondary rounded-circle shadow-none" type="button" id="personTabsDropdown" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" style="width: 40px; height: 40px;">
-        <i class="ti ti-dots-vertical fs-2"></i>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2" aria-labelledby="personTabsDropdown" style="border-radius: 16px; margin-top: 8px; min-width: 220px; z-index: 2000;">
-        <li>
-          <a class="dropdown-item active rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="info" data-title="Personel Bilgileri">
-            <i class="ti ti-user-circle me-2"></i> Personel Bilgileri
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="puantaj" data-title="Puantaj Cetveli">
-            <i class="ti ti-calendar-event me-2"></i> Puantaj Cetveli
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="finance" data-title="Ödemeler & Finans">
-            <i class="ti ti-cash-banknote me-2"></i> Ödemeler & Finans
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item rounded-3 py-2 text-semibold tab-trigger" href="#" data-tab="documents" data-title="Evraklar & Belgeler">
-            <i class="ti ti-file-text me-2"></i> Evraklar & Belgeler
-          </a>
-        </li>
-      </ul>
-    </div>
+    <!-- Header Actions moved to FAB at bottom right -->
   </div>
 
   <style>
@@ -289,6 +338,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
               <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="PWA Giriş Şifresi">
               <label for="floatingPassword">Yeni PWA Giriş Şifresi</label>
             </div>
+            <div class="form-floating mb-3">
+              <input type="text" name="iban_number" class="form-control" id="floatingIban" placeholder="TR..." value="<?php echo Security::safeDecrypt($person->iban_number ?? ''); ?>" maxlength="32">
+              <label for="floatingIban">İban Numarası</label>
+            </div>
           </div>
 
           <!-- Ücret & Çalışma Grubu -->
@@ -304,6 +357,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
             </div>
 
             <div class="row g-2 mb-3">
+              <div class="col-12">
+                <div class="form-floating mb-3 form-floating-select2">
+                  <?php echo $jobGroupsHelper->jobGroupsSelect("job_group", $person->job_group ?? ''); ?>
+                  <label for="job_group">İş Grubu</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating mb-3 form-floating-select2">
+                  <?php echo $teamsHelper->teamsSelect("team_id", $person->ekip ?? ($person->team_id ?? '')); ?>
+                  <label for="team_id">Ekibi</label>
+                </div>
+              </div>
               <div class="col-6">
                 <div class="form-floating">
                   <input type="number" step="0.01" name="daily_wage" class="form-control" id="floatingDailyWage" placeholder="0.00" value="<?php echo (float)$person->daily_wages; ?>">
@@ -351,6 +416,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
             <div class="form-floating mb-3">
               <textarea name="address" id="floatingAddress" class="form-control" placeholder="Adres Bilgisi" style="height: 100px;"><?php echo htmlspecialchars($person->address ?? ''); ?></textarea>
               <label for="floatingAddress">Adres Bilgisi</label>
+            </div>
+
+            <div class="form-floating mb-3">
+              <textarea name="description" id="floatingDescription" class="form-control" placeholder="Açıklama" style="height: 100px;"><?php echo htmlspecialchars($person->description ?? ''); ?></textarea>
+              <label for="floatingDescription">Açıklama</label>
             </div>
           </div>
         </div>
@@ -581,8 +651,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
       <?php endif; ?>
     </div>
 
-    <!-- Floating Action Button for Finance -->
-    <a href="#" class="mobile-fab shadow-lg" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="bottom: 85px;">
+    <!-- Floating Action Button for Finance (Moved higher to avoid overlap with Menu FAB) -->
+    <a href="#" class="mobile-fab shadow-lg" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="bottom: 155px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4);">
       <i class="ti ti-plus"></i>
     </a>
   </div>
@@ -594,9 +664,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
           <h4 class="mb-1">Evrak Arşivi</h4>
           <p class="text-xs">Bu personele ait dökümanlar yakında burada listelenecek.</p>
           <button class="btn btn-outline-primary btn-sm rounded-pill mt-3">Yeni Evrak Yükle</button>
-     </div>
   </div>
-</div>
+
+  <!-- FAB code removed from here -->
 </div>
 
 <!-- Payroll Detail Modal -->
@@ -719,9 +789,48 @@ $(document).ready(function() {
     // Select2'yi sayfa ilk yüklendiğinde de başlat
     if ($.fn.select2) {
         $('.select2-init').select2();
+        
+        $("#job_group").select2({
+            tags: true,
+            placeholder: "İş Grubu Seçiniz veya Yazınız",
+            allowClear: true,
+            width: '100%'
+        });
+
+        $("#team_id").select2({
+            tags: true,
+            placeholder: "Ekip Seçiniz veya Yazınız",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Floating label effect for Select2
+        $('.form-floating-select2 select').on('select2:open', function() {
+            $(this).closest('.form-floating-select2').addClass('is-focused');
+        }).on('select2:close', function() {
+            $(this).closest('.form-floating-select2').removeClass('is-focused');
+            if ($(this).val()) {
+                $(this).closest('.form-floating-select2').addClass('has-value');
+            } else {
+                $(this).closest('.form-floating-select2').removeClass('has-value');
+            }
+        }).on('change', function() {
+            if ($(this).val()) {
+                $(this).closest('.form-floating-select2').addClass('has-value');
+            } else {
+                $(this).closest('.form-floating-select2').removeClass('has-value');
+            }
+        });
+
+        // Initial check
+        $('.form-floating-select2 select').each(function() {
+            if ($(this).val()) {
+                $(this).closest('.form-floating-select2').addClass('has-value');
+            }
+        });
     }
 
-    // Dropdown Manuel Tetikleyici
+    // Dropdown Manuel Tetikleyici (Working pattern from projects/manage.php)
     $(document).on('click', '#personTabsDropdown', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -899,7 +1008,7 @@ $(document).ready(function() {
 
     // Dışarı tıklayınca kapatma
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('.dropdown').length) {
+        if (!$(e.target).closest('.dropdown, .dropup').length) {
             $('.dropdown-menu').removeClass('show');
         }
     });
@@ -953,19 +1062,26 @@ $(document).ready(function() {
     color: #ef4444 !important;
 }
 
-.dropdown-menu.show {
+.dropdown-menu {
+    transition: all 0.2s ease-in-out;
+    display: none;
+    right: 0 !important;
+    left: auto !important;
+    border-radius: 16px !important;
+}
+
+.dropup .dropdown-menu {
+    top: auto !important;
+    bottom: 100% !important;
+    margin-bottom: 12px !important;
+    transform: translateY(15px) !important;
+}
+
+.dropup .dropdown-menu.show {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
     transform: translateY(0) !important;
-}
-
-.dropdown-menu {
-    transition: all 0.2s ease-in-out;
-    transform: translateY(10px);
-    display: none;
-    right: 0 !important;
-    left: auto !important;
 }
 
 .btn-check:checked + .btn-outline-primary {
@@ -982,3 +1098,32 @@ body[data-bs-theme="dark"] .calendar-day.empty {
     background-color: transparent;
 }
 </style>
+
+<!-- Floating Action Button (FAB) for Personnel Menu -->
+<div class="dropup position-fixed" style="right: 1.25rem; bottom: 100px; z-index: 1060;">
+  <button class="mobile-fab border-0 shadow-lg dropdown-toggle no-caret" id="personTabsDropdown" type="button" aria-expanded="false" style="position: static; box-shadow: 0 4px 20px rgba(32, 107, 196, 0.5) !important;">
+    <i class="ti ti-dots-vertical"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 mb-3" style="border-radius: 16px; min-width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;">
+    <li>
+      <a class="dropdown-item active rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="info" data-title="Personel Bilgileri">
+        <i class="ti ti-user-circle me-2"></i> Personel Bilgileri
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="puantaj" data-title="Puantaj Cetveli">
+        <i class="ti ti-calendar-event me-2"></i> Puantaj Cetveli
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="finance" data-title="Ödemeler & Finans">
+        <i class="ti ti-cash-banknote me-2"></i> Ödemeler & Finans
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item rounded-3 py-2 text-semibold tab-trigger" href="#" data-tab="documents" data-title="Evraklar & Belgeler">
+        <i class="ti ti-file-text me-2"></i> Evraklar & Belgeler
+      </a>
+    </li>
+  </ul>
+</div>

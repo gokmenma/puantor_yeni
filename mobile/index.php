@@ -198,6 +198,16 @@ switch ($route) {
         $page_file = "modules/more/index.php";
         $active_page = "more";
         break;
+    case 'cari':
+        $title = "Cari Takip";
+        $page_file = "modules/cari/index.php";
+        $active_page = "more";
+        break;
+    case 'cari-movements':
+        $title = "Cari Hareketleri";
+        $page_file = "modules/cari/movements.php";
+        $active_page = "more";
+        break;
     default:
         $title = "Puantaj Takip";
         $page_file = "modules/dashboard/index.php";
