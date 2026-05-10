@@ -133,16 +133,34 @@ $projectNamesCache[0] = "Proje Yok";
     }
 
     /* İsim ve Unvan sütunları için genişlik */
-    #puantajTable th:nth-child(1), #puantajTable td:nth-child(1) { width: 180px !important; min-width: 180px !important; max-width: 250px !important; }
-    #puantajTable th:nth-child(2), #puantajTable td:nth-child(2) { width: 150px !important; min-width: 150px !important; max-width: 150px !important; }
-    #puantajTable .extra-grup { width: 120px !important; min-width: 120px !important; }
-    #puantajTable .extra-ekip { width: 120px !important; min-width: 120px !important; }
+    #puantajTable .extra-grup, #puantajTable .extra-ekip { 
+        width: 120px !important; 
+    }
     
     table#puantajTable.table {
         width: 100% !important;
-        min-width: 1600px !important;
-        max-width: none !important;
+        min-width: 1200px !important;
         table-layout: fixed !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        margin: 0 !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    #puantajTable th, #puantajTable td {
+        border: 1px solid #e2e8f0 !important;
+        padding: 6px 4px !important;
+        vertical-align: middle !important;
+    }
+
+    /* Greedy column: Adı Soyadı takes remaining space while others stay fixed */
+    #puantajTable th:nth-child(1), #puantajTable td:nth-child(1) { 
+        width: 220px !important; 
+        min-width: 200px !important; 
+    }
+    #puantajTable th:nth-child(2), #puantajTable td:nth-child(2) { 
+        width: 160px !important; 
+        min-width: 150px !important; 
     }
     
     #puantajTable th, #puantajTable td {
@@ -159,8 +177,9 @@ $projectNamesCache[0] = "Proje Yok";
 
     /* Gün hücrelerini her koşulda sabitle */
     .gun, .gunadi, .head-date {
-        width: 35px !important;
-        min-width: 35px !important;
+        width: 38px !important;
+        min-width: 38px !important;
+        max-width: 38px !important;
         padding: 0 !important;
         text-align: center !important;
         overflow: hidden !important;
@@ -295,7 +314,7 @@ $projectNamesCache[0] = "Proje Yok";
         z-index: 100;
     }
 
-    table:not(#puantajTable) {
+    table {
         width: 100% !important;
     }
 
@@ -426,7 +445,7 @@ $projectNamesCache[0] = "Proje Yok";
 <?php include_once 'content/puantaj-istatistik-modal.php' ?>
 
 
-<div class="container-xl mt-3">
+<div class="container-fluid mt-3">
     <form action="" method="post" id="puantajInfoForm">
         <div class="row g-2 align-items-center">
             <div class="col-md-2">
@@ -479,7 +498,7 @@ $projectNamesCache[0] = "Proje Yok";
 </div>
 
 
-<div class="container-xl mt-3">
+<div class="container-fluid mt-3">
     <div class="row row-deck row-cards">
         <div class="col-12">
             <div class="card">
@@ -582,7 +601,7 @@ $projectNamesCache[0] = "Proje Yok";
                     <table id="puantajTable" class="table card-table text-nowrap datatable">
                         <thead class="sticky">
                             <tr>
-                                <th class="ld cursor-pointer" style="width: 180px !important;" onclick="sortPuantaj(0)">Adı Soyadı</th>
+                                <th class="ld cursor-pointer" onclick="sortPuantaj(0)">Adı Soyadı</th>
                                 <th class="ld cursor-pointer" style="width: 150px !important;" onclick="sortPuantaj(1)">Unvanı</th>
                                 <th class="ld extra-column extra-grup cursor-pointer" style="display:none; width: 120px !important;" onclick="sortPuantaj(2)">İş Grubu</th>
                                 <th class="ld extra-column extra-ekip cursor-pointer" style="display:none; width: 120px !important;" onclick="sortPuantaj(3)">Ekip</th>
@@ -602,7 +621,7 @@ $projectNamesCache[0] = "Proje Yok";
                             </tr>
 
                             <tr>
-                                <th class="ld" style="width: 180px !important;"></th>
+                                <th class="ld"></th>
                                 <th class="ld" style="width: 150px !important;"></th>
                                 <th class="ld extra-column extra-grup" style="display:none; width: 120px !important;"></th>
                                 <th class="ld extra-column extra-ekip" style="display:none; width: 120px !important;"></th>
@@ -646,7 +665,7 @@ $projectNamesCache[0] = "Proje Yok";
 
                                 ?>
                                 <tr>
-                                    <td class="text-nowrap" style="width: 180px !important;" data-id="<?php echo $id ?>"><a class="btn-user-modal"
+                                    <td class="text-nowrap" data-id="<?php echo $id ?>"><a class="btn-user-modal"
                                             type="button">
                                             <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
                                                 target="_blank"><?php echo $person->full_name ?></a></td>
