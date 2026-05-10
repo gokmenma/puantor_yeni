@@ -248,6 +248,41 @@ body[data-bs-theme="dark"] .text-dark { color: #f4f6fa !important; }
     margin: 0.5rem;
 }
 .modal-content {
-    border-radius: 20px;
+    border-radius: 24px !important;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+}
+#projectModal .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none !important; /* Override 80vh */
+}
+#projectModal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 1055;
+    background: #fff !important;
+    border-top: 1px solid rgba(0,0,0,0.05) !important;
+    padding: 1rem 1.25rem !important;
+}
+
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 12px; /* Restore horizontal padding from screen edges */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: auto;
+        max-width: none;
+    }
+    .modal-content {
+        border-bottom-left-radius: 24px !important; /* Keep rounded corners on mobile if margin exists */
+        border-bottom-right-radius: 24px !important;
+    }
+    #projectModal .modal-body {
+        padding-bottom: 2rem;
+    }
 }
 </style>

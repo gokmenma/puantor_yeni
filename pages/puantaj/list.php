@@ -134,33 +134,35 @@ $projectNamesCache[0] = "Proje Yok";
 
     /* İsim ve Unvan sütunları için genişlik */
     #puantajTable .extra-grup, #puantajTable .extra-ekip { 
-        width: 120px !important; 
+        width: 140px !important;
+        min-width: 140px !important;
     }
     
     table#puantajTable.table {
         width: 100% !important;
-        min-width: 1200px !important;
-        table-layout: fixed !important;
+        table-layout: auto !important;
         border-collapse: separate !important;
         border-spacing: 0 !important;
         margin: 0 !important;
         border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     #puantajTable th, #puantajTable td {
         border: 1px solid #e2e8f0 !important;
-        padding: 6px 4px !important;
+        padding: 8px 6px !important;
         vertical-align: middle !important;
+        white-space: nowrap !important;
     }
 
-    /* Greedy column: Adı Soyadı takes remaining space while others stay fixed */
+    /* First column greedy behavior */
     #puantajTable th:nth-child(1), #puantajTable td:nth-child(1) { 
-        width: 220px !important; 
-        min-width: 200px !important; 
+        width: auto !important; 
+        min-width: 220px !important; 
     }
     #puantajTable th:nth-child(2), #puantajTable td:nth-child(2) { 
-        width: 160px !important; 
-        min-width: 150px !important; 
+        width: auto !important; 
+        min-width: 160px !important; 
     }
     
     #puantajTable th, #puantajTable td {
@@ -177,13 +179,14 @@ $projectNamesCache[0] = "Proje Yok";
 
     /* Gün hücrelerini her koşulda sabitle */
     .gun, .gunadi, .head-date {
-        width: 38px !important;
-        min-width: 38px !important;
-        max-width: 38px !important;
-        padding: 0 !important;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+        padding: 4px 0 !important;
         text-align: center !important;
         overflow: hidden !important;
         white-space: nowrap !important;
+        font-size: 13px !important;
     }
 
     .table tr td,
@@ -608,7 +611,7 @@ $projectNamesCache[0] = "Proje Yok";
 
                                 <?php foreach ($dates as $date): ?>
                                     <?php
-                                    $style = 'width: 35px !important; min-width: 35px !important;';
+                                    $style = 'width: 40px !important; min-width: 40px !important;';
                                     $isSunday = (date('N', strtotime($date)) == 7);
                                     if ($isSunday) {
                                         $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
@@ -628,7 +631,7 @@ $projectNamesCache[0] = "Proje Yok";
 
                                 <?php foreach ($dates as $date): ?>
                                     <?php
-                                    $style = 'width: 35px !important; min-width: 35px !important;';
+                                    $style = 'width: 40px !important; min-width: 40px !important;';
                                     $isSunday = (date('N', strtotime($date)) == 7);
                                     if ($isSunday) {
                                         $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
@@ -715,25 +718,25 @@ $projectNamesCache[0] = "Proje Yok";
                                                             $selected = "";
                                                         }
                                                     }
-                                                    echo "<td class='gun noselect $selected' data-tooltip ='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ";color:" . $color . "; min-width: 35px !important;'>" . $puantajTuru->PuantajKod . "</td>";
+                                                    echo "<td class='gun noselect $selected' data-tooltip ='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ";color:" . $color . "; min-width: 40px !important;'>" . $puantajTuru->PuantajKod . "</td>";
                                                 } else {
-                                                    echo "<td class='gun noselect' data-change='false' data-project='0' style='min-width: 35px !important;'></td>";
+                                                    echo "<td class='gun noselect' data-change='false' data-project='0' style='min-width: 40px !important;'></td>";
                                                 }
                                             } else {
                                                 if (Date::isWeekend($date)) {
                                                     // Hafta sonu varsayılan puantaj türü (53)
                                                     $weekendTuru = $allPuantajTurleri[53] ?? null;
                                                     if ($weekendTuru) {
-                                                        echo "<td class='gun noselect' data-tooltip='' data-change='false' data-project='' data-id='53' style='background:" . $weekendTuru->ArkaPlanRengi . ";color:" . $weekendTuru->FontRengi . "; min-width: 35px !important;'>" . $weekendTuru->PuantajKod . "</td>";
+                                                        echo "<td class='gun noselect' data-tooltip='' data-change='false' data-project='' data-id='53' style='background:" . $weekendTuru->ArkaPlanRengi . ";color:" . $weekendTuru->FontRengi . "; min-width: 40px !important;'>" . $weekendTuru->PuantajKod . "</td>";
                                                     } else {
-                                                        echo "<td class='gun noselect' data-project='' style='min-width: 35px !important;'></td>";
+                                                        echo "<td class='gun noselect' data-project='' style='min-width: 40px !important;'></td>";
                                                     }
                                                 } else {
-                                                    echo "<td class='gun noselect' data-project='' style='min-width: 35px !important;'></td>";
+                                                    echo "<td class='gun noselect' data-project='' style='min-width: 40px !important;'></td>";
                                                 }
                                             }
                                         } else {
-                                            echo "<td class='noselect text-center' style='background:#ddd; min-width: 35px !important;'>---</td>";
+                                            echo "<td class='noselect text-center' style='background:#ddd; min-width: 40px !important;'>---</td>";
                                         }
                                         ?>
 
@@ -748,3 +751,20 @@ $projectNamesCache[0] = "Proje Yok";
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function() {
+        // DataTable yüklendikten sonra sütun genişliklerini ayarla
+        setTimeout(function() {
+            if ($.fn.DataTable.isDataTable('#puantajTable')) {
+                $('#puantajTable').DataTable().columns.adjust().draw();
+            }
+        }, 500);
+
+        // Pencere boyutu değiştiğinde de ayarla
+        $(window).on('resize', function() {
+            if ($.fn.DataTable.isDataTable('#puantajTable')) {
+                $('#puantajTable').DataTable().columns.adjust();
+            }
+        });
+    });
+</script>

@@ -529,8 +529,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    });
-
     // Modal select styling
     const modalSelects = document.querySelectorAll('#filterModal select');
     modalSelects.forEach(s => {

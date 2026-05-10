@@ -282,13 +282,17 @@ $(document).ready(function() {
   let touchStartX = 0;
   let touchMoveX = 0;
   let currentSwipeItem = null;
-  const swipeThreshold = 70;
+  let isSwiping = false;
+  const swipeThreshold = 80;
+  const minSwipeStart = 10; // Minimum pixels to start swipe animation
 
   $(document).on('touchstart', '.project-item-content', function(e) {
       touchStartX = e.originalEvent.touches[0].clientX;
       touchMoveX = touchStartX;
       currentSwipeItem = $(this);
+      isSwiping = false;
       
+      // Close other open swipes
       $('.project-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
   });
 
@@ -296,25 +300,31 @@ $(document).ready(function() {
       touchMoveX = e.originalEvent.touches[0].clientX;
       let diff = touchMoveX - touchStartX; // Positive for right swipe
       
-      // Swipe right only
-      if (diff > 0) {
+      // If we haven't started swiping yet, check if movement exceeds threshold
+      if (!isSwiping && diff > minSwipeStart) {
+          isSwiping = true;
+      }
+      
+      if (isSwiping && diff > 0) {
+          e.preventDefault(); // Prevent scrolling while swiping
           if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
           $(this).css('transition', 'none');
           $(this).css('transform', 'translateX(' + diff + 'px)');
-      } else {
-          $(this).css('transform', 'translateX(0)');
       }
   });
 
   $(document).on('touchend', '.project-item-content', function(e) {
+      if (!isSwiping) return; // If it was just a click, do nothing
+      
       let diff = touchMoveX - touchStartX;
-      $(this).css('transition', 'transform 0.2s ease-out');
+      $(this).css('transition', 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)');
       
       if (diff > swipeThreshold / 2) {
           $(this).css('transform', 'translateX(' + swipeThreshold + 'px)');
       } else {
           $(this).css('transform', 'translateX(0)');
       }
+      isSwiping = false;
   });
 
   // Close swipe on outside click
