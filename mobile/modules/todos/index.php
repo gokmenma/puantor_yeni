@@ -235,36 +235,31 @@ foreach ($todos as $todo) {
     </div>
   </div>
 
-  <!-- İşlem Filtreleri (like Son İşlemler & Filtreler) -->
-  <div class="d-flex align-items-center justify-content-between mb-3 mt-4">
-    <h4 class="mb-0 text-semibold" style="font-size: 0.95rem;">Son Görevler</h4>
-    <div class="btn-group btn-group-sm" role="group" style="border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.03);">
-      <button type="button" class="btn btn-light btn-filter active" data-filter="all" style="font-size: 0.7rem; padding: 4px 8px;">Tümü</button>
-      <button type="button" class="btn btn-light btn-filter" data-filter="pending" style="font-size: 0.7rem; padding: 4px 8px;">Bekleyen</button>
-      <button type="button" class="btn btn-light btn-filter" data-filter="completed" style="font-size: 0.7rem; padding: 4px 8px;">Tamamlanan</button>
-    </div>
+  <!-- Bekleyen Görevler -->
+  <div class="d-flex align-items-center justify-content-between mb-2 mt-4">
+    <h4 class="mb-0 text-semibold" style="font-size: 0.95rem;">Bekleyen Görevler</h4>
+    <span class="badge bg-primary-lt" style="border-radius: 6px;"><?php echo count($pending_todos); ?></span>
   </div>
 
-  <div class="list-group list-group-mobile mb-4" id="todos-list">
-    <?php if (empty($todos)): ?>
-      <div class="text-center py-5 bg-white rounded-3 border">
-        <i class="ti ti-confetti text-muted mb-2" style="font-size: 2.5rem; opacity: 0.5;"></i>
-        <p class="text-muted text-sm mb-0">Görev bulunamadı.</p>
+  <div class="list-group list-group-mobile mb-4" id="pending-todos-list">
+    <?php if (empty($pending_todos)): ?>
+      <div class="text-center py-4 bg-white rounded-3 border" style="border-style: dashed !important;">
+        <i class="ti ti-circle-check text-muted mb-2" style="font-size: 1.5rem; opacity: 0.5;"></i>
+        <p class="text-muted text-xs mb-0">Tüm görevler tamamlandı!</p>
       </div>
     <?php else: ?>
-      <?php foreach ($todos as $todo): 
-        $is_done = ($todo->tamamlandi ?? 0) == 1;
+      <?php foreach ($pending_todos as $todo): 
         $todo_id_encrypted = Security::encrypt($todo->id);
       ?>
         <div class="todo-item-wrapper todo-item todo-row" 
-             data-type="<?php echo $is_done ? 'completed' : 'pending'; ?>"
+             data-type="pending"
              data-id="<?php echo $todo_id_encrypted; ?>"
              data-title="<?php echo htmlspecialchars($todo->baslik); ?>"
              data-description="<?php echo htmlspecialchars($todo->aciklama ?? ''); ?>"
              data-liste-id="<?php echo Security::encrypt($todo->liste_id); ?>"
              data-tarih="<?php echo $todo->tarih; ?>"
              data-saat="<?php echo substr($todo->saat ?? '', 0, 5); ?>"
-             data-status="<?php echo $todo->tamamlandi; ?>">
+             data-status="0">
           <div class="todo-item-actions">
             <button class="btn-swipe-delete" onclick="deleteTodo('<?php echo $todo_id_encrypted; ?>')">
               <i class="ti ti-trash"></i>
@@ -273,18 +268,17 @@ foreach ($todos as $todo) {
           </div>
           <div class="todo-item-content d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-              <!-- Custom status toggle avatar matches the finance circle style perfectly -->
-              <div onclick="event.stopPropagation(); toggleTodoStatusDirect('<?php echo $todo_id_encrypted; ?>', '<?php echo $todo->tamamlandi; ?>')" class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: <?php echo $is_done ? 'rgba(47, 179, 68, 0.15)' : 'rgba(32, 107, 196, 0.15)'; ?>; color: <?php echo $is_done ? '#2fb344' : 'var(--mobile-primary)'; ?>; cursor: pointer;">
-                <i class="ti <?php echo $is_done ? 'ti-square-check' : 'ti-square'; ?>" style="font-size: 1.25rem;"></i>
+              <div onclick="event.stopPropagation(); toggleTodoStatusDirect('<?php echo $todo_id_encrypted; ?>', '0')" class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(32, 107, 196, 0.1); color: var(--mobile-primary); cursor: pointer; border: 1.5px solid rgba(32, 107, 196, 0.1);">
+                <i class="ti ti-square" style="font-size: 1.25rem;"></i>
               </div>
               <div onclick="editTodo('<?php echo $todo_id_encrypted; ?>')" style="cursor: pointer;">
-                <div class="text-bold text-sm <?php echo $is_done ? 'text-decoration-line-through text-muted' : ''; ?>" style="color: var(--tblr-body-color, #1d273b);"><?php echo htmlspecialchars($todo->baslik); ?></div>
+                <div class="text-bold text-sm" style="color: #1d273b;"><?php echo htmlspecialchars($todo->baslik); ?></div>
                 <div class="text-muted text-xs d-flex align-items-center gap-1 mt-0.5">
                   <?php if (!empty($todo->liste_adi)): ?>
                     <span><?php echo htmlspecialchars($todo->liste_adi); ?></span>
                     <span class="text-muted-50">•</span>
                   <?php endif; ?>
-                  <span class="<?php echo !$is_done && !empty($todo->tarih) && strtotime($todo->tarih) < time() ? 'text-danger text-bold' : ''; ?>">
+                  <span class="<?php echo !empty($todo->tarih) && strtotime($todo->tarih) < time() ? 'text-danger text-bold' : ''; ?>">
                     <?php echo !empty($todo->tarih) && $todo->tarih !== '0000-00-00' ? date('d.m.Y', strtotime($todo->tarih)) . ($todo->saat ? ' ' . substr($todo->saat, 0, 5) : '') : 'Süresiz'; ?>
                   </span>
                 </div>
@@ -298,6 +292,60 @@ foreach ($todos as $todo) {
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
+
+  <!-- Tamamlanan Görevler -->
+  <?php if (!empty($completed_todos)): ?>
+    <div class="d-flex align-items-center justify-content-between mb-2 mt-4">
+      <h4 class="mb-0 text-semibold" style="font-size: 0.95rem; opacity: 0.7;">Tamamlananlar</h4>
+      <span class="badge bg-success-lt" style="border-radius: 6px;"><?php echo count($completed_todos); ?></span>
+    </div>
+
+    <div class="list-group list-group-mobile mb-4" id="completed-todos-list" style="opacity: 0.85;">
+      <?php foreach ($completed_todos as $todo): 
+        $todo_id_encrypted = Security::encrypt($todo->id);
+      ?>
+        <div class="todo-item-wrapper todo-item todo-row" 
+             data-type="completed"
+             data-id="<?php echo $todo_id_encrypted; ?>"
+             data-title="<?php echo htmlspecialchars($todo->baslik); ?>"
+             data-description="<?php echo htmlspecialchars($todo->aciklama ?? ''); ?>"
+             data-liste-id="<?php echo Security::encrypt($todo->liste_id); ?>"
+             data-tarih="<?php echo $todo->tarih; ?>"
+             data-saat="<?php echo substr($todo->saat ?? '', 0, 5); ?>"
+             data-status="1">
+          <div class="todo-item-actions">
+            <button class="btn-swipe-delete" onclick="deleteTodo('<?php echo $todo_id_encrypted; ?>')">
+              <i class="ti ti-trash"></i>
+              <span>Sil</span>
+            </button>
+          </div>
+          <div class="todo-item-content d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <div onclick="event.stopPropagation(); toggleTodoStatusDirect('<?php echo $todo_id_encrypted; ?>', '1')" class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(47, 179, 68, 0.1); color: #2fb344; cursor: pointer; border: 1.5px solid rgba(47, 179, 68, 0.1);">
+                <i class="ti ti-square-check" style="font-size: 1.25rem;"></i>
+              </div>
+              <div onclick="editTodo('<?php echo $todo_id_encrypted; ?>')" style="cursor: pointer;">
+                <div class="text-bold text-sm text-decoration-line-through text-muted" style="opacity: 0.8;"><?php echo htmlspecialchars($todo->baslik); ?></div>
+                <div class="text-muted text-xs d-flex align-items-center gap-1 mt-0.5">
+                  <?php if (!empty($todo->liste_adi)): ?>
+                    <span><?php echo htmlspecialchars($todo->liste_adi); ?></span>
+                    <span class="text-muted-50">•</span>
+                  <?php endif; ?>
+                  <span>
+                    <?php echo !empty($todo->tarih) && $todo->tarih !== '0000-00-00' ? date('d.m.Y', strtotime($todo->tarih)) : 'Süresiz'; ?>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div onclick="editTodo('<?php echo $todo_id_encrypted; ?>')" class="text-muted" style="cursor: pointer;">
+              <i class="ti ti-chevron-right opacity-30"></i>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+
 </div>
 
 <!-- Floating Action Button (FAB) matches finance page FAB perfectly -->
@@ -379,12 +427,13 @@ foreach ($todos as $todo) {
     .form-floating > .form-select,
     .form-floating > textarea {
         color: var(--todo-text-main) !important;
-        font-family: 'DM Sans', sans-serif !important;
+        font-family: var(--tblr-font-sans-serif, 'Inter', sans-serif) !important;
     }
     
     .form-floating > label {
         color: var(--todo-text-muted) !important;
         font-size: 0.85rem;
+        font-family: var(--tblr-font-sans-serif, 'Inter', sans-serif) !important;
     }
     .form-floating > .form-control,
     .form-floating > .form-select,
@@ -507,10 +556,8 @@ function openTodoModal() {
 }
 
 function getGorevApiUrl() {
-    const pathname = window.location.pathname;
-    const mobileIndex = pathname.indexOf('/mobile');
-    const basePath = mobileIndex !== -1 ? pathname.substring(0, mobileIndex) : '';
-    return basePath + '/pages/gorevler/api.php';
+    // API_PATH mobil uygulamanın kök dizinindeki head.php'de tanımlıdır (genelde 'api/')
+    return (window.API_PATH || 'api/') + 'gorevler.php';
 }
 
 function saveTodo(e) {
@@ -524,6 +571,10 @@ function saveTodo(e) {
         formData.append('gorev_id', todoId);
     }
     
+    const submitBtn = $(e.target).find('button[type="submit"]');
+    const originalBtnHtml = submitBtn.html();
+    submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Kaydediliyor...');
+
     $.ajax({
         url: getGorevApiUrl(),
         method: 'POST',
@@ -534,10 +585,24 @@ function saveTodo(e) {
         success: function(response) {
             if (response.success) {
                 bootstrap.Modal.getInstance($('#todoModal')[0]).hide();
-                location.reload();
+                Swal.fire({
+                    title: 'Başarılı',
+                    text: response.message || 'Görev başarıyla kaydedildi.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
             } else {
                 Swal.fire('Hata', response.message || 'Bir hata oluştu.', 'error');
+                submitBtn.prop('disabled', false).html(originalBtnHtml);
             }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', status, error, xhr.responseText);
+            Swal.fire('Hata', 'Sunucuya ulaşılamadı veya bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+            submitBtn.prop('disabled', false).html(originalBtnHtml);
         }
     });
 }
@@ -605,7 +670,15 @@ function deleteTodo(id) {
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        location.reload();
+                        Swal.fire({
+                            title: 'Silindi',
+                            text: 'Görev başarıyla silindi.',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
                     } else {
                         Swal.fire('Hata', response.message || 'İşlem gerçekleştirilemedi.', 'error');
                     }

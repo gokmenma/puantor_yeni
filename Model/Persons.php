@@ -76,6 +76,8 @@ class Persons extends Model
             $sql .= ' AND (
                         p.wage_type = 1 
                         OR EXISTS (SELECT 1 FROM puantaj WHERE person = p.id AND gun >= ? AND gun <= ?)
+                        OR EXISTS (SELECT 1 FROM maas_gelir_kesinti WHERE person_id = p.id AND gun >= ? AND gun <= ?)
+                        OR EXISTS (SELECT 1 FROM project_person WHERE person_id = p.id)
                         OR STR_TO_DATE(job_start_date, "%d.%m.%Y") >= STR_TO_DATE(?, "%Y%m%d")
                     )';
         }
@@ -83,7 +85,7 @@ class Persons extends Model
         $query = $this->db->prepare($sql);
         
         if (!$show_all) {
-            $query->execute([$firm_id, $last_day, $first_day, $last_day, $first_day]);
+            $query->execute([$firm_id, $last_day, $first_day, $last_day, $first_day, $last_day, $first_day]);
         } else {
             $query->execute([$firm_id, $last_day]);
         }
