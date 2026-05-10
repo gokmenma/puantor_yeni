@@ -62,6 +62,189 @@ $today = date('Y-m-d');
 $is_today_or_future = ($selected_date >= $today);
 ?>
 
+<style>
+    /* Swipe to Action Styles */
+    .person-item-wrapper {
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        user-select: none;
+    }
+    body[data-bs-theme="dark"] .person-item-wrapper {
+        background: #1e293b !important;
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+    .person-item-actions {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        background: #f1f5f9;
+        z-index: 1;
+        visibility: hidden; /* Hide by default to prevent flashing */
+    }
+    body[data-bs-theme="dark"] .person-item-actions {
+        background: #1e293b;
+    }
+    .person-item-content {
+        position: relative;
+        background: #fff;
+        z-index: 2;
+        transition: transform 0.2s ease-out;
+        width: 100%;
+    }
+    body[data-bs-theme="dark"] .person-item-content {
+        background: #1e293b !important;
+    }
+    .btn-swipe-clear {
+        color: #d63f3f;
+        width: 70px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: #fef2f2;
+        font-size: 0.7rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    body[data-bs-theme="dark"] .btn-swipe-clear {
+        background: rgba(214, 63, 63, 0.1);
+        color: #ef4444;
+    }
+    .btn-swipe-clear:active {
+        background: #fee2e2;
+    }
+    .btn-swipe-clear i {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+    }
+
+    /* Filtre Select Tweaks */
+    #filterModal .form-select {
+        height: 42px;
+        font-size: 0.9rem;
+    }
+    #filterModal .btn-group .btn {
+        font-size: 0.82rem;
+        font-weight: 500;
+        padding: 10px;
+    }
+    #filterModal .btn-check:checked + .btn {
+        background-color: var(--mobile-primary) !important;
+        color: white !important;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .person-row.saved { background-color: rgba(47, 179, 68, 0.04) !important; transition: background 0.3s; }
+    
+    /* Option styling */
+    .type-option-row {
+        border-color: #f1f5f9 !important;
+        background-color: #f8fafc;
+    }
+    .type-option-row:hover {
+        background-color: #f1f5f9;
+        border-color: #cbd5e1 !important;
+    }
+    .type-option-row.selected {
+        background-color: rgba(32, 107, 196, 0.08);
+        border-color: var(--mobile-primary) !important;
+    }
+    .type-option-row.selected .select-check-icon {
+        display: block !important;
+    }
+    .nav-pills .nav-link.active {
+        background-color: var(--mobile-primary);
+        color: white !important;
+    }
+    .nav-pills .nav-link {
+        color: #64748b;
+    }
+    .nav-pills .nav-link:hover {
+        background-color: #f1f5f9;
+    }
+    .nav-pills .nav-link.active:hover {
+        background-color: var(--mobile-primary);
+    }
+    
+    /* Search Bar Tweaks */
+    .search-container {
+        position: relative;
+    }
+    .search-container .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9299a6;
+        font-size: 1.1rem;
+    }
+    .search-input {
+        width: 100%;
+        padding: 10px 16px 10px 42px;
+        border-radius: 14px;
+        border: 1px solid rgba(0,0,0,0.06);
+        background-color: #f8fafc;
+        outline: none;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+    .search-input:focus {
+        background-color: #ffffff;
+        border-color: var(--mobile-primary);
+        box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.15);
+    }
+
+    /* PREMIUM DARK MODE TWEAKS */
+    body[data-bs-theme="dark"] .type-option-row {
+        border-color: var(--mobile-card-border-dark) !important;
+        background-color: #1e293b;
+    }
+    body[data-bs-theme="dark"] .type-option-row:hover {
+        background-color: #243049;
+    }
+    body[data-bs-theme="dark"] .type-option-row.selected {
+        background-color: rgba(32, 107, 196, 0.15);
+        border-color: var(--mobile-primary) !important;
+    }
+    body[data-bs-theme="dark"] .nav-pills .nav-link {
+        color: #94a3b8;
+    }
+    body[data-bs-theme="dark"] .nav-pills .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    body[data-bs-theme="dark"] .search-input {
+        background-color: #1e293b;
+        border-color: var(--mobile-card-border-dark);
+        color: #f4f6fa;
+    }
+    body[data-bs-theme="dark"] .search-input:focus {
+        background-color: #1e293b;
+        border-color: var(--mobile-primary);
+        box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.25);
+    }
+    body[data-bs-theme="dark"] .text-dark {
+        color: #f4f6fa !important;
+    }
+    body[data-bs-theme="dark"] .avatar-md {
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
+    }
+    body[data-bs-theme="dark"] .modal-content {
+        background-color: #1a2234 !important;
+        color: #f4f6fa !important;
+    }
+    body[data-bs-theme="dark"] .border-end {
+        border-color: var(--mobile-card-border-dark) !important;
+    }
+</style>
+
 <div class="container px-0">
     <div class="mb-2">
         <?php 
@@ -169,48 +352,58 @@ $is_today_or_future = ($selected_date >= $today);
                 $current_type = $puantajModel->getPuantajTuruById($current_status_id);
             }
         ?>
-            <div class="list-group-item list-group-item-action py-2.5 person-row cursor-pointer d-flex align-items-center justify-content-between" 
-                 data-person-id="<?php echo $person->id; ?>" 
-                 data-person-key="<?php echo Security::encrypt($person->id); ?>"
-                 data-person-name="<?php echo htmlspecialchars($person->full_name); ?>"
-                 data-current-type-id="<?php echo $current_status_id; ?>"
-                 data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>"
-                 data-is-disabled="<?php echo $is_disabled ? 'true' : 'false'; ?>"
-                 onclick="<?php echo $is_disabled ? "Swal.fire({icon: 'info', title: 'Puantaj Kilitli', text: 'Bu personelin bu tarihteki puantajı başka bir projede (" . htmlspecialchars($disabled_project_name) . ") girilmiştir. Değiştirilemez.', confirmButtonText: 'Tamam'})" : "openPuantajModal(this)"; ?>"
-                 style="gap: 12px; border-radius: 0; <?php echo $is_disabled ? 'opacity: 0.7; background-color: rgba(241, 245, 249, 0.4); pointer-events: auto;' : ''; ?>">
-                <div style="min-width: 0; flex: 1;">
-                    <div class="text-semibold text-dark mb-0" style="font-size: 0.92rem; letter-spacing: -0.2px; line-height: 1.2;">
-                        <?php echo htmlspecialchars($person->full_name); ?>
-                    </div>
-                    <div class="text-muted" style="font-size: 0.72rem; opacity: 0.7; font-weight: 500; margin-top: 2px;">
-                        <?php if ($is_disabled): ?>
-                            <span class="text-danger" style="font-weight: 600;"><i class="ti ti-lock me-1"></i><?php echo htmlspecialchars($disabled_project_name); ?> (Kilitli)</span>
-                        <?php else: ?>
-                            <?php 
-                            if ($puantaj_project_id > 0 && $selected_project_id == 0) {
-                                $proj_name = $projectHelper->getProjectName($puantaj_project_id);
-                                echo '<span class="text-primary" style="font-weight: 600;"><i class="ti ti-subtask me-1"></i>' . htmlspecialchars($proj_name) . '</span>';
-                            } else {
-                                echo !empty($person->job) ? htmlspecialchars($person->job) : 'Görev eklenmedi'; 
-                            }
-                            ?>
-                        <?php endif; ?>
-                    </div>
+            <div class="person-item-wrapper" data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>">
+                <div class="person-item-actions">
+                    <button class="btn-swipe-clear" onclick="clearPuantaj('<?php echo $person->id; ?>', '<?php echo htmlspecialchars($person->full_name); ?>')" <?php echo $is_disabled ? 'disabled style="opacity: 0.5;"' : ''; ?>>
+                        <i class="ti ti-rotate-clockwise-2"></i>
+                        <span>Temizle</span>
+                    </button>
                 </div>
-                
-                <!-- Sağ Taraf: Minimal Badge -->
-                <div style="flex-shrink: 0;">
-                    <?php if ($current_type): ?>
-                        <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle font-weight-bold" 
-                             style="background-color: <?php echo htmlspecialchars($current_type->ArkaPlanRengi); ?>; color: <?php echo htmlspecialchars($current_type->FontRengi); ?>; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-transform: uppercase; border: 1.5px solid rgba(255,255,255,0.2);">
-                            <?php echo htmlspecialchars($current_type->PuantajKod); ?>
+                <div class="person-item-content">
+                    <div class="list-group-item list-group-item-action py-2.5 person-row cursor-pointer d-flex align-items-center justify-content-between" 
+                         data-person-id="<?php echo $person->id; ?>" 
+                         data-person-key="<?php echo Security::encrypt($person->id); ?>"
+                         data-person-name="<?php echo htmlspecialchars($person->full_name); ?>"
+                         data-current-type-id="<?php echo $current_status_id; ?>"
+                         data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>"
+                         data-is-disabled="<?php echo $is_disabled ? 'true' : 'false'; ?>"
+                         onclick="<?php echo $is_disabled ? "Swal.fire({icon: 'info', title: 'Puantaj Kilitli', text: 'Bu personelin bu tarihteki puantajı başka bir projede (" . htmlspecialchars($disabled_project_name) . ") girilmiştir. Değiştirilemez.', confirmButtonText: 'Tamam'})" : "openPuantajModal(this)"; ?>"
+                         style="gap: 12px; border-radius: 0; border: none; <?php echo $is_disabled ? 'opacity: 0.7; background-color: rgba(241, 245, 249, 0.4); pointer-events: auto;' : ''; ?>">
+                        <div style="min-width: 0; flex: 1;">
+                            <div class="text-semibold text-dark mb-0" style="font-size: 0.92rem; letter-spacing: -0.2px; line-height: 1.2;">
+                                <?php echo htmlspecialchars($person->full_name); ?>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.72rem; opacity: 0.7; font-weight: 500; margin-top: 2px;">
+                                <?php if ($is_disabled): ?>
+                                    <span class="text-danger" style="font-weight: 600;"><i class="ti ti-lock me-1"></i><?php echo htmlspecialchars($disabled_project_name); ?> (Kilitli)</span>
+                                <?php else: ?>
+                                    <?php 
+                                    if ($puantaj_project_id > 0 && $selected_project_id == 0) {
+                                        $proj_name = $projectHelper->getProjectName($puantaj_project_id);
+                                        echo '<span class="text-primary" style="font-weight: 600;"><i class="ti ti-subtask me-1"></i>' . htmlspecialchars($proj_name) . '</span>';
+                                    } else {
+                                        echo !empty($person->job) ? htmlspecialchars($person->job) : 'Görev eklenmedi'; 
+                                    }
+                                    ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                    <?php else: ?>
-                        <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle" 
-                             style="background-color: #f8fafc; color: #94a3b8; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; border: 1px dashed #e2e8f0; text-transform: uppercase;">
-                            -
+                        
+                        <!-- Sağ Taraf: Minimal Badge -->
+                        <div style="flex-shrink: 0;">
+                            <?php if ($current_type): ?>
+                                <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle font-weight-bold" 
+                                     style="background-color: <?php echo htmlspecialchars($current_type->ArkaPlanRengi); ?>; color: <?php echo htmlspecialchars($current_type->FontRengi); ?>; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-transform: uppercase; border: 1.5px solid rgba(255,255,255,0.2);">
+                                    <?php echo htmlspecialchars($current_type->PuantajKod); ?>
+                                </div>
+                            <?php else: ?>
+                                <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle" 
+                                     style="background-color: #f8fafc; color: #94a3b8; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; border: 1px dashed #e2e8f0; text-transform: uppercase;">
+                                    -
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -368,126 +561,6 @@ $is_today_or_future = ($selected_date >= $today);
     </div>
 </div>
 
-<style>
-    /* Filtre Select Tweaks */
-    #filterModal .form-select {
-        height: 42px;
-        font-size: 0.9rem;
-    }
-    #filterModal .btn-group .btn {
-        font-size: 0.82rem;
-        font-weight: 500;
-        padding: 10px;
-    }
-    #filterModal .btn-check:checked + .btn {
-        background-color: var(--mobile-primary) !important;
-        color: white !important;
-    }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .person-row.saved { background-color: rgba(47, 179, 68, 0.04) !important; transition: background 0.3s; }
-    
-    /* Option styling */
-    .type-option-row {
-        border-color: #f1f5f9 !important;
-        background-color: #f8fafc;
-    }
-    .type-option-row:hover {
-        background-color: #f1f5f9;
-        border-color: #cbd5e1 !important;
-    }
-    .type-option-row.selected {
-        background-color: rgba(32, 107, 196, 0.08);
-        border-color: var(--mobile-primary) !important;
-    }
-    .type-option-row.selected .select-check-icon {
-        display: block !important;
-    }
-    .nav-pills .nav-link.active {
-        background-color: var(--mobile-primary);
-        color: white !important;
-    }
-    .nav-pills .nav-link {
-        color: #64748b;
-    }
-    .nav-pills .nav-link:hover {
-        background-color: #f1f5f9;
-    }
-    .nav-pills .nav-link.active:hover {
-        background-color: var(--mobile-primary);
-    }
-    
-    /* Search Bar Tweaks */
-    .search-container {
-        position: relative;
-    }
-    .search-container .search-icon {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9299a6;
-        font-size: 1.1rem;
-    }
-    .search-input {
-        width: 100%;
-        padding: 10px 16px 10px 42px;
-        border-radius: 14px;
-        border: 1px solid rgba(0,0,0,0.06);
-        background-color: #f8fafc;
-        outline: none;
-        font-size: 0.9rem;
-        transition: all 0.2s ease;
-    }
-    .search-input:focus {
-        background-color: #ffffff;
-        border-color: var(--mobile-primary);
-        box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.15);
-    }
-
-    /* PREMIUM DARK MODE TWEAKS */
-    body[data-bs-theme="dark"] .type-option-row {
-        border-color: var(--mobile-card-border-dark) !important;
-        background-color: #1e293b;
-    }
-    body[data-bs-theme="dark"] .type-option-row:hover {
-        background-color: #243049;
-    }
-    body[data-bs-theme="dark"] .type-option-row.selected {
-        background-color: rgba(32, 107, 196, 0.15);
-        border-color: var(--mobile-primary) !important;
-    }
-    body[data-bs-theme="dark"] .nav-pills .nav-link {
-        color: #94a3b8;
-    }
-    body[data-bs-theme="dark"] .nav-pills .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-    body[data-bs-theme="dark"] .search-input {
-        background-color: #1e293b;
-        border-color: var(--mobile-card-border-dark);
-        color: #f4f6fa;
-    }
-    body[data-bs-theme="dark"] .search-input:focus {
-        background-color: #1e293b;
-        border-color: var(--mobile-primary);
-        box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.25);
-    }
-    body[data-bs-theme="dark"] .text-dark {
-        color: #f4f6fa !important;
-    }
-    body[data-bs-theme="dark"] .avatar-md {
-        background-color: #1e293b !important;
-        color: #94a3b8 !important;
-    }
-    body[data-bs-theme="dark"] .modal-content {
-        background-color: #1a2234 !important;
-        color: #f4f6fa !important;
-    }
-    body[data-bs-theme="dark"] .border-end {
-        border-color: var(--mobile-card-border-dark) !important;
-    }
-</style>
 
 <script>
 // jQuery'nin $ olarak tanımlandığından emin olalım
@@ -498,17 +571,17 @@ if (typeof $ === 'undefined' && typeof jQuery !== 'undefined') {
 document.addEventListener('DOMContentLoaded', function() {
     // Search Filtering
     const searchInput = document.getElementById('puantajSearchInput');
-    const rows = document.querySelectorAll('.person-row');
+    const items = document.querySelectorAll('.person-item-wrapper');
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase();
-            rows.forEach(row => {
-                const name = row.getAttribute('data-name');
+            items.forEach(item => {
+                const name = item.getAttribute('data-name');
                 if (name.includes(term)) {
-                    row.style.setProperty('display', 'flex', 'important');
+                    item.style.setProperty('display', 'block', 'important');
                 } else {
-                    row.style.setProperty('display', 'none', 'important');
+                    item.style.setProperty('display', 'none', 'important');
                 }
             });
         });
@@ -524,18 +597,115 @@ document.addEventListener('DOMContentLoaded', function() {
         onChange: function(selectedDates, dateStr, instance) {
             const dateParts = dateStr.split(".");
             const ymdDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-            const projId = document.getElementById('projectSelect').value || 0;
+            const projId = '<?php echo $selected_project_id; ?>' || 0;
             location.href = `puantaj?date=${ymdDate}&project_id=${projId}`;
         }
     });
 
-    // Modal select styling
-    const modalSelects = document.querySelectorAll('#filterModal select');
-    modalSelects.forEach(s => {
-        s.classList.add('form-select', 'border-0', 'bg-secondary-lt');
-        s.style.borderRadius = '12px';
+    // Swipe logic
+    let touchStartX = 0;
+    let touchMoveX = 0;
+    let currentSwipeItem = null;
+    const swipeThreshold = 70;
+
+    $(document).on('touchstart', '.person-item-content', function(e) {
+        touchStartX = e.originalEvent.touches[0].clientX;
+        touchMoveX = touchStartX;
+        currentSwipeItem = $(this);
+        
+        // Diğer açık olanları kapat
+        $('.person-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
+        $('.person-item-actions').css('visibility', 'hidden');
+        
+        // Bu elemanın aksiyonlarını görünür yap
+        currentSwipeItem.siblings('.person-item-actions').css('visibility', 'visible');
+    });
+
+    $(document).on('touchmove', '.person-item-content', function(e) {
+        touchMoveX = e.originalEvent.touches[0].clientX;
+        let diff = touchStartX - touchMoveX;
+        if (diff > 0) {
+            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
+            $(this).css('transition', 'none');
+            $(this).css('transform', 'translateX(-' + diff + 'px)');
+        } else {
+            $(this).css('transform', 'translateX(0)');
+        }
+    });
+
+    $(document).on('touchend', '.person-item-content', function(e) {
+        let diff = touchStartX - touchMoveX;
+        $(this).css('transition', 'transform 0.2s ease-out');
+        if (diff > swipeThreshold / 2) {
+            $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
+        } else {
+            $(this).css('transform', 'translateX(0)');
+            setTimeout(() => {
+                $(this).siblings('.person-item-actions').css('visibility', 'hidden');
+            }, 200);
+        }
+    });
+
+    $(document).on('touchstart', function(e) {
+        if (!$(e.target).closest('.person-item-wrapper').length) {
+            $('.person-item-content').css('transform', 'translateX(0)');
+            setTimeout(() => {
+                $('.person-item-actions').css('visibility', 'hidden');
+            }, 200);
+        }
     });
 });
+
+function clearPuantaj(personId, personName) {
+    const serverDate = '<?php echo $selected_date; ?>';
+    const badge = document.getElementById(`status-badge-${personId}`);
+    if (!badge) return;
+    const originalContent = badge.outerHTML;
+    
+    // Anlık geri bildirim
+    badge.innerText = "...";
+    badge.style.backgroundColor = '#f1f5f9';
+    badge.style.color = '#94a3b8';
+
+    jQuery.ajax({
+        url: 'modules/puantaj/api/puantaj-delete.php',
+        method: 'POST',
+        data: {
+            person_id: personId,
+            date: serverDate,
+            project_id: <?php echo (int)($selected_project_id ?: -1); ?>
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success' || response.status === 'info') {
+                // UI Güncelleme
+                badge.style.backgroundColor = '#f8fafc';
+                badge.style.color = '#94a3b8';
+                badge.className = "avatar avatar-sm rounded-circle";
+                badge.innerText = "-";
+                badge.style.border = "1px dashed #e2e8f0";
+                
+                const row = document.querySelector(`.person-row[data-person-id="${personId}"]`);
+                if (row) row.setAttribute('data-current-type-id', '');
+                
+                // Kaydırmayı kapat
+                $('.person-item-content').css('transform', 'translateX(0)');
+                setTimeout(() => {
+                    $('.person-item-actions').css('visibility', 'hidden');
+                }, 200);
+            } else {
+                badge.outerHTML = originalContent;
+                Swal.fire('Hata', response.message, 'error');
+                $('.person-item-content').css('transform', 'translateX(0)');
+            }
+        },
+        error: function() {
+            badge.outerHTML = originalContent;
+            Swal.fire('Hata', 'Bağlantı hatası oluştu.', 'error');
+            $('.person-item-content').css('transform', 'translateX(0)');
+        }
+    });
+}
 
 function applyFilters() {
     const form = document.getElementById('filterForm');
