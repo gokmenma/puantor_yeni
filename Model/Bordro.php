@@ -40,14 +40,14 @@ class Bordro extends Model
         $sql = $this->db->prepare("
                                 SELECT 
                                 *
-                                FROM sqlmaas_gelir_kesinti
-                                WHERE person_id = :id AND kategori != 14
-                                AND tutar > 0
+                                  FROM sqlmaas_gelir_kesinti 
+                                  WHERE person_id = :id AND person_id > 0 AND kategori != 14
+                                  AND tutar > 0
                                     UNION ALL
                                 SELECT 
                                 id,person_id,turu,kategori,ay,yil,person,puantaj_turu,gun,saat,SUM(tutar) AS tutar,aciklama,created_at,'puantaj'
                                 FROM sqlmaas_gelir_kesinti
-                                WHERE person_id = :id AND kategori = 14
+                                WHERE person_id = :id AND person_id > 0 AND kategori = 14
                                 GROUP BY kategori ORDER BY created_at desc");
         $sql->execute([':id' => $id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);

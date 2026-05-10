@@ -61,7 +61,7 @@ if ($project_id == 0 || $project_id == '') {
     $persons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $last_day, $show_all);
 } else {
     // Proje id dolu ise projeye ait personelleri getirir
-    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $last_day);
+    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $firstDay, $last_day, 0, 0, true);
 }
 
 // Set the default timezone to your local timezone
@@ -212,62 +212,62 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                     }
                                 }
 
-                                // Personel Beyaz Yaka ise
+                                // Hesaplama işlemi tetiklendiyse
                                 if (isset($_POST["action"]) && ($_POST["action"] == 'payroll_calculate' || $_POST["action"] == 'update_personnel')) {
-                                    
-                                    // Beyaz Yaka hesaplama (Eskiden burada olan update_personnel mantığı yukarı taşındı)
+                                    // Eğer ayın ilk günü bugünden küçükse veya eşitse (geçmiş veya mevcut ay)
+                                    if ($firstDay <= Date::Ymd(date('Y-m-d'))) {
+                                        // Personel o tarihte çalışıyorsa
+                                        if (Date::isBetween($person->job_start_date, $firstDay, $lastDay) || Date::isBefore($person->job_start_date, $firstDay)) {
+                                            
+                                            // TEMİZLİK: Personelin o aya ait mevcut maaş (Kat 16) ve puantaj tutarlarını temizleyelim
+                                            // Tip değişikliği durumunda (Beyaz -> Mavi veya tersi) eski hesaplamaların kalmaması için gereklidir.
+                                            $bordro->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 16")->execute([$person->id, $month, $year]);
+                                            $bordro->connect()->prepare("UPDATE puantaj SET tutar = 0 WHERE person = ? AND gun >= ? AND gun <= ?")->execute([$person->id, $firstDay, $lastDay]);
 
+                                            if ($person->wage_type == 1) {
+                                                // BEYAZ YAKA HESAPLAMA
+                                                $description = Date::monthName($month) . ' ' . $year . ' Maaş';
+                                                
+                                                $job_start = str_replace('.', '-', $person->job_start_date);
+                                                $job_start_timestamp = strtotime($job_start);
+                                                $month_start_timestamp = strtotime("$year-$month-01");
 
-                                    if ($person->wage_type == 1) {
-                                        // Eylül 2024 Maaş şeklinde açıklama oluştur
-                                        $description = Date::monthName($month) . ' ' . $year . ' Maaş';
-                                        // Personelin aylık maaşı eklenmemişse
-                                        // Personelin işe başlama tarihi o ay içindeyse
-                            
-                                        //veya personelin işe başlama tarihi o aydan önceyse
-                                        //Eğer ayın ilk günü bugünden küçükse
-                                        if ($firstDay <= Date::Ymd(date('Y-m-d'))) {
-                                            if (
-                                                Date::isBetween($person->job_start_date, $firstDay, $lastDay) ||
-                                                Date::isBefore($person->job_start_date, $firstDay)
-                                            ) {
-
-
-                                                $montly_income = $bordro->isPersonMonthlyIncomeAdded($person->id, $month, $year)->id ?? 0;
-
-                                                // Personelin aylık maaşı ekle mi diye kontrol et
-                                                if ($montly_income == 0) {
-                                                    // Personelin aylık maaşını ekleyelim
-                                                    $bordro->addPersonMonthlyIncome($person->id, $month, $year, $person->daily_wages, $description);
+                                                if ($job_start_timestamp > $month_start_timestamp) {
+                                                    // Ay içinde işe başlamışsa Kıst Maaş hesabı yap
+                                                    $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+                                                    $start_day = (int) date('d', $job_start_timestamp);
+                                                    $worked_days = $days_in_month - $start_day + 1;
+                                                    $daily_rate = $person->daily_wages / 30;
+                                                    $calculated_salary = $daily_rate * $worked_days;
+                                                    
+                                                    $bordro->addPersonMonthlyIncome($person->id, $month, $year, $calculated_salary, $description . " (Kıst Maaş)");
                                                 } else {
-                                                    //echo $montly_income;
-                                                    // Personelin aylık maaşını güncelleyelim,işe başlaama tarihinde değişiklik olduğu zaman maaş güncellenir
-                                                    $bordro->updatePersonMonthlyIncome($person->id, $montly_income, $month, $year);
+                                                    // Tam maaş
+                                                    $bordro->addPersonMonthlyIncome($person->id, $month, $year, $person->daily_wages, $description);
+                                                }
+                                            } else {
+                                                // MAVİ YAKA HESAPLAMA
+                                                $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
+                                                $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
+                                                $work_hour = str_replace(',', '.', $work_hour);
+                                                $ucret = $person->daily_wages / $work_hour;
+
+                                                foreach ($puantajRecords as $p_record) {
+                                                    $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
+                                                    $current_daily_wage = (($defined_wage > 0) ? ($defined_wage / $work_hour) : $ucret);
+
+                                                    $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
+                                                    if ($puantaj_turu->Turu != 'Saatlik') {
+                                                        $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
+                                                        $tutar = floatval($saat) * $current_daily_wage;
+                                                    } else {
+                                                        $saat = $puantaj_turu->PuantajSaati;
+                                                        $tutar = floatval($saat) * $current_daily_wage;
+                                                    }
+
+                                                    $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
                                                 }
                                             }
-                                        }
-                                    } else {
-                                        // Mavi Yaka hesaplama
-                                        // Personelin puantaj verilerini getir
-                                        $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
-                                        $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
-                                        $work_hour = str_replace(',', '.', $work_hour);
-                                        $ucret = $person->daily_wages / $work_hour;
-
-                                        foreach ($puantajRecords as $p_record) {
-                                            $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
-                                            $daily_wages = (($defined_wage > 0) ? ($defined_wage / $work_hour) : $ucret);
-
-                                            $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
-                                            if ($puantaj_turu->Turu != 'Saatlik') {
-                                                $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
-                                                $tutar = floatval($saat) * $daily_wages;
-                                            } else {
-                                                $saat = $puantaj_turu->PuantajSaati;
-                                                $tutar = floatval($saat) * $daily_wages;
-                                            }
-
-                                            $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
                                         }
                                     }
                                 }

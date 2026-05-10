@@ -30,6 +30,28 @@ $company = new CompanyHelper();
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Personel Listesi</h3>
+                    <div class="ms-3">
+                        <div class="form-selectgroup">
+                            <label class="form-selectgroup-item">
+                                <input type="radio" name="person_status" value="" class="form-selectgroup-input status-filter">
+                                <span class="form-selectgroup-label">
+                                    <i class="ti ti-users icon me-1"></i> Tümü
+                                </span>
+                            </label>
+                            <label class="form-selectgroup-item">
+                                <input type="radio" name="person_status" value="Aktif" class="form-selectgroup-input status-filter" checked>
+                                <span class="form-selectgroup-label">
+                                    <i class="ti ti-user-check icon me-1 text-success"></i> Aktif
+                                </span>
+                            </label>
+                            <label class="form-selectgroup-item">
+                                <input type="radio" name="person_status" value="Pasif" class="form-selectgroup-input status-filter">
+                                <span class="form-selectgroup-label">
+                                    <i class="ti ti-user-x icon me-1 text-danger"></i> Pasif
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                     <div class="d-flex col-auto ms-auto">
                         <button type="button" id="btnDeleteSelected" class="btn btn-danger me-2 d-none">
                             <i class="ti ti-trash icon me-2"></i> Seçilenleri Sil
@@ -80,6 +102,7 @@ $company = new CompanyHelper();
                                 <th>Firma Adı</th>
                                 <th>Ücret Türü</th>
                                 <th>İşe Giriş Tarihi</th>
+                                <th>İşten Çıkış Tarihi</th>
                                 <th>Telefon</th>
                                 <th>Adres</th>
                                 <th>Günlük/Aylık Ücretİ</th>
@@ -114,10 +137,17 @@ $company = new CompanyHelper();
                                          ?></td>
                                         <td <?php echo $wage_type_color; ?>><?php echo $wage_type; ?></td>
                                         <td><?php echo $person->job_start_date ?? '-'; ?></td>
+                                        <td><?php echo $person->job_end_date ?? '-'; ?></td>
                                         <td><?php echo $person->phone; ?></td>
                                         <td><?php echo $person->address; ?></td>
                                         <td><?php echo Helper::formattedMoney($person->daily_wages ?? 0); ?></td>
-                                        <td><?php echo $person->state ?></td>
+                                         <td>
+                                            <?php if (empty($person->job_end_date)): ?>
+                                                <span class="badge bg-success-lt">Aktif</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-danger-lt">Pasif</span>
+                                            <?php endif; ?>
+                                         </td>
                                         <td class="<?php echo $color ?>"><?php echo Helper::formattedMoney($balance) ?></td>
                                         <td class="text-end">
                                             <div class="dropdown">
@@ -152,6 +182,26 @@ $company = new CompanyHelper();
         </div>
     </div>
 </div>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#persons').DataTable();
+
+        // Varsayılan olarak Aktif olanları filtrele
+        table.column(10).search('^Aktif$', true, false).draw();
+
+        // Filtre butonlarına tıklandığında
+        $('.status-filter').on('change', function() {
+            var val = $(this).val();
+            if (val === '') {
+                table.column(10).search('').draw();
+            } else {
+                // Tam eşleşme için regex kullanıyoruz: ^Aktif$ veya ^Pasif$
+                table.column(10).search('^' + val + '$', true, false).draw();
+            }
+        });
+    });
+</script>
 
 <!-- Ücret Güncelleme Modalı -->
 <div class="modal modal-blur fade" id="update_wages_modal" tabindex="-1" role="dialog" aria-hidden="true">
