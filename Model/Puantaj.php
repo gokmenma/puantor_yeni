@@ -86,8 +86,15 @@ class Puantaj extends Model
 
     public function getPuantajByPersonAndDate($person_id, $start_date, $end_date)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE person = ? AND gun >= ? AND gun <= ?");
-        $sql->execute([$person_id, $start_date, $end_date]);
+        // Tarihleri her iki formatta da hazırla (tireli ve tiresiz)
+        $start_dash = (strpos($start_date, '-') !== false) ? $start_date : substr($start_date, 0, 4) . '-' . substr($start_date, 4, 2) . '-' . substr($start_date, 6, 2);
+        $start_nodash = str_replace('-', '', $start_date);
+        $end_dash = (strpos($end_date, '-') !== false) ? $end_date : substr($end_date, 0, 4) . '-' . substr($end_date, 4, 2) . '-' . substr($end_date, 6, 2);
+        $end_nodash = str_replace('-', '', $end_date);
+
+        // Hem tireli aralığı hem de tiresiz aralığı kapsayacak şekilde OR şartı ekle
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE person = ? AND ((gun >= ? AND gun <= ?) OR (gun >= ? AND gun <= ?))");
+        $sql->execute([$person_id, $start_dash, $end_dash, $start_nodash, $end_nodash]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 

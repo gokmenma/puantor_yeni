@@ -70,15 +70,23 @@ class DefinesModel extends Model
     {
         $sql = $this->db->prepare("SELECT * FROM $this->table WHERE type_id = ?");
         $sql->execute([$type]);
-        if ($sql->rowCount() != 0) {
+        $rows = $sql->fetchAll(PDO::FETCH_OBJ);
+        
+        $ids = array_map(function ($item) {
+            return (int)$item->id;
+        }, $rows);
 
-            $result = implode(',', array_map(function ($item) {
-                return $item->id;
-            }, $sql->fetchAll(PDO::FETCH_OBJ)));
-            return $result;
+        // System-generated categories that might not exist in defines table
+        if ($type == 1) { // Income
+            if (!in_array(16, $ids)) {
+                $ids[] = 16; // Always include System Salary category
+            }
+        }
 
+        if (!empty($ids)) {
+            return implode(',', $ids);
         } else {
-            return [];
+            return ""; // Return empty string to prevent 'IN ()' syntax errors if accessed. 
         }
     }
 

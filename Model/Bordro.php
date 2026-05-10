@@ -62,10 +62,10 @@ class Bordro extends Model
     SELECT 
         (SELECT SUM(tutar) FROM $this->sql_table mgk 
             WHERE mgk.person_id = :person_id AND (kategori IN ($gelir)) 
-            AND CAST(gun AS UNSIGNED) >= :start_date AND CAST(gun AS UNSIGNED) <= :end_date) AS gelir,
+            AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) >= :start_date AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) <= :end_date) AS gelir,
         (SELECT SUM(tutar) FROM  $this->sql_table mgk 
             WHERE mgk.person_id = :person_id AND kategori IN($kesinti)  
-            AND CAST(gun AS UNSIGNED) >= :start_date AND CAST(gun AS UNSIGNED) <= :end_date) AS odeme
+            AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) >= :start_date AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) <= :end_date) AS odeme
 ");
 
         $query->execute([
@@ -88,18 +88,18 @@ class Bordro extends Model
                             SELECT SUM(tutar) FROM maas_gelir_kesinti mgkk
                             WHERE mgkk.person_id = :person_id
                             AND mgkk.kategori IN (2, 7)
-                            AND mgkk.gun < :start_date  -- Kesinti Toplamı
+                            AND REPLACE(mgkk.gun, "-", "") < :start_date  -- Kesinti Toplamı
                         ), 0) +
                         COALESCE((
                             SELECT SUM(tutar) FROM maas_gelir_kesinti mgkg
                             WHERE mgkg.person_id = :person_id
                             AND mgkg.kategori IN (1, 16)
-                            AND mgkg.gun < :start_date  -- Maaş veya diğer ödemeler toplamı
+                            AND REPLACE(mgkg.gun, "-", "") < :start_date  -- Maaş veya diğer ödemeler toplamı
                         ), 0) +
                         COALESCE((
                             SELECT SUM(tutar) FROM puantaj p
                             WHERE p.person = :person_id  
-                            AND p.gun < :start_date  -- puantaj çalışmaları toplamı
+                            AND REPLACE(p.gun, "-", "") < :start_date  -- puantaj çalışmaları toplamı
                         ), 0)
                     ) AS toplam;');
 
