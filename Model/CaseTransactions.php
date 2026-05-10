@@ -56,8 +56,8 @@ class CaseTransactions extends Model
     //firmanın kasalarının işlemlerini getirir
     public function allTransactionByFirm($firm_id)
     {
-        $is_main_user = $_SESSION['user']->parent_id;
-        if ($is_main_user == 0) {
+        $is_main_user = ($_SESSION['user']->parent_id == 0 || (isset($_SESSION['user']->is_main_user) && $_SESSION['user']->is_main_user == 1));
+        if ($is_main_user) {
             $cases = $this->caseObj->allCaseWithFirmId();
         } else {
             $cases = $this->caseObj->getCasesByUserIds();
@@ -194,8 +194,14 @@ class CaseTransactions extends Model
 
     public function getFirmBalance($firm_id)
     {
-        // Firmanın kasalarını al
-        $cases = $this->caseObj->allCaseWithFirmId();
+        // Firmanın kasalarını yetkiye göre al
+        $is_main_user = ($_SESSION['user']->parent_id == 0 || (isset($_SESSION['user']->is_main_user) && $_SESSION['user']->is_main_user == 1));
+        if ($is_main_user) {
+            $cases = $this->caseObj->allCaseWithFirmId();
+        } else {
+            $cases = $this->caseObj->getCasesByUserIds();
+        }
+
         $case_ids = array_map(function ($case) {
             return $case->id;
         }, $cases);

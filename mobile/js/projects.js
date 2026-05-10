@@ -1,7 +1,9 @@
 // API Path tespiti
 const getApiPath = (endpoint) => {
-  const isMobile = window.location.pathname.includes('/mobile/');
-  const base = isMobile ? '../api/' : 'api/';
+  const isMobile = window.location.pathname.includes('/mobile/') || window.location.hostname.includes('mobile.');
+  const base = isMobile ? 'api/' : 'api/'; // Mobilde subdomain root ise api/ direkt çalışır
+  
+  // Eğer subdomain root ise (mobile.puantor.site), api/ klasörü direkt kök dizindedir.
   return base + endpoint;
 };
 
@@ -47,7 +49,16 @@ $(document).on("click", ".update-project", function (e) {
     method: "POST",
     body: formData
   })
-    .then((response) => response.json())
+    .then((response) => response.text())
+    .then((text) => {
+      console.log("Raw response:", text);
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.error("JSON parse error:", e, "Content:", text);
+        throw e;
+      }
+    })
     .then((data) => {
       if (data.status == "success") {
         var p = data.data;
@@ -178,7 +189,7 @@ $(document).on("click", ".delete-project", function () {
   //Tablo adı butonun içinde bulunduğu tablo
   let action = "deleteProject";
   let confirmMessage = "Proje silinecektir!";
-  let url = "/api/projects/projects.php";
+  let url = "api/projects/projects.php";
 
   deleteRecord(this, action, confirmMessage, url);
 });
@@ -191,11 +202,9 @@ $(document).on("click", ".delete-project-action", async function () {
   let action = "deleteProjectAction";
   let confirmMessage = type + " silinecektir!";
   let project_id = $(this).attr("data-project");
-  let url = "/api/projects/projects.php?project_id=" + project_id;
+  let url = "api/projects/projects.php?project_id=" + project_id;
 
   const result = await deleteRecordByReturn(this, action, confirmMessage, url);
-
-  console.log(result);
 
   if (result.status == "success") {
     $("#total_income").text(result.summary.hakedis);
@@ -246,9 +255,112 @@ $(document).ready(function () {
   }
 });
 
-//Project manage sayfasında Ödeme, hakediş gibi verileri ekledikten sonra tabloya eklemek için
-//expense.js ve progress-payment.js ve payment.js dosyalarında kullanılan addDataToTable fonksiyonu
-// deduction.js dosyasında kullanıldı
+// Search & Filter Logic
+$(document).ready(function() {
+  $('#project-search').on('keyup', function() {
+    var value = $(this).val().toLowerCase();
+    $('#project-list .project-item-wrapper').filter(function() {
+      $(this).toggle($(this).data('name').indexOf(value) > -1)
+    });
+  });
+
+  $('.filter-btn').on('click', function() {
+    $('.filter-btn').removeClass('active bg-white shadow-sm').addClass('text-muted');
+    $(this).addClass('active bg-white shadow-sm').removeClass('text-muted');
+    var type = $(this).data('type');
+    
+    $('#project-list .project-item-wrapper').filter(function() {
+      if (type === 'Tümü') {
+        $(this).show();
+      } else {
+        $(this).toggle($(this).data('type') === type);
+      }
+    });
+  });
+
+  // Swipe-to-Action Interaction (Swipe Right)
+  let touchStartX = 0;
+  let touchMoveX = 0;
+  let currentSwipeItem = null;
+  const swipeThreshold = 70;
+
+  $(document).on('touchstart', '.project-item-content', function(e) {
+      touchStartX = e.originalEvent.touches[0].clientX;
+      touchMoveX = touchStartX;
+      currentSwipeItem = $(this);
+      
+      $('.project-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
+  });
+
+  $(document).on('touchmove', '.project-item-content', function(e) {
+      touchMoveX = e.originalEvent.touches[0].clientX;
+      let diff = touchMoveX - touchStartX; // Positive for right swipe
+      
+      // Swipe right only
+      if (diff > 0) {
+          if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
+          $(this).css('transition', 'none');
+          $(this).css('transform', 'translateX(' + diff + 'px)');
+      } else {
+          $(this).css('transform', 'translateX(0)');
+      }
+  });
+
+  $(document).on('touchend', '.project-item-content', function(e) {
+      let diff = touchMoveX - touchStartX;
+      $(this).css('transition', 'transform 0.2s ease-out');
+      
+      if (diff > swipeThreshold / 2) {
+          $(this).css('transform', 'translateX(' + swipeThreshold + 'px)');
+      } else {
+          $(this).css('transform', 'translateX(0)');
+      }
+  });
+
+  // Close swipe on outside click
+  $(document).on('touchstart', function(e) {
+      if (!$(e.target).closest('.project-item-wrapper').length) {
+          $('.project-item-content').css('transform', 'translateX(0)');
+      }
+      if (!$(e.target).closest('.financial-item-wrapper').length) {
+          $('.financial-item-content').css('transform', 'translateX(0)');
+      }
+  });
+
+  // Swipe-to-Delete for Financial Items (Swipe Left)
+  $(document).on('touchstart', '.financial-item-content', function(e) {
+      touchStartX = e.originalEvent.touches[0].clientX;
+      touchMoveX = touchStartX;
+      currentSwipeItem = $(this);
+      
+      $('.financial-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
+  });
+
+  $(document).on('touchmove', '.financial-item-content', function(e) {
+      touchMoveX = e.originalEvent.touches[0].clientX;
+      let diff = touchStartX - touchMoveX; // Positive for left swipe
+      
+      if (diff > 0) {
+          if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
+          $(this).css('transition', 'none');
+          $(this).css('transform', 'translateX(-' + diff + 'px)');
+      } else {
+          $(this).css('transform', 'translateX(0)');
+      }
+  });
+
+  $(document).on('touchend', '.financial-item-content', function(e) {
+      let diff = touchStartX - touchMoveX;
+      $(this).css('transition', 'transform 0.2s ease-out');
+      
+      if (diff > swipeThreshold / 2) {
+          $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
+      } else {
+          $(this).css('transform', 'translateX(0)');
+      }
+  });
+});
+
 function addDataToTable(data) {
   var table = $("#project_paymentTable").DataTable();
   table.row

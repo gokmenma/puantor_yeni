@@ -49,14 +49,13 @@ class Projects extends Model
         $sql = $this->db->prepare('SELECT 
                                             p.*, 
                                             (CASE 
-                                                WHEN FIND_IN_SET(p.id, (SELECT GROUP_CONCAT(person_id) FROM project_person WHERE project_id = ?)) > 0 THEN 1 
+                                                WHEN EXISTS (SELECT 1 FROM project_person pp WHERE pp.project_id = ? AND pp.person_id = p.id) THEN 1 
                                                 ELSE 0 
                                             END) AS is_added
                                         FROM 
                                             persons p
                                         WHERE 
-                                            p.firm_id = ? AND
-                                            p.wage_type = 2;');
+                                            p.firm_id = ? AND p.deleted_at IS NULL;');
         $sql->execute([$project_id, $firm_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
@@ -67,22 +66,23 @@ class Projects extends Model
         $sql = $this->db->prepare('SELECT 
                                             p.*, 
                                             (CASE 
-                                                WHEN FIND_IN_SET(p.id, (SELECT GROUP_CONCAT(person_id) FROM project_person WHERE project_id = ?)) > 0 THEN 1 
+                                                WHEN EXISTS (SELECT 1 FROM project_person pp WHERE pp.project_id = ? AND pp.person_id = p.id) THEN 1 
                                                 ELSE 0 
                                             END) AS is_added
                                         FROM 
                                             persons p
                                         WHERE 
-                                            p.wage_type = 2;');
+                                            p.deleted_at IS NULL;');
         $sql->execute([$project_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
     public function getPersonFromProject($project_id)
     {
-        $sql = $this->db->prepare('SELECT *
-                                            FROM project_person
-                                            WHERE project_id = ?');
+        $sql = $this->db->prepare('SELECT pp.*
+                                            FROM project_person pp
+                                            JOIN persons p ON p.id = pp.person_id
+                                            WHERE pp.project_id = ? AND p.deleted_at IS NULL');
         $sql->execute([$project_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }

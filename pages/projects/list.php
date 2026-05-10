@@ -43,7 +43,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
 
                             <label class="form-selectgroup-item">
                                 <input type="radio" name="icons" value="user" data-type="Tümü"
-                                    class="form-selectgroup-input">
+                                    class="form-selectgroup-input" checked>
                                 <span class="form-selectgroup-label">
                                     <i class="ti ti-list-check icon me-2"></i>
                                     Tümü
@@ -51,7 +51,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                             </label>
                             <label class="form-selectgroup-item">
                                 <input type="radio" name="icons" value="circle" data-type="Alınan"
-                                    class="form-selectgroup-input" checked>
+                                    class="form-selectgroup-input">
                                 <span class="form-selectgroup-label">
                                     <i class="ti ti-download icon me-2"></i>
                                     Alınan Projeler
@@ -66,7 +66,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                 </span>
                             </label>
                         </div>
-                        <a href="#" class="btn btn-primary route-link" data-page="projects/manage">
+                        <a href="#" class="btn btn-primary" id="addNewProject">
                             <i class="ti ti-plus icon me-2"></i> Yeni
                         </a>
                     </div>
@@ -127,8 +127,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                     <td><?php echo $project->type == 1 ? 'Alınan' : 'Verilen' ?></td>
                                     <td><?php echo $companyHelper->getCompanyName($project->company_id) ?></td>
                                     <td>
-                                        <a class="link route-link nav-item" data-tooltip="Detay"
-                                            data-page="projects/manage&id=<?php echo $id ?>" data-tooltip-location="top">
+                                        <a href="#" class="link update-project" data-id="<?php echo $id ?>" data-tooltip="Düzenle">
                                             <?php echo $project->project_name ?>
                                         </a>
                                     </td>
@@ -151,21 +150,20 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
 
                                     </td>
 
-                                    <!-- Bakiye rengini belirle ve göster 
-                                    <td class="<?php //echo Helper::balanceColor($balance) ?>">-->
-                                        <!-- //Bakiyesini yazdır 
-                                        <?php //echo Helper::formattedMoney($balance) ?>
-                                    </td>-->
                                     <td class="text-end">
                                         <div class="dropdown">
                                             <button class="btn dropdown-toggle align-text-top"
                                                 data-bs-toggle="dropdown">İşlem</button>
 
                                             <div class="dropdown-menu dropdown-menu-end">
+                                                <a class="dropdown-item route-link"
+                                                    data-page="projects/manage&id=<?php echo $id ?>" href="#">
+                                                    <i class="ti ti-eye icon me-3"></i> Proje Detayları
+                                                </a>
                                                 <?php if ($perm->hasPermission("project_add_update")) { ?>
-                                                    <a class="dropdown-item route-link"
-                                                        data-page="projects/manage&id=<?php echo $id ?>" href="#">
-                                                        <i class="ti ti-edit icon me-3"></i> Güncelle/Detay
+                                                    <a class="dropdown-item update-project"
+                                                        data-id="<?php echo $id ?>" href="#">
+                                                        <i class="ti ti-edit icon me-3"></i> Güncelle
                                                     </a>
                                                 <?php } ?>
                                                 <a class="dropdown-item route-link"
@@ -212,6 +210,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
     </div>
 </div>
 
-<?php include_once 'modals/progress-payment-modal.php' ?>
-<?php include_once 'modals/payment-modal.php' ?>
-<?php include_once 'modals/expense-modal.php' ?>
+<?php include_once ROOT . '/pages/projects/modals/progress-payment-modal.php' ?>
+<?php include_once ROOT . '/pages/projects/modals/payment-modal.php' ?>
+<?php include_once ROOT . '/pages/projects/modals/expense-modal.php' ?>
+<?php include_once ROOT . '/pages/projects/modals/project-modal.php' ?>

@@ -4,7 +4,9 @@ require_once ROOT . "/Model/Persons.php";
 require_once ROOT . "/Model/Puantaj.php";
 require_once ROOT . "/App/Helper/date.php";
 require_once ROOT . "/App/Helper/security.php";
-require_once ROOT . "/App/Helper/projects.php";
+require_once ROOT . "/Model/SettingsModel.php";
+require_once ROOT . "/App/Helper/jobs.php";
+require_once ROOT . "/App/Helper/teams.php";
 
 use App\Helper\Date;
 use App\Helper\Security;
@@ -13,21 +15,37 @@ $personsModel = new Persons();
 $puantajModel = new Puantaj();
 $projectHelper = new ProjectHelper();
 $projectsModel = new Projects();
+$settingsModel = new SettingsModel();
+$jobsHelper = new Jobs();
+$teamsHelper = new Teams();
 
 $firm_id = $_SESSION['firm_id'] ?? 0;
 $selected_date = $_GET['date'] ?? date('Y-m-d');
 $selected_project_id = intval($_GET['project_id'] ?? 0);
+$selected_job_group = intval($_GET['job_group'] ?? 0);
+$selected_team_id = intval($_GET['team_id'] ?? 0);
+$selected_collar_type = $_GET['collar_type'] ?? 'all'; // all, blue, white
+
+// Ayarlar: Beyaz yakalıları göster
+$showWhiteCollarSetting = $settingsModel->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+$showWhiteCollar = ($selected_collar_type === 'white' || $selected_collar_type === 'all') ? 1 : 0;
+// Eğer genel ayar kapalıysa ve filtre 'all' ise sadece mavileri göster
+if ($showWhiteCollarSetting == 0 && $selected_collar_type === 'all') $showWhiteCollar = 0;
 
 // Masaüstü ile %100 aynı personelleri getirmek için ortak fonksiyonu kullanıyoruz
 $first_day_ymd = date('Ymd', strtotime($selected_date . ' -0 days'));
 $last_day_ymd = date('Ymd', strtotime(date('Y-m-t', strtotime($selected_date))));
 
-// Masaüstü listesi bu fonksiyonu kullanır:
-$persons_ids = $personsModel->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day_ymd, $last_day_ymd, 0, 0);
+// Masaüstü listesi bu mantığı kullanır:
+$all_projects = $projectsModel->getProjectsByFirm($firm_id);
+
+if ($selected_project_id == 0) {
+    $persons = $personsModel->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day_ymd, $last_day_ymd, $selected_job_group, $selected_team_id, $showWhiteCollar);
+} else {
+    $persons = $projectsModel->getPersonIdByFromProjectCurrentMonth($selected_project_id, $first_day_ymd, $last_day_ymd, $selected_job_group, $selected_team_id, $showWhiteCollar);
+}
 
 $conn = $puantajModel->getDb();
-
-$persons = $persons_ids;
 $stmt = $conn->prepare("SELECT * FROM puantajturu ORDER BY Turu, PuantajSaati ASC");
 $stmt->execute();
 $puantaj_types = $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -46,21 +64,30 @@ $is_today_or_future = ($selected_date >= $today);
 
 <div class="container px-0">
     <div class="mb-2">
+        <?php 
+        $base_params = $_GET;
+        unset($base_params['date']);
+        $query_str = http_build_query($base_params);
+        $prev_url = "puantaj?date=$prev_date" . ($query_str ? "&$query_str" : "");
+        $next_url = "puantaj?date=$next_date" . ($query_str ? "&$query_str" : "");
+        $today_url = "puantaj?date=" . date('Y-m-d') . ($query_str ? "&$query_str" : "");
+        $yesterday_url = "puantaj?date=" . date('Y-m-d', strtotime('-1 day')) . ($query_str ? "&$query_str" : "");
+        ?>
         <div class="d-flex align-items-center justify-content-between mb-2">
             <h2 class="mb-0 text-semibold" style="letter-spacing: -0.5px;">Hızlı Puantaj</h2>
                 <div class="d-flex align-items-center gap-2">
-                    <a href="puantaj?date=<?php echo $prev_date; ?>&project_id=<?php echo $selected_project_id; ?>" class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0" style="width: 34px; height: 34px; min-height: auto !important; display: flex; align-items: center; justify-content: center;" title="Önceki Gün">
+                    <a href="<?php echo $prev_url; ?>" class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0" style="width: 34px; height: 34px; min-height: auto !important; display: flex; align-items: center; justify-content: center;" title="Önceki Gün">
                         <i class="ti ti-chevron-left fs-3"></i>
                     </a>
                     <div class="position-relative d-inline-block">
                         <input type="text" id="datePicker" class="form-control form-control-sm border-0 bg-secondary-lt text-bold text-center" 
-                                value="<?php echo date('d.m.Y', strtotime($selected_date)); ?>" 
-                                style="width: 100px; height: 34px; border-radius: 10px; cursor: pointer; padding-right: 1.6rem; font-size: 0.82rem; color: #1d273b !important; min-height: auto !important;">
-                        <i class="ti ti-calendar position-absolute text-muted" style="right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 0.85rem;"></i>
+                                 value="<?php echo date('d.m.Y', strtotime($selected_date)); ?>" 
+                                 style="width: 100px; height: 34px; border-radius: 10px; cursor: pointer; padding-right: 1.6rem; font-size: 0.82rem; color: #1d273b !important; min-height: auto !important;">
+                         <i class="ti ti-calendar position-absolute text-muted" style="right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 0.85rem;"></i>
                     </div>
                     <?php if (!$is_today_or_future): ?>
-                        <a href="puantaj?date=<?php echo $next_date; ?>&project_id=<?php echo $selected_project_id; ?>" class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0" style="width: 34px; height: 34px; min-height: auto !important; display: flex; align-items: center; justify-content: center;" title="Sonraki Gün">
-                            <i class="ti ti-chevron-right fs-3"></i>
+                        <a href="<?php echo $next_url; ?>" class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0" style="width: 34px; height: 34px; min-height: auto !important; display: flex; align-items: center; justify-content: center;" title="Sonraki Gün">
+                             <i class="ti ti-chevron-right fs-3"></i>
                         </a>
                     <?php else: ?>
                         <button class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0 disabled" style="width: 34px; height: 34px; min-height: auto !important; opacity: 0.3; display: flex; align-items: center; justify-content: center;" disabled>
@@ -71,27 +98,15 @@ $is_today_or_future = ($selected_date >= $today);
         </div>
         <div class="d-flex gap-2 overflow-auto pb-2 no-scrollbar">
             <button class="btn btn-sm btn-pill <?php echo $selected_date == date('Y-m-d') ? 'btn-primary' : 'btn-outline-primary'; ?>" 
-                    onclick="location.href='puantaj?date=<?php echo date('Y-m-d'); ?>&project_id=<?php echo $selected_project_id; ?>'">Bugün</button>
+                    onclick="location.href='<?php echo $today_url; ?>'">Bugün</button>
             <button class="btn btn-sm btn-pill <?php echo $selected_date == date('Y-m-d', strtotime('-1 day')) ? 'btn-primary' : 'btn-outline-primary'; ?>"
-                    onclick="location.href='puantaj?date=<?php echo date('Y-m-d', strtotime('-1 day')); ?>&project_id=<?php echo $selected_project_id; ?>'">Dün</button>
-            <button class="btn btn-sm btn-pill btn-outline-secondary" onclick="setAll('X')">Tümünü Geldi Yap</button>
+                    onclick="location.href='<?php echo $yesterday_url; ?>'">Dün</button>
+            <button class="btn btn-sm btn-pill btn-outline-secondary" onclick="openBulkPuantajModal()">Tümünü işaretle</button>
+            <button class="btn btn-sm btn-icon btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#filterModal" style="width: 32px; height: 32px; min-height: auto !important;">
+                <i class="ti ti-filter fs-3"></i>
+            </button>
         </div>
         
-        <!-- Proje Seçimi -->
-        <?php
-        $all_projects = $projectsModel->getProjectsByFirm($firm_id);
-        ?>
-        <div class="mt-2 position-relative">
-            <select id="projectSelect" class="form-select border-0 bg-secondary-lt text-semibold py-2" style="border-radius: 10px; font-size: 0.82rem; color: #1d273b; cursor: pointer; padding-left: 1rem; padding-right: 2rem; appearance: none; -webkit-appearance: none; height: 34px;">
-                <option value="0">Tüm Projeler (Filtresiz)</option>
-                <?php foreach ($all_projects as $proj): ?>
-                    <option value="<?php echo $proj->id; ?>" <?php echo ($selected_project_id == $proj->id) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($proj->project_name); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <i class="ti ti-chevron-down position-absolute text-muted" style="right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 0.9rem;"></i>
-        </div>
     </div>
 
     <!-- Hafta Sonu Bilgilendirmesi -->
@@ -126,14 +141,20 @@ $is_today_or_future = ($selected_date >= $today);
             $date_dash = $selected_date; // 2026-05-08
             $date_nodash = str_replace('-', '', $selected_date); // 20260508
             
-            $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_dash, $selected_project_id);
+            // Masaüstü ile tam uyumlu olması için: Önce herhangi bir projedeki kaydı bul
+            $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_dash, -1);
             if (empty($current_status_id)) {
-                $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_nodash, $selected_project_id);
+                $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_nodash, -1);
             }
 
-            $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_dash, $selected_project_id);
+            $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_dash, -1);
             if (empty($puantaj_project_id)) {
-                $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_nodash, $selected_project_id);
+                $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_nodash, -1);
+            }
+
+            // Hafta sonu (Pazar) HT otomatik gösterme (Sadece hiç kayıt yoksa)
+            if (empty($current_status_id) && Date::isWeekend($selected_date)) {
+                $current_status_id = 53; // HT ID
             }
             
             $is_disabled = false;
@@ -291,7 +312,77 @@ $is_today_or_future = ($selected_date >= $today);
     </div>
 </div>
 
+<!-- Filtre Modalı -->
+<div class="modal modal-blur fade" id="filterModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 20px; border: none;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title font-weight-bold">Filtrele</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label text-xs font-weight-bold text-muted">PROJE</label>
+                        <select name="project_id" class="form-select border-0 bg-secondary-lt" style="border-radius: 12px;">
+                            <option value="0">Tüm Projeler</option>
+                            <?php foreach ($all_projects as $proj): ?>
+                                <option value="<?php echo $proj->id; ?>" <?php echo ($selected_project_id == $proj->id) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($proj->project_name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-xs font-weight-bold text-muted">PERSONEL TİPİ</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="collar_type" id="collar_all" value="all" <?php echo $selected_collar_type == 'all' ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_all" style="border-radius: 12px 0 0 12px;">Hepsi</label>
+
+                            <input type="radio" class="btn-check" name="collar_type" id="collar_blue" value="blue" <?php echo $selected_collar_type == 'blue' ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_blue">Mavi Yaka</label>
+
+                            <input type="radio" class="btn-check" name="collar_type" id="collar_white" value="white" <?php echo $selected_collar_type == 'white' ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="collar_white" style="border-radius: 0 12px 12px 0;">Beyaz Yaka</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-xs font-weight-bold text-muted">İŞ GRUBU / GÖREV</label>
+                        <?php echo $jobsHelper->jobGroupsSelect('job_group', $selected_job_group); ?>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-xs font-weight-bold text-muted">EKİBİ</label>
+                        <?php echo $teamsHelper->teamsSelect('team_id', $selected_team_id); ?>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary w-100 py-2.5" onclick="applyFilters()" style="border-radius: 14px; font-weight: 600;">Filtreleri Uygula</button>
+                        <button type="button" class="btn btn-link w-100 mt-2 text-muted text-xs text-decoration-none" onclick="clearFilters()">Seçimleri Temizle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
+    /* Filtre Select Tweaks */
+    #filterModal .form-select {
+        height: 42px;
+        font-size: 0.9rem;
+    }
+    #filterModal .btn-group .btn {
+        font-size: 0.82rem;
+        font-weight: 500;
+        padding: 10px;
+    }
+    #filterModal .btn-check:checked + .btn {
+        background-color: var(--mobile-primary) !important;
+        color: white !important;
+    }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .person-row.saved { background-color: rgba(47, 179, 68, 0.04) !important; transition: background 0.3s; }
@@ -438,22 +529,68 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Project Select Change Handler
-    const projectSelect = document.getElementById('projectSelect');
-    if (projectSelect) {
-        projectSelect.addEventListener('change', function() {
-            const projId = this.value;
-            const date = '<?php echo $selected_date; ?>';
-            location.href = `puantaj?date=${date}&project_id=${projId}`;
-        });
-    }
+    });
+
+    // Modal select styling
+    const modalSelects = document.querySelectorAll('#filterModal select');
+    modalSelects.forEach(s => {
+        s.classList.add('form-select', 'border-0', 'bg-secondary-lt');
+        s.style.borderRadius = '12px';
+    });
 });
+
+function applyFilters() {
+    const form = document.getElementById('filterForm');
+    const formData = new FormData(form);
+    const url = new URL(window.location.href);
+    
+    url.searchParams.set('project_id', formData.get('project_id'));
+    url.searchParams.set('job_group', formData.get('job_group'));
+    url.searchParams.set('team_id', formData.get('team_id'));
+    url.searchParams.set('collar_type', formData.get('collar_type'));
+    
+    location.href = url.toString();
+}
+
+function clearFilters() {
+    const url = new URL(window.location.href);
+    const date = url.searchParams.get('date') || '<?php echo date('Y-m-d'); ?>';
+    location.href = `puantaj?date=${date}`;
+}
 
 let currentSelectedPersonId = null;
 let currentSelectedPersonKey = null;
 let currentSelectedTypeId = null;
+let isBulkMode = false;
+
+function openBulkPuantajModal() {
+    isBulkMode = true;
+    currentSelectedPersonId = null;
+    currentSelectedPersonKey = null;
+    currentSelectedTypeId = null;
+    
+    document.getElementById('modalPersonName').innerText = "Tüm Personeller";
+    
+    // Seçimleri temizle
+    document.querySelectorAll('.type-option-row').forEach(row => {
+        row.classList.remove('selected');
+    });
+    
+    // Varsayılan olarak Normal Çalışma sekmesini aç
+    const tabButtons = Array.from(document.querySelectorAll('#v-pills-tab button'));
+    const normalTabButton = tabButtons.find(btn => btn.innerText.trim() === 'Normal Çalışma');
+    if (normalTabButton) {
+        bootstrap.Tab.getOrCreateInstance(normalTabButton).show();
+    } else if (tabButtons.length > 0) {
+        bootstrap.Tab.getOrCreateInstance(tabButtons[0]).show();
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('puantajModal'));
+    modal.show();
+}
 
 function openPuantajModal(element) {
+    isBulkMode = false;
     currentSelectedPersonId = element.getAttribute('data-person-id');
     currentSelectedPersonKey = element.getAttribute('data-person-key');
     const personName = element.getAttribute('data-person-name');
@@ -507,7 +644,91 @@ function selectTypeOption(element) {
     currentSelectedTypeId = element.getAttribute('data-type-id');
     
     // Seçim yapınca direkt atama yapsın!
-    saveSelectedPuantaj(element);
+    if (isBulkMode) {
+        saveBulkPuantaj(element);
+    } else {
+        saveSelectedPuantaj(element);
+    }
+}
+
+function saveBulkPuantaj(selectedOption) {
+    const typeCode = selectedOption.getAttribute('data-type-code');
+    const typeId = selectedOption.getAttribute('data-type-id');
+    const serverDate = '<?php echo $selected_date; ?>';
+    
+    Swal.fire({
+        title: 'Emin misiniz?',
+        text: `Tüm personelleri "${typeCode}" olarak işaretlemek istediğinize emin misiniz?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#206bc4',
+        cancelButtonColor: '#9299a6',
+        confirmButtonText: 'Evet, Uygula!',
+        cancelButtonText: 'Vazgeç',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'btn btn-primary',
+            cancelButton: 'btn btn-link link-secondary'
+        },
+        buttonsStyling: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const modalEl = document.getElementById('puantajModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            const rows = document.querySelectorAll('.person-row');
+            const payload = {};
+            
+            rows.forEach(row => {
+                if (row.getAttribute('data-is-disabled') === 'true') return;
+                if (row.style.display === 'none') return;
+                
+                const personKey = row.getAttribute('data-person-key');
+                payload[personKey] = {};
+                payload[personKey][serverDate] = {
+                    puantajId: typeId,
+                    project_id: <?php echo (int)$selected_project_id; ?>
+                };
+                
+                const personId = row.getAttribute('data-person-id');
+                const badge = document.getElementById(`status-badge-${personId}`);
+                if(badge) {
+                    badge.innerText = "...";
+                    badge.style.backgroundColor = '#f1f5f9';
+                    badge.style.color = '#94a3b8';
+                }
+            });
+
+            jQuery.ajax({
+                url: 'modules/puantaj/api/puantaj-bulk-save.php',
+                method: 'POST',
+                data: {
+                    action: 'savePuantaj',
+                    data: JSON.stringify(payload)
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status === 'success' || response.status === 'info') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Başarılı',
+                            text: 'Puantajlar başarıyla güncellendi.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Hata', response.message, 'error').then(() => location.reload());
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('Bağlantı Hatası', 'İşlem sırasında bir hata oluştu.', 'error').then(() => location.reload());
+                }
+            });
+        }
+    });
 }
 
 function saveSelectedPuantaj(selectedOption) {
@@ -578,55 +799,4 @@ function saveSelectedPuantaj(selectedOption) {
     });
 }
 
-function setAll(typeCode) {
-    const typeOption = document.querySelector(`.type-option-row[data-type-code="${typeCode}"]`);
-    if (!typeOption) {
-        alert('Hata: Tür bulunamadı.');
-        return;
-    }
-    
-    if(!confirm('Tüm personelleri "' + typeCode + '" olarak işaretlemek istediğinize emin misiniz?')) return;
-
-    const typeId = typeOption.getAttribute('data-type-id');
-    const typeColor = typeOption.getAttribute('data-type-color');
-    const typeTextColor = typeOption.getAttribute('data-type-text-color');
-    const serverDate = '<?php echo $selected_date; ?>';
-    const rows = document.querySelectorAll('.person-row');
-    
-    const payload = {};
-    rows.forEach(row => {
-        if (row.getAttribute('data-is-disabled') === 'true') return;
-        const personKey = row.getAttribute('data-person-key');
-        payload[personKey] = {};
-        payload[personKey][serverDate] = {
-            puantajId: typeId,
-            project_id: <?php echo (int)$selected_project_id; ?>
-        };
-        
-        const personId = row.getAttribute('data-person-id');
-        const badge = document.getElementById(`status-badge-${personId}`);
-        if(badge) badge.innerText = "...";
-    });
-
-    jQuery.ajax({
-        url: '../api/puantaj.php',
-        method: 'POST',
-        data: {
-            action: 'savePuantaj',
-            data: JSON.stringify(payload)
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.status === 'success' || response.status === 'info') {
-                location.reload(); // Toplu işlemden sonra en güvenlisi sayfayı yenilemek
-            } else {
-                alert('Hata: ' + response.message);
-            }
-        },
-        error: function(xhr) {
-            alert('Bağlantı hatası: ' + xhr.status);
-        }
-    });
-}
-</script>
 </script>

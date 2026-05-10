@@ -20,6 +20,76 @@ $year = intval($_GET['year'] ?? date('Y'));
 $month = intval($_GET['month'] ?? date('m'));
 $firm_id = $_SESSION['firm_id'];
 
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+// Personelleri Güncelle veya Hesapla işlemi
+if ($view == 'personnel' && ($action == 'update_personnel' || $action == 'payroll_calculate')) {
+    $lastDayYmd = Date::lastDay($month, $year);
+    $firstDayYmd = Date::firstDay($month, $year);
+    
+    // getPersonIdByFirmCurrentMonth methodu $show_all parametresine göre tüm personelleri getirebilir
+    $show_all = ($action == 'update_personnel' || $action == 'payroll_calculate');
+    $p_list = $personModel->getPersonIdByFirmCurrentMonth($firm_id, $firstDayYmd, $lastDayYmd, $show_all);
+    
+    if (count($p_list) > 0) {
+        require_once ROOT . '/Model/Puantaj.php';
+        require_once ROOT . '/Model/SettingsModel.php';
+        require_once ROOT . '/Model/Wages.php';
+        $puantajObj = new Puantaj();
+        $Settings = new SettingsModel();
+        $wages = new Wages();
+
+        foreach ($p_list as $item) {
+            $person = $personModel->find($item->id);
+            if (!$person) continue;
+
+            // Personel işten ayrılmışsa ve ayrılma tarihi bu aydan önceyse işlem yapma
+            if ($person->job_end_date != null && $person->job_end_date != '') {
+                $job_end_date_ymd = Date::Ymd($person->job_end_date);
+                if ($job_end_date_ymd < $firstDayYmd) {
+                    continue;
+                }
+            }
+            
+            // Beyaz Yaka ise maaş girişlerini kontrol et/ekle
+            if ($person->wage_type == 1) {
+                $description = Date::monthName($month) . ' ' . $year . ' Maaş';
+                if ($firstDayYmd <= Date::Ymd(date('Y-m-d'))) {
+                    if (Date::isBetween($person->job_start_date, $firstDayYmd, $lastDayYmd) || Date::isBefore($person->job_start_date, $firstDayYmd)) {
+                        $montly_income = $bordroModel->isPersonMonthlyIncomeAdded($person->id, $month, $year)->id ?? 0;
+                        if ($montly_income == 0) {
+                            $bordroModel->addPersonMonthlyIncome($person->id, $month, $year, $person->daily_wages, $description);
+                        } else {
+                            $bordroModel->updatePersonMonthlyIncome($person->id, $montly_income, $month, $year);
+                        }
+                    }
+                }
+            } else {
+                // Mavi Yaka ise puantaj tutarlarını güncelle
+                $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDayYmd, $lastDayYmd);
+                $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
+                $work_hour = str_replace(',', '.', $work_hour);
+                $ucret = $person->daily_wages / $work_hour;
+
+                foreach ($puantajRecords as $p_record) {
+                    $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
+                    $daily_wages = (($defined_wage > 0) ? ($defined_wage / $work_hour) : $ucret);
+
+                    $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
+                    if ($puantaj_turu->Turu != 'Saatlik') {
+                        $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
+                        $tutar = floatval($saat) * $daily_wages;
+                    } else {
+                        $saat = $puantaj_turu->PuantajSaati;
+                        $tutar = floatval($saat) * $daily_wages;
+                    }
+                    $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
+                }
+            }
+        }
+    }
+}
+
 // Başlık ve Geri Butonu Kontrolü
 $back_url = "index.php?route=payroll";
 if ($view == 'personnel') {
@@ -65,9 +135,14 @@ if ($view == 'personnel') {
         </ul>
       </div>
     <?php elseif ($view == 'personnel'): ?>
-       <button class="btn btn-sm btn-primary shadow-sm rounded-pill px-3 btn-active-scale" id="btn-recalculate">
-         <i class="ti ti-refresh me-1"></i> Hesapla
-       </button>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-white border shadow-sm rounded-pill px-2 btn-active-scale" id="btn-update-personnel" title="Personelleri Güncelle">
+          <i class="ti ti-users-plus fs-3"></i>
+        </button>
+        <button class="btn btn-sm btn-primary shadow-sm rounded-pill px-3 btn-active-scale" id="btn-recalculate">
+          <i class="ti ti-refresh me-1"></i> Hesapla
+        </button>
+      </div>
     <?php endif; ?>
   </div>
 
@@ -156,7 +231,8 @@ if ($view == 'personnel') {
     <?php
     $lastDay = Date::lastDay($month, $year);
     $firstDay = Date::firstDay($month, $year);
-    $persons = $personModel->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $lastDay);
+    $show_all = ($action == 'update_personnel' || $action == 'payroll_calculate');
+    $persons = $personModel->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $lastDay, $show_all);
     
     // Toplam Hakediş ve Kesinti Hesapla (Özet Kartı İçin)
     $total_all_gelir = 0;
@@ -308,17 +384,28 @@ $(document).ready(function() {
     });
   });
 
-  $('#btn-recalculate').on('click', function() {
+  function triggerAction(action) {
     Swal.fire({
-      title: 'Hesaplanıyor...',
-      text: 'Lütfen bekleyiniz, dönem bordrosu güncelleniyor.',
+      title: action === 'update_personnel' ? 'Personeller Güncelleniyor...' : 'Hesaplanıyor...',
+      text: 'Lütfen bekleyiniz, işlem gerçekleştiriliyor.',
       allowOutsideClick: false,
       showConfirmButton: false,
       didOpen: () => { 
         Swal.showLoading(); 
-        setTimeout(() => { location.reload(); }, 1500); 
+        var form = $('<form method="POST"></form>');
+        form.append('<input type="hidden" name="action" value="' + action + '">');
+        $('body').append(form);
+        form.submit();
       }
     });
+  }
+
+  $('#btn-recalculate').on('click', function() {
+    triggerAction('payroll_calculate');
+  });
+
+  $(document).on('click', '#btn-update-personnel', function() {
+    triggerAction('update_personnel');
   });
 });
 </script>

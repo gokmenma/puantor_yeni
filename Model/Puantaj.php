@@ -105,7 +105,10 @@ class Puantaj extends Model
         $date_dash = (strpos($date, '-') !== false) ? $date : substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
         $date_nodash = str_replace('-', '', $date);
 
-        if ($project_id !== null && $project_id !== "" && $project_id > 0) {
+        if ($project_id === -1) {
+            $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) ORDER BY id DESC LIMIT 1");
+            $sql->execute([$person_id, $date_dash, $date_nodash]);
+        } elseif ($project_id !== null && $project_id !== "" && $project_id > 0) {
             $sql = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and project_id = ?");
             $sql->execute([$person_id, $date_dash, $date_nodash, $project_id]);
         } else {
@@ -121,7 +124,10 @@ class Puantaj extends Model
         $date_dash = (strpos($date, '-') !== false) ? $date : substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
         $date_nodash = str_replace('-', '', $date);
 
-        if ($project_id !== null && $project_id > 0) {
+        if ($project_id === -1) {
+            $sql = $this->db->prepare("SELECT puantaj_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) ORDER BY id DESC LIMIT 1");
+            $sql->execute([$person_id, $date_dash, $date_nodash]);
+        } elseif ($project_id !== null && $project_id > 0) {
             $sql = $this->db->prepare("SELECT puantaj_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and project_id = ?");
             $sql->execute([$person_id, $date_dash, $date_nodash, $project_id]);
         } else {
@@ -137,7 +143,10 @@ class Puantaj extends Model
         $date_dash = (strpos($date, '-') !== false) ? $date : substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
         $date_nodash = str_replace('-', '', $date);
 
-        if ($project_id !== null && $project_id > 0) {
+        if ($project_id === -1) {
+            $sql = $this->db->prepare("SELECT project_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) ORDER BY id DESC LIMIT 1");
+            $sql->execute([$person_id, $date_dash, $date_nodash]);
+        } elseif ($project_id !== null && $project_id > 0) {
             $sql = $this->db->prepare("SELECT project_id FROM puantaj WHERE person = ? and (gun = ? OR gun = ?) and project_id = ?");
             $sql->execute([$person_id, $date_dash, $date_nodash, $project_id]);
         } else {

@@ -108,7 +108,7 @@ if ($page == 'financial/transactions/list') {
 }
 // Proje Ekleme,güncelleme ve listeleme sayfası
 if ($page == 'projects/list' || $page == 'projects/manage' || $page == 'projects/add-person') {
-    echo '<script src="./src/project/projects.js"></script>';
+    echo '<script src="./src/project/projects.js?v='.time().'"></script>';
     echo '<script src="./src/project/progress-payment.js"></script>';
     echo '<script src="./src/project/payment.js"></script>';
     echo '<script src="./src/project/expense.js"></script>';

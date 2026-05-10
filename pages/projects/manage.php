@@ -108,19 +108,11 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                             <div class="card-header">
                                 <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <a href="#tabs-home-3" class="nav-link active" data-bs-toggle="tab"
+                                        <a href="#tabs-summary-3" class="nav-link active" data-bs-toggle="tab"
                                             aria-selected="true"
                                             role="tab">
-                                            <i class="ti ti-home icon me-1"></i>
-                                            Genel Bilgiler
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a href="#tabs-profile-3" class="nav-link" data-bs-toggle="tab"
-                                            aria-selected="false" tabindex="-1"
-                                            role="tab">
-                                            <i class="ti ti-clipboard-text icon me-1"></i>
-                                            Diğer Bilgiler
+                                            <i class="ti ti-chart-dots icon me-1"></i>
+                                           Proje Özet Bilgileri
                                         </a>
                                     </li>
                                     <li class="nav-item" role="presentation">
@@ -140,23 +132,20 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                         </a>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <a href="#tabs-summary-3" class="nav-link" data-bs-toggle="tab"
+                                        <a href="#tabs-personnel-3" class="nav-link" data-bs-toggle="tab"
                                             aria-selected="false" tabindex="-1"
                                             role="tab">
-                                            <i class="ti ti-chart-dots icon me-1"></i>
-                                           Proje Özet Bilgileri
+                                            <i class="ti ti-users icon me-1"></i>
+                                            Proje Personelleri
                                         </a>
                                     </li>
                                 </ul>
                             </div>
                             <div class="card-body">
                                 <div class="tab-content">
-                                    <div class="tab-pane active show" id="tabs-home-3" role="tabpanel">
-                                        <?php include_once "content/0-home.php" ?>
+                                    <div class="tab-pane active show" id="tabs-summary-3" role="tabpanel">
+                                        <?php include_once "content/4-project-summary.php" ?>
 
-                                    </div>
-                                    <div class="tab-pane" id="tabs-profile-3" role="tabpanel">
-                                        <?php include_once "content/1-other-info.php" ?>
                                     </div>
                                     <div class="tab-pane" id="tabs-payment-3" role="tabpanel">
                                         <?php include_once "content/2-payment-info.php" ?>
@@ -166,8 +155,8 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                         <?php include_once "content/3-works-puantaj-info.php" ?>
 
                                     </div>
-                                    <div class="tab-pane" id="tabs-summary-3" role="tabpanel">
-                                        <?php include_once "content/4-project-summary.php" ?>
+                                    <div class="tab-pane" id="tabs-personnel-3" role="tabpanel">
+                                        <?php include_once "content/5-personnel.php" ?>
 
                                     </div>
                                 </div>

@@ -17,17 +17,18 @@ if ($_POST['action'] == "saveProject") {
     $data = [
         "id" => $id,
         "firm_id" => $_SESSION['firm_id'],
-        "type" => $_POST['project_type'],
-        'project_name' => Security::escape($_POST['project_name']),
-        'start_date' => Security::escape($_POST['start_date']),
-        'end_date' => Security::escape($_POST['end_date']),
-        'city' => Security::escape($_POST['project_city']),
-        'town' => Security::escape($_POST['project_town']),
-        'status' => Security::escape($_POST['project_status']),
-        'email' => Security::escape($_POST['email']),
-        'phone' => Security::escape($_POST['phone']),
-        'account_number' => Security::escape($_POST['account_number']),
-        'address' => Security::escape($_POST['address']),
+        "type" => $_POST['project_type'] ?? 1,
+        'project_name' => Security::escape($_POST['project_name'] ?? ''),
+        'start_date' => Security::escape($_POST['start_date'] ?? ''),
+        'end_date' => Security::escape($_POST['end_date'] ?? ''),
+        'city' => Security::escape($_POST['project_city'] ?? ''),
+        'town' => Security::escape($_POST['project_town'] ?? ''),
+        'status' => Security::escape($_POST['project_status'] ?? ''),
+        'email' => Security::escape($_POST['email'] ?? ''),
+        'phone' => Security::escape($_POST['phone'] ?? ''),
+        'account_number' => Security::escape($_POST['account_number'] ?? ''),
+        'address' => Security::escape($_POST['address'] ?? ''),
+        'notes' => Security::escape($_POST['project'] ?? ''),
     ];
     //Yeni kayıt esnasında başlangıç bütçesi alınır
     if (isset($_POST["budget"])) {
@@ -127,3 +128,20 @@ if ($_POST['action'] == "deleteProjectAction") {
     ];
     echo json_encode($res);
 }
+
+if ($_POST['action'] == "getProject") {
+    $id = Security::decrypt($_POST['id']);
+    $project = $Projects->find($id);
+    if ($project) {
+        $project->id = Security::encrypt($project->id);
+        $project->company_id = Security::encrypt($project->company_id);
+        
+        require_once "../../App/Helper/cities.php";
+        $cities = new Cities();
+        $project->town_name = $cities->getTownName($project->town);
+        
+        echo json_encode(['status' => 'success', 'data' => $project]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Proje bulunamadı']);
+    }
+}

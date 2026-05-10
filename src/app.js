@@ -100,6 +100,7 @@ if ($(".datatable").length > 0) {
 
   //Puantaj tablosu için
   var puantaj_table = $("#puantajTable").DataTable({
+    autoWidth: false,
     ordering: true,
     order: [[0, "asc"]],
     orderCellsTop: true,

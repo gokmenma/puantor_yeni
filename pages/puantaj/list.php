@@ -139,9 +139,10 @@ $projectNamesCache[0] = "Proje Yok";
     #puantajTable .extra-ekip { width: 120px !important; min-width: 120px !important; }
     
     table#puantajTable.table {
-        width: max-content !important;
-        min-width: 100% !important;
+        width: 100% !important;
+        min-width: 1600px !important;
         max-width: none !important;
+        table-layout: fixed !important;
     }
     
     #puantajTable th, #puantajTable td {
@@ -588,7 +589,7 @@ $projectNamesCache[0] = "Proje Yok";
 
                                 <?php foreach ($dates as $date): ?>
                                     <?php
-                                    $style = 'min-width: 35px !important;';
+                                    $style = 'width: 35px !important; min-width: 35px !important;';
                                     $isSunday = (date('N', strtotime($date)) == 7);
                                     if ($isSunday) {
                                         $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
@@ -608,7 +609,7 @@ $projectNamesCache[0] = "Proje Yok";
 
                                 <?php foreach ($dates as $date): ?>
                                     <?php
-                                    $style = 'min-width: 35px !important;';
+                                    $style = 'width: 35px !important; min-width: 35px !important;';
                                     $isSunday = (date('N', strtotime($date)) == 7);
                                     if ($isSunday) {
                                         $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
