@@ -186,10 +186,25 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                             <?php
                             foreach ($income_expenses as $item):
                                 $item_id = Security::encrypt($item->id);
-                                ?>
-                                <tr>
+                                $is_puantaj = ($item->kategori == 14);
+                                $row_class = $is_puantaj ? 'puantaj-row cursor-pointer' : '';
+                            ?>
+                                <tr class="<?php echo $row_class; ?>" 
+                                    data-id="<?php echo $item->id; ?>" 
+                                    data-person="<?php echo $item->person_id; ?>"
+                                    data-ay="<?php echo $item->ay; ?>"
+                                    data-yil="<?php echo $item->yil; ?>"
+                                    data-type="puantaj">
                                     <td><?php echo $item->id; ?></td>
-                                    <td><?php echo Date::dmY($item->gun); ?></td>
+                                    <td>
+                                        <?php 
+                                        if ($is_puantaj) {
+                                            echo Date::monthName($item->ay) . " " . $item->yil;
+                                        } else {
+                                            echo Date::dmY($item->gun);
+                                        }
+                                        ?>
+                                    </td>
                                     <td><?php
                                     // İşlem türüne göre icon ve renk belirle
                                     echo $financialHelper->getTransactionIcon($item->kategori) ?? '';
@@ -204,14 +219,25 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                                     }
                                     ?>
                                     </td>
-                                    <td><?php echo $item->turu; ?></td>
+                                    <td>
+                                        <?php 
+                                        if ($is_puantaj) {
+                                            echo "<strong>Puantaj Hak Edişi</strong>";
+                                            if (!empty($item->saat)) {
+                                                echo " <span class='badge bg-azure-lt ms-2'>" . number_format($item->saat, 1, ',', '.') . " Saat</span>";
+                                            }
+                                        } else {
+                                            echo $item->turu;
+                                        }
+                                        ?>
+                                    </td>
                                     <td><?php echo $item->ay; ?></td>
                                     <td><?php echo $item->yil; ?></td>
 
                                   
                                     <td><?php echo Helper::formattedMoney($item->tutar); ?></td>
-                                    <td><?php echo Helper::short($item->aciklama); ?></td>
-                                    <td><?php echo $item->created_at; ?></td>
+                                    <td><?php echo $is_puantaj ? '' : Helper::short($item->aciklama); ?></td>
+                                    <td><?php echo $is_puantaj ? '' : $item->created_at; ?></td>
 
 
 
@@ -251,3 +277,114 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/pages/payroll/content/wage_cut-modal.php' ?>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/pages/payroll/content/income-modal.php' ?>
 <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/pages/payroll/content/payment-modal.php' ?>
+
+<!-- Puantaj Detay Modal -->
+<div class="modal modal-blur fade" id="puantajDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="ti ti-calendar-stats me-2"></i>
+                    Puantaj Detayları - <span id="modal_period_label">...</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive" style="max-height: 450px;">
+                    <table class="table table-vcenter card-table table-hover mb-0">
+                        <thead class="sticky-top bg-light">
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Proje</th>
+                                <th>Tür</th>
+                                <th class="text-end">Saat</th>
+                                <th class="text-end">Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="puantaj_detail_rows">
+                            <!-- JS ile doldurulacak -->
+                        </tbody>
+                        <tfoot class="bg-light font-weight-bold">
+                            <tr>
+                                <td colspan="3">Toplam</td>
+                                <td class="text-end" id="modal_total_hours">0</td>
+                                <td class="text-end" id="modal_total_amount">0,00 TL</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary font-weight-medium px-4" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .puantaj-row:hover {
+        background-color: rgba(var(--tblr-primary-rgb), 0.04) !important;
+        transition: background-color 0.2s ease;
+    }
+    .cursor-pointer {
+        cursor: pointer !important;
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    $('.puantaj-row').on('click', function() {
+        const personId = $(this).data('person');
+        const ay = $(this).data('ay');
+        const yil = $(this).data('yil');
+        
+        if (!personId || !ay || !yil) return;
+
+        $('#modal_period_label').text(ay + '/' + yil);
+        $('#puantaj_detail_rows').html('<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>');
+        $('#puantajDetailModal').modal('show');
+
+        $.ajax({
+            url: '/api/bordro/get-puantaj-detail.php',
+            type: 'POST',
+            data: { 
+                person_id: personId,
+                ay: ay,
+                yil: yil
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    let html = '';
+                    let totalHours = 0;
+                    let totalAmount = 0;
+
+                    response.data.forEach(item => {
+                        totalHours += parseFloat(item.saat || 0);
+                        totalAmount += parseFloat(item.tutar || 0);
+                        
+                        html += `
+                            <tr>
+                                <td>${item.gun_formatted}</td>
+                                <td>${item.project_name || '-'}</td>
+                                <td><span class="badge bg-blue-lt">${item.puantaj_adi}</span></td>
+                                <td class="text-end font-weight-medium">${parseFloat(item.saat).toFixed(1)}</td>
+                                <td class="text-end text-primary font-weight-bold">${item.tutar_formatted}</td>
+                            </tr>
+                        `;
+                    });
+
+                    $('#puantaj_detail_rows').html(html);
+                    $('#modal_total_hours').text(totalHours.toFixed(1).replace('.', ',') + ' Saat');
+                    $('#modal_total_amount').text(totalAmount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' }));
+                } else {
+                    $('#puantaj_detail_rows').html('<tr><td colspan="5" class="text-center text-danger py-4">' + (response.message || 'Hata oluştu') + '</td></tr>');
+                }
+            },
+            error: function() {
+                $('#puantaj_detail_rows').html('<tr><td colspan="5" class="text-center text-danger py-4">Sistem hatası</td></tr>');
+            }
+        });
+    });
+});
+</script>

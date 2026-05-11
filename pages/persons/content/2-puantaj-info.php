@@ -298,7 +298,19 @@ foreach ($puantaj_info as $item) {
         background: rgba(var(--tblr-primary-rgb, 32, 107, 196), 0.1) !important;
         font-weight: 800;
         color: var(--tblr-primary, #206bc4) !important;
-        box-shadow: inset 0 0 0 1px var(--tblr-primary, #206bc4) !important;
+        border: 1px solid var(--tblr-primary, #206bc4);
+    }
+    
+    .btn-goto-month {
+        opacity: 0.2;
+        transition: all 0.2s ease;
+        border: none !important;
+        background: transparent !important;
+    }
+    .mini-month:hover .btn-goto-month {
+        opacity: 1;
+        color: var(--tblr-primary) !important;
+        background: rgba(var(--tblr-primary-rgb), 0.1) !important;
     }
     
     /* Modern SweetAlert2 overrides to match Tabler Premium theme */
@@ -632,7 +644,15 @@ $(document).ready(function() {
 
         for (let m = 0; m < 12; m++) {
             const monthDiv = $('<div class="mini-month"></div>');
-            const header = $(`<div class="mini-month-header">${monthNames[m]} ${year}</div>`);
+            const header = $(`<div class="mini-month-header d-flex align-items-center justify-content-between">
+                <span class="ps-2">${monthNames[m]} ${year}</span>
+                <a href="index.php?p=puantaj/list&months=${String(m + 1).padStart(2, '0')}&year=${year}" 
+                   class="btn-goto-month btn btn-icon btn-sm rounded-circle me-1" 
+                   title="Puantaj Sayfasına Git"
+                   style="width: 26px; height: 26px; padding: 0;">
+                    <i class="ti ti-external-link icon fs-3"></i>
+                </a>
+            </div>`);
             monthDiv.append(header);
             
             const daysGrid = $('<div class="mini-month-days"></div>');

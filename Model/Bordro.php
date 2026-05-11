@@ -52,7 +52,11 @@ class Bordro extends Model
                                 person,puantaj_turu,gun,SUM(saat) as saat,SUM(tutar) AS tutar,aciklama,created_at,'puantaj'
                                 FROM sqlmaas_gelir_kesinti
                                 WHERE person_id = :id AND person_id > 0 AND kategori = 14
-                                GROUP BY yil, ay, kategori ORDER BY gun desc");
+                                GROUP BY 
+                                    CASE WHEN gun LIKE '%-%' THEN SUBSTR(gun, 1, 4) ELSE SUBSTR(gun, 1, 4) END,
+                                    CASE WHEN gun LIKE '%-%' THEN SUBSTR(gun, 6, 2) ELSE SUBSTR(gun, 5, 2) END,
+                                    kategori 
+                                ORDER BY gun desc");
         $sql->execute([':id' => $id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }

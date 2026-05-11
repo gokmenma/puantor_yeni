@@ -294,9 +294,9 @@ $is_today_or_future = ($selected_date >= $today);
         background-color: #1e293b !important;
         color: #94a3b8 !important;
     }
-    body[data-bs-theme="dark"] .modal-content {
-        background-color: #1a2234 !important;
-        color: #f4f6fa !important;
+    body[data-bs-theme="dark"] .avatar-md {
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
     }
     body[data-bs-theme="dark"] .border-end {
         border-color: var(--mobile-card-border-dark) !important;
@@ -475,7 +475,7 @@ $is_today_or_future = ($selected_date >= $today);
 <!-- Puantaj Seçim Modalı -->
 <div class="modal modal-blur fade" id="puantajModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content" style="border-radius: 24px; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.1);">
+        <div class="modal-content">
             <div class="modal-header border-0 pb-0">
                 <div>
                     <h5 class="modal-title font-weight-bold text-dark mb-1" id="modalPersonName" style="font-size: 1.15rem;">Personel Adı</h5>
@@ -570,7 +570,7 @@ $is_today_or_future = ($selected_date >= $today);
 <!-- Filtre Modalı -->
 <div class="modal modal-blur fade" id="filterModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="border-radius: 20px; border: none;">
+        <div class="modal-content">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title font-weight-bold">Filtrele</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>

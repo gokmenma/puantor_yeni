@@ -48,6 +48,30 @@
     :root {
       --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, sans-serif;
     }
+    
+    /* Global Premium Modal Styling for Mobile */
+    .modal-content {
+        border-radius: 24px !important;
+        border: none !important;
+        overflow: hidden !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15) !important;
+    }
+    .modal-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        padding: 1.25rem 1.5rem !important;
+    }
+    .modal-footer {
+        border-top: 1px solid rgba(0,0,0,0.05) !important;
+        padding: 1rem 1.5rem !important;
+    }
+    body[data-bs-theme="dark"] .modal-content {
+        background-color: #1a2234 !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4) !important;
+    }
+    body[data-bs-theme="dark"] .modal-header,
+    body[data-bs-theme="dark"] .modal-footer {
+        border-color: rgba(255,255,255,0.05) !important;
+    }
   </style>
   <script>
     window.API_PATH = 'api/';

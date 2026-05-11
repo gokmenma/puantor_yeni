@@ -65,27 +65,42 @@ $months = [
       if (!$person) continue;
       
       $p_id = $person->id;
-      $stats = ['G' => 0, 'X' => 0, 'İ' => 0];
+      $stats = [];
       
       // Bu personelin o aydaki kayıtlarını işle
       if (isset($allPuantajData[$p_id])) {
           foreach ($allPuantajData[$p_id] as $p_row) {
               $type = $puantajTypes[$p_row->puantaj_id] ?? null;
               if ($type) {
-                  $turu = $type->Turu;
-                  $kod = $type->PuantajKod;
+                  $cat = $type->Turu;
+                  $color = $type->ArkaPlanRengi;
+                  $textColor = $type->FontRengi;
                   
-                  if ($turu == 'Normal Çalışma' || $turu == 'Saatlik') {
-                      $stats['G']++;
-                  } elseif ($turu == 'Ücretli İzin') {
-                      $stats['İ']++;
-                  } elseif ($turu == 'Ücretsiz' && !in_array($kod, ['HT', 'RT'])) {
-                      $stats['X']++;
+                  // Kısaltma oluştur (Normal Çalışma -> NÇ)
+                  $words = explode(' ', $cat);
+                  $short = '';
+                  foreach($words as $w) $short .= mb_substr($w, 0, 1, 'UTF-8');
+                  
+                  if (!isset($stats[$cat])) {
+                      $stats[$cat] = (object)[
+                          'count' => 0,
+                          'short' => $short,
+                          'color' => $color,
+                          'textColor' => $textColor
+                      ];
                   }
+                  $stats[$cat]->count++;
               }
           }
       }
-    ?>
+      
+      // Önem sırasına göre sırala (Normal Çalışma en üstte)
+      uksort($stats, function($a, $b) {
+          if ($a == 'Normal Çalışma') return -1;
+          if ($b == 'Normal Çalışma') return 1;
+          return strcmp($a, $b);
+      });
+?>
       <div class="list-group-item d-flex align-items-center justify-content-between py-3 cursor-pointer" onclick="openCalendarModal('<?php echo $person->id; ?>', '<?php echo htmlspecialchars($person->full_name); ?>')">
         <div class="d-flex align-items-center gap-3">
           <div class="avatar avatar-sm rounded-circle bg-primary-lt text-primary font-weight-bold">
@@ -97,19 +112,23 @@ $months = [
           </div>
         </div>
         
-        <div class="d-flex gap-2">
-          <div class="text-center px-2 py-1 rounded bg-green-lt" style="min-width: 35px;">
-            <div class="text-xs font-weight-bold"><?php echo $stats['G']; ?></div>
-            <div class="text-muted" style="font-size: 10px;">G</div>
-          </div>
-          <div class="text-center px-2 py-1 rounded bg-red-lt" style="min-width: 35px;">
-            <div class="text-xs font-weight-bold"><?php echo $stats['X']; ?></div>
-            <div class="text-muted" style="font-size: 10px;">X</div>
-          </div>
-          <div class="text-center px-2 py-1 rounded bg-yellow-lt" style="min-width: 35px;">
-            <div class="text-xs font-weight-bold"><?php echo $stats['İ']; ?></div>
-            <div class="text-muted" style="font-size: 10px;">İ</div>
-          </div>
+        <div class="d-flex gap-1 flex-wrap justify-content-end" style="max-width: 150px;">
+          <?php 
+          $limit = 3;
+          $i = 0;
+          foreach ($stats as $catName => $stat): 
+              if ($i >= $limit) break;
+              // Çok az olanları (0 veya 1) bazen göstermemek isteyebiliriz ama burada hepsini gösterelim
+              if ($stat->count == 0) continue;
+          ?>
+            <div class="text-center px-1.5 py-1 rounded" style="min-width: 32px; background-color: <?php echo $stat->color; ?>20; border: 1px solid <?php echo $stat->color; ?>40;">
+              <div class="text-bold" style="font-size: 0.75rem; color: <?php echo $stat->color; ?>;"><?php echo $stat->count; ?></div>
+              <div style="font-size: 8px; color: <?php echo $stat->color; ?>; font-weight: 800; opacity: 0.8;"><?php echo $stat->short; ?></div>
+            </div>
+          <?php 
+            $i++;
+          endforeach; 
+          ?>
         </div>
       </div>
     <?php endforeach; ?>
@@ -150,6 +169,34 @@ $months = [
 </div>
 
 <style>
+    :root {
+      --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    /* Global Premium Modal Styling for Mobile */
+    .modal-content {
+        border-radius: 24px !important;
+        border: none !important;
+        overflow: hidden !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15) !important;
+    }
+    .modal-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+        padding: 1.25rem 1.5rem !important;
+    }
+    .modal-footer {
+        border-top: 1px solid rgba(0,0,0,0.05) !important;
+        padding: 1rem 1.5rem !important;
+    }
+    body[data-bs-theme="dark"] .modal-content {
+        background-color: #1a2234 !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4) !important;
+    }
+    body[data-bs-theme="dark"] .modal-header,
+    body[data-bs-theme="dark"] .modal-footer {
+        border-color: rgba(255,255,255,0.05) !important;
+    }
+
     .calendar-day {
         aspect-ratio: 1;
         display: flex;

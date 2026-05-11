@@ -454,7 +454,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
     <div class="mobile-card p-4 shadow-sm mb-4 text-center">
       <div class="d-flex align-items-center justify-content-between mb-4">
         <a href="edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $prevMonth; ?>&year=<?php echo $prevYear; ?>" class="btn btn-icon btn-ghost-secondary rounded-circle"><i class="ti ti-chevron-left fs-2"></i></a>
-        <h3 class="mb-0 font-weight-bold" style="font-size: 1.15rem;"><?php echo Date::monthName($month); ?> <?php echo $year; ?></h3>
+        <h3 class="mb-0 font-weight-bold d-flex align-items-center gap-2" style="font-size: 1.15rem;">
+          <?php echo Date::monthName($month); ?> <?php echo $year; ?>
+          <?php 
+          $targetDate = ($month == date('m') && $year == date('Y')) ? date('Y-m-d') : "$year-$month-01";
+          ?>
+          <a href="puantaj?date=<?php echo $targetDate; ?>" class="btn btn-icon btn-ghost-primary rounded-circle" style="width: 28px; height: 28px; min-height: 28px;">
+            <i class="ti ti-external-link icon" style="font-size: 1.1rem;"></i>
+          </a>
+        </h3>
         <a href="edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $nextMonth; ?>&year=<?php echo $nextYear; ?>" class="btn btn-icon btn-ghost-secondary rounded-circle"><i class="ti ti-chevron-right fs-2"></i></a>
       </div>
 

@@ -24,12 +24,12 @@ $teamsHelper = new Teams();
 
 $firm_id = $_SESSION['firm_id'];
 
-$year = isset($_POST['year']) ? $_POST['year'] : date('Y');
-$month = isset($_POST['months']) ? $_POST['months'] : date('m');
+$year = isset($_REQUEST['year']) ? $_REQUEST['year'] : date('Y');
+$month = isset($_REQUEST['months']) ? $_REQUEST['months'] : date('m');
 $last_day = Date::Ymd(Date::lastDay($month, $year));
-$project_id = isset($_POST['projects']) ? $_POST['projects'] : 0;
-$job_group = isset($_POST['job_groups']) ? $_POST['job_groups'] : 0;
-$team_id = isset($_POST['team_id']) ? $_POST['team_id'] : 0;
+$project_id = isset($_REQUEST['projects']) ? $_REQUEST['projects'] : 0;
+$job_group = isset($_REQUEST['job_groups']) ? $_REQUEST['job_groups'] : 0;
+$team_id = isset($_REQUEST['team_id']) ? $_REQUEST['team_id'] : 0;
 
 
 require_once 'Model/SettingsModel.php';
