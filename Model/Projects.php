@@ -103,6 +103,16 @@ class Projects extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function getProjectPersonnelCount($project_id)
+    {
+        $sql = $this->db->prepare('SELECT COUNT(*) as total
+                                            FROM project_person pp
+                                            JOIN persons p ON p.id = pp.person_id
+                                            WHERE pp.project_id = ? AND p.deleted_at IS NULL');
+        $sql->execute([$project_id]);
+        return $sql->fetch(PDO::FETCH_OBJ)->total;
+    }
+
 
     //Personel, gelen projede çalışıyor mu kontrol et
     //örnek: project_id = 1, person_id alanı = 275,278,279

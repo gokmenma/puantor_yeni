@@ -62,6 +62,9 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
   <!-- KPI İstatistik Kartları (Grid) -->
   <div class="row g-1 mb-2">
     <!-- Personel Kartı -->
+    <?php 
+    $persons_auth = $Auths->getAuthIdByTitle("Personeller");
+    if (!$persons_auth || $Auths->AuthorizeByAuthId($persons_auth->id)): ?>
     <div class="col-6">
       <div class="mobile-card h-100 d-flex flex-column justify-content-between mb-0">
         <div class="d-flex align-items-center justify-content-between mb-2">
@@ -76,8 +79,12 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
         </div>
       </div>
     </div>
+    <?php endif; ?>
 
     <!-- Proje Kartı -->
+    <?php 
+    $projects_auth = $Auths->getAuthIdByTitle("Projeler");
+    if (!$projects_auth || $Auths->AuthorizeByAuthId($projects_auth->id)): ?>
     <div class="col-6">
       <div class="mobile-card h-100 d-flex flex-column justify-content-between mb-0">
         <div class="d-flex align-items-center justify-content-between mb-2">
@@ -92,29 +99,47 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
         </div>
       </div>
     </div>
+    <?php endif; ?>
   </div>
 
   <!-- Hızlı İşlemler Gridi (Quick Actions) -->
   <h4 class="mb-3 text-semibold" style="font-size: 0.9rem; letter-spacing: -0.2px; opacity: 0.9;">Hızlı İşlemler</h4>
   <div class="quick-actions-grid">
+    <?php 
+    $persons_auth = $Auths->getAuthIdByTitle("Personeller");
+    if (!$persons_auth || $Auths->AuthorizeByAuthId($persons_auth->id)): ?>
     <a href="persons" class="quick-action-btn">
       <i class="ti ti-user-plus" style="color: #206bc4; font-size: 1.35rem;"></i>
       <span>Personel<br>Listesi</span>
     </a>
+    <?php endif; ?>
+
+    <?php 
+    $puantaj_auth = $Auths->getAuthIdByTitle("Puantaj");
+    if (!$puantaj_auth || $Auths->AuthorizeByAuthId($puantaj_auth->id)): ?>
     <a href="puantaj-detail" class="quick-action-btn">
       <i class="ti ti-calendar-event" style="color: #2fb344; font-size: 1.35rem;"></i>
       <span>Puantaj<br>Listesi</span>
     </a>
+    <?php endif; ?>
+
+    <?php 
+    $todos_auth = $Auths->getAuthIdByTitle("Yapılacaklar");
+    if (!$todos_auth || $Auths->AuthorizeByAuthId($todos_auth->id)): ?>
     <a href="todos" class="quick-action-btn">
       <i class="ti ti-checklist" style="color: #f59e0b; font-size: 1.35rem;"></i>
       <span>Yapılacaklar</span>
     </a>
+    <?php endif; ?>
     <a href="https://wa.me/905000000000" target="_blank" class="quick-action-btn">
       <i class="ti ti-brand-whatsapp" style="color: #07d341; font-size: 1.35rem;"></i>
       <span>WhatsApp<br>Destek</span>
     </a>
   </div>
 
+  <?php 
+  $todos_auth = $Auths->getAuthIdByTitle("Yapılacaklar");
+  if (!$todos_auth || $Auths->AuthorizeByAuthId($todos_auth->id)): ?>
   <!-- Yapılacaklar Listesi (Recent Todos) -->
   <div class="d-flex align-items-center justify-content-between mb-3 mt-2">
     <h4 class="mb-0 text-semibold" style="font-size: 0.9rem; letter-spacing: -0.2px; opacity: 0.9;">Yapılacaklar (<?php echo $pending_todos_count; ?>)</h4>
@@ -182,6 +207,7 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
         <?php endforeach; ?>
       </div>
     </div>
+  <?php endif; ?>
   <?php endif; ?>
 
   <!-- Son Aktiviteler (Activity Feed) -->

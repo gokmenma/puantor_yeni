@@ -87,6 +87,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                 <th style="width:10%">Başlama Tarihi</th>
                                 <th style="width:10%">Tahmini Bitiş Tarihi</th>
                                 <th style="width:10%">Kalan Gün</th>
+                                <th style="width:5%">Personel</th>
                                
                                 <th class="no-export" style="width:7%">İşlem</th>
                             </tr>
@@ -147,7 +148,12 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                             echo '<span class="text-muted">' . $sub_text . '</span>';
                                         }
                                         ?>
-
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="#" class="btn btn-ghost-primary btn-sm show-project-personnel" data-id="<?php echo $project->id ?>" data-name="<?php echo $project->project_name ?>">
+                                            <i class="ti ti-users icon me-1"></i>
+                                            <?php echo $projectObj->getProjectPersonnelCount($project->id) ?>
+                                        </a>
                                     </td>
 
                                     <td class="text-end">
@@ -214,3 +220,4 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
 <?php include_once ROOT . '/pages/projects/modals/payment-modal.php' ?>
 <?php include_once ROOT . '/pages/projects/modals/expense-modal.php' ?>
 <?php include_once ROOT . '/pages/projects/modals/project-modal.php' ?>
+<?php include_once ROOT . '/pages/projects/modals/personnel-list-modal.php' ?>

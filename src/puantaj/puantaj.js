@@ -216,11 +216,28 @@ function storeLastValues() {
   });
 }
 
+function setCookie(name, value, days) {
+  var expires = "";
+  if (days) {
+    var date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
 $(document).ready(function () {
   // Mevcut değerleri kaydet
   storeLastValues();
 
   $("#projects, #year, #months, #job_groups, #team_id").on("change select2:select", function () {
+    // Save current values to Cookies for PHP to read on next fresh load
+    setCookie('p_projects', $("#projects").val(), 30);
+    setCookie('p_year', $("#year").val(), 30);
+    setCookie('p_months', $("#months").val(), 30);
+    setCookie('p_job_groups', $("#job_groups").val(), 30);
+    setCookie('p_team_id', $("#team_id").val(), 30);
+    
     Route();
   });
 });

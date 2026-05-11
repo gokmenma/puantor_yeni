@@ -233,10 +233,16 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
-
-                        <a href="index.php?p=settings/manage&tab=edit-profile" class="dropdown-item">Profili
-                            Güncelle</a>
-                        <a href="./logout.php" class="dropdown-item">Çıkış Yap</a>
+                        <a href="index.php?p=settings/manage&view=profile" class="dropdown-item">
+                            <i class="ti ti-user me-2"></i> Profil Bilgileri
+                        </a>
+                        <a href="index.php?p=settings/manage&view=profile#tabs-notifications-7" class="dropdown-item">
+                            <i class="ti ti-bell me-2"></i> Bildirim Tercihleri
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="./logout.php" class="dropdown-item text-danger">
+                            <i class="ti ti-logout me-2"></i> Çıkış Yap
+                        </a>
                     </div>
                 </div>
             </div>

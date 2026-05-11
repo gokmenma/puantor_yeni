@@ -24,12 +24,12 @@ $teamsHelper = new Teams();
 
 $firm_id = $_SESSION['firm_id'];
 
-$year = isset($_REQUEST['year']) ? $_REQUEST['year'] : date('Y');
-$month = isset($_REQUEST['months']) ? $_REQUEST['months'] : date('m');
+$year = isset($_REQUEST['year']) ? $_REQUEST['year'] : ($_COOKIE['p_year'] ?? date('Y'));
+$month = isset($_REQUEST['months']) ? $_REQUEST['months'] : ($_COOKIE['p_months'] ?? date('m'));
 $last_day = Date::Ymd(Date::lastDay($month, $year));
-$project_id = isset($_REQUEST['projects']) ? $_REQUEST['projects'] : 0;
-$job_group = isset($_REQUEST['job_groups']) ? $_REQUEST['job_groups'] : 0;
-$team_id = isset($_REQUEST['team_id']) ? $_REQUEST['team_id'] : 0;
+$project_id = isset($_REQUEST['projects']) ? $_REQUEST['projects'] : ($_COOKIE['p_projects'] ?? 0);
+$job_group = isset($_REQUEST['job_groups']) ? $_REQUEST['job_groups'] : ($_COOKIE['p_job_groups'] ?? 0);
+$team_id = isset($_REQUEST['team_id']) ? $_REQUEST['team_id'] : ($_COOKIE['p_team_id'] ?? 0);
 
 
 require_once 'Model/SettingsModel.php';

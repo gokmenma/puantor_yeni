@@ -46,7 +46,7 @@ $userId = $user->id ?? 0;
   </div>
 
   <!-- Kullanıcı Profili Özeti -->
-  <div class="mobile-card mb-4 p-3 d-flex align-items-center gap-3">
+  <a href="profile" class="mobile-card mb-4 p-3 d-flex align-items-center gap-3 text-decoration-none text-reset btn-active-scale">
     <div class="avatar avatar-lg rounded-circle text-uppercase" style="background-color: rgba(32, 107, 196, 0.1); color: var(--tblr-primary); font-size: 1.2rem; font-weight: 700;">
       <?php 
         if ($user) {
@@ -60,10 +60,10 @@ $userId = $user->id ?? 0;
       <h3 class="mb-0 text-bold" style="font-size: 1rem;"><?php echo htmlspecialchars($user->full_name ?? $user->name ?? 'İsimsiz Kullanıcı'); ?></h3>
       <p class="text-muted text-xs mb-0 text-truncate"><?php echo htmlspecialchars($user->email ?? ''); ?></p>
     </div>
-    <a href="/index.php?p=settings/manage&tab=edit-account" class="btn btn-icon btn-sm btn-outline-secondary border-0">
-      <i class="ti ti-pencil"></i>
-    </a>
-  </div>
+    <div class="btn btn-icon btn-sm btn-outline-secondary border-0">
+      <i class="ti ti-chevron-right"></i>
+    </div>
+  </a>
 
   <!-- Ana Modüller -->
   <div class="d-flex align-items-center justify-content-between mb-2 px-2">
@@ -133,7 +133,10 @@ $userId = $user->id ?? 0;
   <!-- Destek ve Ayarlar -->
   <h4 class="mb-2 ms-2 text-muted text-xs text-uppercase tracking-wide text-semibold">Destek & Sistem</h4>
   <div class="list-group list-group-mobile mb-4">
-    <a href="?route=settings" class="list-group-item">
+    <?php 
+    $settings_auth = $Auths->getAuthIdByTitle("Ayarlar");
+    if (!$settings_auth || $Auths->AuthorizeByAuthId($settings_auth->id)): ?>
+    <a href="settings" class="list-group-item">
       <div class="d-flex align-items-center gap-3">
         <div class="avatar avatar-sm rounded bg-secondary-lt">
           <i class="ti ti-settings text-secondary"></i>
@@ -142,6 +145,7 @@ $userId = $user->id ?? 0;
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
+    <?php endif; ?>
 
     <a href="tickets" class="list-group-item">
       <div class="d-flex align-items-center gap-3">

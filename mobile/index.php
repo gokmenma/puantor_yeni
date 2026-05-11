@@ -244,7 +244,17 @@ switch ($route) {
         $active_page = "more";
         break;
     case 'settings':
+        $settings_auth = $Auths->getAuthIdByTitle("Ayarlar");
+        if ($settings_auth && !$Auths->AuthorizeByAuthId($settings_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Ayarlar";
+        $page_file = "modules/settings/index.php";
+        $active_page = "more";
+        break;
+    case 'profile':
+        $title = "Profil Ayarları";
         $page_file = "modules/settings/index.php";
         $active_page = "more";
         break;
