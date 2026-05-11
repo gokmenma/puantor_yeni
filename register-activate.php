@@ -62,7 +62,7 @@ function alertdanger($message, $type = "danger", $title = "Hata!")
         <div class="container container-tight py-4">
             <div class="text-center mb-4">
                 <a href="." class="navbar-brand navbar-brand-autodark">
-                    <img src="./static/logo-ai.svg" height="120" alt=""></a>
+                    <img src="./static/Logo-ai.svg" height="120" alt=""></a>
                 </a>
             </div>
             <div class="text-center">

@@ -59,7 +59,7 @@ class Date
 
     public static function daysInMonth($month, $year)
     {
-        return cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        return cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
     }
 
     public static function generateDates($year, $month, $days)

@@ -1,9 +1,9 @@
 Array
 (
-    [time] => 2026-05-08 22:25:18
+    [time] => 2026-05-11 11:36:59
     [POST] => Array
         (
-            [id] => 7U5JitUDaQ1W32-OOv4OtL3NQ9dO8IrhYvIXvoAbYA**
+            [id] => Em4q8ao7Funyw-3uzBHiUzUBB1Qf6jWbyxlGTiMSrA**
             [month] => 
             [year] => 
         )
@@ -12,28 +12,29 @@ Array
         (
             [user] => stdClass Object
                 (
-                    [id] => 172
+                    [id] => 242
                     [user_type] => 2
                     [parent_id] => 0
-                    [firm_id] => 94
-                    [full_name] => Mehmet Ali Gokmen
+                    [firm_id] => 186
+                    [full_name] => Mehmet Ali Gökmen
                     [email] => beyzade83@gmail.com
-                    [password] => $2y$10$Y/.3H5pw6.ZwFDW06t8iBeWxPzU7jGHrnoL4fzpIJNFE/0B9MkvA.
+                    [password] => $2y$10$AfetxhZRRWcTnp8MI/meye8s49JzyZEvVQ2pCPqjRQ0QiOeedmSl6
                     [phone] => 
                     [job] => 
                     [title] => 
-                    [user_roles] => 1
+                    [user_roles] => 149
                     [status] => 1
                     [is_main_user] => 1
                     [sicil_no] => 
                     [yetkinlik_no] => 
-                    [session_token] => 64fd076211c7e135c1613f5f17f064bb11a325fb350c003896bd1b33f1f45c51
-                    [activate_token] => 8VP8aPVETVM0DkMjNSAnR2ZckiCukrzDLBRSkNdCLEREtCoH1lI%3D
+                    [session_token] => 766288042230652808c4c2cb64722d63903c6fd11a22ab413bb98cbf280ed789
+                    [activate_token] => cgVUG8io2HUEUnOwCgMQVfLG40t%2B2D5%2BpvuGy2mthVhSZ2ZAbpU%3D
                     [remember_token] => 
-                    [created_at] => 2025-06-24 22:54:59
+                    [created_at] => 2026-03-11 12:08:24
+                    [responsible_persons] => 
                 )
 
-            [firm_id] => 94
+            [firm_id] => 186
         )
 
     [TARGET_PATH] => C:\xampp\htdocs\puantoryeni\mobile\api\bordro/../../../api/bordro/detail.php

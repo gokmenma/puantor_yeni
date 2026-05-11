@@ -104,6 +104,7 @@ $userId = $user->id ?? 0;
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
 
+    <?php if ($Auths->hasPermission("cari_takip")): ?>
     <a href="cari" class="list-group-item" data-id="cari">
       <div class="d-flex align-items-center gap-1">
         <i class="ti ti-grip-vertical text-muted drag-handle"></i>
@@ -114,6 +115,7 @@ $userId = $user->id ?? 0;
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
+    <?php endif; ?>
   </div>
 
   <!-- Destek ve Ayarlar -->

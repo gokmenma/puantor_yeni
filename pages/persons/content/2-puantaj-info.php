@@ -332,15 +332,23 @@ foreach ($puantaj_info as $item) {
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h3 class="card-title">Çalışma Bilgileri</h3>
                     <div class="d-flex align-items-center gap-2">
-                        <select class="form-select form-select-sm" id="calendar_year_select" style="width: 100px;">
-                            <?php
-                            $currentYear = date('Y');
-                            for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
-                                $selected = ($i == $currentYear) ? 'selected' : '';
-                                echo "<option value='$i' $selected>$i</option>";
-                            }
-                            ?>
-                        </select>
+                        <div class="input-group input-group-flat input-group-sm" style="width: 160px;">
+                            <button type="button" class="btn btn-icon btn-sm btn-outline-primary" id="prev_year_btn" title="Önceki Yıl">
+                                <i class="ti ti-chevron-left"></i>
+                            </button>
+                            <select class="form-select form-select-sm text-center font-weight-bold" id="calendar_year_select">
+                                <?php
+                                $currentYear = date('Y');
+                                for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
+                                    $selected = ($i == $currentYear) ? 'selected' : '';
+                                    echo "<option value='$i' $selected>$i</option>";
+                                }
+                                ?>
+                            </select>
+                            <button type="button" class="btn btn-icon btn-sm btn-outline-primary" id="next_year_btn" title="Sonraki Yıl">
+                                <i class="ti ti-chevron-right"></i>
+                            </button>
+                        </div>
                         <div class="btn-group">
                             <button type="button" class="btn btn-sm btn-outline-primary active" id="view_calendar_btn" title="Takvim Görünümü">
                                 <i class="ti ti-calendar icon"></i> Takvim
@@ -486,6 +494,18 @@ $(document).ready(function() {
             dayGridMonth: 'Ay',
             dayGridWeek: 'Hafta',
             listMonth: 'Ajanda'
+        },
+        datesSet: function(info) {
+            // Takvim görünümü değiştiğinde (ileri/geri) yıl dropdown'ını güncelle
+            const midDate = new Date((info.start.getTime() + info.end.getTime()) / 2);
+            const year = midDate.getFullYear();
+            if ($('#calendar_year_select').val() != year) {
+                $('#calendar_year_select').val(year);
+                if ($('#puantaj_year_view').is(':visible')) {
+                    renderYearlyGrid(year);
+                    updateYearlySummary(year);
+                }
+            }
         },
         viewDidMount: function(info) {
             if (info.view && info.view.type !== 'yearView') {
@@ -675,6 +695,17 @@ $(document).ready(function() {
             container.append(monthDiv);
         }
     }
+
+    // Yıl Değiştirme Butonları
+    $('#prev_year_btn').on('click', function() {
+        let year = parseInt($('#calendar_year_select').val());
+        $('#calendar_year_select').val(year - 1).trigger('change');
+    });
+
+    $('#next_year_btn').on('click', function() {
+        let year = parseInt($('#calendar_year_select').val());
+        $('#calendar_year_select').val(year + 1).trigger('change');
+    });
 
     // Yıllık görünüm seçildiğinde tetikle
     $('#calendar_year_select').on('change', function() {

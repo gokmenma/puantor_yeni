@@ -42,6 +42,7 @@ class Bordro extends Model
                                 *
                                   FROM sqlmaas_gelir_kesinti 
                                   WHERE person_id = :id AND person_id > 0 AND kategori != 14
+                                  AND kategori NOT IN (3, 4, 5, 6, 8, 9, 10, 11, 12, 13)
                                   AND tutar > 0
                                     UNION ALL
                                 SELECT 

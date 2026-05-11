@@ -4,8 +4,15 @@ require_once dirname(__DIR__, 2) . "/Model/CariHareketleri.php";
 require_once dirname(__DIR__, 2) . "/App/Helper/security.php";
 require_once dirname(__DIR__, 2) . "/App/Helper/date.php";
 
+require_once dirname(__DIR__, 2) . "/Model/Auths.php";
+
 use App\Helper\Security;
 use App\Helper\Date;
+
+$Auths = new Auths();
+$Auths->checkFirmReturn();
+$Auths->hasPermissionReturn("cari_hareketleri");
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $moveModel = new CariHareketleri();

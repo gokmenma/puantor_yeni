@@ -1,14 +1,15 @@
 <?php
 // Puantor Mobil - Yapılacaklar Listesi
-require_once ROOT . "/Model/TodoModel.php";
-$todoModel = new Todo();
-$todos = $todoModel->getTodosByFirm();
+require_once ROOT . "/Model/GorevModel.php";
+$gorevModel = new GorevModel();
+$firm_id = $_SESSION['firm_id'] ?? 0;
+$todos = $gorevModel->getTumGorevler($firm_id);
 
 // Gruplandır
 $pending_todos = [];
 $completed_todos = [];
 foreach ($todos as $todo) {
-    if (($todo->state ?? 0) == 1) {
+    if (($todo->tamamlandi ?? 0) == 1) {
         $completed_todos[] = $todo;
     } else {
         $pending_todos[] = $todo;
@@ -106,9 +107,9 @@ foreach ($todos as $todo) {
       <div class="d-flex align-items-center gap-3 w-100">
         <input class="form-check-input" type="checkbox">
         <div class="flex-fill text-center">
-          <div class="todo-title"><?php echo htmlspecialchars($todo->title ?? $todo->content ?? 'Görev'); ?></div>
-          <?php if (isset($todo->project_name) || isset($todo->created_at)): ?>
-            <div class="todo-subtitle"><?php echo htmlspecialchars($todo->project_name ?? date('d M Y', strtotime($todo->created_at))); ?></div>
+          <div class="todo-title"><?php echo htmlspecialchars($todo->baslik ?? 'Görev'); ?></div>
+          <?php if (!empty($todo->tarih) || isset($todo->created_at)): ?>
+            <div class="todo-subtitle"><?php echo htmlspecialchars(!empty($todo->tarih) && $todo->tarih != '0000-00-00' ? date('d M Y', strtotime($todo->tarih)) : (isset($todo->created_at) ? date('d M Y', strtotime($todo->created_at)) : '')); ?></div>
           <?php endif; ?>
         </div>
         <i class="ti ti-chevron-right text-muted opacity-50"></i>
@@ -127,7 +128,7 @@ foreach ($todos as $todo) {
         <div class="d-flex align-items-center gap-3 w-100">
           <input class="form-check-input" type="checkbox" checked>
           <div class="flex-fill text-center">
-            <div class="todo-title"><?php echo htmlspecialchars($todo->title ?? $todo->content ?? 'Görev'); ?></div>
+            <div class="todo-title"><?php echo htmlspecialchars($todo->baslik ?? 'Görev'); ?></div>
           </div>
         </div>
       </div>

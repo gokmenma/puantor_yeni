@@ -2,11 +2,11 @@
 // Puantor Mobil - Dashboard Ana Sayfası
 require_once ROOT . "/Model/Persons.php";
 require_once ROOT . "/Model/Projects.php";
-require_once ROOT . "/Model/TodoModel.php"; // loads Todo class
+require_once ROOT . "/Model/GorevModel.php";
 
 $personsModel = new Persons();
 $projectsModel = new Projects();
-$todoModel = new Todo();
+$gorevModel = new GorevModel();
 
 $firm_id = $_SESSION['firm_id'] ?? 0;
 $user = $_SESSION['user'] ?? null;
@@ -14,10 +14,10 @@ $user = $_SESSION['user'] ?? null;
 // Canlı Veri Sayımları
 $active_persons = count($personsModel->getPersonsByFirm($firm_id));
 $active_projects = count($projectsModel->getProjectsByFirm($firm_id));
-$todos = $todoModel->getTodosByFirm();
+$todos = $gorevModel->getTumGorevler($firm_id);
 $pending_todos_count = 0;
 foreach ($todos as $t) {
-    if (($t->state ?? 0) == 0) {
+    if (($t->tamamlandi ?? 0) == 0) {
         $pending_todos_count++;
     }
 }
@@ -105,18 +105,25 @@ foreach ($todos as $t) {
       $count = 0;
       foreach ($todos as $todo): 
         if ($count >= 3) break;
+        if (($todo->tamamlandi ?? 0) == 1) continue;
         $count++;
-        $is_done = ($todo->state ?? 0) == 1;
+        $is_done = ($todo->tamamlandi ?? 0) == 1;
       ?>
         <div class="list-group-item d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-3">
             <input class="form-check-input m-0" type="checkbox" <?php echo $is_done ? 'checked' : ''; ?> disabled style="width: 18px; height: 18px; border-radius: 6px;">
             <span class="text-sm <?php echo $is_done ? 'text-decoration-line-through text-muted' : 'text-bold'; ?>">
-              <?php echo htmlspecialchars($todo->title ?? $todo->content ?? 'Görev'); ?>
+              <?php echo htmlspecialchars($todo->baslik ?? 'Görev'); ?>
             </span>
           </div>
           <span class="text-xs text-muted">
-            <?php echo isset($todo->created_at) ? date('d.m', strtotime($todo->created_at)) : ''; ?>
+            <?php 
+              if (!empty($todo->tarih) && $todo->tarih != '0000-00-00') {
+                  echo date('d.m', strtotime($todo->tarih));
+              } elseif (isset($todo->created_at)) {
+                  echo date('d.m', strtotime($todo->created_at));
+              }
+            ?>
           </span>
         </div>
       <?php endforeach; ?>

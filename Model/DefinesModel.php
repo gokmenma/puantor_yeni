@@ -68,7 +68,7 @@ class DefinesModel extends Model
      */
     public function getExpenseTypes($type)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE type_id = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE type_id = ? AND id NOT IN (3, 4, 5, 6, 8, 9, 10, 11, 12, 13)");
         $sql->execute([$type]);
         $rows = $sql->fetchAll(PDO::FETCH_OBJ);
         

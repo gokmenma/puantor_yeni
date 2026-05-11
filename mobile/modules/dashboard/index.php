@@ -2,11 +2,13 @@
 // Puantor Mobil - Dashboard Ana Sayfası
 require_once ROOT . "/Model/Persons.php";
 require_once ROOT . "/Model/Projects.php";
-require_once ROOT . "/Model/TodoModel.php"; // loads Todo class
+require_once ROOT . "/Model/GorevModel.php";
+require_once ROOT . "/App/Helper/security.php";
+use App\Helper\Security;
 
 $personsModel = new Persons();
 $projectsModel = new Projects();
-$todoModel = new Todo();
+$gorevModel = new GorevModel();
 
 $firm_id = $_SESSION['firm_id'] ?? 0;
 $user = $_SESSION['user'] ?? null;
@@ -14,10 +16,10 @@ $user = $_SESSION['user'] ?? null;
 // Canlı Veri Sayımları
 $active_persons = count($personsModel->getPersonsByFirm($firm_id));
 $active_projects = count($projectsModel->getProjectsByFirm($firm_id));
-$todos = $todoModel->getTodosByFirm();
+$todos = $gorevModel->getTumGorevler($firm_id);
 $pending_todos_count = 0;
 foreach ($todos as $t) {
-    if (($t->state ?? 0) == 0) {
+    if (($t->tamamlandi ?? 0) == 0) {
         $pending_todos_count++;
     }
 }
@@ -125,26 +127,60 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
       <p class="text-muted text-xs mb-0">Hiç yapılacak işiniz yok!</p>
     </div>
   <?php else: ?>
-    <div class="list-group list-group-mobile mb-4">
-      <?php 
-      $count = 0;
-      foreach ($todos as $todo): 
-        if ($count >= 3) break;
-        $count++;
-        $is_done = ($todo->status ?? 0) == 1;
-      ?>
-        <a href="todos" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2.5">
-          <div class="d-flex align-items-center gap-3">
-            <input class="form-check-input m-0" type="checkbox" <?php echo $is_done ? 'checked' : ''; ?> disabled style="width: 18px; height: 18px; border-radius: 6px;">
-            <span class="text-sm <?php echo $is_done ? 'text-decoration-line-through text-muted' : 'text-semibold'; ?>">
-              <?php echo htmlspecialchars($todo->title ?? 'Görev'); ?>
-            </span>
+    <div class="mobile-card p-0 overflow-hidden mb-4" style="border-radius: 18px; border: 1px solid rgba(0,0,0,0.05);">
+      <div class="list-group list-group-flush" id="dashboard-todos">
+        <?php 
+        $count = 0;
+        $total_todos = 0;
+        // First count how many we will show to handle borders correctly
+        foreach($todos as $t) if(($t->tamamlandi ?? 0) == 0) $total_todos++;
+        
+        foreach ($todos as $todo): 
+          if ($count >= 3) break;
+          if (($todo->tamamlandi ?? 0) == 1) continue;
+          $count++;
+          $todo_id_enc = Security::encrypt($todo->id);
+          $is_last = ($count == min(3, $total_todos));
+        ?>
+          <div class="swipe-item-wrapper <?php echo !$is_last ? 'border-bottom' : ''; ?>" style="border-bottom-color: rgba(0,0,0,0.03) !important;">
+            <div class="swipe-actions-left">
+              <button class="btn-swipe-action bg-primary" onclick="showDashboardTodoDetail('<?php echo $todo_id_enc; ?>')">
+                <i class="ti ti-info-circle"></i>
+                <span>Detay</span>
+              </button>
+            </div>
+            <a href="todos" class="swipe-item-content d-flex align-items-center justify-content-between py-3 text-decoration-none"
+                 style="padding-left: 1rem; padding-right: 1rem; color: inherit;"
+                 data-id="<?php echo $todo_id_enc; ?>"
+                 data-title="<?php echo htmlspecialchars($todo->baslik ?? ''); ?>"
+                 data-description="<?php echo htmlspecialchars($todo->aciklama ?? 'Açıklama yok.'); ?>"
+                 data-date="<?php echo !empty($todo->tarih) && $todo->tarih != '0000-00-00' ? date('d.m.Y', strtotime($todo->tarih)) : 'Süresiz'; ?>"
+                 data-time="<?php echo $todo->saat ? substr($todo->saat, 0, 5) : ''; ?>"
+                 data-list="<?php echo htmlspecialchars($todo->liste_adi ?? 'Genel'); ?>">
+              <div class="d-flex align-items-center gap-3">
+                <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(32, 107, 196, 0.1); color: var(--mobile-primary); border: 1.5px solid rgba(32, 107, 196, 0.1); flex-shrink: 0;">
+                  <i class="ti ti-square" style="font-size: 1.25rem;"></i>
+                </div>
+                <div>
+                  <div class="text-bold text-sm" style="color: #1d273b; line-height: 1.2;"><?php echo htmlspecialchars($todo->baslik ?? 'Görev'); ?></div>
+                  <div class="text-muted text-xs d-flex align-items-center gap-1 mt-0.5">
+                    <?php if (!empty($todo->liste_adi)): ?>
+                      <span><?php echo htmlspecialchars($todo->liste_adi); ?></span>
+                      <span class="text-muted-50">•</span>
+                    <?php endif; ?>
+                    <span class="<?php echo !empty($todo->tarih) && strtotime($todo->tarih) < time() ? 'text-danger text-bold' : ''; ?>">
+                      <?php echo !empty($todo->tarih) && $todo->tarih !== '0000-00-00' ? date('d.m.Y', strtotime($todo->tarih)) : 'Süresiz'; ?>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-muted">
+                <i class="ti ti-chevron-right opacity-30"></i>
+              </div>
+            </a>
           </div>
-          <span class="text-xs text-muted">
-            <?php echo isset($todo->created_at) ? date('d.m', strtotime($todo->created_at)) : ''; ?>
-          </span>
-        </a>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
+      </div>
     </div>
   <?php endif; ?>
 
@@ -200,6 +236,53 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
   <?php endif; ?>
 
   <style>
+    .swipe-item-wrapper {
+        position: relative;
+        overflow: hidden;
+        background: transparent;
+    }
+    body[data-bs-theme="dark"] .swipe-item-wrapper {
+        background: transparent;
+    }
+    .swipe-actions-left {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        display: flex;
+        z-index: 1;
+    }
+    .btn-swipe-action {
+        border: none;
+        color: white;
+        width: 65px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+    .btn-swipe-action:active {
+        opacity: 0.8;
+    }
+    .btn-swipe-action i {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+    }
+    .swipe-item-content {
+        position: relative;
+        z-index: 2;
+        background: #fff;
+        transition: transform 0.2s ease-out;
+    }
+    body[data-bs-theme="dark"] .swipe-item-content {
+        background: #1d273b;
+    }
+
     .activity-feed {
         position: relative;
         padding-left: 5px;
@@ -243,6 +326,105 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
   </style>
 
 </div>
+
+<!-- Görev Detay Modali -->
+<div class="modal fade" id="dashboardTodoDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 24px; border: none; overflow: hidden;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-semibold">Görev Detayı</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <div class="mb-3">
+          <div class="badge bg-primary-lt mb-2" id="detail-list-badge">Liste Adı</div>
+          <h3 class="mb-1 text-bold" id="detail-title">Görev Başlığı</h3>
+          <div class="d-flex align-items-center gap-2 text-muted text-xs">
+            <i class="ti ti-calendar"></i>
+            <span id="detail-date">Tarih</span>
+            <span id="detail-time-wrapper"><i class="ti ti-clock ms-2"></i> <span id="detail-time">Saat</span></span>
+          </div>
+        </div>
+        <div class="p-3 bg-light rounded-3 mb-3">
+          <label class="text-xs text-muted text-uppercase tracking-wider font-weight-bold mb-1 d-block">Açıklama</label>
+          <p class="mb-0 text-sm" id="detail-description" style="white-space: pre-wrap;">Görev açıklaması buraya gelecek.</p>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <a href="todos" class="btn btn-primary w-100 py-2.5 text-semibold" style="border-radius: 12px;">Tüm Yapılacaklara Git</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    let touchStartX = 0;
+    let touchMoveX = 0;
+    const swipeThreshold = 65; // Only 1 button now (65px)
+
+    $(document).on('touchstart', '.swipe-item-content', function(e) {
+        touchStartX = e.originalEvent.touches[0].clientX;
+        touchMoveX = touchStartX;
+        $('.swipe-item-content').not(this).css('transform', 'translateX(0)');
+    });
+
+    $(document).on('touchmove', '.swipe-item-content', function(e) {
+        touchMoveX = e.originalEvent.touches[0].clientX;
+        let diff = touchMoveX - touchStartX;
+        
+        // Swiping right reveals left actions
+        if (diff > 0) {
+            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
+            $(this).css('transition', 'none');
+            $(this).css('transform', 'translateX(' + diff + 'px)');
+        } else {
+            $(this).css('transform', 'translateX(0)');
+        }
+    });
+
+    $(document).on('touchend', '.swipe-item-content', function(e) {
+        let diff = touchMoveX - touchStartX;
+        $(this).css('transition', 'transform 0.2s ease-out');
+        
+        if (diff > swipeThreshold / 2) {
+            $(this).css('transform', 'translateX(' + swipeThreshold + 'px)');
+        } else {
+            $(this).css('transform', 'translateX(0)');
+        }
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.swipe-item-wrapper').length) {
+            $('.swipe-item-content').css('transform', 'translateX(0)');
+        }
+    });
+});
+
+function showDashboardTodoDetail(id) {
+    const content = $(`.swipe-item-content[data-id="${id}"]`);
+    if (!content.length) return;
+
+    $('#detail-title').text(content.attr('data-title'));
+    $('#detail-description').text(content.attr('data-description'));
+    $('#detail-date').text(content.attr('data-date'));
+    $('#detail-list-badge').text(content.attr('data-list'));
+    
+    const time = content.attr('data-time');
+    if (time) {
+        $('#detail-time').text(time);
+        $('#detail-time-wrapper').show();
+    } else {
+        $('#detail-time-wrapper').hide();
+    }
+
+    // Reset swipe
+    content.css('transform', 'translateX(0)');
+    
+    const modal = new bootstrap.Modal($('#dashboardTodoDetailModal'));
+    modal.show();
+}
+</script>
 
 <!-- Firma Seçim Modali (Bottom Sheet tarzı) -->
 <div class="modal fade" id="firmSelectionModal" tabindex="-1" aria-labelledby="firmSelectionModalLabel" aria-hidden="true">

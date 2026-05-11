@@ -11,7 +11,11 @@ require_once __DIR__ . "/../Database/db.php";
 require_once __DIR__ . "/../Model/UserModel.php";
 require_once __DIR__ . "/../Model/MyFirmModel.php";
 
+require_once __DIR__ . "/../Model/Auths.php";
+
 $User = new UserModel();
+$Auths = new Auths();
+
 
 // Oturum kontrolü
 if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
@@ -199,11 +203,19 @@ switch ($route) {
         $active_page = "more";
         break;
     case 'cari':
+        if (!$Auths->hasPermission("cari_takip")) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Cari Takip";
         $page_file = "modules/cari/index.php";
         $active_page = "more";
         break;
     case 'cari-movements':
+        if (!$Auths->hasPermission("cari_hareketleri")) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Cari Hareketleri";
         $page_file = "modules/cari/movements.php";
         $active_page = "more";
