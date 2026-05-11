@@ -88,6 +88,10 @@ $(document).on("click", "#kullanici_kaydet", function () {
         text: data.message,
         icon: data.status,
         confirmButtonText: "Tamam"
+      }).then(() => {
+        if (data.status == "success" && id == "0") {
+            window.location.href = "index.php?p=users/manage&id=" + data.lastid;
+        }
       });
     });
 });

@@ -32,9 +32,25 @@ class Projects extends Model
 
     public function getProjectsByFirm($firm_id)
     {
-        $sql = $this->db->prepare('SELECT * FROM projects WHERE firm_id = ?');
-        $sql->execute([$firm_id]);
-        return $sql->fetchAll(PDO::FETCH_OBJ);
+        $sql = "SELECT * FROM projects WHERE firm_id = ?";
+        $params = [$firm_id];
+
+        // Yetki kontrolü: Kullanıcı ana kullanıcı değilse ve sorumlu olduğu projeler tanımlanmışsa filtrele
+        $user = $_SESSION['user'] ?? null;
+        $is_main_user = (isset($user->is_main_user) && $user->is_main_user == 1) || (isset($user->parent_id) && $user->parent_id == 0);
+        
+        if ($user && !$is_main_user && !empty($user->responsible_projects)) {
+            $project_ids = explode(',', $user->responsible_projects);
+            if (!empty($project_ids)) {
+                $placeholders = implode(',', array_fill(0, count($project_ids), '?'));
+                $sql .= " AND id IN ($placeholders)";
+                $params = array_merge($params, $project_ids);
+            }
+        }
+
+        $query = $this->db->prepare($sql);
+        $query->execute($params);
+        return $query->fetchAll(PDO::FETCH_OBJ);
     }
 
     public function addPersontoProject($data)
@@ -124,6 +140,16 @@ class Projects extends Model
 
     public function getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false)
     {
+        // Yetki kontrolü
+        $user = $_SESSION['user'] ?? null;
+        $is_main_user = (isset($user->is_main_user) && $user->is_main_user == 1) || (isset($user->parent_id) && $user->parent_id == 0);
+        if ($user && !$is_main_user && !empty($user->responsible_projects)) {
+            $allowed_projects = explode(',', $user->responsible_projects);
+            if (!in_array($project_id, $allowed_projects)) {
+                return []; // Yetkisi yoksa boş dön
+            }
+        }
+
         $wage_type_sql = $include_white_collar ? 'wage_type IN (1, 2)' : 'wage_type = 2';
         $sql = "SELECT p.*
                         FROM persons p

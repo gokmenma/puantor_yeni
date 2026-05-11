@@ -106,6 +106,7 @@ try {
                                     Genel Bilgiler
                                 </a>
                             </li>
+                            <?php if ($id > 0): ?>
                             <li class="nav-item" role="presentation">
                                 <a href="#tabs-profile-3" class="nav-link" data-bs-toggle="tab" aria-selected="false"
                                     tabindex="-1"
@@ -114,6 +115,7 @@ try {
                                     Sorumlu Olduğu Personeller
                                 </a>
                             </li>
+                            <?php endif; ?>
                         </ul>
                     </div>
                     <div class="card-body">
@@ -123,6 +125,7 @@ try {
                                 <div class="tab-pane active show" id="tabs-home-3" role="tabpanel">
                                     <?php include_once "content/0-home.php"; ?>
                                 </div>
+                                <?php if ($id > 0): ?>
                                 <div class="tab-pane" id="tabs-profile-3" role="tabpanel">
                                     <div class="row mb-3 mt-2">
                                         <div class="col-md-12">
@@ -279,6 +282,7 @@ try {
                                         });
                                     </script>
                                 </div>
+                                <?php endif; ?>
                             </div>
                         </form>
                     </div>

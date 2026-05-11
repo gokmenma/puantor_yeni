@@ -182,7 +182,7 @@ class Persons extends Model
             return $results;
         }
 
-        $page = isset($_GET['p']) ? $_GET['p'] : '';
+        $page = isset($_GET['p']) ? $_GET['p'] : (isset($_GET['route']) ? $_GET['route'] : '');
 
         $module_key = null;
         if (strpos($page, 'puantaj') !== false) {

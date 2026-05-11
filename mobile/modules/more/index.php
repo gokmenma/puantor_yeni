@@ -71,6 +71,9 @@ $userId = $user->id ?? 0;
     <span class="text-muted text-xxs d-flex align-items-center gap-1"><i class="ti ti-hand-finger text-primary"></i> Sıralamak için sürükleyin</span>
   </div>
   <div id="module-list" class="list-group list-group-mobile mb-4">
+    <?php 
+    $payroll_auth = $Auths->getAuthIdByTitle("Bordro");
+    if (!$payroll_auth || $Auths->AuthorizeByAuthId($payroll_auth->id)): ?>
     <a href="payroll" class="list-group-item" data-id="payroll">
       <div class="d-flex align-items-center gap-1">
         <i class="ti ti-grip-vertical text-muted drag-handle"></i>
@@ -81,7 +84,11 @@ $userId = $user->id ?? 0;
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
+    <?php endif; ?>
 
+    <?php 
+    $projects_auth = $Auths->getAuthIdByTitle("Projeler");
+    if (!$projects_auth || $Auths->AuthorizeByAuthId($projects_auth->id)): ?>
     <a href="projects" class="list-group-item" data-id="projects">
       <div class="d-flex align-items-center gap-1">
         <i class="ti ti-grip-vertical text-muted drag-handle"></i>
@@ -92,7 +99,11 @@ $userId = $user->id ?? 0;
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
+    <?php endif; ?>
     
+    <?php 
+    $todos_auth = $Auths->getAuthIdByTitle("Yapılacaklar");
+    if (!$todos_auth || $Auths->AuthorizeByAuthId($todos_auth->id)): ?>
     <a href="todos" class="list-group-item" data-id="todos">
       <div class="d-flex align-items-center gap-1">
         <i class="ti ti-grip-vertical text-muted drag-handle"></i>
@@ -103,6 +114,7 @@ $userId = $user->id ?? 0;
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
+    <?php endif; ?>
 
     <?php if ($Auths->hasPermission("cari_takip")): ?>
     <a href="cari" class="list-group-item" data-id="cari">

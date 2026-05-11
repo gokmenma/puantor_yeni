@@ -118,61 +118,112 @@ switch ($route) {
         $active_page = "home";
         break;
     case 'persons':
+        $persons_auth = $Auths->getAuthIdByTitle("Personeller");
+        if ($persons_auth && !$Auths->AuthorizeByAuthId($persons_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Personeller";
         $page_file = "modules/persons/index.php";
         $active_page = "persons";
         break;
     case 'person-add':
-        $title = "Yeni Personel Ekle";
-        $page_file = "modules/persons/add.php";
-        $active_page = "persons";
-        break;
     case 'person-edit':
-        $title = "Personel Düzenle";
-        $page_file = "modules/persons/edit.php";
+        $persons_auth = $Auths->getAuthIdByTitle("Personeller");
+        if ($persons_auth && !$Auths->AuthorizeByAuthId($persons_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
+        $title = ($route == 'person-add') ? "Yeni Personel Ekle" : "Personel Düzenle";
+        $page_file = ($route == 'person-add') ? "modules/persons/add.php" : "modules/persons/edit.php";
         $active_page = "persons";
         break;
     case 'puantaj':
+        $puantaj_auth = $Auths->getAuthIdByTitle("Puantaj");
+        if ($puantaj_auth && !$Auths->AuthorizeByAuthId($puantaj_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Hızlı Puantaj";
         $page_file = "modules/puantaj/index.php";
         $active_page = "puantaj";
         break;
     case 'puantaj-detail':
+        $puantaj_auth = $Auths->getAuthIdByTitle("Puantaj");
+        if ($puantaj_auth && !$Auths->AuthorizeByAuthId($puantaj_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Aylık Puantaj";
         $page_file = "modules/puantaj/detail.php";
         $active_page = "puantaj";
         break;
     case 'projects':
+        $projects_auth = $Auths->getAuthIdByTitle("Projeler");
+        if ($projects_auth && !$Auths->AuthorizeByAuthId($projects_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Projeler";
         $page_file = "modules/projects/index.php";
         $active_page = "more";
         break;
     case 'project-manage':
+        $projects_auth = $Auths->getAuthIdByTitle("Projeler");
+        if ($projects_auth && !$Auths->AuthorizeByAuthId($projects_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Proje Detay / Güncelle";
         $page_file = "modules/projects/manage.php";
         $active_page = "more";
         break;
     case 'finance':
+        $finance_auth = $Auths->getAuthIdByTitle("Finans");
+        if ($finance_auth && !$Auths->AuthorizeByAuthId($finance_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Kasa & Finans";
         $page_file = "modules/finance/index.php";
         $active_page = "more";
         break;
     case 'payroll':
+        $payroll_auth = $Auths->getAuthIdByTitle("Bordro");
+        if ($payroll_auth && !$Auths->AuthorizeByAuthId($payroll_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Bordrolar";
         $page_file = "modules/payroll/index.php";
         $active_page = "more";
         break;
     case 'todos':
+        $todos_auth = $Auths->getAuthIdByTitle("Yapılacaklar");
+        if ($todos_auth && !$Auths->AuthorizeByAuthId($todos_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Yapılacaklar";
         $page_file = "modules/todos/index.php";
         $active_page = "more";
         break;
     case 'person-puantaj':
+        $puantaj_auth = $Auths->getAuthIdByTitle("Puantaj");
+        if ($puantaj_auth && !$Auths->AuthorizeByAuthId($puantaj_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Personel Puantajı";
         $page_file = "modules/puantaj/detail.php";
         $active_page = "persons";
         break;
     case 'person-finance':
+        $finance_auth = $Auths->getAuthIdByTitle("Finans");
+        if ($finance_auth && !$Auths->AuthorizeByAuthId($finance_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Personel Ödemeleri";
         $page_file = "modules/finance/index.php";
         $active_page = "persons";

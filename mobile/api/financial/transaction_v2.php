@@ -1,6 +1,6 @@
-﻿<?php
+<?php
 session_start();
- = __DIR__ . '/../../../api/financial/transaction.php';
+$target = __DIR__ . '/../../../api/financial/transaction.php';
 if (file_exists($target)) {
     require_once $target;
 } else {
