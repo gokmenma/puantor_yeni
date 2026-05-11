@@ -46,10 +46,13 @@ class Bordro extends Model
                                   AND tutar > 0
                                     UNION ALL
                                 SELECT 
-                                id,person_id,turu,kategori,ay,yil,person,puantaj_turu,gun,saat,SUM(tutar) AS tutar,aciklama,created_at,'puantaj'
+                                id,person_id,turu,kategori,
+                                CASE WHEN gun LIKE '%-%' THEN SUBSTR(gun, 6, 2) ELSE SUBSTR(gun, 5, 2) END AS ay,
+                                CASE WHEN gun LIKE '%-%' THEN SUBSTR(gun, 1, 4) ELSE SUBSTR(gun, 1, 4) END AS yil,
+                                person,puantaj_turu,gun,SUM(saat) as saat,SUM(tutar) AS tutar,aciklama,created_at,'puantaj'
                                 FROM sqlmaas_gelir_kesinti
                                 WHERE person_id = :id AND person_id > 0 AND kategori = 14
-                                GROUP BY kategori ORDER BY created_at desc");
+                                GROUP BY yil, ay, kategori ORDER BY gun desc");
         $sql->execute([':id' => $id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }

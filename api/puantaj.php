@@ -92,6 +92,7 @@ if ($_POST['action'] == 'savePuantaj') {
 
                     $data = [
                         'id' => $id,
+                        'company_id' => $person_info->firm_id ?? 0,
                         'person' => $person_id,
                         'project_id' => $current_p_id,
                         'puantaj_id' => $puantaj_item['puantajId'],

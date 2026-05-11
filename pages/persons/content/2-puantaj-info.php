@@ -433,14 +433,25 @@ foreach ($puantaj_info as $item) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($puantaj_info as $item): ?>
-                                        <tr>
+                                    <?php foreach ($puantaj_info as $item): 
+                                        $gunStr = (string)$item->gun;
+                                        $itemYear = '';
+                                        if (strlen($gunStr) == 8 && is_numeric($gunStr)) {
+                                            $itemYear = substr($gunStr, 0, 4);
+                                        } else if (strpos($gunStr, '-') !== false) {
+                                            $itemYear = explode('-', $gunStr)[0];
+                                        }
+                                        
+                                        // Sadece seçili yıla ait kayıtları göster (PHP tarafında başlangıç filtresi)
+                                        $display = ($itemYear == date('Y')) ? '' : 'style="display:none;"';
+                                    ?>
+                                        <tr class="puantaj-row" data-year="<?php echo $itemYear ?>" <?php echo $display ?>>
                                             <td><?php echo $item->id ?></td>
                                             <td><?php echo $projects->find($item->project_id)->project_name ?? '' ?></td>
                                             <td>
                                                 <?php
                                                 $puantaj_turu = $puantajObj->getPuantajTuruById($item->puantaj_id);
-                                                echo $puantaj_turu->PuantajKod . " - " . $puantaj_turu->PuantajAdi;
+                                                echo ($puantaj_turu->PuantajKod ?? '') . " - " . ($puantaj_turu->PuantajAdi ?? '');
                                                 ?>
                                             </td>
                                             <td><?php echo Date::ymd($item->gun, "d.m.Y") ?></td>
@@ -697,12 +708,14 @@ $(document).ready(function() {
     }
 
     // Yıl Değiştirme Butonları
-    $('#prev_year_btn').on('click', function() {
+    $('#prev_year_btn').on('click', function(e) {
+        e.preventDefault();
         let year = parseInt($('#calendar_year_select').val());
         $('#calendar_year_select').val(year - 1).trigger('change');
     });
 
-    $('#next_year_btn').on('click', function() {
+    $('#next_year_btn').on('click', function(e) {
+        e.preventDefault();
         let year = parseInt($('#calendar_year_select').val());
         $('#calendar_year_select').val(year + 1).trigger('change');
     });
@@ -711,16 +724,36 @@ $(document).ready(function() {
     $('#calendar_year_select').on('change', function() {
         const year = $(this).val();
         
-        // Ana takvimi güncelle
-        const currentDate = ec.getDate();
-        ec.gotoDate(new Date(year, currentDate.getMonth(), 1));
+        // Ana takvimi güncelle (Eğer takvim yüklüyse ve destekliyorsa)
+        try {
+            if (typeof ec !== 'undefined' && ec) {
+                if (typeof ec.gotoDate === 'function') {
+                    const currentDate = (typeof ec.getDate === 'function') ? ec.getDate() : new Date();
+                    ec.gotoDate(new Date(year, currentDate.getMonth(), 1));
+                }
+            }
+        } catch (e) { console.error('Calendar update failed:', e); }
         
-        // Yıllık görünüm açıksa onu da güncelle
-        if ($('#puantaj_year_view').is(':visible')) {
-            renderYearlyGrid(year);
-            updateYearlySummary(year);
-        }
+        renderYearlyGrid(year);
+        updateYearlySummary(year);
+        filterTableByYear(year);
     });
+
+    function filterTableByYear(year) {
+        if ($.fn.DataTable.isDataTable('#puantaj_info_table')) {
+            const table = $('#puantaj_info_table').DataTable();
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                const node = table.row(dataIndex).node();
+                return node ? $(node).data('year') == year : false;
+            });
+            table.draw();
+            $.fn.dataTable.ext.search.pop();
+        } else {
+            $('.puantaj-row').each(function() {
+                $(this).toggle($(this).data('year') == year);
+            });
+        }
+    }
 
     // Liste / Takvim geçişleri
     $('#view_calendar_btn').on('click', function() {

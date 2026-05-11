@@ -70,8 +70,11 @@ class Puantaj extends Model
     //Personelin puantaj tablosundaki çalışmaları getirilir
     public function getPuantajInfoByPerson($person_id)
     {
-      
-        $sql = $this->db->prepare("SELECT * FROM puantaj WHERE person = ? ORDER BY gun DESC");
+        $sql = $this->db->prepare("SELECT pt.* FROM puantaj pt 
+                                   INNER JOIN persons p ON p.id = pt.person 
+                                   WHERE pt.person = ? 
+                                   AND (pt.company_id = p.firm_id OR pt.company_id = 0 OR pt.company_id IS NULL)
+                                   ORDER BY pt.gun DESC");
         $sql->execute([$person_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
