@@ -1,0 +1,24 @@
+--- Proxy Request at 2026-05-11 13:56:12 ---
+URL: Unknown
+METHOD: N/A
+POST RAW: 
+POST JSON: []
+SESSION: []
+--- Proxy Request at 2026-05-11 13:56:15 ---
+URL: /api/financial/transaction.php
+METHOD: POST
+POST RAW: action=getSubTypes&type=2
+POST JSON: {"action":"getSubTypes","type":"2"}
+SESSION: {"user":{"id":242,"user_type":2,"parent_id":0,"firm_id":186,"full_name":"Mehmet Ali G\u00f6kmen","email":"beyzade83@gmail.com","password":"$2y$10$AfetxhZRRWcTnp8MI\/meye8s49JzyZEvVQ2pCPqjRQ0QiOeedmSl6","phone":null,"job":null,"title":null,"user_roles":149,"status":1,"is_main_user":1,"sicil_no":null,"yetkinlik_no":null,"session_token":"cb9d7990d6e3973f0d6d8c24e9f03d852a0d36fdfd8e112cc8b94cfa9af1b1bc","activate_token":"cgVUG8io2HUEUnOwCgMQVfLG40t%2B2D5%2BpvuGy2mthVhSZ2ZAbpU%3D","remember_token":null,"created_at":"2026-03-11 12:08:24","responsible_persons":null},"firm_id":186}
+--- Proxy Request at 2026-05-11 13:56:17 ---
+URL: /api/financial/transaction.php
+METHOD: POST
+POST RAW: action=getTransaction&id=Xszh9dDMidCi8jgKK0RjZqjrTk3bje68LSyKj4YMLw**&cases=-A-kgb_TQhmkEBXhFAasrocuNj4ZnQfoApA-0ShY&projects=&persons=&companies=
+POST JSON: {"action":"getTransaction","id":"Xszh9dDMidCi8jgKK0RjZqjrTk3bje68LSyKj4YMLw**","cases":"-A-kgb_TQhmkEBXhFAasrocuNj4ZnQfoApA-0ShY","projects":"","persons":"","companies":""}
+SESSION: {"user":{"id":242,"user_type":2,"parent_id":0,"firm_id":186,"full_name":"Mehmet Ali G\u00f6kmen","email":"beyzade83@gmail.com","password":"$2y$10$AfetxhZRRWcTnp8MI\/meye8s49JzyZEvVQ2pCPqjRQ0QiOeedmSl6","phone":null,"job":null,"title":null,"user_roles":149,"status":1,"is_main_user":1,"sicil_no":null,"yetkinlik_no":null,"session_token":"cb9d7990d6e3973f0d6d8c24e9f03d852a0d36fdfd8e112cc8b94cfa9af1b1bc","activate_token":"cgVUG8io2HUEUnOwCgMQVfLG40t%2B2D5%2BpvuGy2mthVhSZ2ZAbpU%3D","remember_token":null,"created_at":"2026-03-11 12:08:24","responsible_persons":null},"firm_id":186}
+--- Proxy Request at 2026-05-11 13:56:20 ---
+URL: /api/financial/transaction.php
+METHOD: POST
+POST RAW: action=getTransaction&id=Yg_2hnxkl8MqLQvETjQ6GrOf6fNJ74NeAPh2AKCwWg**&cases=-A-kgb_TQhmkEBXhFAasrocuNj4ZnQfoApA-0ShY&projects=&persons=&companies=
+POST JSON: {"action":"getTransaction","id":"Yg_2hnxkl8MqLQvETjQ6GrOf6fNJ74NeAPh2AKCwWg**","cases":"-A-kgb_TQhmkEBXhFAasrocuNj4ZnQfoApA-0ShY","projects":"","persons":"","companies":""}
+SESSION: {"user":{"id":242,"user_type":2,"parent_id":0,"firm_id":186,"full_name":"Mehmet Ali G\u00f6kmen","email":"beyzade83@gmail.com","password":"$2y$10$AfetxhZRRWcTnp8MI\/meye8s49JzyZEvVQ2pCPqjRQ0QiOeedmSl6","phone":null,"job":null,"title":null,"user_roles":149,"status":1,"is_main_user":1,"sicil_no":null,"yetkinlik_no":null,"session_token":"cb9d7990d6e3973f0d6d8c24e9f03d852a0d36fdfd8e112cc8b94cfa9af1b1bc","activate_token":"cgVUG8io2HUEUnOwCgMQVfLG40t%2B2D5%2BpvuGy2mthVhSZ2ZAbpU%3D","remember_token":null,"created_at":"2026-03-11 12:08:24","responsible_persons":null},"firm_id":186}

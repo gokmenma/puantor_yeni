@@ -56,6 +56,7 @@ class Bordro extends Model
                                     CASE WHEN gun LIKE '%-%' THEN SUBSTR(gun, 1, 4) ELSE SUBSTR(gun, 1, 4) END,
                                     CASE WHEN gun LIKE '%-%' THEN SUBSTR(gun, 6, 2) ELSE SUBSTR(gun, 5, 2) END,
                                     kategori 
+                                HAVING tutar > 0
                                 ORDER BY gun desc");
         $sql->execute([':id' => $id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);

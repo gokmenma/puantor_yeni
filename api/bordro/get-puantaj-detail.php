@@ -27,12 +27,14 @@ try {
     $lastDay = Date::lastDay($ay, $yil);
 
     // Puantaj kayıtlarını detaylı getir (Proje ve Tür isimleri ile)
+    // Tarih formatı hem tireli hem tiresiz olabildiği için CAST/REPLACE kullanıyoruz
     $sql = "SELECT pt.*, p.project_name, tr.PuantajAdi as puantaj_adi 
             FROM puantaj pt 
             LEFT JOIN projects p ON p.id = pt.project_id 
             LEFT JOIN puantajturu tr ON tr.id = pt.puantaj_id 
             WHERE pt.person = :person_id 
-            AND pt.gun >= :start_date AND pt.gun <= :end_date 
+            AND CAST(REPLACE(pt.gun, '-', '') AS UNSIGNED) >= :start_date 
+            AND CAST(REPLACE(pt.gun, '-', '') AS UNSIGNED) <= :end_date 
             ORDER BY pt.gun ASC";
             
     $stmt = $db->prepare($sql);

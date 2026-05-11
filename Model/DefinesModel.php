@@ -81,6 +81,9 @@ class DefinesModel extends Model
             if (!in_array(16, $ids)) {
                 $ids[] = 16; // Always include System Salary category
             }
+            if (!in_array(14, $ids)) {
+                $ids[] = 14; // Always include Puantaj Hakediş category
+            }
         }
 
         if (!empty($ids)) {

@@ -1,11 +1,11 @@
 Array
 (
-    [time] => 2026-05-11 11:36:59
+    [time] => 2026-05-11 13:56:19
     [POST] => Array
         (
-            [id] => Em4q8ao7Funyw-3uzBHiUzUBB1Qf6jWbyxlGTiMSrA**
-            [month] => 
-            [year] => 
+            [id] => UCBTO2WpjYth3j__0fYHR7s_fdGHXLwNdXxFY92FTQ**
+            [month] => 05
+            [year] => 2026
         )
 
     [SESSION] => Array
@@ -27,7 +27,7 @@ Array
                     [is_main_user] => 1
                     [sicil_no] => 
                     [yetkinlik_no] => 
-                    [session_token] => 766288042230652808c4c2cb64722d63903c6fd11a22ab413bb98cbf280ed789
+                    [session_token] => cb9d7990d6e3973f0d6d8c24e9f03d852a0d36fdfd8e112cc8b94cfa9af1b1bc
                     [activate_token] => cgVUG8io2HUEUnOwCgMQVfLG40t%2B2D5%2BpvuGy2mthVhSZ2ZAbpU%3D
                     [remember_token] => 
                     [created_at] => 2026-03-11 12:08:24

@@ -453,7 +453,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
   <div id="tab-puantaj" class="person-tab-content d-none">
     <div class="mobile-card p-4 shadow-sm mb-4 text-center">
       <div class="d-flex align-items-center justify-content-between mb-4">
-        <a href="edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $prevMonth; ?>&year=<?php echo $prevYear; ?>" class="btn btn-icon btn-ghost-secondary rounded-circle"><i class="ti ti-chevron-left fs-2"></i></a>
+        <a href="person-edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $prevMonth; ?>&year=<?php echo $prevYear; ?>&tab=puantaj" class="btn btn-icon btn-ghost-secondary rounded-circle btn-calendar-nav"><i class="ti ti-chevron-left fs-2"></i></a>
         <h3 class="mb-0 font-weight-bold d-flex align-items-center gap-2" style="font-size: 1.15rem;">
           <?php echo Date::monthName($month); ?> <?php echo $year; ?>
           <?php 
@@ -463,7 +463,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
             <i class="ti ti-external-link icon" style="font-size: 1.1rem;"></i>
           </a>
         </h3>
-        <a href="edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $nextMonth; ?>&year=<?php echo $nextYear; ?>" class="btn btn-icon btn-ghost-secondary rounded-circle"><i class="ti ti-chevron-right fs-2"></i></a>
+        <a href="person-edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $nextMonth; ?>&year=<?php echo $nextYear; ?>&tab=puantaj" class="btn btn-icon btn-ghost-secondary rounded-circle btn-calendar-nav"><i class="ti ti-chevron-right fs-2"></i></a>
       </div>
 
       <div class="calendar-grid">
@@ -597,66 +597,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
       </div>
     </div>
 
-    <!-- İşlem Listesi (Kart Tasarımı) -->
+    <!-- İşlem Listesi (Kasa Tasarımı) -->
     <div id="person-finance-list" class="px-1">
-      <?php if (empty($all_items)): ?>
-        <div class="mobile-card p-5 text-center text-muted bg-white border-0 shadow-sm" style="border-radius: 20px;">
-          <i class="ti ti-receipt-off fs-1 mb-2 opacity-20"></i>
-          <p class="mb-0 text-sm">Henüz finansal işlem bulunamadı.</p>
-        </div>
-      <?php else: ?>
-        <?php foreach ($all_items as $item): 
-          $is_hakedis = ($item->type === 'hakedis');
-          $is_income = false;
-          if ($is_hakedis) {
-              $is_income = true;
-          } else {
-              $type_info = $financialHelper->getTransactionTypeById($item->kategori);
-              $is_income = ($type_info->type_id == 1);
-          }
-        ?>
-          <div class="swipe-container mb-3 shadow-sm" style="border-radius: 20px; overflow: hidden;">
-            <?php if (!$is_hakedis): ?>
-              <div class="swipe-actions">
-                <button class="btn-swipe-action btn-delete-payment" data-id="<?php echo Security::encrypt($item->id); ?>" data-type="<?php echo ($item->kategori == 14 ? 'Puantaj Çalışma' : 'Diger'); ?>">
-                  <i class="ti ti-trash"></i>
-                  <span>Sil</span>
-                </button>
-              </div>
-            <?php endif; ?>
-            <div class="swipe-content bg-white transaction-item-content py-4 px-3 <?php echo $is_hakedis ? 'btn-hakedis-detail' : ''; ?>" 
-                 data-month="<?php echo $item->ay ?? ''; ?>" 
-                 data-year="<?php echo $item->yil ?? ''; ?>"
-                 style="border: 1px solid rgba(0,0,0,0.05); <?php echo $is_hakedis ? 'cursor: pointer;' : ''; ?>">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-3">
-                  <div class="avatar avatar-lg rounded-circle <?php echo $is_income ? 'bg-green-lt text-green' : 'bg-red-lt text-red'; ?>" style="width: 45px; height: 45px; border: none;">
-                    <i class="ti <?php echo $is_income ? 'ti-arrow-up-right' : 'ti-arrow-down-left'; ?>" style="font-size: 1.3rem;"></i>
-                  </div>
-                  <div>
-                    <div class="text-bold <?php echo $is_hakedis ? 'text-primary' : 'text-dark'; ?>" style="font-size: 0.95rem; margin-bottom: 2px;">
-                      <?php echo htmlspecialchars($item->aciklama ?: ($is_hakedis ? 'Hakedişi' : 'İşlem')); ?>
-                    </div>
-                    <div class="text-muted text-xs">
-                      <?php echo Date::dmY($item->gun); ?>
-                    </div>
-                    <?php if ($is_hakedis): ?>
-                      <div class="mt-1">
-                        <span class="badge bg-primary-lt text-uppercase font-weight-bold" style="font-size: 0.6rem; padding: 2px 6px; border-radius: 4px;">BORDRO</span>
-                      </div>
-                    <?php endif; ?>
-                  </div>
+      <div class="list-group list-group-mobile shadow-sm" style="border-radius: 20px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06);">
+        <?php if (empty($all_items)): ?>
+          <div class="p-5 text-center text-muted bg-white border-0">
+            <i class="ti ti-receipt-off fs-1 mb-2 opacity-20"></i>
+            <p class="mb-0 text-sm">Henüz finansal işlem bulunamadı.</p>
+          </div>
+        <?php else: ?>
+          <?php foreach ($all_items as $index => $item): 
+            $is_hakedis = ($item->type === 'hakedis');
+            $is_income = false;
+            if ($is_hakedis) {
+                $is_income = true;
+            } else {
+                $type_info = $financialHelper->getTransactionTypeById($item->kategori);
+                $is_income = ($type_info->type_id == 1);
+            }
+          ?>
+            <div class="person-item-wrapper <?php echo $index > 0 ? 'border-top' : ''; ?>" style="border-radius: 0; margin-bottom: 0; box-shadow: none;">
+              <?php if (!$is_hakedis): ?>
+                <div class="person-item-actions">
+                  <button class="btn-swipe-delete btn-delete-payment" data-id="<?php echo Security::encrypt($item->id); ?>" data-type="<?php echo $item->tablename ?? 'Diger'; ?>">
+                    <i class="ti ti-trash"></i>
+                    <span>Sil</span>
+                  </button>
                 </div>
-                <div class="text-end">
-                  <div class="text-bold <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 1.1rem;">
-                    <?php echo $is_income ? '+ ' : '- '; ?> ₺ <?php echo Helper::formattedMoneyWithoutCurrency($item->tutar); ?>
+              <?php endif; ?>
+              <div class="person-item-content <?php echo $is_hakedis ? 'btn-hakedis-detail' : 'btn-edit-payment'; ?>" 
+                   <?php if (!$is_hakedis): ?>data-id="<?php echo Security::encrypt($item->id); ?>"<?php endif; ?>
+                   data-month="<?php echo $item->ay ?? ''; ?>" 
+                   data-year="<?php echo $item->yil ?? ''; ?>"
+                   style="cursor: pointer;">
+                <div class="list-group-item border-0 py-3.5 px-3 w-100 bg-transparent d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px; border: none; background: <?php echo $is_income ? 'rgba(47, 179, 68, 0.12)' : 'rgba(214, 63, 63, 0.12)'; ?>; color: <?php echo $is_income ? '#2fb344' : '#d63f3f'; ?>;">
+                      <i class="ti <?php echo $is_income ? 'ti-arrow-up-right' : 'ti-arrow-down-left'; ?>" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <div>
+                      <div class="text-bold <?php echo $is_hakedis ? 'text-primary' : 'text-dark'; ?>" style="font-size: 0.9rem; margin-bottom: 1px;">
+                        <?php echo htmlspecialchars($is_hakedis ? ($item->aciklama ?: 'Hakedişi') : ($item->turu ?: 'İşlem')); ?>
+                      </div>
+                      <div class="text-muted text-xs d-flex align-items-center gap-1">
+                        <span><?php echo $is_hakedis ? 'Bordro İşlemi' : ($item->aciklama ?: 'İşlem Detayı'); ?></span>
+                        <span class="opacity-50">•</span>
+                        <span><?php echo Date::dmY($item->gun); ?></span>
+                        <?php if ($is_hakedis): ?>
+                          <span class="ms-1 px-1.5 py-0.5 bg-primary-lt text-uppercase font-weight-bold" style="font-size: 0.55rem; border-radius: 4px; letter-spacing: 0.2px;">HAKEDİŞ</span>
+                        <?php endif; ?>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="text-bold <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 0.95rem; letter-spacing: -0.3px;">
+                      <?php echo $is_income ? '+' : '-'; ?> ₺<?php echo Helper::formattedMoneyWithoutCurrency($item->tutar); ?>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        <?php endforeach; ?>
-      <?php endif; ?>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
     </div>
 
     <!-- Floating Action Button for Finance (Moved higher to avoid overlap with Menu FAB) -->
@@ -706,6 +710,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
       </div>
       <div class="modal-body p-4">
         <form id="add-person-transaction-form">
+          <input type="hidden" name="transaction_id" id="transaction_id" value="0">
           <input type="hidden" name="gm_person_name" value="<?php echo Security::encrypt($id); ?>">
           <input type="hidden" name="gm_amount_money" value="1">
           <input type="hidden" name="gm_project_id" value="0">
@@ -753,7 +758,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
 
           <!-- Tutar -->
           <div class="form-floating mb-3">
-            <input type="number" step="0.01" name="amount" id="amount-input" class="form-control text-bold" placeholder="0,00" required>
+            <input type="text" inputmode="decimal" name="amount" id="amount-input" class="form-control text-bold" placeholder="0,00" required>
             <label for="amount-input">Tutar (₺) <span class="text-danger">*</span></label>
           </div>
 
@@ -767,7 +772,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
             </div>
             <div class="col-6">
               <div class="form-floating">
-                <select name="gm_incexp_type" id="gm_incexp_type" class="form-select" required>
+                <select name="gm_incexp_type" id="gm_incexp_type" class="form-select select2-init" required>
                   <option value="">Tür Seçiniz</option>
                 </select>
                 <label for="gm_incexp_type">İşlem Türü <span class="text-danger">*</span></label>
@@ -838,6 +843,16 @@ $(document).ready(function() {
         });
     }
 
+    // URL'deki tab parametresine göre otomatik sekme açma
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTab = urlParams.get('tab');
+    if (initialTab) {
+        $('.tab-trigger[data-tab="' + initialTab + '"]').trigger('click');
+    } else if (urlParams.has('month') || urlParams.has('year')) {
+        // URL'de ay/yıl parametresi varsa Puantaj sekmesini otomatik aç
+        $('.tab-trigger[data-tab="puantaj"]').click();
+    }
+
     // Dropdown Manuel Tetikleyici (Working pattern from projects/manage.php)
     $(document).on('click', '#personTabsDropdown', function(e) {
         e.preventDefault();
@@ -881,49 +896,204 @@ $(document).ready(function() {
 
     // 1. Kasa Alt Türlerini Getir
     function fetchSubTypes(type) {
-        $.post('api/financial/transaction.php', {
+        var select = $('#gm_incexp_type');
+        select.html('<option value="">Yükleniyor...</option>').trigger('change');
+        
+        $.post('api/financial/transaction_v2.php', {
             action: 'getSubTypes',
             type: type
         }, function(response) {
             try {
                 var res = typeof response === 'object' ? response : JSON.parse(response);
-                var select = $('#gm_incexp_type');
                 select.empty();
                 select.append('<option value="">Tür Seçiniz</option>');
                 if (res.subTypes && res.subTypes.length > 0) {
                     res.subTypes.forEach(function(item) {
                         select.append('<option value="' + item.id + '">' + item.name + '</option>');
                     });
+                } else if(res.status === 'error') {
+                     console.error("Backend auth error:", res.message);
                 }
-            } catch (e) { console.error(e); }
+                // Refresh Select2 if active
+                if ($.fn.select2) {
+                    select.trigger('change');
+                }
+            } catch (e) { 
+                console.error("JSON Parse error:", e, "Response was:", response); 
+            }
         });
     }
 
-    $('input[name="transaction_type"]').change(function() {
+    // Watch radio switch within modal
+    $(document).on('change', 'input[name="transaction_type"]', function() {
         fetchSubTypes($(this).val());
     });
 
-    // 2. Personel İşlemi Kaydet
-    $('#submit-person-transaction').click(function(e) {
+    // Listen for edit clicks
+    $(document).on('click', '.btn-edit-payment', function(e) {
         e.preventDefault();
-        var form = $('#add-person-transaction-form');
-        var formData = form.serialize();
+        var transId = $(this).data('id');
+        
+        // Show loading indicator on the row or modal
+        var modal = $('#add-person-transaction-modal');
+        modal.find('.modal-title').text('İşlem Düzenle');
+        modal.find('#transaction_id').val(transId);
+        
+        // Collect all current encrypted case IDs to help backend map the correct encrypted ID back to us
+        var currentCases = [];
+        $('#gm_case_id option').each(function() {
+            var val = $(this).val();
+            if (val && val != '0') currentCases.push(val);
+        });
 
-        $.post('api/financial/transaction.php', formData, function(res) {
+        $.post('api/financial/transaction_v2.php', {
+            action: 'getTransaction',
+            id: transId,
+            cases: currentCases.join(','),
+            projects: '',
+            persons: '',
+            companies: ''
+        }, function(res) {
+            try {
+                var response = typeof res === 'object' ? res : JSON.parse(res);
+                if (response.status === 'success' && response.transaction) {
+                    var t = response.transaction;
+                    
+                    // 1. Radio buttons (Income/Expense)
+                    $('input[name="transaction_type"][value="' + t.type_id + '"]').prop('checked', true).trigger('change');
+                    
+                    // 2. Case dropdown (Needs encrypted compare sometimes, handle both)
+                    // Wait, backend getTransaction might map standard IDs. If select is select2 it needs careful trigger
+                    $('#gm_case_id').val(t.case_id).trigger('change');
+                    
+                    // 3. Amount
+                    $('#amount-input').val(t.amount);
+                    
+                    // 4. Date (Convert d.m.Y to Y-m-d)
+                    if(t.date.indexOf('.') > -1) {
+                        var d = t.date.split('.');
+                        var isoDate = d[2] + '-' + d[1] + '-' + d[0];
+                        $('#transaction_date').val(isoDate);
+                    } else {
+                        $('#transaction_date').val(t.date);
+                    }
+                    
+                    // 5. Sub type (Load after a slight delay to allow fetchSubTypes ajax to run first!)
+                    setTimeout(function() {
+                        $('#gm_incexp_type').val(t.users_type_id).trigger('change');
+                    }, 500);
+                    
+                    // 6. Description
+                    $('#floatingDescription').val(t.description);
+                    
+                    modal.modal('show');
+                } else {
+                    Swal.fire('Hata', 'İşlem detayları yüklenemedi.', 'error');
+                }
+            } catch (err) { console.error(err); }
+        });
+    });
+
+    // Clear modal when clicking the general add (+) FAB
+    $('[data-bs-target="#add-person-transaction-modal"]').on('click', function() {
+         var modal = $('#add-person-transaction-modal');
+         if(!modal.hasClass('show')) { // only clear if not already triggered by JS click
+             modal.find('.modal-title').text('Yeni Ödeme / Gelir');
+             modal.find('#transaction_id').val(0);
+             modal.find('#amount-input').val('');
+             modal.find('#floatingDescription').val('');
+             modal.find('#transaction_date').val(new Date().toISOString().split('T')[0]);
+         }
+    });
+
+    // Preload sub-types when modal is opened to be absolutely sure it populated
+    $('#add-person-transaction-modal').on('show.bs.modal', function () {
+        var currentType = $('input[name="transaction_type"]:checked').val() || 2;
+        fetchSubTypes(currentType);
+        
+        // Make sure select2 works inside Bootstrap modal container
+        if ($.fn.select2) {
+             $('.select2-init', this).select2({
+                  dropdownParent: $('#add-person-transaction-modal')
+             });
+        }
+    });
+
+    // 2. Personel İşlemi Kaydet
+    $('#submit-person-transaction').on('click', function(e) {
+        e.preventDefault();
+        try {
+            var btn = $(this);
+            var form = $('#add-person-transaction-form');
+            
+            // Normalize Amount value for robust validation
+            var amountStr = $('#amount-input').val() || "";
+            var amountNum = parseFloat(amountStr.toString().replace(',', '.'));
+            
+            // Validation Checks
+            if(!$('#gm_incexp_type').val()){
+                 Swal.fire('Uyarı', 'Lütfen İşlem Türü seçiniz!', 'warning');
+                 return;
+            }
+            if(!amountStr || isNaN(amountNum) || amountNum <= 0){
+                 Swal.fire('Uyarı', 'Lütfen geçerli bir tutar giriniz!', 'warning');
+                 return;
+            }
+            
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Kaydediliyor...');
+            
+            // Serialize to Array to safely modify values
+            var formData = form.serializeArray();
+            
+            // Standardize amount: backend EXPECTS comma format, convert all periods to commas for backend safe conversion
+            $.each(formData, function(index, field) {
+                if (field.name === 'amount') {
+                    field.value = field.value.toString().replace('.', ',');
+                }
+            });
+            
+            // Critical debug logging before transmit
+            console.log("Submitting data to transaction.php: ", formData);
+            
+            $.post('api/financial/transaction_v2.php', formData, function(res) {
+            btn.prop('disabled', false).html('Kaydet');
             try {
                 var response = typeof res === 'object' ? res : JSON.parse(res);
                 if (response.status === 'success') {
-                    Swal.fire('Başarılı', response.message, 'success').then(() => location.reload());
+                    Swal.fire({
+                        title: 'Başarılı',
+                        text: 'Personel Hareketi başarıyla kaydedildi.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                         // Persist context by reloading directly to the finance tab
+                         var url = new URL(window.location.href);
+                         url.searchParams.set('tab', 'finance');
+                         window.location.href = url.toString();
+                    });
                 } else {
-                    Swal.fire('Hata', response.message, 'error');
+                    Swal.fire('Hata', response.message || 'Kaydetme başarısız.', 'error');
                 }
-            } catch (e) { Swal.fire('Hata', 'Beklenmeyen bir hata oluştu.', 'error'); }
-        });
+            } catch (e) { 
+                console.error("Submission Parse Error:", e, res);
+                Swal.fire('Hata', 'Beklenmeyen bir sunucu yanıtı alındı.', 'error'); 
+            }
+            }).fail(function(xhr) {
+                btn.prop('disabled', false).html('Kaydet');
+                Swal.fire('Hata', 'Ağ bağlantı hatası oluştu.', 'error');
+            });
+        } catch (runtimeErr) {
+            console.error("Runtime UI Crash: ", runtimeErr);
+            Swal.fire('Yazılım Hatası', 'Bir arayüz hatası oluştu: ' + runtimeErr.message, 'error');
+            $(this).prop('disabled', false).html('Kaydet');
+        }
     });
 
     // 3. Ödeme/İşlem Silme (Swipe Actions)
     $(document).on('click', '.btn-delete-payment', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         var btn = $(this);
         var id = btn.data('id');
         var type = btn.data('type');
@@ -935,23 +1105,40 @@ $(document).ready(function() {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Evet, Sil',
-            cancelButtonText: 'Vazgeç'
+            cancelButtonText: 'Vazgeç',
+            confirmButtonColor: '#d63f3f',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                $.post('api/persons/person.php?person_id=' + personId + '&type=' + type, {
-                    action: 'deletePayment',
-                    id: id
-                }, function(res) {
-                    try {
-                        var response = typeof res === 'object' ? res : JSON.parse(res);
+                $.ajax({
+                    url: 'api/persons/person.php?person_id=' + personId + '&type=' + type,
+                    type: 'POST',
+                    data: {
+                        action: 'deletePayment',
+                        id: id
+                    },
+                    dataType: 'json',
+                    success: function(response) {
                         if (response.status === 'success') {
-                            btn.closest('.swipe-container').fadeOut(300, function() { $(this).remove(); });
-                            Swal.fire('Silindi', response.message, 'success');
+                            btn.closest('.person-item-wrapper').fadeOut(300, function() { $(this).remove(); });
+                            Swal.fire({
+                                title: 'Silindi',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
                         } else {
                             Swal.fire('Hata', response.message, 'error');
                         }
-                    } catch (e) { Swal.fire('Hata', 'İşlem başarısız.', 'error'); }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Hata', 'İşlem başarısız veya bağlantı hatası oluştu.', 'error');
+                    }
                 });
+            } else {
+                // Reset swipe
+                btn.closest('.person-item-wrapper').find('.person-item-content').css('transform', 'translateX(0)');
             }
         });
     });
@@ -982,25 +1169,31 @@ $(document).ready(function() {
     // 5. Swipe Logic for Finance Items
     let touchStartX = 0;
     let touchMoveX = 0;
-    const swipeThreshold = 70;
+    const swipeThreshold = 75;
 
-    $(document).on('touchstart', '.transaction-item-content', function(e) {
+    $(document).on('touchstart', '.person-item-content', function(e) {
         touchStartX = e.originalEvent.touches[0].clientX;
-        $('.transaction-item-content').not(this).css('transform', 'translateX(0)');
+        touchMoveX = touchStartX;
+        $('.person-item-content').not(this).css('transform', 'translateX(0)');
     });
 
-    $(document).on('touchmove', '.transaction-item-content', function(e) {
+    $(document).on('touchmove', '.person-item-content', function(e) {
         touchMoveX = e.originalEvent.touches[0].clientX;
         let diff = touchStartX - touchMoveX;
-        if (diff > 0 && !$(this).hasClass('btn-hakedis-detail')) { // Only swipe left if not hakediş
+        
+        // Only swipe left if not a hakedis/puantaj record
+        if (diff > 0 && !$(this).hasClass('btn-hakedis-detail')) { 
             if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
             $(this).css('transition', 'none').css('transform', 'translateX(-' + diff + 'px)');
+        } else if (diff < 0) {
+            $(this).css('transform', 'translateX(0)');
         }
     });
 
-    $(document).on('touchend', '.transaction-item-content', function(e) {
+    $(document).on('touchend', '.person-item-content', function(e) {
         let diff = touchStartX - touchMoveX;
         $(this).css('transition', 'transform 0.2s ease-out');
+        
         if (diff > swipeThreshold / 2 && !$(this).hasClass('btn-hakedis-detail')) {
             $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
         } else {
@@ -1008,11 +1201,32 @@ $(document).ready(function() {
         }
     });
 
-    // URL'de ay/yıl parametresi varsa Puantaj sekmesini otomatik aç
-    var urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('month') || urlParams.has('year')) {
-        $('.tab-trigger[data-tab="puantaj"]').click();
-    }
+    // 6. Ajax Calendar Navigation
+    $(document).on('click', '.btn-calendar-nav', function(e) {
+        e.preventDefault();
+        var url = $(this).attr('href');
+        
+        var $tabPuantaj = $('#tab-puantaj');
+        var originalContent = $tabPuantaj.html();
+        
+        $tabPuantaj.html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Takvim Yükleniyor...</p></div>');
+        
+        $.get(url, function(data) {
+            var newContent = $(data).find('#tab-puantaj').html();
+            if(newContent) {
+                $tabPuantaj.html(newContent);
+                window.history.pushState({ path: url }, '', url);
+            } else {
+                $tabPuantaj.html(originalContent);
+                Swal.fire('Hata', 'Takvim verisi alınamadı.', 'error');
+            }
+        }).fail(function() {
+            $tabPuantaj.html(originalContent);
+            Swal.fire('Hata', 'Bağlantı hatası oluştu.', 'error');
+        });
+    });
+
+    // Duplicate urlParams removed for error fix
 
     // Dışarı tıklayınca kapatma
     $(document).on('click', function(e) {
@@ -1024,6 +1238,55 @@ $(document).ready(function() {
 </script>
 
 <style>
+/* Unified Swipe to Delete Styles matching personnel and todos */
+.person-item-wrapper {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 18px;
+    margin-bottom: 12px;
+    user-select: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+body[data-bs-theme="dark"] .person-item-wrapper,
+body[data-bs-theme="dark"] .person-item-content {
+    background: #1e293b !important;
+}
+.person-item-actions {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: #d63f3f;
+    z-index: 1;
+}
+.person-item-content {
+    position: relative;
+    background: #fff;
+    z-index: 2;
+    transition: transform 0.2s ease-out;
+    width: 100%;
+}
+.btn-swipe-delete {
+    color: white;
+    width: 75px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+.btn-swipe-delete i {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+
 .person-tab-content.d-none {
     display: none !important;
 }

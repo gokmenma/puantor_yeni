@@ -9,6 +9,7 @@ require_once ROOT . "/Model/Puantaj.php";
 require_once "../../Model/Auths.php";
 require_once "../../App/Helper/helper.php";
 require_once "../../Model/Projects.php";
+require_once ROOT . "/Model/CaseTransactions.php";
 
 use App\Helper\Security;
 use App\Helper\Helper;
@@ -231,7 +232,7 @@ if ($_POST["action"] == "bulkDeletePersons") {
 
 //Gelir gider bilgilerindeki kayıtları silmek için
 if ($_POST['action'] == 'deletePayment') {
-
+    ob_clean();
     //Ödeme Silme Yetkisi var mı kontrol et
     $Auths->hasPermissionReturn("delete_staff_payment");
 
@@ -246,10 +247,14 @@ if ($_POST['action'] == 'deletePayment') {
     try {
         $db->beginTransaction();
 
-        //Gelen type değerine göre silme işlemi yapılır
-        if ($type === 'Puantaj Çalışma') {
+        //Gelen type değerine göre silme işlemi yapılır (View tablename sütunu üzerinden eşleme)
+        if ($type === 'puantaj' || $type === 'Puantaj Çalışma') {
             $Puantaj->delete($id);
+        } elseif ($type === 'case_transactions') {
+            $ctMod = new \CaseTransactions();
+            $ctMod->delete($id);
         } else {
+            // 'maas_gelir_kesinti' veya 'Diger'
             $Bordro->delete($id);
         }
 

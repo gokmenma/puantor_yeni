@@ -244,24 +244,21 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
 
 
                                     <td class="text-end">
-                                        <div class="dropdown">
-                                            <button class="btn dropdown-toggle align-text-top"
-                                                data-bs-toggle="dropdown">İşlem</button>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <?php
-                                                //Eğer ödeme, gelir veya kesinti ise işlem yapılabilir
-                                                if ($item->kategori != 14): ?>
+                                        <?php if ($item->kategori != 14): ?>
+                                            <div class="dropdown">
+                                                <button class="btn dropdown-toggle align-text-top"
+                                                    data-bs-toggle="dropdown">İşlem</button>
+                                                <div class="dropdown-menu dropdown-menu-end">
                                                     <a class="dropdown-item edit-payment">
                                                         <i class="ti ti-edit icon me-3"></i> Güncelle
                                                     </a>
-                                                <?php endif ?>
-                                                <a class="dropdown-item delete-payment" href="#"
-                                                    data-id="<?php echo $item_id ?>">
-                                                    <i class="ti ti-trash icon me-3"></i> Sil
-                                                </a>
+                                                    <a class="dropdown-item delete-payment" href="#"
+                                                        data-id="<?php echo $item_id ?>">
+                                                        <i class="ti ti-trash icon me-3"></i> Sil
+                                                    </a>
+                                                </div>
                                             </div>
-                                        </div>
-
+                                        <?php endif; ?>
                                     </td>
 
                                 </tr>
