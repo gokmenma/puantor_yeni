@@ -3,7 +3,7 @@
     "short_name": "Puantor",
     "description": "Premium Puantaj ve Personel Takip Sistemi",
     "start_url": "index.php",
-    "display": "standalone",
+    "display": "fullscreen",
     "background_color": "#ffffff",
     "theme_color": "#ffffff",
     "orientation": "portrait",
