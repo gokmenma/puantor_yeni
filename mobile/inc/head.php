@@ -9,9 +9,9 @@
   <!-- PWA & Favicon -->
   <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#206bc4">
+  <meta name="theme-color" content="<?php echo ($theme ?? 'light') == 'dark' ? '#1a2234' : '#ffffff'; ?>">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Puantor">
   <link rel="apple-touch-icon" href="../static/png/icon-192x192.png">
 
