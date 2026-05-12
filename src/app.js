@@ -286,34 +286,42 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
           }
         }
       ],
-      columnDefs: [{ targets: [1, 2, 3], visible: false }]
+      columnDefs: [{ targets: [1, 2, 3, 4], visible: false }],
+      initComplete: function () {
+        var api = this.api();
+        console.log("Raporlar: Tablo hazır, menü inşa ediliyor...");
+        
+        // Menüyü temizle
+        $("#customColvisMenu").empty();
+        api.columns().every(function (idx) {
+          if (idx === 0) return;
+          
+          var column = this;
+          var title = $(column.header()).text().trim() || ("Sütun " + idx);
+          var isVisible = column.visible();
+          
+          var itemHtml = `
+              <label class="dropdown-item d-flex align-items-center cursor-pointer py-2 px-3 rounded-2" style="font-size: 0.85rem;">
+                  <div class="form-check mb-0">
+                      <input class="form-check-input col-visibility-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
+                      <span class="form-check-label fw-medium ms-1 text-secondary" style="user-select:none;">
+                          ${title}
+                      </span>
+                  </div>
+              </label>`;
+          
+          // Daha garanti bir ekleme yöntemi
+          var menuEl = document.getElementById('customColvisMenu');
+          if(menuEl) {
+              var div = document.createElement('div');
+              div.innerHTML = itemHtml;
+              menuEl.appendChild(div.firstElementChild);
+          }
+        });
+
+        $("#customReportActions").removeClass("d-none").addClass("d-flex");
+      }
     });
-
-    // Custom UI Kontrollerini İnşa Et
-    $("#customColvisMenu").empty();
-    $("#puantajDataTable thead th").each(function () {
-      var colInstance = reportTable.column($(this));
-      var actualIndex = colInstance.index();
-      if (actualIndex === 0) return;
-
-      var title = $(this).text().trim();
-      var isVisible = colInstance.visible();
-      var id = "colCheck_" + actualIndex;
-      var itemHtml = `
-          <label class="dropdown-item d-flex align-items-center cursor-pointer py-2 px-3 rounded-2 hover-bg-light" style="font-size: 0.85rem;">
-              <div class="form-check mb-0">
-                  <input class="form-check-input col-visibility-trigger" type="checkbox" value="" id="${id}" data-column="${actualIndex}" ${
-        isVisible ? "checked" : ""
-      }>
-                  <span class="form-check-label fw-medium ms-1 text-secondary" for="${id}">
-                      ${title}
-                  </span>
-              </div>
-          </label>`;
-      $("#customColvisMenu").append(itemHtml);
-    });
-
-    $("#customReportActions").removeClass("d-none d-md-none").addClass("d-flex");
 
     $("#customBtnExcel")
       .off("click")

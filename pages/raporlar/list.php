@@ -207,8 +207,11 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     p.full_name, 
                     p.job,
                     p.kimlik_no,
+                    p.iban_number,
+                    p.job_start_date,
+                    p.job_end_date,
+                    p.ekip as team_name,
                     pr.project_name,
-                    t.team_name,
                     SUM(CASE WHEN pt.Turu = 'Normal Çalışma' THEN 1 ELSE 0 END) as n_calisma,
                     SUM(CASE WHEN pt.Turu = 'Saatlik' THEN pua.saat ELSE 0 END) as s_calisma,
                     SUM(CASE WHEN pt.Turu = 'Fazla Çalışma' THEN pua.saat ELSE 0 END) as f_mesai,
@@ -218,7 +221,6 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     SUM(CASE WHEN pt.PuantajKod IN ('R', 'R-', 'R+') THEN 1 ELSE 0 END) as rapor
                 FROM persons p
                 LEFT JOIN projects pr ON p.project_id = pr.id
-                LEFT JOIN teams t ON p.team_id = t.id
                 LEFT JOIN puantaj pua ON p.id = pua.person AND ((pua.gun >= ? AND pua.gun <= ?) OR (pua.gun >= ? AND pua.gun <= ?))
                 LEFT JOIN puantajturu pt ON pua.puantaj_id = pt.id
                 WHERE p.firm_id = ? AND p.deleted_at IS NULL
@@ -228,6 +230,12 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                 $stmt = $db->prepare($queryStr);
                 $stmt->execute([$start_dash, $end_dash, $start_nodash, $end_nodash, $firm_id]);
                 $raporData = $stmt->fetchAll(PDO::FETCH_OBJ);
+                
+                // Verileri işleme (Şifreli alanları çözme)
+                foreach($raporData as $row) {
+                    $row->iban_number = Security::safeDecrypt($row->iban_number ?? '');
+                    $row->kimlik_no = Security::safeDecrypt($row->kimlik_no ?? '');
+                }
                 ?>
 
                 <div class="card border-0 shadow-sm" style="border-radius: 12px;">
@@ -236,35 +244,34 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                             <h3 class="card-title fw-bold mb-0">Puantaj İcmal Verileri</h3>
                             <span class="badge bg-blue-lt mt-1"><?= $displayMonth ?> <?= $year ?> Dönemi</span>
                         </div>
-                        <div class="d-flex gap-2 align-items-center">
-                            <!-- Premium UX Action Bar -->
-                            <div id="customReportActions" class="d-none gap-2 d-md-flex">
-                                <!-- Sütunlar Dropdown -->
-                                <div class="dropdown">
-                                    <button class="btn btn-ghost-secondary btn-sm border-0 shadow-none dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="ti ti-layout-columns fs-2 me-1 text-muted"></i> Görünüm
+                        <div class="d-flex align-items-center">
+                            <!-- Unified Toolbar Group -->
+                            <div id="customReportActions" class="btn-group shadow-sm d-none" role="group" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <!-- Geri Butonu (Far Left) -->
+                                <a href="index.php?p=raporlar/list&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-white px-3" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;" title="Geri Dön" data-bs-toggle="tooltip">
+                                    <i class="ti ti-arrow-left fs-2 text-secondary"></i>
+                                </a>
+
+                                <!-- Görünüm Dropdown -->
+                                <div class="dropdown" role="group">
+                                    <button class="btn btn-white px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false" title="Sütun Görünümü" data-bs-toggle="tooltip">
+                                        <i class="ti ti-layout-columns fs-2 text-muted me-1"></i>
                                     </button>
-                                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2" id="customColvisMenu" style="min-width: 180px; border-radius: 10px;">
-                                        <!-- Populated by JS -->
+                                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2" id="customColvisMenu" style="min-width: 200px; border-radius: 10px; z-index: 1060;">
+                                        <!-- Populated by app.js -->
                                     </div>
                                 </div>
 
-                                <!-- Excel & PDF Triggers -->
-                                <button type="button" id="customBtnExcel" class="btn btn-sm btn-emerald-lt border border-emerald-subtle fw-bold d-flex align-items-center" style="border-radius: 8px; transition: all 0.2s ease;">
-                                    <i class="ti ti-file-spreadsheet fs-2 me-1"></i> Excel
+                                <!-- Excel Dışa Aktar -->
+                                <button type="button" id="customBtnExcel" class="btn btn-white px-3 text-success" title="Excel'e Aktar" data-bs-toggle="tooltip">
+                                    <i class="ti ti-file-spreadsheet fs-2"></i>
                                 </button>
                                 
-                                <button type="button" id="customBtnPdf" class="btn btn-sm btn-red-lt border border-red-subtle fw-bold d-flex align-items-center" style="border-radius: 8px; transition: all 0.2s ease;">
-                                    <i class="ti ti-file-type-pdf fs-2 me-1"></i> PDF
+                                <!-- PDF Dışa Aktar -->
+                                <button type="button" id="customBtnPdf" class="btn btn-white px-3 text-danger" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" title="PDF Olarak İndir" data-bs-toggle="tooltip">
+                                    <i class="ti ti-file-type-pdf fs-2"></i>
                                 </button>
                             </div>
-
-                            <!-- Spacer -->
-                            <div class="vr text-secondary mx-1 d-none d-md-block" style="opacity: 0.2; height: 24px;"></div>
-
-                            <a href="index.php?p=raporlar/list&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-light btn-sm border shadow-sm">
-                                <i class="ti ti-arrow-left me-1"></i> Geri
-                            </a>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -273,7 +280,10 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                             <thead>
                                 <tr>
                                     <th>Personel Adı</th>
-                                    <th>TC Kimlik</th>
+                                    <th>TC Kimlik No</th>
+                                    <th>IBAN No</th>
+                                    <th>İşe Giriş</th>
+                                    <th>İşten Çıkış</th>
                                     <th>Ekip</th>
                                     <th>Proje</th>
                                     <th>Ünvan / Meslek</th>
@@ -297,7 +307,10 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                             <span class="fw-semibold text-dark"><?= htmlspecialchars($r->full_name) ?></span>
                                         </div>
                                     </td>
-                                    <td><?= htmlspecialchars(Security::safeDecrypt($r->kimlik_no ?? '')) ?></td>
+                                    <td><?= htmlspecialchars($r->kimlik_no ?? '') ?></td>
+                                    <td><?= htmlspecialchars($r->iban_number ?? '-') ?></td>
+                                    <td><?= htmlspecialchars($r->job_start_date ?? '-') ?></td>
+                                    <td><?= htmlspecialchars($r->job_end_date ?? '-') ?></td>
                                     <td><?= htmlspecialchars($r->team_name ?? '-') ?></td>
                                     <td><?= htmlspecialchars($r->project_name ?? '-') ?></td>
                                     <td class="small text-secondary"><?= htmlspecialchars($r->job ?? '-') ?></td>

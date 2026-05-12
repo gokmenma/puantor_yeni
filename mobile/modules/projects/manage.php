@@ -432,7 +432,12 @@ body[data-bs-theme="dark"] .text-dark {
 
     <!-- Gelir Gider Listesi -->
     <div id="project-financial-list">
-      <label class="form-label text-muted text-xs text-uppercase font-weight-bold mb-3 px-1">GELİR GİDER HAREKETLERİ</label>
+      <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+        <label class="form-label text-muted text-xs text-uppercase font-weight-bold mb-0">GELİR GİDER HAREKETLERİ</label>
+        <button id="addProjectTransactionBtn" class="btn btn-primary btn-sm rounded-pill px-3" style="font-size: 0.75rem; font-weight: 600;">
+          <i class="ti ti-plus me-1"></i> Yeni Ekle
+        </button>
+      </div>
       <?php if (empty($income_expenses)): ?>
         <div class="text-center py-5 bg-white rounded-3 border shadow-sm" style="border-radius: 16px;">
           <i class="ti ti-receipt-off text-muted mb-2" style="font-size: 2.5rem; opacity: 0.5;"></i>
@@ -442,20 +447,19 @@ body[data-bs-theme="dark"] .text-dark {
         <div class="list-group list-group-mobile shadow-sm">
           <?php foreach ($income_expenses as $item): 
             $item_id = Security::encrypt($item->id);
-            $is_income = ($item->turu == 14 || $item->turu == 1); // 14: Puantaj/Hakediş, 1: Gelir
+            $is_income = ($item->turu == 5 || $item->turu == 1); // 5: Projeden Alınan Ödeme, 1: Gelir
+            $is_editable = !empty($item->id);
           ?>
-            <div class="financial-item-wrapper" style="position: relative; overflow: hidden; background: #fff;">
-              <div class="financial-item-actions" style="position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; background: #206bc4; z-index: 1;">
-                <button class="btn-swipe-edit btn-edit-project-transaction" data-id="<?php echo $item_id; ?>" style="color: white; width: 70px; height: 100%; border: none; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; border-right: 1px solid rgba(255,255,255,0.2);">
-                  <i class="ti ti-edit" style="font-size: 1.2rem; margin-bottom: 2px;"></i>
-                  <span>Düzenle</span>
-                </button>
-                <button class="btn-swipe-delete btn-delete-project-action" data-id="<?php echo $item_id; ?>" data-project="<?php echo Security::encrypt($item->project_id); ?>" style="color: white; width: 70px; height: 100%; border: none; background: #d63f3f; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">
+            <div class="financial-item-wrapper" style="position: relative; overflow: hidden; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);">
+              <?php if($is_editable): ?>
+              <div class="financial-item-actions" style="position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; background: #d63f3f; z-index: 1;">
+                <button class="btn-swipe-delete btn-delete-project-action" data-id="<?php echo $item_id; ?>" data-project="<?php echo Security::encrypt($item->project_id); ?>" style="color: white; width: 70px; height: 100%; border: none; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">
                   <i class="ti ti-trash" style="font-size: 1.2rem; margin-bottom: 2px;"></i>
                   <span>Sil</span>
                 </button>
               </div>
-              <div class="financial-item-content swipe-content" style="position: relative; background: #fff; z-index: 2; transition: transform 0.2s ease-out; width: 100%;">
+              <?php endif; ?>
+              <div class="financial-item-content <?php echo $is_editable ? 'swipe-content btn-edit-project-transaction' : ''; ?>" data-id="<?php echo $item_id; ?>" style="position: relative; background: #fff; z-index: 2; transition: transform 0.2s ease-out; width: 100%; <?php echo $is_editable ? 'cursor: pointer;' : ''; ?>">
                 <div class="list-group-item py-3 px-3">
                   <div class="d-flex align-items-center justify-content-between w-100">
                     <div class="d-flex align-items-center gap-3">
@@ -482,10 +486,6 @@ body[data-bs-theme="dark"] .text-dark {
       <?php endif; ?>
     </div>
     
-    <!-- Ekle Butonu for Gelir/Gider -->
-    <a href="#" class="mobile-fab" id="addProjectTransactionBtn" style="background-color: var(--mobile-primary); bottom: 90px;">
-      <i class="ti ti-plus"></i>
-    </a>
   </div>
 
   <!-- TAB 4: Çalışma & Puantaj -->
@@ -643,9 +643,11 @@ body[data-bs-theme="dark"] .text-dark {
               <?php 
               require_once ROOT . "/Model/Cases.php";
               $casesObj = new Cases();
+              $default_case_id = $casesObj->getDefaultCaseIdByFirm();
               $cases = $casesObj->allCaseWithFirmId();
               foreach ($cases as $c) {
-                  echo '<option value="'.Security::encrypt($c->id).'">'.$c->case_name.'</option>';
+                  $selected = ($c->id == $default_case_id) ? 'selected' : '';
+                  echo '<option value="'.Security::encrypt($c->id).'" '.$selected.'>'.$c->case_name.'</option>';
               }
               ?>
             </select>
@@ -668,9 +670,9 @@ body[data-bs-theme="dark"] .text-dark {
           </div>
         </form>
       </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-outline-secondary w-100 mb-2" data-bs-dismiss="modal" style="border-radius: 12px; padding: 12px;">İptal</button>
-        <button type="button" class="btn btn-primary w-100" id="saveProjectTransactionBtn" style="border-radius: 12px; padding: 12px;">Kaydet</button>
+      <div class="modal-footer border-0 pt-0 d-flex flex-column gap-2">
+        <button type="button" class="btn btn-primary w-100 m-0" id="saveProjectTransactionBtn" style="border-radius: 12px; padding: 12px;">Kaydet</button>
+        <button type="button" class="btn btn-outline-secondary w-100 m-0" data-bs-dismiss="modal" style="border-radius: 12px; padding: 12px;">İptal</button>
       </div>
     </div>
   </div>
@@ -679,6 +681,25 @@ body[data-bs-theme="dark"] .text-dark {
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 $(document).ready(function() {
+  // URL'den aktif sekmeyi al
+  const urlParams = new URLSearchParams(window.location.search);
+  const activeTab = urlParams.get('tab');
+  if (activeTab) {
+      // Tüm sekmeleri gizle
+      $('.project-tab-content').addClass('d-none');
+      // Seçili sekmeyi göster
+      $('#tab-' + activeTab).removeClass('d-none');
+      // Dropdown'daki aktif durumu güncelle
+      $('.tab-trigger').removeClass('active');
+      $('.tab-trigger[data-tab="' + activeTab + '"]').addClass('active');
+      // Başlığı güncelle
+      $('#page-title').text($('.tab-trigger[data-tab="' + activeTab + '"]').data('title'));
+      
+      if (activeTab === 'summary') {
+          setTimeout(initMobileCharts, 150);
+      }
+  }
+
   // Dropdown Manuel Tetikleyici
   $(document).on('click', '#projectTabsDropdown', function(e) {
       e.preventDefault();
@@ -869,10 +890,11 @@ $(document).ready(function() {
   // Swipe logic for financial items
   let touchStartX = 0;
   let touchMoveX = 0;
-  const swipeThreshold = 140; // Genişletildi (Edit + Sil)
+  const swipeThreshold = 70;
 
   $(document).on('touchstart', '#project-financial-list .swipe-content', function(e) {
       touchStartX = e.originalEvent.touches[0].clientX;
+      touchMoveX = touchStartX;
       $('#project-financial-list .swipe-content').not(this).css('transform', 'translateX(0)');
   });
 
@@ -923,7 +945,9 @@ $(document).ready(function() {
                       Swal.fire('Silindi!', res.message, 'success');
                       // Update balance summaries dynamically
                       setTimeout(() => {
-                          location.reload();
+                          var currentUrl = new URL(window.location.href);
+                          currentUrl.searchParams.set('tab', 'payments');
+                          window.location.href = currentUrl.toString();
                       }, 1000);
                   } else {
                       Swal.fire('Hata!', res.message, 'error');
@@ -1015,7 +1039,11 @@ $(document).ready(function() {
               .then(() => {
                   var m = bootstrap.Modal.getInstance(document.getElementById('projectTransactionModal'));
                   if(m) m.hide();
-                  location.reload();
+                  
+                  // Aktif sekmeyi koruyarak yenile
+                  var currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.set('tab', 'payments');
+                  window.location.href = currentUrl.toString();
               });
           } else {
               Swal.fire('Hata!', data.message, 'error');

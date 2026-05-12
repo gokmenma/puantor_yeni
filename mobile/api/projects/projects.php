@@ -92,5 +92,26 @@ if ($_POST['action'] == "getProject") {
     exit;
 }
 
+if ($_POST['action'] == "deleteProjectAction") {
+    $id = Security::decrypt($_POST['id']);
+    
+    if (!$id) {
+        echo json_encode(['status' => 'error', 'message' => 'Geçersiz ID']);
+        exit;
+    }
+    
+    try {
+        $ProjectIncExp->delete($id);
+        $status = "success";
+        $message = "İşlem başarıyla silindi";
+    } catch (PDOException $ex) {
+        $status = "error";
+        $message = $ex->getMessage();
+    }
+    
+    echo json_encode(['status' => $status, 'message' => $message]);
+    exit;
+}
+
 echo json_encode(["status" => "error", "message" => "Geçersiz işlem"]);
 exit;
