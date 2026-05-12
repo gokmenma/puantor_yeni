@@ -106,11 +106,13 @@ foreach ($puantaj_types as $type) {
                  data-person-key="<?php echo Security::encrypt($person->id); ?>"
                  data-person-name="<?php echo htmlspecialchars($person->full_name); ?>"
                  data-current-type-id="<?php echo $current_status_id; ?>"
-                 data-name="<?php echo strtolower($person->full_name); ?>"
-                 onclick="openPuantajModal(this)">
+                 data-name="<?php echo strtolower($person->full_name); ?>">
                 <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="avatar avatar-md rounded-circle text-uppercase font-weight-bold" 
+                        <div class="selection-indicator d-none">
+                            <i class="ti ti-circle-check text-primary fs-2"></i>
+                        </div>
+                        <div class="avatar avatar-md rounded-circle text-uppercase font-weight-bold person-avatar" 
                              style="background-color: #f1f5f9; color: #475569; width: 44px; height: 44px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                             <?php echo mb_substr($person->full_name, 0, 1, 'UTF-8'); ?>
                         </div>
@@ -121,12 +123,12 @@ foreach ($puantaj_types as $type) {
                     </div>
                     <div>
                         <?php if ($current_type): ?>
-                            <span id="status-badge-<?php echo $person->id; ?>" class="badge px-2.5 py-1.5 text-xs font-weight-bold" 
+                            <span id="status-badge-<?php echo $person->id; ?>" class="badge px-2.5 py-1.5 text-xs font-weight-bold status-badge" 
                                   style="background-color: <?php echo htmlspecialchars($current_type->ArkaPlanRengi); ?>; color: <?php echo htmlspecialchars($current_type->FontRengi); ?>; border-radius: 8px;">
                                 <?php echo htmlspecialchars($current_type->PuantajAdi); ?> (<?php echo htmlspecialchars($current_type->PuantajKod); ?>)
                             </span>
                         <?php else: ?>
-                            <span id="status-badge-<?php echo $person->id; ?>" class="badge bg-secondary-lt text-secondary px-2.5 py-1.5 text-xs font-weight-bold" style="border-radius: 8px;">
+                            <span id="status-badge-<?php echo $person->id; ?>" class="badge bg-secondary-lt text-secondary px-2.5 py-1.5 text-xs font-weight-bold status-badge" style="border-radius: 8px;">
                                 Seçilmedi
                             </span>
                         <?php endif; ?>
@@ -137,6 +139,21 @@ foreach ($puantaj_types as $type) {
     </div>
 </div>
 
+<!-- Toplu İşlem Barı -->
+<div id="bulkActionBar" class="fixed-bottom bg-white shadow-lg p-3 d-none" style="border-radius: 20px 20px 0 0; z-index: 1050; border-top: 1px solid #eee;">
+    <div class="d-flex align-items-center justify-content-between container">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-icon btn-sm btn-ghost-danger rounded-circle" onclick="cancelSelection()">
+                <i class="ti ti-x"></i>
+            </button>
+            <span class="text-bold text-dark" id="selectedCountText">0 kişi seçildi</span>
+        </div>
+        <button class="btn btn-primary px-4 py-2" style="border-radius: 12px;" onclick="openBulkPuantajModal()">
+            <i class="ti ti-check me-1"></i> Toplu Ata
+        </button>
+    </div>
+</div>
+
 <!-- Puantaj Seçim Modalı -->
 <div class="modal modal-blur fade" id="puantajModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -144,7 +161,7 @@ foreach ($puantaj_types as $type) {
             <div class="modal-header border-0 pb-0">
                 <div>
                     <h5 class="modal-title font-weight-bold text-dark mb-1" id="modalPersonName" style="font-size: 1.15rem;">Personel Adı</h5>
-                    <p class="text-muted text-xs mb-0">Puantaj türü ve çalışma saatini seçin</p>
+                    <p class="text-muted text-xs mb-0" id="modalSubtitle">Puantaj türü ve çalışma saatini seçin</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
@@ -235,6 +252,17 @@ foreach ($puantaj_types as $type) {
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .person-row.saved { background-color: rgba(47, 179, 68, 0.04) !important; transition: background 0.3s; }
     
+    .person-row.selected {
+        background-color: rgba(32, 107, 196, 0.05) !important;
+        border-color: rgba(32, 107, 196, 0.2) !important;
+    }
+    .person-row.selected .selection-indicator {
+        display: block !important;
+    }
+    .person-row.selected .person-avatar {
+        display: none !important;
+    }
+    
     /* Option styling */
     .type-option-row {
         border-color: #f1f5f9 !important;
@@ -292,9 +320,22 @@ foreach ($puantaj_types as $type) {
         border-color: var(--mobile-primary);
         box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.15);
     }
+
+    #bulkActionBar {
+        transition: transform 0.3s ease-in-out;
+        transform: translateY(0);
+    }
+    #bulkActionBar.d-none {
+        transform: translateY(100%);
+        display: none !important;
+    }
 </style>
 
 <script>
+let isSelectionMode = false;
+let selectedPersons = [];
+let longPressTimer;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Search Filtering
     const searchInput = document.getElementById('puantajSearchInput');
@@ -314,12 +355,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Row Click & Long Press logic
+    rows.forEach(row => {
+        row.addEventListener('touchstart', function(e) {
+            longPressTimer = setTimeout(() => {
+                if (!isSelectionMode) {
+                    startSelectionMode(row);
+                }
+            }, 600); // 600ms for long press
+        }, { passive: true });
+
+        row.addEventListener('touchend', function() {
+            clearTimeout(longPressTimer);
+        }, { passive: true });
+
+        row.addEventListener('touchmove', function() {
+            clearTimeout(longPressTimer);
+        }, { passive: true });
+
+        row.addEventListener('click', function(e) {
+            if (isSelectionMode) {
+                togglePersonSelection(row);
+            } else {
+                openPuantajModal(row);
+            }
+        });
+    });
+
     // Flatpickr initialization
-    flatpickr("#datePicker", {
-        dateFormat: "d.m.Y",
-        defaultDate: "<?php echo date('d.m.Y', strtotime($selected_date)); ?>",
+    flatpickr(\"#datePicker\", {
+        dateFormat: \"d.m.Y\",
+        defaultDate: \"<?php echo date('d.m.Y', strtotime($selected_date)); ?>\",
         onChange: function(selectedDates, dateStr, instance) {
-            const dateParts = dateStr.split(".");
+            const dateParts = dateStr.split(\".\");
             const ymdDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
             location.href = `?p=puantaj&date=${ymdDate}&project_id=<?php echo $selected_project_id; ?>`;
         }
@@ -335,6 +403,70 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function startSelectionMode(row) {
+    isSelectionMode = true;
+    document.getElementById('bulkActionBar').classList.remove('d-none');
+    togglePersonSelection(row);
+    
+    // Haptic feedback if available
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+    }
+}
+
+function togglePersonSelection(row) {
+    const personId = row.getAttribute('data-person-id');
+    const personKey = row.getAttribute('data-person-key');
+    const personName = row.getAttribute('data-person-name');
+    
+    const index = selectedPersons.findIndex(p => p.id === personId);
+    
+    if (index > -1) {
+        selectedPersons.splice(index, 1);
+        row.classList.remove('selected');
+    } else {
+        selectedPersons.push({ id: personId, key: personKey, name: personName });
+        row.classList.add('selected');
+    }
+    
+    updateSelectedCount();
+    
+    if (selectedPersons.length === 0) {
+        cancelSelection();
+    }
+}
+
+function updateSelectedCount() {
+    document.getElementById('selectedCountText').innerText = `${selectedPersons.length} kişi seçildi`;
+}
+
+function cancelSelection() {
+    isSelectionMode = false;
+    selectedPersons = [];
+    document.querySelectorAll('.person-row').forEach(row => {
+        row.classList.remove('selected');
+    });
+    document.getElementById('bulkActionBar').classList.add('d-none');
+}
+
+function openBulkPuantajModal() {
+    if (selectedPersons.length === 0) return;
+    
+    currentSelectedPersonId = null; // Mark as bulk
+    currentSelectedPersonKey = null;
+    
+    document.getElementById('modalPersonName').innerText = \"Toplu Puantaj Atama\";
+    document.getElementById('modalSubtitle').innerText = `${selectedPersons.length} seçili personel için işlem yapılıyor`;
+    
+    // Clear previous selection in modal
+    document.querySelectorAll('.type-option-row').forEach(row => {
+        row.classList.remove('selected');
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('puantajModal'));
+    modal.show();
+}
+
 let currentSelectedPersonId = null;
 let currentSelectedPersonKey = null;
 let currentSelectedTypeId = null;
@@ -346,6 +478,7 @@ function openPuantajModal(element) {
     const currentTypeId = element.getAttribute('data-current-type-id');
     
     document.getElementById('modalPersonName').innerText = personName;
+    document.getElementById('modalSubtitle').innerText = \"Puantaj türü ve çalışma saatini seçin\";
     currentSelectedTypeId = currentTypeId;
     
     // Clear previous selection
@@ -355,7 +488,7 @@ function openPuantajModal(element) {
     
     // Select current type if it exists
     if (currentTypeId) {
-        const activeOption = document.querySelector(`.type-option-row[data-type-id="${currentTypeId}"]`);
+        const activeOption = document.querySelector(`.type-option-row[data-type-id=\"${currentTypeId}\"]`);
         if (activeOption) {
             activeOption.classList.add('selected');
             // Switch to the correct category tab for this option
@@ -383,8 +516,9 @@ function selectTypeOption(element) {
     element.classList.add('selected');
     currentSelectedTypeId = element.getAttribute('data-type-id');
     
-    if (!currentSelectedPersonId) {
-        alert("Hata: Personel ID alınamadı!");
+    // Eğer toplu seçim modundaysa veya currentSelectedPersonId varsa kaydet
+    if (!currentSelectedPersonId && selectedPersons.length === 0) {
+        alert(\"Hata: Personel seçilmedi!\");
         return;
     }
 
@@ -397,26 +531,43 @@ function saveMobilePuantaj(selectedOption) {
     const typeColor = selectedOption.getAttribute('data-type-color');
     const typeTextColor = selectedOption.getAttribute('data-type-text-color');
     
-    // PHP'den gelen tarihi JS içinde güvenli bir değişkene alalım
-    const serverDate = '<?php echo $selected_date; ?>'; // Örn: 2026-05-08
-    
+    const serverDate = '<?php echo $selected_date; ?>';
     const payload = {};
-    payload[currentSelectedPersonKey] = {};
-    payload[currentSelectedPersonKey][serverDate] = {
-        puantajId: currentSelectedTypeId,
-        project_id: <?php echo (int)$selected_project_id; ?>
-    };
+    const targets = [];
+
+    if (currentSelectedPersonId) {
+        // Tekli kayıt
+        payload[currentSelectedPersonKey] = {};
+        payload[currentSelectedPersonKey][serverDate] = {
+            puantajId: currentSelectedTypeId,
+            project_id: <?php echo (int)$selected_project_id; ?>
+        };
+        targets.push({ id: currentSelectedPersonId });
+    } else {
+        // Toplu kayıt
+        selectedPersons.forEach(person => {
+            payload[person.key] = {};
+            payload[person.key][serverDate] = {
+                puantajId: currentSelectedTypeId,
+                project_id: <?php echo (int)$selected_project_id; ?>
+            };
+            targets.push({ id: person.id });
+        });
+    }
     
-    const badge = document.getElementById(`status-badge-${currentSelectedPersonId}`);
-    const originalContent = badge.outerHTML;
-    
-    badge.innerText = "Kaydediliyor...";
+    // Update UI status to 'Saving'
+    targets.forEach(t => {
+        const badge = document.getElementById(`status-badge-${t.id}`);
+        if (badge) {
+            badge.innerText = \"Kaydediliyor...\";
+            badge.className = \"badge bg-secondary-lt text-secondary px-2.5 py-1.5 text-xs font-weight-bold\";
+        }
+    });
     
     const modalEl = document.getElementById('puantajModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
     
-    // AJAX adresini TAM yol olarak verelim ki karışıklık olmasın
     const apiUrl = '../api/puantaj.php';
 
     $.ajax({
@@ -428,36 +579,42 @@ function saveMobilePuantaj(selectedOption) {
         },
         dataType: 'json',
         success: function(response) {
-            // Başarı mesajı kontrolü (Merkezi API'den dönen formata göre)
             if (response.status === 'success' || response.status === 'info') {
-                badge.style.backgroundColor = typeColor;
-                badge.style.color = typeTextColor;
-                badge.className = "badge px-2.5 py-1.5 text-xs font-weight-bold";
-                badge.innerText = `${typeLabel} (${typeCode})`;
+                targets.forEach(t => {
+                    const badge = document.getElementById(`status-badge-${t.id}`);
+                    if (badge) {
+                        badge.style.backgroundColor = typeColor;
+                        badge.style.color = typeTextColor;
+                        badge.className = \"badge px-2.5 py-1.5 text-xs font-weight-bold\";
+                        badge.innerText = `${typeLabel} (${typeCode})`;
+                    }
+                    
+                    const row = document.querySelector(`.person-row[data-person-id=\"${t.id}\"]`);
+                    if (row) {
+                        row.setAttribute('data-current-type-id', currentSelectedTypeId);
+                        row.classList.add('saved');
+                        setTimeout(() => row.classList.remove('saved'), 1000);
+                    }
+                });
                 
-                const row = document.querySelector(`.person-row[data-person-id="${currentSelectedPersonId}"]`);
-                row.setAttribute('data-current-type-id', currentSelectedTypeId);
-                row.classList.add('saved');
-                setTimeout(() => row.classList.remove('saved'), 1000);
+                if (!currentSelectedPersonId) {
+                    cancelSelection();
+                    // Toast message could be added here
+                }
             } else {
-                badge.outerHTML = originalContent;
-                alert("Hata: " + response.message);
+                alert(\"Hata: \" + response.message);
             }
         },
         error: function(xhr) {
-            badge.outerHTML = originalContent;
-            alert("Bağlantı Hatası: " + xhr.status);
+            alert(\"Bağlantı Hatası: \" + xhr.status);
         }
     });
 }
 
-// Eski butonu ve listener'ı temizleyebiliriz veya pasif bırakabiliriz.
-// document.getElementById('btnConfirmPuantaj').addEventListener('click', ...);
-
 function setAll(typeCode) {
-    if (!confirm('Tüm personelleri "Geldi" yapmak istediğinize emin misiniz?')) return;
+    if (!confirm('Tüm personelleri \"Geldi\" yapmak istediğinize emin misiniz?')) return;
     
-    const typeOption = document.querySelector(`.type-option-row[data-type-code="${typeCode}"]`);
+    const typeOption = document.querySelector(`.type-option-row[data-type-code=\"${typeCode}\"]`);
     if (!typeOption) {
         alert('Geldi puantaj türü bulunamadı.');
         return;
@@ -484,8 +641,8 @@ function setAll(typeCode) {
     rows.forEach(row => {
         const personId = row.getAttribute('data-person-id');
         const badge = document.getElementById(`status-badge-${personId}`);
-        badge.innerText = "Kaydediliyor...";
-        badge.className = "badge bg-secondary-lt text-secondary px-2.5 py-1.5 text-xs font-weight-bold";
+        badge.innerText = \"Kaydediliyor...\";
+        badge.className = \"badge bg-secondary-lt text-secondary px-2.5 py-1.5 text-xs font-weight-bold\";
         badge.style.backgroundColor = '';
         badge.style.color = '';
     });
@@ -505,7 +662,7 @@ function setAll(typeCode) {
                     const badge = document.getElementById(`status-badge-${personId}`);
                     badge.style.backgroundColor = typeColor;
                     badge.style.color = typeTextColor;
-                    badge.className = "badge px-2.5 py-1.5 text-xs font-weight-bold";
+                    badge.className = \"badge px-2.5 py-1.5 text-xs font-weight-bold\";
                     badge.innerText = `${typeLabel} (${typeCode})`;
                     
                     row.setAttribute('data-current-type-id', typeId);
