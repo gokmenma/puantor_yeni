@@ -301,6 +301,36 @@ $is_today_or_future = ($selected_date >= $today);
     body[data-bs-theme="dark"] .border-end {
         border-color: var(--mobile-card-border-dark) !important;
     }
+
+    /* Checkbox & Selection */
+    .person-row.selected {
+        background-color: rgba(32, 107, 196, 0.05) !important;
+    }
+    .person-row.selected .selection-indicator {
+        display: block !important;
+    }
+    .person-row.selected .person-avatar-container {
+        display: none !important;
+    }
+    .selection-indicator {
+        margin-right: 8px;
+    }
+
+    #bulkActionBar {
+        transition: transform 0.3s ease-in-out;
+        transform: translateY(0);
+        box-shadow: 0 -10px 25px rgba(0,0,0,0.05);
+    }
+    #bulkActionBar.d-none {
+        transform: translateY(100%);
+        display: none !important;
+    }
+    #clearSearchBtn {
+        transition: all 0.2s ease;
+    }
+    #clearSearchBtn:active {
+        transform: scale(0.95);
+    }
 </style>
 
 <div class="container px-0">
@@ -364,9 +394,14 @@ $is_today_or_future = ($selected_date >= $today);
     <?php endif; ?>
 
     <!-- Arama Çubuğu -->
-    <div class="search-container mb-2">
-        <i class="ti ti-search search-icon"></i>
-        <input type="text" id="puantajSearchInput" class="search-input" placeholder="Personel ara...">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <button id="clearSearchBtn" class="btn btn-icon btn-outline-secondary border-0 bg-secondary-lt d-none" style="border-radius: 14px; height: 44px; width: 44px; flex-shrink: 0;" title="Temizle">
+            <i class="ti ti-trash-x"></i>
+        </button>
+        <div class="search-container flex-grow-1">
+            <i class="ti ti-search search-icon"></i>
+            <input type="text" id="puantajSearchInput" class="search-input" placeholder="Personel ara...">
+        </div>
     </div>
 
     <div class="list-group list-group-mobile mb-5" id="puantajListContainer">
@@ -429,8 +464,16 @@ $is_today_or_future = ($selected_date >= $today);
                          data-current-type-id="<?php echo $current_status_id; ?>"
                          data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>"
                          data-is-disabled="<?php echo $is_disabled ? 'true' : 'false'; ?>"
-                         onclick="<?php echo $is_disabled ? "Swal.fire({icon: 'info', title: 'Puantaj Kilitli', text: 'Bu personelin bu tarihteki puantajı başka bir projede (" . htmlspecialchars($disabled_project_name) . ") girilmiştir. Değiştirilemez.', confirmButtonText: 'Tamam'})" : "openPuantajModal(this)"; ?>"
+                         onclick="<?php echo $is_disabled ? "Swal.fire({icon: 'info', title: 'Puantaj Kilitli', text: 'Bu personelin bu tarihteki puantajı başka bir projede (" . htmlspecialchars($disabled_project_name) . ") girilmiştir. Değiştirilemez.', confirmButtonText: 'Tamam'})" : "handleRowClick(this)"; ?>"
                          style="gap: 12px; border-radius: 0; border: none; <?php echo $is_disabled ? 'opacity: 0.7; background-color: rgba(241, 245, 249, 0.4); pointer-events: auto;' : ''; ?>">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="selection-indicator d-none">
+                                <input class="form-check-input m-0" type="checkbox" style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1; pointer-events: none;">
+                            </div>
+                            <div class="person-avatar-container">
+                                <!-- Avatar or initials could go here if needed, but keeping it clean like screenshot -->
+                            </div>
+                        </div>
                         <div style="min-width: 0; flex: 1;">
                             <div class="text-semibold text-dark mb-0" style="font-size: 0.92rem; letter-spacing: -0.2px; line-height: 1.2;">
                                 <?php echo htmlspecialchars($person->full_name); ?>
@@ -469,6 +512,21 @@ $is_today_or_future = ($selected_date >= $today);
                 </div>
             </div>
         <?php endforeach; ?>
+    </div>
+</div>
+
+<!-- Toplu İşlem Barı -->
+<div id="bulkActionBar" class="fixed-bottom bg-white shadow-lg p-3 d-none" style="border-radius: 24px 24px 0 0; z-index: 1050; border-top: 1px solid rgba(0,0,0,0.05);">
+    <div class="d-flex align-items-center justify-content-between container">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-icon btn-sm btn-ghost-danger rounded-circle" onclick="cancelSelection()">
+                <i class="ti ti-x"></i>
+            </button>
+            <span class="text-bold text-dark" id="selectedCountText">0 kişi seçildi</span>
+        </div>
+        <button class="btn btn-primary px-4 py-2" style="border-radius: 12px;" onclick="openBulkPuantajModal(true)">
+            <i class="ti ti-check me-1"></i> Toplu Ata
+        </button>
     </div>
 </div>
 
@@ -637,11 +695,19 @@ if (typeof $ === 'undefined' && typeof jQuery !== 'undefined') {
 document.addEventListener('DOMContentLoaded', function() {
     // Search Filtering
     const searchInput = document.getElementById('puantajSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
     const items = document.querySelectorAll('.person-item-wrapper');
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase();
+            
+            if (term.length > 0) {
+                clearSearchBtn.classList.remove('d-none');
+            } else {
+                clearSearchBtn.classList.add('d-none');
+            }
+
             items.forEach(item => {
                 const name = item.getAttribute('data-name');
                 if (name.includes(term)) {
@@ -652,6 +718,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
+        });
+    }
+
+    // Long Press & Row Click
+    let longPressTimer;
+    $('.person-row').on('touchstart', function(e) {
+        if ($(this).attr('data-is-disabled') === 'true') return;
+        
+        longPressTimer = setTimeout(() => {
+            if (!isSelectionMode) {
+                startSelectionMode($(this));
+            }
+        }, 600);
+    }).on('touchend touchmove', function() {
+        clearTimeout(longPressTimer);
+    });
 
     // Flatpickr initialization
     flatpickr("#datePicker", {
@@ -793,18 +881,73 @@ function clearFilters() {
     location.href = `puantaj?date=${date}`;
 }
 
-let currentSelectedPersonId = null;
-let currentSelectedPersonKey = null;
-let currentSelectedTypeId = null;
-let isBulkMode = false;
+let isSelectionMode = false;
+let selectedPersons = [];
 
-function openBulkPuantajModal() {
+function handleRowClick(element) {
+    if (isSelectionMode) {
+        togglePersonSelection($(element));
+    } else {
+        openPuantajModal(element);
+    }
+}
+
+function startSelectionMode($row) {
+    isSelectionMode = true;
+    document.getElementById('bulkActionBar').classList.remove('d-none');
+    togglePersonSelection($row);
+    
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+    }
+}
+
+function togglePersonSelection($row) {
+    const personId = $row.attr('data-person-id');
+    const personKey = $row.attr('data-person-key');
+    const personName = $row.attr('data-person-name');
+    const checkbox = $row.find('.form-check-input')[0];
+    
+    const index = selectedPersons.findIndex(p => p.id === personId);
+    
+    if (index > -1) {
+        selectedPersons.splice(index, 1);
+        $row.removeClass('selected');
+        if (checkbox) checkbox.checked = false;
+    } else {
+        selectedPersons.push({ id: personId, key: personKey, name: personName });
+        $row.addClass('selected');
+        if (checkbox) checkbox.checked = true;
+    }
+    
+    document.getElementById('selectedCountText').innerText = `${selectedPersons.length} kişi seçildi`;
+    
+    if (selectedPersons.length === 0) {
+        cancelSelection();
+    }
+}
+
+function cancelSelection() {
+    isSelectionMode = false;
+    selectedPersons = [];
+    $('.person-row').removeClass('selected');
+    $('.form-check-input').prop('checked', false);
+    document.getElementById('bulkActionBar').classList.add('d-none');
+}
+
+function openBulkPuantajModal(fromSelection = false) {
     isBulkMode = true;
     currentSelectedPersonId = null;
     currentSelectedPersonKey = null;
     currentSelectedTypeId = null;
     
-    document.getElementById('modalPersonName').innerText = "Tüm Personeller";
+    if (fromSelection && selectedPersons.length > 0) {
+        document.getElementById('modalPersonName').innerText = "Seçili Personeller (" + selectedPersons.length + ")";
+    } else {
+        document.getElementById('modalPersonName').innerText = "Tüm Personeller";
+        // If not from selection, we might want to clear selectedPersons to avoid confusion
+        selectedPersons = []; 
+    }
     
     // Seçimleri temizle
     document.querySelectorAll('.type-option-row').forEach(row => {
@@ -914,19 +1057,35 @@ function saveBulkPuantaj(selectedOption) {
 
             const rows = document.querySelectorAll('.person-row');
             const payload = {};
-            
-            rows.forEach(row => {
-                if (row.getAttribute('data-is-disabled') === 'true') return;
-                if (row.style.display === 'none') return;
-                
-                const personKey = row.getAttribute('data-person-key');
-                payload[personKey] = {};
-                payload[personKey][serverDate] = {
-                    puantajId: typeId,
-                    project_id: <?php echo (int)$selected_project_id; ?>
-                };
-                
-                const personId = row.getAttribute('data-person-id');
+            const targets = [];
+
+            if (selectedPersons.length > 0) {
+                // Sadece seçili olanlar
+                selectedPersons.forEach(person => {
+                    payload[person.key] = {};
+                    payload[person.key][serverDate] = {
+                        puantajId: typeId,
+                        project_id: <?php echo (int)$selected_project_id; ?>
+                    };
+                    targets.push(person.id);
+                });
+            } else {
+                // Görünür olan tüm personeller
+                rows.forEach(row => {
+                    if (row.getAttribute('data-is-disabled') === 'true') return;
+                    if (row.parentElement.style.display === 'none') return; // person-item-wrapper display'ine bak
+                    
+                    const personKey = row.getAttribute('data-person-key');
+                    payload[personKey] = {};
+                    payload[personKey][serverDate] = {
+                        puantajId: typeId,
+                        project_id: <?php echo (int)$selected_project_id; ?>
+                    };
+                    targets.push(row.getAttribute('data-person-id'));
+                });
+            }
+
+            targets.forEach(personId => {
                 const badge = document.getElementById(`status-badge-${personId}`);
                 if(badge) {
                     badge.innerText = "...";
@@ -952,6 +1111,9 @@ function saveBulkPuantaj(selectedOption) {
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
+                            if (selectedPersons.length > 0) {
+                                cancelSelection();
+                            }
                             location.reload();
                         });
                     } else {
