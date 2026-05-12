@@ -77,7 +77,7 @@
     $page == 'missions/headers/manage' || $page == 'missions/headers/list' ||
     $page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage' ||
     $page == "financial/case/manage" || $page == 'defines/project-status/list' ||
-    $page == 'todos/list'
+    $page == 'todos/list' || $page == 'raporlar/list'
 
   ) {
     echo '<link href="./dist/libs/datatable/datatables.min.css" rel="stylesheet" />';

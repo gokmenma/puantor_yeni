@@ -31,6 +31,10 @@ if (!$cari || $cari->firma != $_SESSION['firm_id']) {
 $moveModel = new CariHareketleri();
 $movements = $moveModel->getMovementsByCari($cari_id);
 
+require_once "App/Helper/company.php";
+$companyHelper = new CompanyHelper();
+$firm_name = $companyHelper->getFirmName($_SESSION['firm_id']);
+
 $total_borc = 0;
 $total_alacak = 0;
 foreach ($movements as $m) {
@@ -40,12 +44,117 @@ foreach ($movements as $m) {
 $net_balance = $total_borc - $total_alacak;
 ?>
 
+<style>
+@media print {
+    /* Hide general layout elements */
+    .navbar, aside, #navbar, .page-header.d-print-none, 
+    .footer, .fab-menu, .dropdown-toggle, 
+    .dataTables_wrapper .row:first-child, 
+    .dataTables_wrapper .row:last-child,
+    .datatable thead tr:has(input), .datatable thead tr + tr:has(input),
+    .datatable thead input,
+    header.navbar-expand-md {
+        display: none !important;
+    }
+    
+    /* Standard trick to hide the search row if :has() isn't fully supported by print engines */
+    thead tr:nth-child(2) {
+        display: none !important;
+    }
+    
+    /* Ensure print row 1 is visible though */
+    thead tr:first-child {
+        display: table-row !important;
+    }
+
+    body {
+        background-color: #fff !important;
+        color: #000 !important;
+        font-size: 12px !important;
+    }
+
+    .page-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .container-xl {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+    table.table {
+        border: 1px solid #dee2e6 !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    table.table th, table.table td {
+        border: 1px solid #dee2e6 !important;
+        padding: 6px !important;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .text-success {
+        color: #28a745 !important;
+    }
+}
+</style>
+
 <div class="container-xl mt-3">
+    
+    <!-- Yazdırma Başlığı (Sadece Yazdırırken Görünür) -->
+    <div class="d-none d-print-block mb-4" style="border-bottom: 2px solid #000; padding-bottom: 10px;">
+        <div class="row align-items-center">
+            <div class="col-4">
+                <img src="./static/Logo-aiv5.svg" height="45" alt="Logo" style="filter: grayscale(1);">
+            </div>
+            <div class="col-8 text-end">
+                <h2 class="mb-1" style="color: #333; font-weight: 700;"><?php echo htmlspecialchars($firm_name); ?></h2>
+                <h3 class="mb-0 text-muted" style="letter-spacing: 1px;">CARİ HESAP EKSTRESİ</h3>
+            </div>
+        </div>
+        
+        <div class="row mt-4 pt-3" style="border-top: 1px dashed #ccc;">
+            <div class="col-6">
+                <p class="mb-1"><strong>CARİ BİLGİLERİ</strong></p>
+                <div style="font-size: 1.1rem; font-weight: 600;"><?php echo htmlspecialchars($cari->FirmaAdi); ?></div>
+                <?php if($cari->YetkiliAdi): ?><div>Yetkili: <?php echo htmlspecialchars($cari->YetkiliAdi); ?></div><?php endif; ?>
+                <div>Tel: <?php echo $cari->Telefon ?: '-'; ?></div>
+                <div>E-Posta: <?php echo $cari->Email ?: '-'; ?></div>
+            </div>
+            <div class="col-6 text-end">
+                <p class="mb-1"><strong>DÖKÜM DETAYLARI</strong></p>
+                <div>Belge Tarihi: <?php echo date('d.m.Y H:i'); ?></div>
+                <div class="mt-2">
+                    <strong style="font-size: 1rem;">GÜNCEL BAKİYE:</strong><br>
+                    <span style="font-size: 1.3rem; font-weight: bold;" class="<?php echo $net_balance < 0 ? 'text-danger' : 'text-success'; ?>">
+                        <?php echo Helper::formattedMoney(abs($net_balance)); ?> 
+                        (<?php echo $net_balance < 0 ? 'Borçlu' : ($net_balance > 0 ? 'Alacaklı' : 'Dengede'); ?>)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="page-header d-print-none mb-3">
         <div class="row align-items-center">
             <div class="col">
                 <h2 class="page-title">
-                    Cari Hareketleri: <?php echo $cari->CariAdi; ?>
+                    Cari Hareketleri: <?php echo $cari->FirmaAdi . ($cari->YetkiliAdi ? " ({$cari->YetkiliAdi})" : ""); ?>
                 </h2>
                 <div class="text-muted mt-1"><?php echo $cari->Telefon; ?> | <?php echo $cari->Email; ?></div>
             </div>
@@ -136,8 +245,6 @@ $net_balance = $total_borc - $total_alacak;
                             $running_balance = 0;
                             foreach ($movements as $m): 
                                 $mid = Security::encrypt($m->id);
-                                $total_borc += $m->borc;
-                                $total_alacak += $m->alacak;
                                 $running_balance += ($m->borc - $m->alacak);
                             ?>
                             <tr>

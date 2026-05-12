@@ -153,7 +153,12 @@ body[data-bs-theme="dark"] .transaction-item-content {
                                         <i class="ti ti-user" style="font-size: 1.25rem;"></i>
                                     </div>
                                     <div>
-                                        <div class="text-bold text-sm" style="color: #1d273b;"><?php echo htmlspecialchars($cari->CariAdi); ?></div>
+                                        <div class="text-bold text-sm" style="color: #1d273b;">
+                                            <?php echo htmlspecialchars($cari->FirmaAdi); ?>
+                                            <?php if ($cari->YetkiliAdi): ?>
+                                                <span class="text-muted font-weight-normal" style="font-size: 0.75rem;">(<?php echo htmlspecialchars($cari->YetkiliAdi); ?>)</span>
+                                            <?php endif; ?>
+                                        </div>
                                         <div class="text-muted text-xs"><?php echo htmlspecialchars($cari->Telefon ?: 'Telefon Yok'); ?></div>
                                     </div>
                                 </div>
@@ -190,13 +195,17 @@ body[data-bs-theme="dark"] .transaction-item-content {
                     <div class="form-floating mb-3">
                         <div class="input-group">
                             <div class="form-floating flex-grow-1">
-                                <input type="text" class="form-control" name="CariAdi" id="mCariAdi" placeholder="Cari Adı" required>
-                                <label for="mCariAdi">Cari Adı *</label>
+                                <input type="text" class="form-control" name="FirmaAdi" id="mFirmaAdi" placeholder="Firma Adı" required>
+                                <label for="mFirmaAdi">Firma Adı *</label>
                             </div>
                             <button type="button" class="btn btn-icon btn-light border" id="btnPickContact" style="height: 58px; width: 50px; border-radius: 0 12px 12px 0;">
                                 <i class="ti ti-address-book" style="font-size: 1.5rem;"></i>
                             </button>
                         </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="YetkiliAdi" id="mYetkiliAdi" placeholder="Yetkili Adı">
+                        <label for="mYetkiliAdi">Yetkili Adı</label>
                     </div>
                     <div class="form-floating mb-3">
                         <input type="text" class="form-control" name="Telefon" id="mTelefon" placeholder="Telefon">
@@ -239,7 +248,8 @@ $(document).ready(function() {
                 
                 // Set Name
                 if (contact.name && contact.name.length > 0) {
-                    $('#mCariAdi').val(contact.name[0]);
+                    $('#mFirmaAdi').val(contact.name[0]);
+                    $('#mYetkiliAdi').val(contact.name[0]);
                 }
 
                 // Set Phone

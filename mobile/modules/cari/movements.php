@@ -100,7 +100,12 @@ body[data-bs-theme="dark"] .transaction-item-content {
             <i class="ti ti-arrow-left"></i>
         </a>
         <div>
-            <h2 class="mb-1 text-semibold" style="letter-spacing: -0.5px;"><?php echo htmlspecialchars($cari->CariAdi); ?></h2>
+            <h2 class="mb-1 text-semibold" style="letter-spacing: -0.5px;">
+                <?php echo htmlspecialchars($cari->FirmaAdi); ?>
+                <?php if (!empty($cari->YetkiliAdi)): ?>
+                    <small class="text-muted" style="font-size: 65%;">(<?php echo htmlspecialchars($cari->YetkiliAdi); ?>)</small>
+                <?php endif; ?>
+            </h2>
             <p class="text-muted text-xs mb-0">Hesap Hareketleri ve Ekstre</p>
         </div>
     </div>

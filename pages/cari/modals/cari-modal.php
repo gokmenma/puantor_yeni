@@ -8,9 +8,19 @@
             <div class="modal-body">
                 <form id="cariForm">
                     <input type="hidden" name="id" id="cari_id" value="0">
-                    <div class="mb-3">
-                        <label class="form-label">Cari Adı <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="CariAdi" id="CariAdi" placeholder="Cari Adı" required>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Firma Adı <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="FirmaAdi" id="FirmaAdi" placeholder="Firma Adı" required>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Yetkili Adı</label>
+                                <input type="text" class="form-control" name="YetkiliAdi" id="YetkiliAdi" placeholder="Yetkili Adı Soyadı">
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-lg-6">

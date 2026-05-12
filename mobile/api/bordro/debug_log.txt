@@ -1,9 +1,9 @@
 Array
 (
-    [time] => 2026-05-11 13:56:19
+    [time] => 2026-05-12 21:03:37
     [POST] => Array
         (
-            [id] => UCBTO2WpjYth3j__0fYHR7s_fdGHXLwNdXxFY92FTQ**
+            [id] => yI-CrAAxkUbktsHEKr5f_gQMOBEDRd2C3w-3jwWotQ**
             [month] => 05
             [year] => 2026
         )
@@ -27,14 +27,18 @@ Array
                     [is_main_user] => 1
                     [sicil_no] => 
                     [yetkinlik_no] => 
-                    [session_token] => cb9d7990d6e3973f0d6d8c24e9f03d852a0d36fdfd8e112cc8b94cfa9af1b1bc
+                    [session_token] => 516f6ec96960d35255c396ba703b6a6bec7f2b2eb60bdd9199ad5914f2f81ecd
                     [activate_token] => cgVUG8io2HUEUnOwCgMQVfLG40t%2B2D5%2BpvuGy2mthVhSZ2ZAbpU%3D
                     [remember_token] => 
                     [created_at] => 2026-03-11 12:08:24
                     [responsible_persons] => 
+                    [responsible_projects] => 
+                    [responsible_modules] => 
                 )
 
             [firm_id] => 186
+            [full_name] => Mehmet Ali Gökmen
+            [user_role] => 149
         )
 
     [TARGET_PATH] => C:\xampp\htdocs\puantoryeni\mobile\api\bordro/../../../api/bordro/detail.php

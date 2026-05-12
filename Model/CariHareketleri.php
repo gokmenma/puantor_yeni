@@ -21,7 +21,7 @@ class CariHareketleri extends Model
 
     public function getMovementsByFirm($firm_id)
     {
-        $query = $this->db->prepare('SELECT ch.*, c.CariAdi FROM cari_hareketleri ch 
+        $query = $this->db->prepare('SELECT ch.*, c.FirmaAdi FROM cari_hareketleri ch 
                                     INNER JOIN cari c ON ch.cari_id = c.id 
                                     WHERE c.firma = ? AND ch.silinme_tarihi IS NULL 
                                     ORDER BY ch.islem_tarihi DESC, ch.id DESC');

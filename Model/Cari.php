@@ -14,7 +14,7 @@ class Cari extends Model
 
     public function getCariByFirm($firm_id)
     {
-        $query = $this->db->prepare('SELECT * FROM cari WHERE firma = ? AND silinme_tarihi IS NULL ORDER BY CariAdi ASC');
+        $query = $this->db->prepare('SELECT * FROM cari WHERE firma = ? AND silinme_tarihi IS NULL ORDER BY FirmaAdi ASC');
         $query->execute([$firm_id]);
         return $query->fetchAll(PDO::FETCH_OBJ);
     }

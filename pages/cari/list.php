@@ -100,7 +100,8 @@ $total_balance = ($totals->total_borc ?? 0) - ($totals->total_alacak ?? 0);
                         <thead>
                             <tr>
                                 <th style="width:5%">ID</th>
-                                <th>Cari Adı</th>
+                                <th>Firma Adı</th>
+                                <th>Yetkili</th>
                                 <th>Telefon</th>
                                 <th>Email</th>
                                 <th>Adres</th>
@@ -117,9 +118,10 @@ $total_balance = ($totals->total_borc ?? 0) - ($totals->total_alacak ?? 0);
                                     <td><?php echo $cari->id; ?></td>
                                     <td>
                                         <a href="?p=cari/movements&id=<?php echo $id; ?>" class="text-reset">
-                                            <?php echo $cari->CariAdi; ?>
+                                            <?php echo $cari->FirmaAdi; ?>
                                         </a>
                                     </td>
+                                    <td><?php echo $cari->YetkiliAdi; ?></td>
                                     <td><?php echo $cari->Telefon; ?></td>
                                     <td><?php echo $cari->Email; ?></td>
                                     <td><?php echo $cari->Adres; ?></td>
@@ -168,7 +170,8 @@ $total_balance = ($totals->total_borc ?? 0) - ($totals->total_alacak ?? 0);
                     var data = JSON.parse(response);
                     if(data.status === 'success') {
                         $('#cari_id').val(id);
-                        $('#CariAdi').val(data.cari.CariAdi);
+                        $('#FirmaAdi').val(data.cari.FirmaAdi);
+                        $('#YetkiliAdi').val(data.cari.YetkiliAdi);
                         $('#Telefon').val(data.cari.Telefon);
                         $('#Email').val(data.cari.Email);
                         $('#Adres').val(data.cari.Adres);
