@@ -9,9 +9,9 @@ $projects = $projectsModel->getProjectsByFirm($firm_id);
 <div class="container px-0">
   <div class="d-flex align-items-center justify-content-between mb-4">
     <h2 class="mb-0 text-semibold" style="letter-spacing: -0.5px;">Projeler</h2>
-    <button class="btn btn-icon btn-sm btn-outline-primary border-0">
+    <a href="#" id="addNewProject" class="btn btn-icon btn-sm btn-outline-primary border-0">
       <i class="ti ti-plus" style="font-size: 1.5rem;"></i>
-    </button>
+    </a>
   </div>
 
   <div class="row g-3">

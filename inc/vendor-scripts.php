@@ -40,6 +40,7 @@ if (
     $page == "raporlar/list"
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
+    echo '<script src="https://cdn.datatables.net/colreorder/1.7.0/js/dataTables.colReorder.min.js"></script>';
 }
 
 

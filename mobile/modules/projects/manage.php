@@ -445,15 +445,17 @@ body[data-bs-theme="dark"] .text-dark {
             $is_income = ($item->turu == 14 || $item->turu == 1); // 14: Puantaj/Hakediş, 1: Gelir
           ?>
             <div class="financial-item-wrapper" style="position: relative; overflow: hidden; background: #fff;">
-              <?php if ($item->turu != 14): ?>
-                <div class="financial-item-actions" style="position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; background: #d63f3f; z-index: 1;">
-                  <button class="btn-swipe-delete btn-delete-project-action" data-id="<?php echo $item_id; ?>" data-project="<?php echo Security::encrypt($item->project_id); ?>" style="color: white; width: 70px; height: 100%; border: none; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">
-                    <i class="ti ti-trash" style="font-size: 1.2rem; margin-bottom: 2px;"></i>
-                    <span>Sil</span>
-                  </button>
-                </div>
-              <?php endif; ?>
-              <div class="financial-item-content" style="position: relative; background: #fff; z-index: 2; transition: transform 0.2s ease-out; width: 100%;">
+              <div class="financial-item-actions" style="position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; background: #206bc4; z-index: 1;">
+                <button class="btn-swipe-edit btn-edit-project-transaction" data-id="<?php echo $item_id; ?>" style="color: white; width: 70px; height: 100%; border: none; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; border-right: 1px solid rgba(255,255,255,0.2);">
+                  <i class="ti ti-edit" style="font-size: 1.2rem; margin-bottom: 2px;"></i>
+                  <span>Düzenle</span>
+                </button>
+                <button class="btn-swipe-delete btn-delete-project-action" data-id="<?php echo $item_id; ?>" data-project="<?php echo Security::encrypt($item->project_id); ?>" style="color: white; width: 70px; height: 100%; border: none; background: #d63f3f; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">
+                  <i class="ti ti-trash" style="font-size: 1.2rem; margin-bottom: 2px;"></i>
+                  <span>Sil</span>
+                </button>
+              </div>
+              <div class="financial-item-content swipe-content" style="position: relative; background: #fff; z-index: 2; transition: transform 0.2s ease-out; width: 100%;">
                 <div class="list-group-item py-3 px-3">
                   <div class="d-flex align-items-center justify-content-between w-100">
                     <div class="d-flex align-items-center gap-3">
@@ -479,6 +481,11 @@ body[data-bs-theme="dark"] .text-dark {
         </div>
       <?php endif; ?>
     </div>
+    
+    <!-- Ekle Butonu for Gelir/Gider -->
+    <a href="#" class="mobile-fab" id="addProjectTransactionBtn" style="background-color: var(--mobile-primary); bottom: 90px;">
+      <i class="ti ti-plus"></i>
+    </a>
   </div>
 
   <!-- TAB 4: Çalışma & Puantaj -->
@@ -606,6 +613,68 @@ body[data-bs-theme="dark"] .text-dark {
   <?php endif; ?>
 </div>
 <?php endif; ?>
+
+<!-- İşlem (Gelir/Gider/Puantaj) Modal -->
+<div class="modal modal-blur fade" id="projectTransactionModal" tabindex="-1" style="display: none;" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" style="border-radius: 24px; overflow: hidden;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-semibold" id="transactionModalTitle" style="font-size: 1.1rem;">Yeni Gelir/Gider Ekle</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="projectTransactionForm">
+          <input type="hidden" name="action" value="saveTransaction">
+          <input type="hidden" name="id" id="transaction_id" value="0">
+          <input type="hidden" name="project_id" value="<?php echo $id_encrypted; ?>">
+          
+          <div class="form-floating mb-3">
+            <select class="form-select" id="transaction_type" name="type" style="border-radius: 12px; height: 54px;" required>
+              <option value="5">Projeden Alınan Ödeme (Gelir)</option>
+              <option value="12">Proje Masrafı (Gider)</option>
+              <option value="14">Puantaj Çalışması (Gider)</option>
+            </select>
+            <label for="transaction_type">İşlem Türü</label>
+          </div>
+
+          <div class="form-floating mb-3">
+            <select class="form-select" id="transaction_case_id" name="case_id" style="border-radius: 12px; height: 54px;">
+              <option value="0">Kasa Seçiniz (Opsiyonel)</option>
+              <?php 
+              require_once ROOT . "/Model/Cases.php";
+              $casesObj = new Cases();
+              $cases = $casesObj->allCaseWithFirmId();
+              foreach ($cases as $c) {
+                  echo '<option value="'.Security::encrypt($c->id).'">'.$c->case_name.'</option>';
+              }
+              ?>
+            </select>
+            <label for="transaction_case_id">İşlem Kasası</label>
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control flatpickr" id="transaction_date" name="date" placeholder="Tarih Seçin" value="<?php echo date('d.m.Y'); ?>" style="border-radius: 12px; height: 54px;" required>
+            <label for="transaction_date">İşlem Tarihi</label>
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control money" id="transaction_amount" name="amount" placeholder="Tutar" style="border-radius: 12px; height: 54px;" required>
+            <label for="transaction_amount">Tutar</label>
+          </div>
+
+          <div class="form-floating mb-3">
+            <textarea class="form-control" id="transaction_description" name="description" placeholder="Açıklama" style="border-radius: 12px; height: 80px;"></textarea>
+            <label for="transaction_description">Açıklama</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary w-100 mb-2" data-bs-dismiss="modal" style="border-radius: 12px; padding: 12px;">İptal</button>
+        <button type="button" class="btn btn-primary w-100" id="saveProjectTransactionBtn" style="border-radius: 12px; padding: 12px;">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
@@ -800,7 +869,7 @@ $(document).ready(function() {
   // Swipe logic for financial items
   let touchStartX = 0;
   let touchMoveX = 0;
-  const swipeThreshold = 70;
+  const swipeThreshold = 140; // Genişletildi (Edit + Sil)
 
   $(document).on('touchstart', '#project-financial-list .swipe-content', function(e) {
       touchStartX = e.originalEvent.touches[0].clientX;
@@ -848,7 +917,7 @@ $(document).ready(function() {
                   id: id
               }, function(res) {
                   if (res.status === 'success') {
-                      btn.closest('.swipe-container').fadeOut(300, function() {
+                      btn.closest('.financial-item-wrapper').fadeOut(300, function() {
                           $(this).remove();
                       });
                       Swal.fire('Silindi!', res.message, 'success');
@@ -861,8 +930,99 @@ $(document).ready(function() {
                   }
               }, 'json');
           } else {
-              btn.closest('.swipe-container').find('.swipe-content').css('transform', 'translateX(0)');
+              btn.closest('.financial-item-wrapper').find('.swipe-content').css('transform', 'translateX(0)');
           }
+      });
+  });
+
+  // Yeni Gelir/Gider Ekle Butonu
+  $('#addProjectTransactionBtn').on('click', function(e) {
+      e.preventDefault();
+      $('#projectTransactionForm')[0].reset();
+      $('#transaction_id').val('0');
+      $('#transactionModalTitle').text('Yeni Gelir/Gider Ekle');
+      
+      // Reset flatpickr
+      if(document.querySelector('#transaction_date')._flatpickr) {
+          document.querySelector('#transaction_date')._flatpickr.setDate(new Date());
+      }
+      
+      var txModal = new bootstrap.Modal(document.getElementById('projectTransactionModal'));
+      txModal.show();
+  });
+
+  // Düzenle Butonu
+  $(document).on('click', '.btn-edit-project-transaction', function(e) {
+      e.preventDefault();
+      var id = $(this).data('id');
+      var contentWrapper = $(this).closest('.financial-item-wrapper').find('.swipe-content');
+      
+      Swal.fire({ title: 'Yükleniyor...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      
+      $.post('api/projects/transaction.php', {
+          action: 'getTransaction',
+          id: id
+      }, function(res) {
+          Swal.close();
+          if(res.status === 'success') {
+              $('#projectTransactionForm')[0].reset();
+              $('#transaction_id').val(res.data.id);
+              $('#transaction_type').val(res.data.turu);
+              if(res.data.case_id) {
+                  $('#transaction_case_id').val(res.data.case_id);
+              }
+              
+              $('#transaction_amount').val(res.data.tutar);
+              if(document.querySelector('#transaction_date')._flatpickr) {
+                  document.querySelector('#transaction_date')._flatpickr.setDate(res.data.tarih, true, 'd.m.Y');
+              } else {
+                  $('#transaction_date').val(res.data.tarih);
+              }
+              $('#transaction_description').val(res.data.aciklama);
+              
+              $('#transactionModalTitle').text('Gelir/Gider Düzenle');
+              var txModal = new bootstrap.Modal(document.getElementById('projectTransactionModal'));
+              txModal.show();
+          } else {
+              Swal.fire('Hata!', res.message || 'Kayıt alınamadı', 'error');
+          }
+          contentWrapper.css('transform', 'translateX(0)');
+      }, 'json');
+  });
+
+  // Gelir/Gider Kaydet
+  $('#saveProjectTransactionBtn').on('click', function(e) {
+      e.preventDefault();
+      
+      var form = $('#projectTransactionForm');
+      var formData = new FormData(form[0]);
+      
+      if(!$('#transaction_amount').val()) {
+          Swal.fire('Hata!', 'Lütfen bir tutar giriniz.', 'error');
+          return;
+      }
+
+      Swal.fire({ title: 'Kaydediliyor...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+      fetch('api/projects/transaction.php', {
+          method: 'POST',
+          body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.status === 'success') {
+              Swal.fire({ title: 'Başarılı!', text: data.message, icon: 'success' })
+              .then(() => {
+                  var m = bootstrap.Modal.getInstance(document.getElementById('projectTransactionModal'));
+                  if(m) m.hide();
+                  location.reload();
+              });
+          } else {
+              Swal.fire('Hata!', data.message, 'error');
+          }
+      })
+      .catch(error => {
+          Swal.fire('Hata!', 'İşlem sırasında bir sorun oluştu.', 'error');
       });
   });
 
@@ -934,7 +1094,7 @@ $(document).ready(function() {
 
   // Close swipe on clicking elsewhere
   $(document).on('touchstart', function(e) {
-      if (!$(e.target).closest('.swipe-container').length) {
+      if (!$(e.target).closest('.financial-item-wrapper').length) {
           $('.swipe-content').css('transform', 'translateX(0)');
       }
   });

@@ -1,4 +1,4 @@
-if ($(".datatable").length > 0) {
+if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
   var table = $(".datatable:not(#puantajTable)").DataTable({
     autoWidth: false,
     order: false,
@@ -104,9 +104,7 @@ if ($(".datatable").length > 0) {
     ordering: true,
     order: [[0, "asc"]],
     orderCellsTop: true,
-    columnDefs: [
-      { orderable: false, targets: "_all" }
-    ],
+    columnDefs: [{ orderable: false, targets: "_all" }],
     layout: {
       bottomStart: "pageLength",
       bottom2Start: "info",
@@ -138,11 +136,19 @@ if ($(".datatable").length > 0) {
           let input = document.createElement("input");
           // Set placeholder based on column index
           var placeholder = "";
-          switch(column.index()) {
-            case 0: placeholder = "Adı Soyadı"; break;
-            case 1: placeholder = "Unvanı"; break;
-            case 2: placeholder = "İş Grubu"; break;
-            case 3: placeholder = "Ekip"; break;
+          switch (column.index()) {
+            case 0:
+              placeholder = "Adı Soyadı";
+              break;
+            case 1:
+              placeholder = "Unvanı";
+              break;
+            case 2:
+              placeholder = "İş Grubu";
+              break;
+            case 3:
+              placeholder = "Ekip";
+              break;
           }
           input.placeholder = placeholder;
           input.classList.add("form-control");
@@ -150,9 +156,9 @@ if ($(".datatable").length > 0) {
           input.setAttribute("autocomplete", "off");
 
           // Append input element to the existing row (tr:eq(1) is the search row)
-          $(
-            "#" + tableId + " thead tr:eq(1) th:eq(" + column.index() + ")"
-          ).html(input);
+          $("#" + tableId + " thead tr:eq(1) th:eq(" + column.index() + ")").html(
+            input
+          );
 
           // Event listener for user input
           $(input).on("keyup change", function () {
@@ -168,6 +174,165 @@ if ($(".datatable").length > 0) {
   $("#export_excel_puantaj").on("click", function () {
     puantaj_table.button(".buttons-excel").trigger();
   });
+
+  // Premium Puantaj Raporu (Puantaj İcmal) için gelişmiş başlatma
+  if ($("#puantajDataTable").length > 0) {
+    console.log("Raporlar: #puantajDataTable tespit edildi, başlatılıyor...");
+    
+    // ColReorder eklentisi yüklü mü kontrol et
+    var isColReorderAvailable = ($.fn.dataTable && $.fn.dataTable.ColReorder);
+    if (!isColReorderAvailable) {
+        console.warn("Raporlar: ColReorder eklentisi bulunamadı, sürükleme çalışmayabilir.");
+    }
+
+    // Statik PHP değişkenleri yerine DOM'dan veri çekme (Month/Year)
+    var reportBadge = $(".badge.bg-blue-lt").first().text().trim() || "Rapor";
+    var excelFileName = "Puantaj_Raporu_" + reportBadge.replace(/\s+/g, "_");
+    var pdfTitle = "Puantaj Raporu - " + reportBadge;
+
+    var commonExportOptions = {
+      columns: ":visible",
+      format: {
+        body: function (data, row, column, node) {
+          var $node = $(node);
+          var nameSpan = $node.find(".fw-semibold");
+          if (nameSpan.length > 0) return nameSpan.text().trim();
+          var text = $node.text().trim();
+          return text === "-" || text === "0" ? "" : text;
+        },
+        header: function (data, column, node) {
+          return $(node).text().trim();
+        }
+      }
+    };
+
+    var reportTable = $("#puantajDataTable").DataTable({
+      language: { url: "src/tr.json" },
+      pageLength: 50,
+      responsive: false,
+      scrollX: true,
+      colReorder: isColReorderAvailable ? true : false,
+      stateSave: true,
+      layout: {
+        topStart: null,
+        topEnd: null,
+        bottomStart: "info",
+        bottomEnd: "paging"
+      },
+      buttons: [
+        {
+          extend: "excelHtml5",
+          className: "d-none",
+          title: excelFileName,
+          exportOptions: commonExportOptions
+        },
+        {
+          extend: "pdfHtml5",
+          className: "d-none",
+          orientation: "landscape",
+          pageSize: "A4",
+          title: pdfTitle,
+          exportOptions: commonExportOptions,
+          customize: function (doc) {
+            doc.defaultStyle.fontSize = 8;
+            doc.styles.tableHeader.fontSize = 8.5;
+            doc.styles.tableHeader.bold = true;
+            doc.styles.tableHeader.fillColor = "#1e293b";
+            doc.styles.tableHeader.color = "white";
+            doc.styles.tableHeader.alignment = "center";
+            doc.pageMargins = [15, 20, 15, 20];
+            doc.content[1].table.widths = Array(
+              doc.content[1].table.body[0].length + 1
+            )
+              .join("*")
+              .split("");
+
+            var rowCount = doc.content[1].table.body.length;
+            for (var i = 1; i < rowCount; i++) {
+              var rowData = doc.content[1].table.body[i];
+              for (var j = 0; j < rowData.length; j++) {
+                rowData[j].alignment = j === 0 || j === 4 ? "left" : "center";
+                if (i % 2 === 0) rowData[j].fillColor = "#f8fafc";
+              }
+            }
+
+            var objLayout = {
+              hLineWidth: function (i) {
+                return 0.5;
+              },
+              vLineWidth: function (i) {
+                return 0.5;
+              },
+              hLineColor: function (i) {
+                return "#e2e8f0";
+              },
+              vLineColor: function (i) {
+                return "#e2e8f0";
+              },
+              paddingLeft: function (i) {
+                return 3;
+              },
+              paddingRight: function (i) {
+                return 3;
+              },
+              paddingTop: function (i) {
+                return 4;
+              },
+              paddingBottom: function (i) {
+                return 4;
+              }
+            };
+            doc.content[1].layout = objLayout;
+          }
+        }
+      ],
+      columnDefs: [{ targets: [1, 2, 3], visible: false }]
+    });
+
+    // Custom UI Kontrollerini İnşa Et
+    $("#customColvisMenu").empty();
+    $("#puantajDataTable thead th").each(function () {
+      var colInstance = reportTable.column($(this));
+      var actualIndex = colInstance.index();
+      if (actualIndex === 0) return;
+
+      var title = $(this).text().trim();
+      var isVisible = colInstance.visible();
+      var id = "colCheck_" + actualIndex;
+      var itemHtml = `
+          <label class="dropdown-item d-flex align-items-center cursor-pointer py-2 px-3 rounded-2 hover-bg-light" style="font-size: 0.85rem;">
+              <div class="form-check mb-0">
+                  <input class="form-check-input col-visibility-trigger" type="checkbox" value="" id="${id}" data-column="${actualIndex}" ${
+        isVisible ? "checked" : ""
+      }>
+                  <span class="form-check-label fw-medium ms-1 text-secondary" for="${id}">
+                      ${title}
+                  </span>
+              </div>
+          </label>`;
+      $("#customColvisMenu").append(itemHtml);
+    });
+
+    $("#customReportActions").removeClass("d-none d-md-none").addClass("d-flex");
+
+    $("#customBtnExcel")
+      .off("click")
+      .on("click", function () {
+        reportTable.button(".buttons-excel").trigger();
+      });
+    $("#customBtnPdf")
+      .off("click")
+      .on("click", function () {
+        reportTable.button(".buttons-pdf").trigger();
+      });
+
+    $(document)
+      .off("change", ".col-visibility-trigger")
+      .on("change", ".col-visibility-trigger", function () {
+        var colIdx = $(this).data("column");
+        reportTable.column(colIdx).visible(this.checked);
+      });
+  }
 }
 
 if ($(".select2").length > 0) {
@@ -601,3 +766,13 @@ window.sortPuantaj = function(colIndex) {
     var activeTh = $('#puantajTable thead tr:eq(0) th').eq(colIndex);
     activeTh.addClass(dir === 'asc' ? 'sorting_asc' : 'sorting_desc');
 };
+
+// Global Dönem Seçimi Otomatik Yenileme
+$(document).ready(function() {
+    $(document).on('change select2:select', '#year, #months, select[name="year"], select[name="months"]', function() {
+        var form = $(this).closest('form');
+        if(form.length > 0) {
+            form.submit();
+        }
+    });
+});

@@ -100,13 +100,19 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
         border-radius: 50px;
     }
 
-    .datatable thead th {
+    .datatable thead th, #puantajDataTable thead th {
         background: #f8fafc;
         font-weight: 700;
         text-transform: uppercase;
         font-size: 11px;
         color: #475569;
         letter-spacing: 0.025em;
+        cursor: grab !important; /* Indicates column reorder capacity */
+        user-select: none;
+    }
+    
+    #puantajDataTable thead th:active {
+        cursor: grabbing !important;
     }
 </style>
 
@@ -124,6 +130,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     </div>
 
     <div class="row g-4">
+        <?php if(empty($report_type)): ?>
         <!-- Left Column: Periodic Settings -->
         <div class="col-lg-3 col-md-4">
             <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
@@ -181,9 +188,10 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Right Column: Main Content -->
-        <div class="col-lg-9 col-md-8">
+        <div class="<?= empty($report_type) ? 'col-lg-9 col-md-8' : 'col-12' ?>">
             <?php if($report_type == 'puantaj'): ?>
                 <!-- --- PUANTAJ REPORT RENDERING --- -->
                 <?php
@@ -306,193 +314,6 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                         </table>
                     </div>
                 </div>
-                <script>
-                    (function() {
-                        var initAttempts = 0;
-                        var maxAttempts = 50;
-                        
-                        var initDataTable = function() {
-                            if (typeof $.fn.DataTable === 'undefined' || typeof $.fn.DataTable.Buttons === 'undefined') {
-                                if (initAttempts < maxAttempts) {
-                                    initAttempts++;
-                                    setTimeout(initDataTable, 100); 
-                                } else {
-                                    console.error('Raporlar: DataTable/Buttons kütüphanesi yüklenemedi!');
-                                }
-                                return;
-                            }
-
-                            // Safety net to ensure Excel logic works robustly
-                            if (typeof window.JSZip === 'undefined' && typeof JSZip !== 'undefined') {
-                                window.JSZip = JSZip;
-                            }
-
-                            try {
-                                if ($.fn.DataTable.isDataTable('#puantajDataTable')) {
-                                    $('#puantajDataTable').DataTable().destroy();
-                                }
-
-                                // Standard Clean Data Export Formatting
-                                var commonExportOptions = {
-                                    columns: ':visible',
-                                    format: {
-                                        body: function (data, row, column, node) {
-                                            var $node = $(node);
-                                            // Find specific Name span inside first column for clean extraction
-                                            var nameSpan = $node.find('.fw-semibold');
-                                            if(nameSpan.length > 0) {
-                                                return nameSpan.text().trim();
-                                            }
-                                            
-                                            // Standard cell content extraction
-                                            var text = $node.text().trim();
-                                            // Replace hyphens and empty zeroes with empty strings for formula ease
-                                            return (text === '-' || text === '0') ? '' : text;
-                                        },
-                                        header: function(data, column, node) {
-                                            return $(node).text().trim();
-                                        }
-                                    }
-                                };
-
-                                var table = $('#puantajDataTable').DataTable({
-                                    language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' },
-                                    pageLength: 50,
-                                    responsive: false,
-                                    scrollX: true,
-                                    layout: {
-                                        topStart: null, 
-                                        topEnd: null,
-                                        bottomStart: 'info',
-                                        bottomEnd: 'paging'
-                                    },
-                                    buttons: [
-                                        {
-                                            extend: 'excelHtml5',
-                                            className: 'd-none', // Background implementation only
-                                            title: 'Puantaj_Raporu_<?= $year ?>_<?= $month ?>',
-                                            exportOptions: commonExportOptions
-                                        },
-                                        {
-                                            extend: 'pdfHtml5',
-                                            className: 'd-none',
-                                            orientation: 'landscape',
-                                            pageSize: 'A4',
-                                            title: 'Puantaj Raporu - <?= $displayMonth ?> <?= $year ?>',
-                                            exportOptions: commonExportOptions,
-                                            customize: function (doc) {
-                                                // MAXIMIZE REAL ESTATE SYSTEM
-                                                doc.defaultStyle.fontSize = 8; // Dropped from 9 for optimal squeezing
-                                                doc.styles.tableHeader.fontSize = 8.5;
-                                                doc.styles.tableHeader.bold = true;
-                                                doc.styles.tableHeader.fillColor = '#1e293b'; 
-                                                doc.styles.tableHeader.color = 'white';
-                                                doc.styles.tableHeader.alignment = 'center';
-                                                
-                                                // Narrow down page margins to gain massive horizontal workspace
-                                                doc.pageMargins = [15, 20, 15, 20];
-                                                
-                                                // Auto-distribute system ensures balanced flow
-                                                doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-                                                
-                                                var rowCount = doc.content[1].table.body.length;
-                                                for (var i = 1; i < rowCount; i++) {
-                                                    var rowData = doc.content[1].table.body[i];
-                                                    for (var j = 0; j < rowData.length; j++) {
-                                                        // High efficiency row aligners
-                                                        rowData[j].alignment = (j === 0 || j === 4) ? 'left' : 'center';
-                                                        
-                                                        // Elegant subtle background striping
-                                                        if (i % 2 === 0) {
-                                                            rowData[j].fillColor = '#f8fafc';
-                                                        }
-                                                    }
-                                                }
-                                                
-                                                // Minimalist Ultra-Condensed Table Space Layout
-                                                var objLayout = {};
-                                                objLayout['hLineWidth'] = function(i) { return .5; };
-                                                objLayout['vLineWidth'] = function(i) { return .5; };
-                                                objLayout['hLineColor'] = function(i) { return '#e2e8f0'; };
-                                                objLayout['vLineColor'] = function(i) { return '#e2e8f0'; };
-                                                objLayout['paddingLeft'] = function(i) { return 3; }; // Drastically reduced from 8
-                                                objLayout['paddingRight'] = function(i) { return 3; }; // Drastically reduced from 8
-                                                objLayout['paddingTop'] = function(i) { return 4; };
-                                                objLayout['paddingBottom'] = function(i) { return 4; };
-                                                doc.content[1].layout = objLayout;
-                                                doc.content[1].layout = objLayout;
-                                            }
-                                        }
-                                    ],
-                                    columnDefs: [{ targets: [1, 2, 3], visible: false }]
-                                });
-
-                                // DYNAMIC CUSTOM CONTROLS GENERATION
-                                // 1. Construct Premium Custom Column Visibility Dropdown
-                                $('#customColvisMenu').empty();
-                                
-                                // Directly scrape TH nodes using jQuery to bypass library iteration inconsistencies
-                                $('#puantajDataTable thead th').each(function(index) {
-                                    if(index === 0) return; // Do not toggle Personnel Name
-                                    
-                                    var title = $(this).text().trim();
-                                    // Safe retrieval of visibility state via API call
-                                    var isVisible = true;
-                                    try {
-                                        isVisible = table.column(index).visible();
-                                    } catch(err) {
-                                        // Fallback: If columns haven't resolved fully yet, assume initial defaults
-                                        isVisible = ![1, 2, 3].includes(index); 
-                                    }
-                                    
-                                    var id = 'colCheck_' + index;
-                                    var itemHtml = `
-                                        <label class="dropdown-item d-flex align-items-center cursor-pointer py-2 px-3 rounded-2 hover-bg-light" style="font-size: 0.85rem;">
-                                            <div class="form-check mb-0">
-                                                <input class="form-check-input col-visibility-trigger" type="checkbox" value="" id="${id}" data-column="${index}" ${isVisible ? 'checked' : ''}>
-                                                <span class="form-check-label fw-medium ms-1 text-secondary" for="${id}">
-                                                    ${title}
-                                                </span>
-                                            </div>
-                                        </label>`;
-                                    $('#customColvisMenu').append(itemHtml);
-                                });
-
-                                // 2. Unhide Custom ActionBar container since DataTable is active
-                                $('#customReportActions').removeClass('d-none d-md-none').addClass('d-flex');
-
-                                // 3. Bind Premium Button Events to Background Table Triggers
-                                $('#customBtnExcel').off('click').on('click', function() {
-                                    table.button('.buttons-excel').trigger();
-                                });
-                                
-                                $('#customBtnPdf').off('click').on('click', function() {
-                                    table.button('.buttons-pdf').trigger();
-                                });
-
-                                // 4. Bind Dynamic Column Visibility Toggles
-                                $(document).off('change', '.col-visibility-trigger').on('change', '.col-visibility-trigger', function() {
-                                    var colIdx = $(this).data('column');
-                                    table.column(colIdx).visible(this.checked);
-                                });
-
-                                console.log("Premium Rapor Arayüzü Hazır.");
-
-                            } catch (e) {
-                                console.error("Premium Init Exception:", e);
-                            }
-                        };
-
-                        $(document).ready(function() {
-                            initDataTable();
-                            // GARANTİ YÖNTEM: Delegated Listener ve Select2 Entegrasyonu
-                            $(document).on('change select2:select', '#year, #months, select[name="year"], select[name="months"]', function() {
-                                $(this).closest('form').submit();
-                            });
-                        });
-                    })();
-                </script>
-
             <?php else: ?>
                 <!-- --- DASHBOARD CARDS RENDERING --- -->
                 <div class="row row-cards g-3">

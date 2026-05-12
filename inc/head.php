@@ -81,7 +81,8 @@
 
   ) {
     echo '<link href="./dist/libs/datatable/datatables.min.css" rel="stylesheet" />';
-  }
+    echo '<link href="https://cdn.datatables.net/colreorder/1.7.0/css/colReorder.dataTables.min.css" rel="stylesheet" />';
+}
 
   if ($page == "supports/ticket-view") {
     echo '<link href="./dist/css/tickets.css" rel="stylesheet" />';
