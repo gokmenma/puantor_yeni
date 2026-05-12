@@ -269,12 +269,6 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
               vLineColor: function (i) {
                 return "#e2e8f0";
               },
-              paddingLeft: function (i) {
-                return 3;
-              },
-              paddingRight: function (i) {
-                return 3;
-              },
               paddingTop: function (i) {
                 return 4;
               },
@@ -284,13 +278,53 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
             };
             doc.content[1].layout = objLayout;
           }
+        },
+        {
+          extend: "pdfHtml5",
+          className: "d-none",
+          orientation: "landscape",
+          pageSize: "A3",
+          title: "Puantaj Raporu"
         }
       ],
       columnDefs: [{ targets: [1, 2, 3, 4], visible: false }],
       initComplete: function () {
         var api = this.api();
-        console.log("Raporlar: Tablo hazır, menü inşa ediliyor...");
-        
+        console.log("Raporlar: Tablo hazır, menü ve arama inşa ediliyor...");
+
+        // Sütun Başlığı Araması Ekle (Sütunla beraber taşınması için TH içine ekliyoruz)
+        api.columns().every(function () {
+            var column = this;
+            var $header = $(column.header());
+            var title = $header.text().trim();
+            
+            if ($header.find(".column-search-input").length === 0) {
+                // Mevcut içeriği bir span içine alalım ki üstte kalsın
+                var headerText = $header.html();
+                $header.html('<div class="d-flex flex-column">' + 
+                             '<span class="mb-1">' + headerText + '</span>' + 
+                             '</div>');
+                
+                // Tüm kolonlar için arama kutusu ekle
+                if (title) {
+                    var input = $('<input type="text" class="form-control form-control-sm column-search-input" placeholder="Ara..." style="font-size: 9px; height: 20px; padding: 2px 5px; font-weight: normal; text-transform: none;" />');
+                    
+                    // Tıklayınca sıralama yapılmasını engellemek için
+                    input.on("click", function(e) { e.stopPropagation(); });
+                    
+                    input.on("keyup change clear", function () {
+                        if (column.search() !== this.value) {
+                            column.search(this.value).draw();
+                        }
+                    });
+                    $header.find(".d-flex").append(input);
+                } else {
+                    // Boşluk bırak (hizalama için)
+                    $header.find(".d-flex").append('<div style="height: 20px;"></div>');
+                }
+            }
+        });
+
         // Menüyü temizle
         $("#customColvisMenu").empty();
         api.columns().every(function (idx) {
