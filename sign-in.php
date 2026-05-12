@@ -13,12 +13,28 @@ $User = new UserModel();
 
 use App\Helper\Date;
 use App\Helper\Security;
-// if ($_POST && isset($_POST['submitForm'])) {
-//   $email = $_POST['email'];
-//   $password = MD5($_POST['password']);
-//   echo $password;
-// };
 
+// Beni Hatırla Kontrolü (Cookie)
+if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['remember_me'])) {
+    $token = $_COOKIE['remember_me'];
+    $cookie_user = $User->getUserBySessionToken($token);
+    if ($cookie_user && $cookie_user->status == 1) {
+        $_SESSION['user'] = $cookie_user;
+        $_SESSION['firm_id'] = $cookie_user->firm_id;
+        $_SESSION['full_name'] = $cookie_user->full_name;
+        $_SESSION['user_role'] = $cookie_user->user_roles;
+        $_SESSION["log_id"] = $User->loginLog($cookie_user->id);
+        
+        $returnUrl = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? $_GET['returnUrl'] : 'company-list.php';
+        header("Location: {$returnUrl}");
+        exit();
+    }
+}
+
+if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
+    header("Location: company-list.php");
+    exit();
+}
 ?>
 
 
@@ -111,7 +127,13 @@ use App\Helper\Security;
                       $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                       $_SESSION['full_name'] = $user->full_name;
                       $_SESSION['user_role'] = $user->user_roles;
-                      $User->setToken($user->id, $_SESSION['csrf_token']);
+
+                      // Beni Hatırla
+                      if (isset($_POST['remember'])) {
+                        $token = bin2hex(random_bytes(32));
+                        $User->setToken($user->id, $token);
+                        setcookie('remember_me', $token, time() + 30 * 24 * 3600, '/');
+                      }
 
                       //Giriş işlemleri kayıt altına alınıyor
                       $_SESSION["log_id"] = $User->loginLog($user->id);
@@ -209,7 +231,7 @@ use App\Helper\Security;
                   </div>
                   <div class="mb-2">
                     <label class="form-check">
-                      <input type="checkbox" class="form-check-input" />
+                      <input type="checkbox" name="remember" class="form-check-input" />
                       <span class="form-check-label">Beni Hatırla</span>
                     </label>
                   </div>

@@ -25,6 +25,10 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
         if ($cookie_user && $cookie_user->status == 1) {
             $_SESSION['user'] = $cookie_user;
             $_SESSION['firm_id'] = $cookie_user->firm_id;
+            $_SESSION['full_name'] = $cookie_user->full_name;
+            $_SESSION['user_role'] = $cookie_user->user_roles;
+            // Refresh cookie expiry
+            setcookie('remember_me', $token, time() + 30 * 24 * 3600, '/');
         } else {
             header("Location: sign-in.php");
             exit();

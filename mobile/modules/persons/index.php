@@ -35,6 +35,19 @@ body[data-bs-theme="dark"] .person-item-content {
     background: #d63f3f;
     z-index: 1;
 }
+.person-item-actions-left {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    z-index: 1;
+}
+body[data-bs-theme="dark"] .person-item-actions-left {
+    background: #1e293b;
+}
 .person-item-content {
     position: relative;
     background: #fff;
@@ -42,7 +55,7 @@ body[data-bs-theme="dark"] .person-item-content {
     transition: transform 0.2s ease-out;
     width: 100%;
 }
-.btn-swipe-delete {
+.btn-swipe-delete, .btn-swipe-action {
     color: white;
     width: 70px;
     height: 100%;
@@ -52,9 +65,26 @@ body[data-bs-theme="dark"] .person-item-content {
     justify-content: center;
     border: none;
     background: transparent;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 600;
+    text-decoration: none !important;
 }
+.btn-swipe-action {
+    color: #64748b;
+    border-right: 1px solid rgba(0,0,0,0.05);
+}
+body[data-bs-theme="dark"] .btn-swipe-action {
+    color: #94a3b8;
+    border-right-color: rgba(255,255,255,0.05);
+}
+.btn-swipe-action i {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+.btn-swipe-action.active-finance { color: #2fb344; }
+.btn-swipe-action.active-puantaj { color: #206bc4; }
+.btn-swipe-action.active-documents { color: #f59e0b; }
+
 .btn-swipe-delete i {
     font-size: 1.2rem;
     margin-bottom: 2px;
@@ -211,6 +241,23 @@ foreach($persons as $p) {
         $initials = mb_substr($person->full_name, 0, 2, 'UTF-8');
       ?>
         <div class="person-item-wrapper" data-name="<?php echo strtolower($person->full_name); ?>">
+          <!-- Left Actions (Swipe Right) -->
+          <div class="person-item-actions-left">
+            <a href="index.php?route=person-edit&id=<?php echo $id_encrypted; ?>&tab=finance" class="btn-swipe-action active-finance">
+              <i class="ti ti-receipt"></i>
+              <span>Finans</span>
+            </a>
+            <a href="index.php?route=person-edit&id=<?php echo $id_encrypted; ?>&tab=puantaj" class="btn-swipe-action active-puantaj">
+              <i class="ti ti-calendar-event"></i>
+              <span>Puantaj</span>
+            </a>
+            <a href="index.php?route=person-edit&id=<?php echo $id_encrypted; ?>&tab=documents" class="btn-swipe-action active-documents">
+              <i class="ti ti-files"></i>
+              <span>Evrak</span>
+            </a>
+          </div>
+          
+          <!-- Right Actions (Swipe Left) -->
           <div class="person-item-actions">
             <button class="btn-swipe-delete btn-delete-person" data-id="<?php echo $id_encrypted; ?>" data-name="<?php echo htmlspecialchars($person->full_name); ?>">
               <i class="ti ti-trash"></i>
@@ -218,7 +265,7 @@ foreach($persons as $p) {
             </button>
           </div>
           <div class="person-item-content">
-            <a href="person-edit?id=<?php echo $id_encrypted; ?>" class="list-group-item border-0 py-3 px-3 w-100 bg-transparent d-flex align-items-center justify-content-between" style="text-decoration: none; color: inherit;">
+            <a href="index.php?route=person-edit&id=<?php echo $id_encrypted; ?>" class="list-group-item border-0 py-3 px-3 w-100 bg-transparent d-flex align-items-center justify-content-between" style="text-decoration: none; color: inherit;">
               <div class="d-flex align-items-center gap-3">
                 <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center" style="background: rgba(32, 107, 196, 0.12); color: var(--mobile-primary); width: 42px; height: 42px;">
                   <span class="text-bold" style="font-size: 0.85rem;"><?php echo $initials; ?></span>
@@ -261,14 +308,13 @@ $(document).ready(function() {
   let touchStartX = 0;
   let touchMoveX = 0;
   let currentSwipeItem = null;
-  const swipeThreshold = 70;
+  const swipeThresholdLeft = 70;  // For delete
+  const swipeThresholdRight = 210; // For 3 buttons (70 * 3)
 
   $(document).on('touchstart', '.person-item-content', function(e) {
       touchStartX = e.originalEvent.touches[0].clientX;
-      touchMoveX = touchStartX; // Initialize touchMoveX to avoid stale values triggering swipe on tap
+      touchMoveX = touchStartX;
       currentSwipeItem = $(this);
-      
-      // Reset other open items
       $('.person-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
   });
 
@@ -276,13 +322,14 @@ $(document).ready(function() {
       touchMoveX = e.originalEvent.touches[0].clientX;
       let diff = touchStartX - touchMoveX;
       
-      // Swipe left only
-      if (diff > 0) {
-          if (diff > swipeThreshold + 20) diff = swipeThreshold + 20; // Limit over-swipe
-          $(this).css('transition', 'none');
+      $(this).css('transition', 'none');
+      if (diff > 0) { // Swiping Left (reveal Delete)
+          if (diff > swipeThresholdLeft + 20) diff = swipeThresholdLeft + 20;
           $(this).css('transform', 'translateX(-' + diff + 'px)');
-      } else {
-          $(this).css('transform', 'translateX(0)');
+      } else { // Swiping Right (reveal Actions)
+          let absDiff = Math.abs(diff);
+          if (absDiff > swipeThresholdRight + 20) absDiff = swipeThresholdRight + 20;
+          $(this).css('transform', 'translateX(' + absDiff + 'px)');
       }
   });
 
@@ -290,8 +337,10 @@ $(document).ready(function() {
       let diff = touchStartX - touchMoveX;
       $(this).css('transition', 'transform 0.2s ease-out');
       
-      if (diff > swipeThreshold / 2) {
-          $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
+      if (diff > swipeThresholdLeft / 2) {
+          $(this).css('transform', 'translateX(-' + swipeThresholdLeft + 'px)');
+      } else if (diff < -(swipeThresholdRight / 4)) {
+          $(this).css('transform', 'translateX(' + swipeThresholdRight + 'px)');
       } else {
           $(this).css('transform', 'translateX(0)');
       }

@@ -115,8 +115,23 @@ $lastDayOfMonth = Date::lastDay($month, $year);
 $personPuantaj = $puantajModel->getPuantajByPersonAndDate($id, $firstDayOfMonth, $lastDayOfMonth);
 $puantajMap = [];
 foreach ($personPuantaj as $p) {
-    $puantajMap[$p->gun] = $p;
+    $cleanGun = str_replace('-', '', $p->gun);
+    $puantajMap[$cleanGun] = $p;
 }
+
+// Aktif Sekme Belirleme (Flicker önlemek için PHP tarafında kontrol)
+$activeTab = $_GET['tab'] ?? 'info';
+if (!isset($_GET['tab']) && (isset($_GET['month']) || isset($_GET['year']))) {
+    $activeTab = 'puantaj';
+}
+
+$tabTitles = [
+    'info' => 'Personel Bilgileri',
+    'puantaj' => 'Puantaj Cetveli',
+    'finance' => 'Ödemeler & Finans',
+    'documents' => 'Evraklar & Belgeler'
+];
+$pageTitle = $tabTitles[$activeTab] ?? 'Personel Düzenle';
 
 // Finans verileri (Sadece bu personelin işlemleri)
 $allTransactions = $ctModel->allTransactionByFirm($firm_id);
@@ -220,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
         <i class="ti ti-chevron-left" style="font-size: 1.2rem;"></i>
       </a>
       <div>
-        <h2 class="mb-0 text-semibold" id="page-title" style="letter-spacing: -0.5px; line-height: 1.1;">Personel Düzenle</h2>
+        <h2 class="mb-0 text-semibold" id="page-title" style="letter-spacing: -0.5px; line-height: 1.1;"><?php echo $pageTitle; ?></h2>
         <span class="text-muted text-xs font-weight-bold text-uppercase" style="letter-spacing: 0.5px; opacity: 0.8;"><?php echo htmlspecialchars($person->full_name); ?></span>
       </div>
     </div>
@@ -292,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
   </style>
 
   <!-- Tab: Personel Bilgileri -->
-  <div id="tab-info" class="person-tab-content">
+  <div id="tab-info" class="person-tab-content <?php echo $activeTab != 'info' ? 'd-none' : ''; ?>">
     <?php if ($message): ?>
       <div class="alert alert-<?php echo $status; ?> d-flex align-items-center mb-3" role="alert" style="border-radius: 14px;">
         <div class="alert-icon me-3">
@@ -450,7 +465,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
         $nextYear++;
     }
   ?>
-  <div id="tab-puantaj" class="person-tab-content d-none">
+  <div id="tab-puantaj" class="person-tab-content <?php echo $activeTab != 'puantaj' ? 'd-none' : ''; ?>">
     <div class="mobile-card p-4 shadow-sm mb-4 text-center">
       <div class="d-flex align-items-center justify-content-between mb-4">
         <a href="person-edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $prevMonth; ?>&year=<?php echo $prevYear; ?>&tab=puantaj" class="btn btn-icon btn-ghost-secondary rounded-circle btn-calendar-nav"><i class="ti ti-chevron-left fs-2"></i></a>
@@ -530,7 +545,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
   </div>
 
   <!-- Tab: Ödemeler & Finans -->
-  <div id="tab-finance" class="person-tab-content d-none">
+  <div id="tab-finance" class="person-tab-content <?php echo $activeTab != 'finance' ? 'd-none' : ''; ?>">
     <?php
     $financialHelper = new Financial();
     $bordroModel = new Bordro();
@@ -670,7 +685,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
   </div>
 
   <!-- Tab: Evraklar -->
-  <div id="tab-documents" class="person-tab-content d-none">
+  <div id="tab-documents" class="person-tab-content <?php echo $activeTab != 'documents' ? 'd-none' : ''; ?>">
      <div class="mobile-card p-5 text-center text-muted">
           <i class="ti ti-files fs-1 mb-3 opacity-20"></i>
           <h4 class="mb-1">Evrak Arşivi</h4>
@@ -843,15 +858,6 @@ $(document).ready(function() {
         });
     }
 
-    // URL'deki tab parametresine göre otomatik sekme açma
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialTab = urlParams.get('tab');
-    if (initialTab) {
-        $('.tab-trigger[data-tab="' + initialTab + '"]').trigger('click');
-    } else if (urlParams.has('month') || urlParams.has('year')) {
-        // URL'de ay/yıl parametresi varsa Puantaj sekmesini otomatik aç
-        $('.tab-trigger[data-tab="puantaj"]').click();
-    }
 
     // Dropdown Manuel Tetikleyici (Working pattern from projects/manage.php)
     $(document).on('click', '#personTabsDropdown', function(e) {
@@ -893,6 +899,16 @@ $(document).ready(function() {
             fetchSubTypes($('input[name="transaction_type"]:checked').val());
         }
     });
+
+    // URL'deki tab parametresine göre otomatik sekme açma
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTab = urlParams.get('tab');
+    if (initialTab) {
+        $('.tab-trigger[data-tab="' + initialTab + '"]').trigger('click');
+    } else if (urlParams.has('month') || urlParams.has('year')) {
+        // URL'de ay/yıl parametresi varsa Puantaj sekmesini otomatik aç
+        $('.tab-trigger[data-tab="puantaj"]').click();
+    }
 
     // 1. Kasa Alt Türlerini Getir
     function fetchSubTypes(type) {
@@ -1377,22 +1393,22 @@ body[data-bs-theme="dark"] .calendar-day.empty {
   </button>
   <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2 mb-3" style="border-radius: 16px; min-width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;">
     <li>
-      <a class="dropdown-item active rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="info" data-title="Personel Bilgileri">
+      <a class="dropdown-item <?php echo $activeTab == 'info' ? 'active' : ''; ?> rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="info" data-title="Personel Bilgileri">
         <i class="ti ti-user-circle me-2"></i> Personel Bilgileri
       </a>
     </li>
     <li>
-      <a class="dropdown-item rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="puantaj" data-title="Puantaj Cetveli">
+      <a class="dropdown-item <?php echo $activeTab == 'puantaj' ? 'active' : ''; ?> rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="puantaj" data-title="Puantaj Cetveli">
         <i class="ti ti-calendar-event me-2"></i> Puantaj Cetveli
       </a>
     </li>
     <li>
-      <a class="dropdown-item rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="finance" data-title="Ödemeler & Finans">
+      <a class="dropdown-item <?php echo $activeTab == 'finance' ? 'active' : ''; ?> rounded-3 py-2 text-semibold mb-1 tab-trigger" href="#" data-tab="finance" data-title="Ödemeler & Finans">
         <i class="ti ti-cash-banknote me-2"></i> Ödemeler & Finans
       </a>
     </li>
     <li>
-      <a class="dropdown-item rounded-3 py-2 text-semibold tab-trigger" href="#" data-tab="documents" data-title="Evraklar & Belgeler">
+      <a class="dropdown-item <?php echo $activeTab == 'documents' ? 'active' : ''; ?> rounded-3 py-2 text-semibold tab-trigger" href="#" data-tab="documents" data-title="Evraklar & Belgeler">
         <i class="ti ti-file-text me-2"></i> Evraklar & Belgeler
       </a>
     </li>

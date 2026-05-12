@@ -50,22 +50,32 @@ if ($view_mode == 'system' && !$can_view_settings) {
         <ul class="nav nav-pills mobile-nav-pills flex-nowrap" id="settingsTabs" role="tablist" style="min-width: max-content;">
             <?php if ($view_mode == 'system' && $can_view_settings): ?>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="general-tab" data-bs-toggle="pill" data-bs-target="#tab-general" type="button" role="tab">Genel</button>
+                    <button class="nav-link active" id="general-tab" data-bs-toggle="pill" data-bs-target="#tab-general" type="button" role="tab">
+                        <i class="ti ti-home me-1"></i> Genel
+                    </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="financial-tab" data-bs-toggle="pill" data-bs-target="#tab-financial" type="button" role="tab">Finansal</button>
+                    <button class="nav-link" id="financial-tab" data-bs-toggle="pill" data-bs-target="#tab-financial" type="button" role="tab">
+                        <i class="ti ti-receipt me-1"></i> Finansal
+                    </button>
                 </li>
             <?php else: ?>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="profile-tab" data-bs-toggle="pill" data-bs-target="#tab-profile" type="button" role="tab">Profil</button>
+                    <button class="nav-link active" id="profile-tab" data-bs-toggle="pill" data-bs-target="#tab-profile" type="button" role="tab">
+                        <i class="ti ti-user me-1"></i> Profil
+                    </button>
                 </li>
                 <?php if ($user->parent_id == 0): ?>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="account-tab" data-bs-toggle="pill" data-bs-target="#tab-account" type="button" role="tab">Hesap</button>
+                    <button class="nav-link" id="account-tab" data-bs-toggle="pill" data-bs-target="#tab-account" type="button" role="tab">
+                        <i class="ti ti-settings me-1"></i> Hesap
+                    </button>
                 </li>
                 <?php endif; ?>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="notifications-tab" data-bs-toggle="pill" data-bs-target="#tab-notifications" type="button" role="tab">Bildirimler</button>
+                    <button class="nav-link" id="notifications-tab" data-bs-toggle="pill" data-bs-target="#tab-notifications" type="button" role="tab">
+                        <i class="ti ti-bell me-1"></i> Bildirimler
+                    </button>
                 </li>
             <?php endif; ?>
         </ul>
@@ -242,8 +252,11 @@ if ($view_mode == 'system' && !$can_view_settings) {
 }
 .mobile-nav-pills .nav-link {
     width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     text-align: center !important;
-    font-size: 0.85rem !important;
+    font-size: 0.8rem !important;
     font-weight: 600 !important;
     padding: 10px 4px !important;
     border-radius: 11px !important;
@@ -251,6 +264,7 @@ if ($view_mode == 'system' && !$can_view_settings) {
     border: none !important;
     background: transparent !important;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap !important;
 }
 .mobile-nav-pills .nav-link.active {
     background: #ffffff !important;

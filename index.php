@@ -22,13 +22,36 @@ date_default_timezone_set('Europe/Istanbul'); // Change to your timezone
 
 ob_start();// Çıktı tamponlamasını başlatır
 if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
-
-    $returnUrl = urlencode($_SERVER["REQUEST_URI"]);
-    if (!isset($_GET["p"])) {
-        $returnUrl = urlencode("/index.php?p=home");
+    // Beni Hatırla Kontrolü (Cookie)
+    if (isset($_COOKIE['remember_me'])) {
+        require_once "Database/db.php";
+        require_once "Model/UserModel.php";
+        $User = new UserModel();
+        $token = $_COOKIE['remember_me'];
+        $cookie_user = $User->getUserBySessionToken($token);
+        if ($cookie_user && $cookie_user->status == 1) {
+            $_SESSION['user'] = $cookie_user;
+            $_SESSION['firm_id'] = $cookie_user->firm_id;
+            $_SESSION['full_name'] = $cookie_user->full_name;
+            $_SESSION['user_role'] = $cookie_user->user_roles;
+            // Giriş logu oluştur
+            $_SESSION["log_id"] = $User->loginLog($cookie_user->id);
+        } else {
+            $returnUrl = urlencode($_SERVER["REQUEST_URI"]);
+            if (!isset($_GET["p"])) {
+                $returnUrl = urlencode("/index.php?p=home");
+            }
+            header("Location: sign-in.php?returnUrl={$returnUrl}");
+            exit();
+        }
+    } else {
+        $returnUrl = urlencode($_SERVER["REQUEST_URI"]);
+        if (!isset($_GET["p"])) {
+            $returnUrl = urlencode("/index.php?p=home");
+        }
+        header("Location: sign-in.php?returnUrl={$returnUrl}");
+        exit();
     }
-    header("Location: sign-in.php?returnUrl={$returnUrl}");
-    exit();
 }
 // CSRF token oluşturma
 if (empty($_SESSION['csrf_token'])) {
