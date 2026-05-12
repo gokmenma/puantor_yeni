@@ -79,9 +79,14 @@ foreach ($puantaj_types as $type) {
     </div>
 
     <!-- Arama Çubuğu -->
-    <div class="search-container mb-3">
-        <i class="ti ti-search search-icon"></i>
-        <input type="text" id="puantajSearchInput" class="search-input" placeholder="Personel ara...">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <button id="clearSearchBtn" class="btn btn-icon btn-outline-secondary border-0 bg-secondary-lt d-none" style="border-radius: 14px; height: 44px; width: 44px; flex-shrink: 0;" title="Temizle">
+            <i class="ti ti-trash-x"></i>
+        </button>
+        <div class="search-container flex-grow-1">
+            <i class="ti ti-search search-icon"></i>
+            <input type="text" id="puantajSearchInput" class="search-input" placeholder="Personel ara...">
+        </div>
     </div>
 
     <div class="list-group list-group-mobile mb-5" id="puantajListContainer">
@@ -110,7 +115,7 @@ foreach ($puantaj_types as $type) {
                 <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
                         <div class="selection-indicator d-none">
-                            <i class="ti ti-circle-check text-primary fs-2"></i>
+                            <input class="form-check-input m-0" type="checkbox" style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1; pointer-events: none;">
                         </div>
                         <div class="avatar avatar-md rounded-circle text-uppercase font-weight-bold person-avatar" 
                              style="background-color: #f1f5f9; color: #475569; width: 44px; height: 44px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
@@ -329,6 +334,13 @@ foreach ($puantaj_types as $type) {
         transform: translateY(100%);
         display: none !important;
     }
+
+    #clearSearchBtn {
+        transition: all 0.2s ease;
+    }
+    #clearSearchBtn:active {
+        transform: scale(0.95);
+    }
 </style>
 
 <script>
@@ -339,11 +351,20 @@ let longPressTimer;
 document.addEventListener('DOMContentLoaded', function() {
     // Search Filtering
     const searchInput = document.getElementById('puantajSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
     const rows = document.querySelectorAll('.person-row');
 
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase();
+            
+            // Show/Hide Clear button
+            if (term.length > 0) {
+                clearSearchBtn.classList.remove('d-none');
+            } else {
+                clearSearchBtn.classList.add('d-none');
+            }
+
             rows.forEach(row => {
                 const name = row.getAttribute('data-name');
                 if (name.includes(term)) {
@@ -352,6 +373,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     row.style.setProperty('display', 'none', 'important');
                 }
             });
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
         });
     }
 
@@ -418,15 +447,18 @@ function togglePersonSelection(row) {
     const personId = row.getAttribute('data-person-id');
     const personKey = row.getAttribute('data-person-key');
     const personName = row.getAttribute('data-person-name');
+    const checkbox = row.querySelector('.form-check-input');
     
     const index = selectedPersons.findIndex(p => p.id === personId);
     
     if (index > -1) {
         selectedPersons.splice(index, 1);
         row.classList.remove('selected');
+        if (checkbox) checkbox.checked = false;
     } else {
         selectedPersons.push({ id: personId, key: personKey, name: personName });
         row.classList.add('selected');
+        if (checkbox) checkbox.checked = true;
     }
     
     updateSelectedCount();
@@ -445,6 +477,8 @@ function cancelSelection() {
     selectedPersons = [];
     document.querySelectorAll('.person-row').forEach(row => {
         row.classList.remove('selected');
+        const checkbox = row.querySelector('.form-check-input');
+        if (checkbox) checkbox.checked = false;
     });
     document.getElementById('bulkActionBar').classList.add('d-none');
 }
