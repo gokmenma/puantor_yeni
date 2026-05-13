@@ -1,9 +1,10 @@
-const CACHE_NAME = 'puantor-personel-v1';
+const CACHE_NAME = 'puantor-personel-v8';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/js/app.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './js/app.js',
+  './css/app.css',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {

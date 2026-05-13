@@ -1,7 +1,7 @@
 if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
   var table = $(".datatable:not(#puantajTable)").DataTable({
     autoWidth: false,
-    order: false,
+    order: [],
     language: {
       url: "src/tr.json"
     },
@@ -174,6 +174,8 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
   $("#export_excel_puantaj").on("click", function () {
     puantaj_table.button(".buttons-excel").trigger();
   });
+
+
 
   // Premium Puantaj Raporu (Puantaj İcmal) için gelişmiş başlatma
   if ($("#puantajDataTable").length > 0) {

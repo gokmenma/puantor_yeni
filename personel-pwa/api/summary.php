@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 0);
+error_reporting(0);
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../Database/require.php';
 require_once __DIR__ . '/../../Model/Persons.php';
@@ -38,6 +40,15 @@ $attendance_data = $PuantajModel->getPuantajByPersonAndDate($person_id, $start_d
 
 // Merge them for the calendar
 $merged_data = array_merge($financial_data, $attendance_data);
+
+// Calculate remaining leave (Mock or from DB if available)
+// For now, let's try to get it from persons table if exists, or default
+$person = $Persons->find($person_id);
+$kalan_izin = $person->remaining_leave ?? 0;
+
+if (isset($balance)) {
+    $balance->kalan_izin = $kalan_izin;
+}
 
 echo json_encode([
     'status' => 'success',

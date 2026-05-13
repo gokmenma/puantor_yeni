@@ -1,16 +1,21 @@
 <?php
+ini_set('display_errors', 0);
+error_reporting(0);
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../Database/require.php';
 
 $action = $_REQUEST['action'] ?? '';
 
 if ($action == 'list') {
-    $person_id = $_GET['person_id'] ?? 0;
-    $query = $db->prepare("SELECT *, DATE_FORMAT(created_at, '%d.%m.%Y %H:%i') as created_at FROM personel_avans_talepleri WHERE person_id = ? ORDER BY id DESC");
-    $query->execute([$person_id]);
-    $list = $query->fetchAll(PDO::FETCH_OBJ);
-    echo json_encode(['status' => 'success', 'list' => $list]);
-
+    try {
+        $person_id = $_GET['person_id'] ?? 0;
+        $query = $db->prepare("SELECT *, DATE_FORMAT(created_at, '%d.%m.%Y %H:%i') as created_at FROM personel_avans_talepleri WHERE person_id = ? ORDER BY id DESC");
+        $query->execute([$person_id]);
+        $list = $query->fetchAll(PDO::FETCH_OBJ);
+        echo json_encode(['status' => 'success', 'list' => $list]);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    }
 } elseif ($action == 'create') {
     $person_id = $_POST['person_id'] ?? 0;
     $firm_id = $_POST['firm_id'] ?? 0;

@@ -2,8 +2,12 @@ window.app = {
     user: null,
     currentMonth: new Date().getMonth() + 1,
     currentYear: new Date().getFullYear(),
+    modal: null,
 
     init() {
+        // Modal will be initialized on demand in showModal if not ready
+        this.initModal();
+
         this.user = JSON.parse(localStorage.getItem('puantor_user'));
         if (this.user) {
             this.showMainApp();
@@ -12,17 +16,20 @@ window.app = {
         }
 
         this.bindEvents();
-        lucide.createIcons();
+        this.initTheme();
     },
-    bindEvents() {
-        // Tab switching
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const tabId = item.getAttribute('data-tab');
-                this.switchTab(tabId);
-            });
-        });
 
+    initModal() {
+        if (this.modal) return true;
+        const modalEl = document.getElementById('app-modal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            this.modal = new bootstrap.Modal(modalEl);
+            return true;
+        }
+        return false;
+    },
+
+    bindEvents() {
         // Login form
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {
@@ -32,96 +39,52 @@ window.app = {
             });
         }
 
-        // Modal close
-        const closeBtn = document.querySelector('.close-modal');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                this.hideModal();
+        // New advance button
+        const btnNewAdvance = document.getElementById('btn-new-advance');
+        if (btnNewAdvance) {
+            btnNewAdvance.addEventListener('click', () => {
+                this.showNewAdvanceModal();
             });
         }
 
-        // New advance button
-        document.getElementById('btn-new-advance').addEventListener('click', () => {
-            const now = new Date();
-            let lastMonth = now.getMonth(); // 0-indexed, so current month is now.getMonth()+1
-            let lastYear = now.getFullYear();
-            if (lastMonth === 0) {
-                lastMonth = 12;
-                lastYear--;
-            }
-            
-            const monthOptions = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"].map((name, i) => `
-                <option value="${i+1}" ${i+1 === lastMonth ? 'selected' : ''}>${name}</option>
-            `).join('');
+        // Password toggle
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                const passwordInput = document.getElementById('password');
+                const icon = document.getElementById('togglePasswordIcon');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('ti-eye');
+                    icon.classList.add('ti-eye-off');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('ti-eye-off');
+                    icon.classList.add('ti-eye');
+                }
+            });
+        }
+    },
 
-            this.showModal('Yeni Avans Talebi', `
-                <form id="advance-form" class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">HEDEF MAAŞ DÖNEMİ</label>
-                        <div class="flex gap-2">
-                            <select name="hedef_ay" class="flex-1 h-12 rounded-xl border-surface-variant bg-surface-container-low">
-                                ${monthOptions}
-                            </select>
-                            <select name="hedef_yil" class="w-32 h-12 rounded-xl border-surface-variant bg-surface-container-low">
-                                <option value="${lastYear}" selected>${lastYear}</option>
-                                <option value="${lastYear+1}">${lastYear+1}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">TALEP EDİLEN TUTAR (TL)</label>
-                        <input type="number" name="tutar" class="w-full h-12 rounded-xl border-surface-variant bg-surface-container-low" placeholder="0.00" required>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">AÇIKLAMA</label>
-                        <textarea name="aciklama" class="w-full rounded-xl border-surface-variant bg-surface-container-low" rows="3" placeholder="Talebinizle ilgili kısa bilgi..."></textarea>
-                    </div>
-                    <button type="submit" class="w-full h-14 bg-secondary text-on-secondary rounded-xl font-bold shadow-lg mt-2">Talebi Gönder</button>
-                </form>
-            `);
-        });
+    initTheme() {
+        const theme = localStorage.getItem('puantor_theme') || 'light';
+        document.body.setAttribute('data-bs-theme', theme);
+        this.updateThemeIcon(theme);
+    },
 
-        // Edit profile button
-        document.getElementById('btn-edit-profile').addEventListener('click', () => {
-            this.showModal('Bilgileri Güncelle', `
-                <form id="profile-form" class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">TELEFON</label>
-                        <input type="text" name="phone" value="${this.user.phone || ''}" class="w-full h-12 rounded-xl border-surface-variant bg-surface-container-low" required>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">E-POSTA</label>
-                        <input type="email" name="email" value="${this.user.email || ''}" class="w-full h-12 rounded-xl border-surface-variant bg-surface-container-low">
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">IBAN</label>
-                        <input type="text" name="iban_number" value="${this.user.iban_number || ''}" class="w-full h-12 rounded-xl border-surface-variant bg-surface-container-low">
-                    </div>
-                    <button type="submit" class="w-full h-14 bg-primary text-on-primary rounded-xl font-bold shadow-lg mt-2">Güncelle</button>
-                </form>
-            `);
-        });
+    toggleTheme() {
+        const currentTheme = document.body.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.body.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('puantor_theme', newTheme);
+        this.updateThemeIcon(newTheme);
+    },
 
-        // Change password button
-        document.getElementById('btn-change-password').addEventListener('click', () => {
-            this.showModal('Şifre Değiştir', `
-                <form id="password-form" class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">MEVCUT ŞİFRE</label>
-                        <input type="password" name="current_password" class="w-full h-12 rounded-xl border-surface-variant bg-surface-container-low" required>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">YENİ ŞİFRE</label>
-                        <input type="password" name="new_password" class="w-full h-12 rounded-xl border-surface-variant bg-surface-container-low" required>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label class="text-xs font-bold text-on-surface-variant">YENİ ŞİFRE (TEKRAR)</label>
-                        <input type="password" name="confirm_password" class="w-full h-12 rounded-xl border-surface-variant bg-surface-container-low" required>
-                    </div>
-                    <button type="submit" class="w-full h-14 bg-error text-on-error rounded-xl font-bold shadow-lg mt-2">Şifreyi Güncelle</button>
-                </form>
-            `);
-        });
+    updateThemeIcon(theme) {
+        const icon = document.getElementById('theme-icon');
+        if (icon) {
+            icon.className = theme === 'dark' ? 'ti ti-sun fs-2 text-warning' : 'ti ti-moon fs-2';
+        }
     },
 
     async handleLogin() {
@@ -131,123 +94,147 @@ window.app = {
         try {
             const response = await fetch('api/auth.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `action=login&kimlik_no=${kimlikNo}&password=${password}`
+                body: new URLSearchParams({
+                    action: 'login',
+                    kimlik_no: kimlikNo,
+                    password: password
+                })
             });
             const result = await response.json();
+            console.log('Login Result:', result);
 
             if (result.status === 'success') {
                 this.user = result.user;
                 localStorage.setItem('puantor_user', JSON.stringify(this.user));
                 this.showMainApp();
             } else {
-                alert(result.message || 'Hatalı giriş bilgileri.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: result.message || 'Hatalı giriş bilgileri.'
+                });
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('Giriş yapılırken bir hata oluştu.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Hata',
+                text: 'Giriş yapılırken bir hata oluştu.'
+            });
         }
     },
 
     logout() {
-        localStorage.removeItem('puantor_user');
-        this.user = null;
-        this.showLoginPage();
+        Swal.fire({
+            title: 'Çıkış Yap',
+            text: 'Oturumu kapatmak istediğinize emin misiniz?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Çıkış Yap',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem('puantor_user');
+                this.user = null;
+                this.showLoginPage();
+            }
+        });
     },
 
     showLoginPage() {
-        document.getElementById('login-page').style.display = 'flex';
-        document.getElementById('main-content').style.display = 'none';
-        document.getElementById('main-content').classList.remove('logged-in');
+        const loginPage = document.getElementById('login-page');
+        const mainContent = document.getElementById('main-content');
+        if (loginPage) loginPage.style.display = 'flex';
+        if (mainContent) mainContent.style.display = 'none';
     },
 
     showMainApp() {
-        document.getElementById('login-page').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        document.getElementById('main-content').classList.add('logged-in');
-        this.updateProfileUI();
-        this.loadSummary();
-        this.loadAdvances();
-        this.switchTab('dashboard-tab');
+        const loginPage = document.getElementById('login-page');
+        const mainContent = document.getElementById('main-content');
+        
+        if (loginPage) loginPage.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'flex'; // Use flex to match app-shell class
+
+        try {
+            this.updateProfileUI();
+            this.loadSummary();
+            this.loadAdvances();
+            this.switchTab('dashboard-tab');
+        } catch (e) {
+            console.error('Error switching to main app:', e);
+        }
     },
 
     switchTab(tabId) {
-        const navs = document.querySelectorAll('.nav-item');
-        const pageTitle = document.getElementById('page-title');
-
-        // Toggle FAB visibility immediately
+        // Toggle FAB visibility
         const btnNewAdvance = document.getElementById('btn-new-advance');
         if (btnNewAdvance) {
             btnNewAdvance.style.display = tabId === 'advance-tab' ? 'flex' : 'none';
         }
 
-        // Toggle Header Icon dynamically
+        // Update Header Icon and Title
         const headerIcon = document.getElementById('header-icon');
-        if (headerIcon) {
-            const icons = {
-                'dashboard-tab': 'house',
-                'attendance-tab': 'calendar',
-                'advance-tab': 'credit-card',
-                'profile-tab': 'user'
-            };
-            headerIcon.setAttribute('data-lucide', icons[tabId] || 'house');
-        }
+        const pageTitle = document.getElementById('page-title');
+        const icons = {
+            'dashboard-tab': 'ti ti-smart-home',
+            'attendance-tab': 'ti ti-calendar-event',
+            'advance-tab': 'ti ti-wallet',
+            'profile-tab': 'ti ti-user'
+        };
+        const titles = {
+            'dashboard-tab': 'Puantör',
+            'attendance-tab': 'Takvim',
+            'advance-tab': 'Avans Talepleri',
+            'profile-tab': 'Profil'
+        };
 
-        // Active nav icon update immediately
-        navs.forEach(nav => nav.classList.remove('active'));
-        const activeNav = document.querySelector(`[data-tab="${tabId}"]`);
-        if (activeNav) {
-            activeNav.classList.add('active');
-            if (pageTitle) {
-                const labels = {
-                    'dashboard-tab': 'Puantör',
-                    'attendance-tab': 'Takvim',
-                    'advance-tab': 'Avans Talepleri',
-                    'profile-tab': 'Profil'
-                };
-                pageTitle.textContent = labels[tabId] || 'Puantör';
-            }
-        }
+        if (headerIcon) headerIcon.className = icons[tabId] || icons['dashboard-tab'];
+        if (pageTitle) pageTitle.textContent = titles[tabId] || titles['dashboard-tab'];
 
-        // Sequence transitions: First fade out existing active tab
-        const currentActiveTab = document.querySelector('.tab-content.active');
-        if (currentActiveTab && currentActiveTab.id !== tabId) {
-            currentActiveTab.classList.remove('active');
-            
-            // Wait for fade-out to finish, then show the new one
-            setTimeout(() => {
-                const activeTab = document.getElementById(tabId);
-                if (activeTab) {
-                    activeTab.classList.add('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            }, 180); // 180ms matches the transition beautifully
-        } else {
-            // No current active tab or clicking same tab, show immediately
-            const activeTab = document.getElementById(tabId);
-            if (activeTab) {
-                activeTab.classList.add('active');
-            }
-        }
+        // Update Nav Active State
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.classList.remove('active');
+            if (nav.getAttribute('data-tab') === tabId) nav.classList.add('active');
+        });
 
-        setTimeout(() => lucide.createIcons(), 210);
+        // Update Tab Content visibility
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        const activeTab = document.getElementById(tabId);
+        if (activeTab) activeTab.classList.add('active');
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (tabId === 'advance-tab') this.loadAdvances();
         if (tabId === 'attendance-tab') this.loadAttendance();
     },
 
     updateProfileUI() {
-        if (this.user) {
-            document.getElementById('user-display-name').textContent = this.user.full_name;
-            document.getElementById('profile-name').textContent = this.user.full_name;
-            document.getElementById('profile-id').textContent = `ID: EMP-${this.user.id.toString().padStart(3, '0')}`;
-            document.getElementById('profile-job').textContent = this.user.job || 'Personel';
-            document.getElementById('profile-phone').textContent = this.user.phone || '-';
-            document.getElementById('profile-email').textContent = this.user.email || '-';
-            document.getElementById('profile-iban').textContent = this.user.iban_number || '-';
-            
-            const initials = this.user.full_name.split(' ').map(n => n[0]).join('');
-            document.getElementById('profile-initials').textContent = initials;
+        if (this.user && this.user.full_name) {
+            try {
+                const nameParts = this.user.full_name.trim().split(' ');
+                const initials = nameParts.length > 0 ? nameParts[0][0] + (nameParts[1] ? nameParts[1][0] : '') : '??';
+                
+                const setSafeText = (id, text) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = text || '-';
+                };
+
+                setSafeText('user-display-name', this.user.full_name);
+                setSafeText('header-avatar-initials', initials);
+                setSafeText('dashboard-user-avatar', initials);
+                setSafeText('profile-initials-large', initials);
+                setSafeText('profile-name', this.user.full_name);
+                setSafeText('profile-id', `ID: EMP-${(this.user.id || 0).toString().padStart(3, '0')}`);
+                setSafeText('profile-job', this.user.job || 'Personel');
+                setSafeText('profile-phone', this.user.phone || '-');
+                setSafeText('profile-email', this.user.email || '-');
+                setSafeText('profile-iban', this.user.iban_number || '-');
+            } catch (e) {
+                console.error('Error updating Profile UI:', e);
+            }
         }
     },
 
@@ -256,39 +243,37 @@ window.app = {
             const response = await fetch(`api/summary.php?person_id=${this.user.id}`);
             const result = await response.json();
             if (result.status === 'success') {
-                // Update total hours
-                const totalHours = result.summary.total_hours || 0;
-                document.getElementById('total-hours').textContent = totalHours;
-                document.getElementById('hours-progress').style.width = `${Math.min((totalHours / 180) * 100, 100)}%`;
-                
-                // Update stats
-                document.getElementById('dashboard-overtime').textContent = `${result.summary.overtime || 0} s`;
-                document.getElementById('dashboard-advance').textContent = `${result.summary.advance || 0} TL`;
-                
-                // Also set available advance limit in the advances tab
-                const limitEl = document.getElementById('available-advance-limit');
-                if (limitEl) limitEl.textContent = result.summary.balance;
+                const setSafeText = (id, text) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = text;
+                };
+
+                setSafeText('total-hours', result.summary.total_hours || 0);
+                setSafeText('dashboard-overtime', `${result.summary.overtime || 0} s`);
+                setSafeText('dashboard-advance', `${result.summary.advance || 0} TL`);
+                setSafeText('dashboard-leave-days', `${result.summary.kalan_izin || 0} G`);
+                setSafeText('available-advance-limit', result.summary.balance || 0);
 
                 const recentContainer = document.getElementById('recent-activity-list');
-                recentContainer.innerHTML = result.recent.map(item => `
-                    <div class="stat-card flex items-center justify-between py-5">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-primary-container flex items-center justify-center text-primary">
-                                <i data-lucide="calendar" class="w-6 h-6"></i>
+                if (recentContainer) {
+                    recentContainer.innerHTML = result.recent.map(item => `
+                        <div class="mobile-card d-flex align-items-center justify-content-between p-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-sm rounded bg-primary-lt text-primary">
+                                    <i class="ti ti-calendar"></i>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0 fs-4 fw-bold">${item.puantaj_turu || item.turu}</h4>
+                                    <p class="text-muted small mb-0">${item.gun}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 class="font-bold text-on-surface">${item.puantaj_turu || item.turu}</h4>
-                                <p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">${item.gun}</p>
+                            <div class="text-end">
+                                <h4 class="mb-0 text-primary fw-bold">${item.saat} s</h4>
+                                <p class="text-muted small mb-0">SÜRE</p>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <p class="font-black text-primary text-lg">${item.saat} s</p>
-                            <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">SÜRE</p>
-                        </div>
-                    </div>
-                `).join('') || '<div class="text-center py-8 text-on-surface-variant opacity-50 font-label-sm">Henüz aktivite bulunmuyor.</div>';
-                
-                lucide.createIcons();
+                    `).join('') || '<div class="text-center py-4 text-muted small">Henüz aktivite bulunmuyor.</div>';
+                }
             }
         } catch (error) {
             console.error('Load summary error:', error);
@@ -305,124 +290,167 @@ window.app = {
                 
                 const container = document.getElementById('advance-list');
                 container.innerHTML = result.list.map(item => {
-                    let statusClass = 'bg-slate-100 text-slate-500';
+                    let statusClass = 'bg-secondary-lt';
                     let statusText = 'Bekleyen';
-                    let icon = 'clock';
+                    let icon = 'ti-clock';
 
                     if (item.durum == 1) {
-                        statusClass = 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+                        statusClass = 'bg-success-lt';
                         statusText = 'Onaylandı';
-                        icon = 'check-circle-2';
+                        icon = 'ti-check';
                     } else if (item.durum == 2) {
-                        statusClass = 'bg-rose-50 text-rose-500 border border-rose-100';
+                        statusClass = 'bg-danger-lt';
                         statusText = 'Reddedildi';
-                        icon = 'x-circle';
-                    } else {
-                        statusClass = 'bg-amber-50 text-amber-600 border border-amber-100';
+                        icon = 'ti-x';
                     }
 
-                    const cleanDesc = (item.aciklama || 'Açıklama belirtilmemiş').replace(/'/g, "\'");
-
                     return `
-                        <div onclick="app.editAdvance('${item.id}', '${item.tutar}', '${cleanDesc}', ${item.durum})" class="stat-card flex flex-col gap-3 group cursor-pointer active:scale-[0.98] transition-all hover:border-primary/15">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
-                                        <i data-lucide="banknote" class="w-4 h-4"></i>
+                        <div onclick="app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\'")}', ${item.durum})" class="mobile-card d-flex flex-column gap-2 cursor-pointer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar avatar-sm rounded bg-primary-lt text-primary">
+                                        <i class="ti ti-cash"></i>
                                     </div>
                                     <div>
-                                        <h4 class="text-[15px] font-semibold text-slate-900">${item.tutar} TL</h4>
-                                        <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">${item.created_at}</p>
+                                        <h4 class="mb-0 fw-bold">${item.tutar} TL</h4>
+                                        <p class="text-muted small mb-0">${item.created_at}</p>
                                     </div>
                                 </div>
-                                <span class="px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider ${statusClass} flex items-center gap-1">
-                                    <i data-lucide="${icon}" class="w-3 h-3"></i>
-                                    ${statusText}
+                                <span class="badge ${statusClass} rounded-pill">
+                                    <i class="${icon} me-1"></i> ${statusText}
                                 </span>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <p class="text-xs font-medium text-slate-400 line-clamp-1">${item.aciklama || 'Açıklama belirtilmemiş'}</p>
-                                <div class="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                    ${item.durum == 0 ? '<span>DÜZENLE</span>' : ''}
-                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-primary"></i>
-                                </div>
-                            </div>
+                            <p class="text-muted small mb-0 text-truncate">${item.aciklama || 'Açıklama belirtilmemiş'}</p>
                         </div>
                     `;
-                }).join('') || '<div class="text-center py-12 text-slate-400 font-medium">Henüz avans talebiniz yok.</div>';
-                
-                lucide.createIcons();
+                }).join('') || '<div class="text-center py-4 text-muted small">Henüz avans talebiniz yok.</div>';
             }
         } catch (error) {
             console.error('Load advances error:', error);
         }
     },
 
-    editAdvance(id, tutar, aciklama, durum) {
-        if (durum !== 0) {
-            this.showToast('Bu talep onaylandığı veya reddedildiği için güncellenemez.', 'error');
-            return;
+    showNewAdvanceModal() {
+        const now = new Date();
+        let lastMonth = now.getMonth();
+        let lastYear = now.getFullYear();
+        if (lastMonth === 0) {
+            lastMonth = 12;
+            lastYear--;
         }
+        
+        const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        const monthOptions = monthNames.map((name, i) => `
+            <option value="${i+1}" ${i+1 === lastMonth ? 'selected' : ''}>${name}</option>
+        `).join('');
 
-        const bodyHtml = `
-            <form id="edit-advance-form" class="space-y-6">
-                <input type="hidden" name="id" value="${id}">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AVANS TUTARI (TL)</label>
-                    <input name="tutar" type="number" step="0.01" class="w-full h-14 bg-gray-50 border-none rounded-2xl px-5 focus:ring-2 focus:ring-primary/20 transition-all font-bold text-slate-900" value="${tutar}" required/>
+        this.showModal('Yeni Avans Talebi', `
+            <form id="advance-form">
+                <div class="mb-3">
+                    <label class="form-label">Hedef Maaş Dönemi</label>
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <select name="hedef_ay" class="form-select">${monthOptions}</select>
+                        </div>
+                        <div class="col-5">
+                            <select name="hedef_yil" class="form-select">
+                                <option value="${lastYear}" selected>${lastYear}</option>
+                                <option value="${lastYear+1}">${lastYear+1}</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AÇIKLAMA</label>
-                    <textarea name="aciklama" rows="3" class="w-full bg-gray-50 border-none rounded-2xl p-5 focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-900" placeholder="Açıklama yazın..." required>${aciklama === 'Açıklama belirtilmemiş' ? '' : aciklama}</textarea>
+                <div class="mb-3">
+                    <label class="form-label">Talep Edilen Tutar (TL)</label>
+                    <input type="number" name="tutar" class="form-control" placeholder="0.00" required>
                 </div>
-                <button class="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2" type="submit">
-                    Güncelle ve Kaydet
-                </button>
+                <div class="mb-3">
+                    <label class="form-label">Açıklama</label>
+                    <textarea name="aciklama" class="form-control" rows="3" placeholder="Talebinizle ilgili kısa bilgi..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Talebi Gönder</button>
             </form>
-        `;
+        `);
 
-        this.showModal('Avans Talebini Güncelle', bodyHtml);
+        document.getElementById('advance-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.append('action', 'create');
+            formData.append('person_id', this.user.id);
+            formData.append('firm_id', this.user.firm_id);
 
-        const editForm = document.getElementById('edit-advance-form');
-        if (editForm) {
-            editForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(editForm);
-                formData.append('action', 'update');
-                formData.append('person_id', this.user.id);
-
-                try {
-                    const response = await fetch('api/advance.php', {
-                        method: 'POST',
-                        body: new URLSearchParams(formData)
-                    });
-                    const res = await response.json();
-                    if (res.status === 'success') {
-                        this.hideModal();
-                        this.loadAdvances();
-                        this.showToast('Avans talebiniz başarıyla güncellendi.', 'success');
-                    } else {
-                        this.showToast(res.message || 'Bir hata oluştu.', 'error');
-                    }
-                } catch (error) {
-                    this.showToast('Talep güncellenirken hata oluştu.', 'error');
+            try {
+                const response = await fetch('api/advance.php', {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    this.hideModal();
+                    this.loadAdvances();
+                    Swal.fire('Başarılı', 'Avans talebiniz başarıyla oluşturuldu.', 'success');
+                } else {
+                    Swal.fire('Hata', res.message || 'Bir hata oluştu.', 'error');
                 }
-            });
-        }
+            } catch (error) {
+                Swal.fire('Hata', 'Talep gönderilirken hata oluştu.', 'error');
+            }
+        });
+    },
+
+    editAdvance(id, tutar, aciklama, durum) {
+        if (durum !== 0) return;
+
+        this.showModal('Talebi Güncelle', `
+            <form id="edit-advance-form">
+                <input type="hidden" name="id" value="${id}">
+                <div class="mb-3">
+                    <label class="form-label">Avans Tutarı (TL)</label>
+                    <input name="tutar" type="number" step="0.01" class="form-control" value="${tutar}" required/>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Açıklama</label>
+                    <textarea name="aciklama" rows="3" class="form-control" required>${aciklama === 'Açıklama belirtilmemiş' ? '' : aciklama}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Güncelle ve Kaydet</button>
+            </form>
+        `);
+
+        document.getElementById('edit-advance-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.append('action', 'update');
+            formData.append('person_id', this.user.id);
+
+            try {
+                const response = await fetch('api/advance.php', {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    this.hideModal();
+                    this.loadAdvances();
+                    Swal.fire('Başarılı', 'Talebiniz başarıyla güncellendi.', 'success');
+                } else {
+                    Swal.fire('Hata', res.message || 'Bir hata oluştu.', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Hata', 'Hata oluştu.', 'error');
+            }
+        });
     },
 
     async loadAttendance() {
         const m = this.currentMonth;
         const y = this.currentYear;
-        
         const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        
         document.getElementById('current-month-label').textContent = `${monthNames[m-1]} ${y}`;
-        document.getElementById('calendar-title').textContent = `${monthNames[m-1].toUpperCase()} ${y}`;
 
         try {
             const response = await fetch(`api/summary.php?person_id=${this.user.id}&month=${m}&year=${y}`);
             const result = await response.json();
-            
             if (result.status === 'success') {
                 this.renderCalendar(m, y, result.monthly);
             }
@@ -447,26 +475,15 @@ window.app = {
         const grid = document.getElementById('calendar-grid');
         const firstDay = new Date(year, month - 1, 1).getDay();
         const daysInMonth = new Date(year, month, 0).getDate();
-        
         let startingDay = firstDay === 0 ? 6 : firstDay - 1;
         
         let html = `
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">P</div>
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">S</div>
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Ç</div>
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">P</div>
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">C</div>
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">C</div>
-            <div class="text-[11px] font-bold text-rose-400 uppercase tracking-widest">P</div>
+            <div class="small fw-bold text-muted">Pt</div><div class="small fw-bold text-muted">Sa</div><div class="small fw-bold text-muted">Ça</div><div class="small fw-bold text-muted">Pe</div><div class="small fw-bold text-muted">Cu</div><div class="small fw-bold text-muted">Ct</div><div class="small fw-bold text-muted text-danger">Pa</div>
         `;
         
-        for (let i = 0; i < startingDay; i++) {
-            html += `<div class="aspect-square"></div>`;
-        }
+        for (let i = 0; i < startingDay; i++) html += `<div></div>`;
         
-        let totalWorkDays = 0;
-        let totalHolidays = 0;
-        let totalWorkHours = 0;
+        let totalWorkDays = 0, totalHolidays = 0, totalWorkHours = 0;
 
         for (let i = 1; i <= daysInMonth; i++) {
             const dayStr = `${year}${month.toString().padStart(2, '0')}${i.toString().padStart(2, '0')}`;
@@ -475,210 +492,173 @@ window.app = {
             const isSunday = new Date(year, month-1, i).getDay() === 0;
             const hasRecord = record && parseFloat(record.saat) > 0;
             
-            if (isSunday) {
-                totalHolidays++;
-            } else if (hasRecord) {
-                totalWorkDays++;
-                totalWorkHours += parseFloat(record.saat);
-            } else if (record && record.type === 'holiday') {
-                totalHolidays++;
-            }
+            if (isSunday) totalHolidays++;
+            else if (hasRecord) { totalWorkDays++; totalWorkHours += parseFloat(record.saat); }
+            else if (record && record.type === 'holiday') totalHolidays++;
 
-            let bgClass = "text-slate-800 hover:bg-slate-50";
-            if (isSunday) {
-                bgClass = "bg-[#829375] text-white shadow-sm";
-            } else if (hasRecord) {
-                bgClass = "bg-primary text-white shadow-sm";
-            }
+            let cls = "calendar-day";
+            if (isSunday) cls += " weekend";
+            if (hasRecord) cls += " active";
+            if (isToday) cls += " today";
             
-            let ringClass = isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-white" : "";
-            
-            html += `
-                <div class="flex items-center justify-center aspect-square rounded-xl text-sm font-bold cursor-pointer active:scale-95 transition-all ${bgClass} ${ringClass}" 
-                     onclick="app.showDayDetails('${dayStr}', ${JSON.stringify(record || {}).replace(/"/g, '&quot;')})">
-                    ${i}
-                </div>
-            `;
+            html += `<div class="${cls}" onclick="app.showDayDetails('${dayStr}', ${JSON.stringify(record || {}).replace(/"/g, '&quot;')})">${i}</div>`;
         }
         grid.innerHTML = html;
 
-        // Update Monthly Summary counters
-        const workDaysEl = document.getElementById('summary-work-days');
-        const holidaysEl = document.getElementById('summary-holidays');
-        const totalHoursEl = document.getElementById('summary-total-hours');
+        document.getElementById('summary-work-days').textContent = `${totalWorkDays} Gün`;
+        document.getElementById('summary-holidays').textContent = `${totalHolidays} Gün`;
+        document.getElementById('summary-total-hours').textContent = `${totalWorkHours.toFixed(1).replace('.0', '')} s`;
 
-        if (workDaysEl) workDaysEl.textContent = `${totalWorkDays} Gün`;
-        if (holidaysEl) holidaysEl.textContent = `${totalHolidays} Gün`;
-        if (totalHoursEl) totalHoursEl.textContent = `${totalWorkHours.toFixed(1).replace('.0', '')} s`;
-
-        // Select today's details by default if in current month, otherwise select 1st day of month
         const today = new Date();
-        let defaultDay = 1;
-        if (today.getMonth() + 1 === month && today.getFullYear() === year) {
-            defaultDay = today.getDate();
-        }
+        let defaultDay = (today.getMonth() + 1 === month && today.getFullYear() === year) ? today.getDate() : 1;
         const defaultDayStr = `${year}${month.toString().padStart(2, '0')}${defaultDay.toString().padStart(2, '0')}`;
-        const defaultRecord = data.find(r => r.gun === defaultDayStr);
-        this.showDayDetails(defaultDayStr, defaultRecord);
+        this.showDayDetails(defaultDayStr, data.find(r => r.gun === defaultDayStr));
     },
 
     showDayDetails(dayStr, record) {
-        const label = document.getElementById('selected-day-label');
+        const date = new Date(dayStr.substring(0, 4), dayStr.substring(4, 6) - 1, dayStr.substring(6, 8));
+        document.getElementById('selected-day-label').textContent = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+        
         const statusEl = document.getElementById('day-status');
         const durationEl = document.getElementById('day-duration-new');
         const iconEl = document.getElementById('day-icon');
         const iconBgEl = document.getElementById('day-icon-bg');
         
-        if (!label || !statusEl || !durationEl) return;
-
-        const date = new Date(dayStr.substring(0, 4), dayStr.substring(4, 6) - 1, dayStr.substring(6, 8));
-        const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
-        
-        label.textContent = `${formattedDate}`;
-        
-        const isSunday = date.getDay() === 0;
-        
-        if (isSunday) {
+        if (date.getDay() === 0) {
             statusEl.textContent = 'Hafta Tatili';
             durationEl.textContent = '0 s';
-            if (iconEl) iconEl.setAttribute('data-lucide', 'sun');
-            if (iconBgEl) iconBgEl.className = 'w-10 h-10 rounded-xl bg-[#829375]/15 flex items-center justify-center text-[#829375]';
+            iconEl.className = 'ti ti-sun';
+            iconBgEl.className = 'avatar avatar-md rounded bg-danger-lt text-danger';
         } else if (record && record.saat) {
             statusEl.textContent = record.puantaj_turu || record.turu || 'Normal Çalışma';
             durationEl.textContent = `${parseFloat(record.saat).toFixed(1).replace('.0', '')} s`;
-            if (iconEl) iconEl.setAttribute('data-lucide', 'briefcase');
-            if (iconBgEl) iconBgEl.className = 'w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-primary';
+            iconEl.className = 'ti ti-briefcase';
+            iconBgEl.className = 'avatar avatar-md rounded bg-primary-lt text-primary';
         } else {
             statusEl.textContent = 'Kayıt Bulunmuyor';
             durationEl.textContent = '0 s';
-            if (iconEl) iconEl.setAttribute('data-lucide', 'calendar-x');
-            if (iconBgEl) iconBgEl.className = 'w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400';
+            iconEl.className = 'ti ti-calendar-off';
+            iconBgEl.className = 'avatar avatar-md rounded bg-secondary-lt text-secondary';
         }
-        lucide.createIcons();
+    },
+
+    showEditProfile() {
+        this.showModal('Bilgileri Güncelle', `
+            <form id="profile-form">
+                <div class="mb-3">
+                    <label class="form-label">Telefon</label>
+                    <input type="text" name="phone" value="${this.user.phone || ''}" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">E-Posta</label>
+                    <input type="email" name="email" value="${this.user.email || ''}" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">IBAN</label>
+                    <input type="text" name="iban_number" value="${this.user.iban_number || ''}" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Güncelle</button>
+            </form>
+        `);
+
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.append('action', 'update');
+            formData.append('person_id', this.user.id);
+
+            try {
+                const response = await fetch('api/profile.php', { method: 'POST', body: new URLSearchParams(formData) });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    this.user = { ...this.user, phone: formData.get('phone'), email: formData.get('email'), iban_number: formData.get('iban_number') };
+                    localStorage.setItem('puantor_user', JSON.stringify(this.user));
+                    this.updateProfileUI();
+                    this.hideModal();
+                    Swal.fire('Başarılı', 'Profil güncellendi.', 'success');
+                } else {
+                    Swal.fire('Hata', res.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Hata', 'Hata oluştu.', 'error');
+            }
+        });
+    },
+
+    showChangePassword() {
+        this.showModal('Şifre Değiştir', `
+            <form id="password-form">
+                <div class="mb-3">
+                    <label class="form-label">Mevcut Şifre</label>
+                    <input type="password" name="current_password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Yeni Şifre</label>
+                    <input type="password" name="new_password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Yeni Şifre (Tekrar)</label>
+                    <input type="password" name="confirm_password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-danger w-100 py-2">Şifreyi Güncelle</button>
+            </form>
+        `);
+
+        document.getElementById('password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            if (formData.get('new_password') !== formData.get('confirm_password')) {
+                Swal.fire('Hata', 'Yeni şifreler uyuşmuyor.', 'error');
+                return;
+            }
+            formData.append('action', 'change_password');
+            formData.append('person_id', this.user.id);
+
+            try {
+                const response = await fetch('api/profile.php', { method: 'POST', body: new URLSearchParams(formData) });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    this.hideModal();
+                    Swal.fire('Başarılı', 'Şifre değiştirildi.', 'success');
+                } else {
+                    Swal.fire('Hata', res.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Hata', 'Hata oluştu.', 'error');
+            }
+        });
     },
 
     showModal(title, bodyHtml) {
-        document.getElementById('modal-title').textContent = title;
-        document.getElementById('modal-body').innerHTML = bodyHtml;
-        document.querySelector('.modal-overlay').classList.add('active');
-        lucide.createIcons();
-
-        // Bind form submissions inside modal
-        const advanceForm = document.getElementById('advance-form');
-        if (advanceForm) {
-            advanceForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(advanceForm);
-                formData.append('action', 'create');
-                formData.append('person_id', this.user.id);
-                formData.append('firm_id', this.user.firm_id);
-
-                try {
-                    const response = await fetch('api/advance.php', {
-                        method: 'POST',
-                        body: new URLSearchParams(formData)
-                    });
-                    const res = await response.json();
-                    if (res.status === 'success') {
-                        this.hideModal();
-                        this.loadAdvances();
-                        this.showToast('Avans talebiniz başarıyla oluşturuldu.', 'success');
-                    } else {
-                        this.showToast(res.message || 'Bir hata oluştu.', 'error');
+        try {
+            const titleEl = document.getElementById('app-modal-title');
+            const bodyEl = document.getElementById('app-modal-body');
+            
+            if (titleEl) titleEl.textContent = title;
+            if (bodyEl) bodyEl.innerHTML = bodyHtml;
+            
+            if (this.initModal()) {
+                this.modal.show();
+            } else {
+                console.error('Bootstrap Modal could not be initialized.');
+                // Fallback to simple alert if bootstrap fails
+                Swal.fire({
+                    title: title,
+                    html: bodyHtml,
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    customClass: {
+                        popup: 'swal2-popup-custom'
                     }
-                } catch (error) {
-                    this.showToast('Talep gönderilirken hata oluştu.', 'error');
-                }
-            });
-        }
-        
-        const profileForm = document.getElementById('profile-form');
-        if (profileForm) {
-            profileForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(profileForm);
-                formData.append('action', 'update');
-                formData.append('person_id', this.user.id);
-
-                try {
-                    const response = await fetch('api/profile.php', {
-                        method: 'POST',
-                        body: new URLSearchParams(formData)
-                    });
-                    const res = await response.json();
-                    if (res.status === 'success') {
-                        this.showToast('Profil başarıyla güncellendi.', 'success');
-                        this.user.phone = formData.get('phone');
-                        this.user.email = formData.get('email');
-                        this.user.iban_number = formData.get('iban_number');
-                        localStorage.setItem('puantor_user', JSON.stringify(this.user));
-                        this.updateProfileUI();
-                        this.hideModal();
-                    } else {
-                        alert(res.message);
-                    }
-                } catch (error) {
-                    alert('Profil güncellenirken hata oluştu.');
-                }
-            });
-        }
-
-        const passwordForm = document.getElementById('password-form');
-        if (passwordForm) {
-            passwordForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(passwordForm);
-                formData.append('action', 'change_password');
-                formData.append('person_id', this.user.id);
-
-                if (formData.get('new_password') !== formData.get('confirm_password')) {
-                    alert('Yeni şifreler uyuşmuyor.');
-                    return;
-                }
-
-                try {
-                    const response = await fetch('api/profile.php', {
-                        method: 'POST',
-                        body: new URLSearchParams(formData)
-                    });
-                    const res = await response.json();
-                    if (res.status === 'success') {
-                        this.showToast('Şifre başarıyla değiştirildi.', 'success');
-                        this.hideModal();
-                    } else {
-                        alert(res.message);
-                    }
-                } catch (error) {
-                    alert('Şifre değiştirilirken hata oluştu.');
-                }
-            });
+                });
+            }
+        } catch (e) {
+            console.error('Error showing modal:', e);
         }
     },
 
     hideModal() {
-        document.querySelector('.modal-overlay').classList.remove('active');
-    },
-
-    showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const toastMsg = document.getElementById('toast-msg');
-        const toastIcon = document.getElementById('toast-icon');
-        if (!toast) return;
-
-        toastMsg.textContent = message;
-        toast.className = 'toast ' + type;
-        toastIcon.setAttribute('data-lucide', type === 'success' ? 'check-circle' : 'alert-circle');
-        lucide.createIcons();
-
-        // Show
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-
-        // Hide after 3s
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        if (this.modal) this.modal.hide();
     }
 };
 

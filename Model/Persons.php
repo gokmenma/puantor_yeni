@@ -133,23 +133,39 @@ class Persons extends Model
         return $query->fetch(PDO::FETCH_OBJ)->tutar;
     }
 
-    public function getPersonByKimlikNo($kimlik_no)
+    public function getPersonByAuthField($value)
     {
-        // Since kimlik_no is stored encrypted with a random IV, we cannot search it directly in SQL
-        // We fetch all records and compare the decrypted value
-        // Note: For large datasets, a hash column should be added to the database for indexing
         $sql = "SELECT * FROM $this->table WHERE deleted_at IS NULL";
         $query = $this->db->prepare($sql);
         $query->execute();
         $persons = $query->fetchAll(PDO::FETCH_OBJ);
 
+        $matches = [];
         foreach ($persons as $person) {
-            $decrypted = Security::safeDecrypt($person->kimlik_no);
-            if ($decrypted == $kimlik_no) {
-                return $person;
+            $decryptedKimlik = Security::safeDecrypt($person->kimlik_no);
+            $decryptedPhone = Security::safeDecrypt($person->phone);
+            
+            // Temizleme: Sadece rakamları karşılaştır
+            $cleanValue = preg_replace('/[^0-9]/', '', $value);
+            $cleanKimlik = preg_replace('/[^0-9]/', '', $decryptedKimlik);
+            $cleanPhone = preg_replace('/[^0-9]/', '', $decryptedPhone);
+
+            if (($cleanKimlik && $cleanKimlik == $cleanValue) || ($cleanPhone && $cleanPhone == $cleanValue)) {
+                // Eğer şifresi olan bir kayıt bulursak hemen döndür (en öncelikli)
+                if (!empty($person->password)) {
+                    return $person;
+                }
+                $matches[] = $person;
             }
         }
-        return null;
+        
+        // Şifreli kayıt bulunamadıysa ilk eşleşen kaydı döndür
+        return !empty($matches) ? $matches[0] : null;
+    }
+
+    public function getPersonByKimlikNo($kimlik_no)
+    {
+        return $this->getPersonByAuthField($kimlik_no);
     }
 
     public function filterPersons($results)

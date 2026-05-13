@@ -12,16 +12,45 @@ if ($action == 'login') {
     $kimlik_no = $_POST['kimlik_no'] ?? '';
     $password = $_POST['password'] ?? '';
 
+    // Giriş denemesi kontrolü
+    $now = time();
+    $attempts = $_SESSION['login_attempts'] ?? 0;
+    $last_attempt = $_SESSION['last_attempt_time'] ?? 0;
+
+    if ($attempts >= 3 && ($now - $last_attempt) < 60) {
+        $remaining = 60 - ($now - $last_attempt);
+        echo json_encode(['status' => 'error', 'message' => "Çok fazla hatalı giriş denemesi. Lütfen $remaining saniye bekleyin."]);
+        exit;
+    }
+
     if (empty($kimlik_no) || empty($password)) {
-        echo json_encode(['status' => 'error', 'message' => 'TC Kimlik No ve şifre gereklidir.']);
+        echo json_encode(['status' => 'error', 'message' => 'Kimlik bilgileri ve şifre gereklidir.']);
         exit;
     }
 
     $Persons = new Persons();
-    $person = $Persons->getPersonByKimlikNo($kimlik_no);
+    $person = $Persons->getPersonByAuthField($kimlik_no);
 
-    if ($person && !empty($person->password) && password_verify($password, $person->password)) {
-        // Login success
+    if (!$person) {
+        echo json_encode(['status' => 'error', 'message' => "Girdiğiniz bilgilere ait personel bulunamadı. Lütfen bilgileri kontrol edin."]);
+        exit;
+    }
+
+    // İşten çıkış kontrolü
+    if (!empty($person->job_end_date)) {
+        echo json_encode(['status' => 'error', 'message' => 'İşten ayrılmış personeller sisteme giriş yapamaz.']);
+        exit;
+    }
+
+    if (empty($person->password)) {
+        echo json_encode(['status' => 'error', 'message' => "Hesabınız (ID: {$person->id}) için şifre tanımlanmamış. Lütfen yönetici ile iletişime geçin."]);
+        exit;
+    }
+
+    if (password_verify($password, $person->password)) {
+        // Başarılı giriş - denemeleri sıfırla
+        $_SESSION['login_attempts'] = 0;
+        
         // Remove sensitive data
         unset($person->password);
         
@@ -30,7 +59,18 @@ if ($action == 'login') {
         $person->iban_number = Security::safeDecrypt($person->iban_number);
         
         echo json_encode(['status' => 'success', 'user' => $person]);
+        exit;
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Hatalı TC Kimlik No veya şifre.']);
+        // Hatalı giriş - denemeyi artır
+        $_SESSION['login_attempts'] = ($attempts < 3) ? $attempts + 1 : 1;
+        $_SESSION['last_attempt_time'] = $now;
+        
+        $message = "Şifre hatalı.";
+        if ($_SESSION['login_attempts'] >= 3) {
+            $message .= " 3 hatalı deneme nedeniyle 1 dakika bekletiliyorsunuz.";
+        }
+
+        echo json_encode(['status' => 'error', 'message' => $message]);
+        exit;
     }
 }

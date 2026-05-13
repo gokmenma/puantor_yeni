@@ -5,660 +5,497 @@
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title>Puantör Personel PWA</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#206bc4">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script src="https://unpkg.com/lucide@latest"></script>
     
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "primary": "#4f46e5",
-                        "secondary": "#6366f1",
-                        "background": "#f8f9ff",
-                        "surface": "#ffffff",
-                        "on-surface": "#1e1b4b",
-                        "on-surface-variant": "#64748b",
-                        "outline": "#e2e8f0",
-                        "primary-container": "#eef2ff",
-                        "on-primary-container": "#4f46e5",
-                        "error": "#ef4444"
-                    },
-                    "fontFamily": {
-                        "sans": ["Geist", "Inter", "sans-serif"]
-                    }
-                },
-            }
-        }
-    </script>
-    
-    <style>
-        :root {
-            --nav-bg: #ffffff;
-            --primary: #4f46e5;
-        }
-        
-        html, body {
-            font-family: 'Geist', sans-serif;
-            background-color: #f8f9ff;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
-            width: 100%;
-        }
-
-        /* Tab transitions - use opacity+translate, NOT display:none (breaks transitions) */
-        .tab-wrapper {
-            position: relative;
-            overflow-x: hidden;
-            width: 100%;
-        }
-        .tab-content {
-            opacity: 0;
-            transform: translateX(20px);
-            transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            display: block;
-        }
-        .tab-content.active {
-            opacity: 1;
-            transform: translateX(0);
-            pointer-events: auto;
-            position: relative;
-        }
-
-        #login-page { display: flex; }
-        #main-content { display: none; }
-        #main-content.logged-in { display: block; }
-
-        /* Navbar – full-width bottom, rounded top corners */
-        .modern-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 68px;
-            background: #ffffff;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 1000;
-            border-radius: 20px 20px 0 0;
-            box-shadow: 0 -4px 24px rgba(79, 70, 229, 0.08), 0 -1px 0 rgba(79, 70, 229, 0.06);
-            padding: 0 8px calc(env(safe-area-inset-bottom)) 8px;
-        }
-
-        .nav-item {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            padding: 6px 12px;
-            border-radius: 16px;
-            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #94a3b8;
-            cursor: pointer;
-            flex: 1;
-            min-width: 56px;
-        }
-
-        .nav-item .icon-wrapper {
-            width: 42px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Active icon background – indigo matching app primary */
-        .nav-item.active .icon-wrapper {
-            background: #4f46e5;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
-        }
-
-        .nav-item.active {
-            color: #4f46e5;
-        }
-
-        /* Force Lucide SVG icon white when active */
-        .nav-item.active .icon-wrapper svg {
-            stroke: #ffffff !important;
-            color: #ffffff !important;
-        }
-
-        .nav-item .icon-wrapper svg {
-            width: 20px;
-            height: 20px;
-            stroke: #94a3b8;
-            transition: stroke 0.22s;
-        }
-
-        .nav-item .nav-label {
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-            display: block;
-            transition: color 0.22s;
-        }
-
-        .nav-item.active .nav-label {
-            color: #4f46e5;
-        }
-
-        /* Dashboard Cards – Sleek & Ultra Minimal */
-        .stat-card {
-            background: #ffffff;
-            border: 1px solid #f3f4f6;
-            border-radius: 16px;
-            padding: 18px 22px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Bottom Sheet – slide-up animation */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.45);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            opacity: 0;
-            visibility: hidden;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            z-index: 2000;
-            transition: opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1),
-                        visibility 0.32s;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 28px 28px 0 0;
-            padding: 28px 24px 32px;
-            transform: translateY(100%);
-            transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
-            max-height: 92vh;
-            overflow: visible;
-        }
-
-        /* Drag handle */
-        .modal-content::before {
-            content: '';
-            display: block;
-            width: 40px;
-            height: 4px;
-            border-radius: 2px;
-            background: #e2e8f0;
-            margin: 0 auto 20px;
-        }
-
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-        }
-
-        .scale-in { animation: scaleIn 0.3s ease-out; }
-        @keyframes scaleIn {
-            from { transform: scale(0.95); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        /* FAB - floating action button right side */
-        .fab-btn {
-            position: fixed;
-            bottom: 88px;
-            right: 24px;
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            background: #4f46e5;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
-            z-index: 500;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-                        box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .fab-btn:active {
-            transform: scale(0.92);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: #1e293b;
-            color: #ffffff;
-            padding: 12px 20px;
-            border-radius: 14px;
-            font-size: 13px;
-            font-weight: 600;
-            z-index: 3000;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
-            pointer-events: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-        .toast.success { background: #16a34a; }
-        .toast.error   { background: #dc2626; }
-    </style>
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="css/app.css">
 </head>
-<body class="bg-surface text-on-surface">
+<body data-bs-theme="light">
+
     <!-- Login Page -->
-    <div id="login-page" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background overflow-hidden">
-        <div class="w-full max-w-sm relative z-10">
-            <div class="text-center mb-10">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-[32px] bg-primary shadow-2xl shadow-primary/30 mb-6">
-                    <i data-lucide="briefcase" class="text-white w-10 h-10"></i>
+    <div id="login-page" class="login-screen">
+        <div class="bg-blob bg-blob-primary"></div>
+        <div class="bg-blob bg-blob-indigo"></div>
+
+        <div class="login-container">
+            <div class="text-center mb-1">
+                <div class="mb-4 d-flex justify-content-center align-items-center" style="height: 100px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.03));">
+                    <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 539 328" style="height: 100px; width: auto; max-width: 100%;">
+                        <title>Puantör Logo</title>
+                        <style>
+                            .s0 { fill: #515051 } 
+                            .s1 { fill: #00adee } 
+                            .s2 { fill: #27436f } 
+                            .s3 { fill: #f7de76 } 
+                        </style>
+                        <g id="katman 1">
+                            <g id="&lt;Group&gt;">
+                                <g id="&lt;Group&gt;">
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m147.4 290.8l-1.9 5.4-2.1 6.3-4.1-11.7h-1l-4.2 11.6-2.1-6.2-1.9-5.4h-1.2l4.6 13.1h1.2l1.3-3.7 2.8-7.7 2.7 7.7 1.3 3.7h1.2l4.6-13.1z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m169.2 290.8l-1.9 5.4-2.1 6.3-4.1-11.7h-1l-4.1 11.6-2.2-6.2-1.9-5.4h-1.2l4.6 13.1h1.2l1.4-3.7 2.7-7.7 2.7 7.7 1.3 3.7h1.2l4.6-13.1z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m191 290.8l-1.8 5.4-2.2 6.3-4.1-11.7h-1l-4.1 11.6-2.2-6.2-1.8-5.4h-1.2l4.5 13.1h1.3l1.3-3.7 2.7-7.7 2.7 7.7 1.3 3.7h1.2l4.6-13.1z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m195.5 302.6q-0.3-0.3-0.7-0.3-0.3 0-0.6 0.3-0.3 0.2-0.3 0.6 0 0.4 0.3 0.7 0.3 0.2 0.6 0.2 0.4 0 0.7-0.2 0.2-0.3 0.2-0.7 0-0.4-0.2-0.6z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m213.3 297.3c0 1.4-0.4 2.6-0.9 3.6q-0.9 1.5-2.3 2.4-1.6 0.9-3.5 0.9-1.9 0-3.4-0.9-1.4-0.8-2.2-2.3v9.4h-1.1v-19.6h1.1v2.9c0.4-1 1.2-1.8 2.2-2.3q1.5-0.9 3.4-0.9 1.9 0 3.5 0.9 1.4 0.9 2.3 2.4c0.5 1.1 0.9 2.2 0.9 3.5zm-1.2 0c0-1.1-0.2-2.1-0.7-3-0.5-0.9-1.1-1.5-1.9-2-0.9-0.5-1.9-0.7-2.9-0.7q-1.7 0-2.9 0.7-1.3 0.7-2 2c-0.5 0.9-0.7 1.9-0.7 3 0 1.2 0.2 2.2 0.7 3.1q0.7 1.3 2 2 1.2 0.7 2.9 0.7c1 0 2-0.2 2.9-0.7 0.8-0.5 1.4-1.1 1.9-2 0.5-0.9 0.7-1.9 0.7-3.1z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m227.1 290.8v7.3q0 1.4-0.6 2.5-0.6 1.2-1.7 1.8-1.2 0.7-2.6 0.7c-1.4 0-2.6-0.5-3.3-1.3-0.8-0.8-1.2-1.9-1.2-3.5v-7.5h-1.1v7.6c0 1.8 0.5 3.2 1.4 4.2q1.5 1.5 4.1 1.5 1.7 0 3-0.7c0.9-0.5 1.6-1.2 2.1-2.1v2.6h1.1v-13.1z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m245.2 290.8v13.1h-1.1v-2.9c-0.5 1-1.3 1.7-2.2 2.3q-1.6 0.9-3.5 0.9c-1.3 0-2.4-0.3-3.4-0.9q-1.5-0.9-2.3-2.4-0.9-1.6-0.9-3.6c0-1.3 0.3-2.4 0.9-3.5q0.8-1.5 2.3-2.4c1-0.6 2.1-0.9 3.4-0.9q1.9 0 3.5 0.9 1.4 0.8 2.2 2.3v-2.9zm-1.1 6.5c0-1.1-0.2-2.1-0.7-3-0.4-0.9-1.1-1.5-2-2q-1.2-0.7-2.8-0.7c-1.1 0-2.1 0.2-2.9 0.7q-1.3 0.7-2 2c-0.5 0.9-0.7 1.9-0.7 3 0 1.2 0.2 2.2 0.7 3.1q0.7 1.3 2 2c0.8 0.5 1.8 0.7 2.9 0.7q1.6 0 2.8-0.7c0.9-0.5 1.6-1.1 2-2 0.5-0.9 0.7-1.9 0.7-3.1z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m260 292.1q-1.5-1.5-4.2-1.5c-1.1 0-2.1 0.2-3 0.7q-1.4 0.8-2.1 2v-2.5h-1.1v13.1h1.1v-7.3c0-0.9 0.3-1.8 0.7-2.5 0.4-0.8 1-1.4 1.8-1.8q1.1-0.7 2.6-0.7 2.2 0 3.3 1.3 1.2 1.2 1.2 3.5v7.5h1.2v-7.6q-0.1-2.7-1.5-4.2z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m273.1 302.5c-0.3 0.2-0.7 0.4-1.2 0.5q-0.6 0.2-1 0.2-1.5 0-2-0.8-0.5-0.8-0.5-2.4v-8.2h4.5v-1h-4.5v-4.1l-1.1 0.1v4h-2.9v1h2.9v8.2q0 2.1 0.7 3.2c0.6 0.6 1.5 1 2.9 1 0.8 0 1.7-0.3 2.7-0.7z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m288.7 297.3q0 2-0.9 3.6-0.9 1.5-2.4 2.4c-1 0.6-2.2 0.9-3.5 0.9q-1.9 0-3.5-0.9-1.5-0.9-2.4-2.4-0.8-1.6-0.8-3.6c0-1.2 0.2-2.4 0.8-3.5q0.9-1.5 2.4-2.4c1.1-0.6 2.2-0.9 3.5-0.9 1.3 0 2.5 0.3 3.5 0.9q1.5 0.9 2.4 2.4c0.6 1.1 0.9 2.3 0.9 3.5zm-1.2 0q0-1.6-0.7-2.9-0.7-1.3-2-2.1-1.3-0.7-2.9-0.7c-1.1 0-2 0.2-2.9 0.7q-1.3 0.8-2 2.1-0.7 1.3-0.7 2.9 0 1.7 0.7 3 0.7 1.3 2 2.1c0.9 0.5 1.8 0.7 2.9 0.7q1.6 0 2.9-0.7 1.3-0.8 2-2.1 0.7-1.3 0.7-3z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m297.8 290.6q-1.4 0-2.6 0.8c-0.8 0.6-1.4 1.3-1.9 2.3v-2.9h-1.1v13.1h1.1v-6.7q0.1-1.5 0.6-2.8c0.4-0.8 1-1.5 1.7-2q1-0.7 2.2-0.7c0.8 0 1.6 0.2 2.2 0.6l0.5-1q-1.1-0.7-2.7-0.7z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m302.7 302.6q-0.3-0.3-0.7-0.3c-0.2 0-0.5 0.1-0.6 0.3q-0.3 0.2-0.3 0.6 0 0.4 0.3 0.7c0.1 0.1 0.4 0.2 0.6 0.2q0.4 0 0.7-0.2 0.2-0.3 0.2-0.7 0-0.4-0.2-0.6z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m316.5 301.5c-0.6 0.5-1.2 0.9-1.9 1.2q-1 0.4-2.2 0.4-1.6 0-2.9-0.7c-0.8-0.5-1.5-1.1-2.1-2q-0.7-1.3-0.7-3.1c0-1.1 0.2-2.2 0.7-3q0.8-1.4 2.1-2c0.9-0.5 1.8-0.7 2.9-0.7q1.1 0 2.2 0.4 1 0.4 1.8 1.2l0.7-0.7c-1.3-1.3-2.9-2-4.7-2q-1.9 0-3.5 0.9c-1 0.5-1.8 1.3-2.4 2.4q-0.9 1.5-0.9 3.5 0 2 0.9 3.6 0.9 1.6 2.4 2.4c1.1 0.6 2.2 0.9 3.5 0.9 0.9 0 1.8-0.2 2.6-0.5q1.2-0.5 2.3-1.4z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m332.9 297.3q0 2-0.9 3.6-0.8 1.5-2.4 2.4c-1 0.6-2.2 0.9-3.5 0.9q-1.9 0-3.4-0.9-1.6-0.9-2.5-2.4-0.8-1.6-0.8-3.6c0-1.2 0.3-2.4 0.8-3.5q0.9-1.5 2.5-2.4c1-0.6 2.1-0.9 3.4-0.9 1.3 0 2.5 0.3 3.5 0.9q1.6 0.9 2.4 2.4c0.6 1.1 0.9 2.3 0.9 3.5zm-1.1 0q0-1.6-0.8-2.9-0.7-1.3-2-2.1-1.3-0.7-2.9-0.7c-1 0-2 0.2-2.9 0.7q-1.2 0.8-2 2.1-0.7 1.3-0.7 2.9 0 1.7 0.7 3 0.8 1.3 2 2.1c0.9 0.5 1.9 0.7 2.9 0.7q1.6 0 2.9-0.7 1.3-0.8 2-2.1 0.8-1.3 0.8-3z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m355.6 292.1c-1-1-2.2-1.5-3.9-1.5q-1.6 0-2.9 0.8-1.3 0.9-2 2.4-0.5-1.6-1.7-2.4c-0.9-0.6-1.9-0.8-3.1-0.8-0.9 0-1.8 0.2-2.6 0.7-0.8 0.4-1.4 1.1-1.9 1.9v-2.4h-1.1v13.1h1.2v-7.4c0-0.9 0.2-1.7 0.5-2.5q0.6-1.1 1.6-1.7 1.1-0.7 2.3-0.7 2 0 3.1 1.2 1 1.3 1 3.5v7.6h1.2v-7.4c0-0.9 0.2-1.7 0.5-2.5q0.6-1.1 1.6-1.7c0.7-0.5 1.5-0.7 2.3-0.7q2 0 3.1 1.2 1 1.3 1 3.5v7.6h1.2v-7.6q0-2.7-1.4-4.2z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m362.5 302.6q-0.3-0.3-0.7-0.3c-0.2 0-0.5 0.1-0.6 0.3q-0.3 0.2-0.3 0.6 0 0.4 0.3 0.7c0.1 0.1 0.4 0.2 0.6 0.2q0.4 0 0.7-0.2 0.2-0.3 0.2-0.7 0-0.4-0.2-0.6z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m372.9 302.5c-0.4 0.2-0.8 0.4-1.2 0.5q-0.6 0.2-1.1 0.2-1.4 0-2-0.8-0.5-0.8-0.5-2.4v-8.2h4.6v-1h-4.6v-4.1l-1.1 0.1v4h-2.8v1h2.8v8.2q0 2.1 0.8 3.2c0.5 0.6 1.5 1 2.8 1 0.9 0 1.8-0.3 2.7-0.7z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m381.7 290.6q-1.5 0-2.7 0.8c-0.8 0.6-1.4 1.3-1.9 2.3v-2.9h-1v13.1h1.1v-6.7q0-1.5 0.6-2.8c0.4-0.8 0.9-1.5 1.6-2q1-0.7 2.2-0.7 1.2 0 2.3 0.6l0.5-1c-0.8-0.4-1.7-0.7-2.7-0.7z"/>
+                                    </g>
+                                </g>
+                                <g id="&lt;Group&gt;">
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m92.4 199.9v50.9h-46.3v13.9h-18.6v-64.8zm-18.5 18.5h-27.8v13.9h27.8z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m143.4 199.9v46.3h-27.8v-46.3h-18.5v64.8h64.8v-64.8z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m231.5 199.9v64.8h-18.6v-13.9h-27.8v13.9h-18.5v-64.8zm-18.6 18.5h-27.7v13.9h27.7z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m282.4 199.9v33.2l-33.2-33.2h-13.1v64.8h18.5v-33.2l33.3 33.2h13.1v-64.8z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" class="s0" d="m305.6 199.9v18.5h23.2v46.3h18.5v-46.3h23.2v-18.5z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m440 199.9v64.8h-64.9v-64.8zm-18.5 18.5h-27.8v27.8h27.8z"/>
+                                    </g>
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s0" d="m509.6 264.7h-26.2l-20.2-20.1v20.1h-18.5v-64.8h64.8v50.9h-13.8zm-18.6-46.3h-27.8v13.9h27.8z"/>
+                                    </g>
+                                </g>
+                                <g id="&lt;Group&gt;">
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m259.9 71.9c0 4.3-1.8 8.2-4.6 11.1-2.8 2.8-6.7 4.6-11.1 4.6-8.6 0-15.6-7-15.6-15.7 0-4.3 1.7-8.2 4.6-11 2.8-2.9 6.7-4.6 11-4.6 4.4 0 8.3 1.7 11.1 4.6 2.8 2.8 4.6 6.7 4.6 11zm-9.4-1.9h-4.4v-4.4h-3.8v4.4h-4.3v3.8h4.3v4.4h3.8v-4.4h4.4z"/>
+                                    </g>
+                                </g>
+                                <g id="&lt;Group&gt;">
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m259.9 108.6c0 4.3-1.8 8.2-4.6 11.1-2.8 2.8-6.7 4.5-11.1 4.5-8.6 0-15.6-7-15.6-15.6 0-4.3 1.7-8.2 4.6-11.1 2.8-2.8 6.7-4.5 11-4.5 4.4 0 8.3 1.7 11.1 4.5 2.8 2.9 4.6 6.8 4.6 11.1zm-17.6-6.5c0 1 0.9 1.9 1.9 1.9 1.1 0 1.9-0.9 1.9-1.9 0-1-0.8-1.9-1.9-1.9-1 0-1.9 0.9-1.9 1.9zm3.8 13c0-1.1-0.8-1.9-1.9-1.9-1 0-1.9 0.8-1.9 1.9 0 1 0.9 1.9 1.9 1.9 1.1 0 1.9-0.9 1.9-1.9zm4.4-8.4h-12.5v3.8h12.5z"/>
+                                    </g>
+                                </g>
+                                <g id="&lt;Group&gt;">
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s1" d="m296.6 71.9c0 4.3-1.7 8.2-4.6 11.1-2.8 2.8-6.7 4.6-11 4.6-8.6 0-15.6-7-15.6-15.7 0-4.3 1.7-8.2 4.6-11 2.8-2.9 6.7-4.6 11-4.6 4.3 0 8.2 1.7 11 4.6 2.9 2.8 4.6 6.7 4.6 11zm-12.9 0l3.1-3.1-2.7-2.6-3.1 3-3.1-3-2.7 2.6 3.1 3.1-3.1 3.2 2.7 2.6 3.1-3.1 3.1 3.1 2.7-2.6z"/>
+                                    </g>
+                                </g>
+                                <g id="&lt;Group&gt;">
+                                    <g id="&lt;Group&gt;">
+                                        <path id="&lt;Path&gt;" class="s1" d="m272.5 104.9c-2.3 1.9-4.6 3.9-6.9 6.1q-0.2-1.2-0.2-2.4c0-4.3 1.7-8.2 4.6-11.1 2.8-2.8 6.7-4.5 11-4.5q2.7 0 5.2 0.9c-4.7 3.5-9.1 7-13.3 10.6-0.2 0.2-0.4 0.3-0.4 0.4z"/>
+                                        <path id="&lt;Path&gt;" class="s1" d="m296.6 108.3v0.3c0 4.3-1.7 8.2-4.6 11.1-2.4 2.4-5.6 4-9.2 4.4 4.4-5.5 9-10.8 13.8-15.8z"/>
+                                    </g>
+                                </g>
+                                <g id="&lt;Group&gt;">
+                                    <path id="&lt;Compound Path&gt;" class="s2" d="m218.9 159.1c-1.2-2.2-2.5-4.4-3.9-6.5-1.5-2.5-3.2-4.9-4.8-7.1l-0.3-0.4c-2.4-3.2-4.9-6.3-7.4-9.1v8.1c0 4.6 1.9 8.8 5 11.9 3 3 7.2 4.9 11.8 4.9h0.5c-0.3-0.6-0.6-1.2-0.9-1.8zm100.7-72.4c-1.5 1.2-3 2.5-4.5 3.7-0.3 0.3-0.7 0.6-1.1 0.9v52.8c0 2.2-0.9 4.3-2.4 5.7-1.4 1.5-3.5 2.4-5.7 2.4h-42.8c-0.2 0.3-0.4 0.6-0.6 0.9l-2.4 4c-0.7 1.3-1.4 2.5-2.1 3.8h47.9c4.6 0 8.8-1.9 11.9-4.9 3-3.1 4.9-7.3 4.9-11.9v-60z"/>
+                                    <path id="&lt;Compound Path&gt;" fill-rule="evenodd" class="s2" d="m322.5 54.1l0.2 0.2v16.2q-0.4 0.2-0.8 0.4c-2.4 1.3-5 2.8-7.9 4.5v-17.3l-1.1-1h-11.6c-4.6 0-8.8-2-11.8-5-3.1-3-4.9-7.2-4.9-11.8v-11.4l-0.3-0.5h-65c-2.2 0-4.2 0.9-5.7 2.4-1.5 1.4-2.4 3.4-2.4 5.7v90.4q-2.8-1.5-5.7-2.8l-2.3-1c-0.2-0.1-0.4-0.3-0.7-0.4v-86.2c0-4.7 1.9-8.9 5-11.9 3-3 7.2-4.9 11.8-4.9h69.8c1 0 2 0.4 2.8 1.2l29.2 28.5c1 0.8 1.6 1.9 1.6 3.3q0 0.7-0.2 1.4zm-14.8-5.7l-14.4-14.1v6c0 2.2 0.9 4.2 2.3 5.7 1.5 1.4 3.5 2.4 5.7 2.4z"/>
+                                </g>
+                                <g id="&lt;Group&gt;">
+                                    <path id="&lt;Path&gt;" class="s3" d="m346.9 63c-6.2 3.7-12.4 7.8-18.3 12.3-2.1 1.5-4.1 3-5.9 4.4q-0.6 0.5-1.1 0.9l-4.2 3.5q-1.7 1.4-3.4 2.8c-0.4 0.3-0.7 0.7-1.1 1-0.4 0.2-0.7 0.5-1.1 0.8-1.6 1.5-3.1 2.9-4.7 4.4-1 0.9-2 1.9-3.1 2.9l-1.3 1.2c-0.9 0.8-1.7 1.6-2.6 2.5l-3.6 3.8c-0.2 0.2-0.4 0.4-0.5 0.6-0.3 0.2-0.5 0.5-0.8 0.7-5.5 5.8-10.9 11.9-16 18.4-0.2 0.3-0.5 0.5-0.7 0.8-3.1 4.1-6.2 8.1-9 12.1-1.1 1.7-2.3 3.4-3.5 5.1q-1.1 1.8-2.3 3.6c-1.4 2.1-2.7 4.3-4.1 6.5l-0.5 0.9-1.9 3.3c-0.9 1.5-1.8 3-2.6 4.6-0.1 0.2-0.3 0.5-0.4 0.8q-0.5 0.9-1 1.8c-0.8 1.5-1.5 2.9-2.3 4.5-0.4 0.8-0.8 1.6-1.2 2.3q-0.2 0.5-0.4 1l-22.2-0.1q-1.2-4.4-3.5-9.5c-0.1-0.3-0.3-0.5-0.4-0.8-0.4-0.8-0.8-1.7-1.3-2.6q-1.5-2.7-3.1-5.3-0.5-0.8-0.9-1.5c-1.6-2.5-3.3-4.9-5-7.3-0.2-0.2-0.3-0.4-0.3-0.4q-0.7-0.9-1.4-1.7c-2.4-3.2-4.9-6.2-7.4-9q-0.6-0.8-1.3-1.5l-0.6-0.7c-2.1-2.4-4.2-4.6-6.3-6.7q3 1.3 6.2 2.8l0.7 0.3 1.6 0.7c2.1 1 4.2 2 6.3 3.2q0.5 0.2 0.8 0.4c3.2 1.6 6.1 3.1 8.7 4.7 6.3 3.9 11.1 7.1 15.3 10.6l1.4 1.1 1.4-1.8c1-1.3 2.1-2.5 3.1-3.8 2.4-2.9 4.9-5.7 7.3-8.5l2.6-2.8c1.7-1.8 3.4-3.7 5.1-5.4 3.4-3.5 7-6.9 10.5-10.2 0.2-0.2 0.4-0.3 0.5-0.5 2.2-2.1 4.3-4 6.5-5.8q0.5-0.5 1.1-1l0.3-0.2q0.8-0.7 1.6-1.3c3.9-3.4 8-6.6 12.6-10.1l0.3-0.3 4.4-3.2c0.8-0.6 1.7-1.1 2.5-1.7 0.7-0.5 1.4-0.9 2-1.4l2.6-1.7q3.3-2.3 6.6-4.4l6.4-3.8c0.3-0.1 0.6-0.3 0.9-0.5 2.8-1.7 5.4-3.2 7.8-4.5q0.4-0.2 0.8-0.4c1-0.5 2.1-1.1 3.2-1.6 6.6-3.6 13.4-6.6 20.2-9.3z"/>
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
                 </div>
-                <h1 class="text-3xl font-black text-primary mb-2">Puantör</h1>
-                <p class="text-sm font-medium text-on-surface-variant px-8">Personel yönetim sistemine hoş geldiniz.</p>
+                <p class="login-subtitle">Personel hesabı ile giriş yapın</p>
             </div>
-            
-            <form id="loginForm" class="space-y-6 bg-white p-10 rounded-[40px] shadow-2xl shadow-primary/5 border border-white/50">
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-black text-on-surface-variant ml-1 uppercase tracking-[0.1em]">T.C. KİMLİK NO</label>
-                        <div class="relative">
-                            <i data-lucide="user" class="absolute left-5 top-1/2 -translate-y-1/2 text-primary w-5 h-5"></i>
-                            <input id="kimlik_no" class="w-full h-16 bg-gray-50 border-none rounded-2xl pl-14 pr-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold text-on-surface shadow-inner" placeholder="00000000000" type="text" required/>
-                        </div>
+
+            <div class="login-middle-form">
+                <form id="loginForm">
+                    <div class="form-floating mb-3">
+                        <input type="text" id="kimlik_no" class="form-control" placeholder="00000000000" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)" required autocomplete="username">
+                        <label for="kimlik_no">T.C. Kimlik veya Telefon</label>
                     </div>
-                    
-                    <div class="space-y-2">
-                        <label class="text-[11px] font-black text-on-surface-variant ml-1 uppercase tracking-[0.1em]">ŞİFRE</label>
-                        <div class="relative">
-                            <i data-lucide="lock" class="absolute left-5 top-1/2 -translate-y-1/2 text-primary w-5 h-5"></i>
-                            <input id="password" class="w-full h-16 bg-gray-50 border-none rounded-2xl pl-14 pr-6 focus:ring-2 focus:ring-primary/20 transition-all font-bold text-on-surface shadow-inner" placeholder="••••••••" type="password" required/>
-                        </div>
+                    <div class="form-floating mb-3 position-relative">
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                        <label for="password">Şifre</label>
+                        <span class="input-icon-addon-right" id="togglePasswordBtn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 10;">
+                            <i class="ti ti-eye" id="togglePasswordIcon"></i>
+                        </span>
                     </div>
-                </div>
-                
-                <button class="w-full h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 active:scale-95 transition-all duration-200 mt-4 flex items-center justify-center gap-3 group" type="submit">
-                    Giriş Yap
-                    <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
-                </button>
-            </form>
-            
-            <p class="text-center mt-12 text-[10px] font-bold text-on-surface-variant/40 tracking-widest uppercase">v3.0 Jakarta Premium Edition</p>
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <label class="form-check m-0" style="cursor: pointer;">
+                            <input type="checkbox" id="rememberMe" class="form-check-input" style="cursor: pointer;">
+                            <span class="form-check-label text-xs text-secondary" style="font-weight: 500; user-select: none;">Beni Hatırla</span>
+                        </label>
+                        <a href="javascript:void(0)" class="text-xs text-primary text-decoration-none hover-underline" style="font-weight: 600;">Şifremi Unuttum</a>
+                    </div>
+                    <button type="submit" class="btn-login w-100 mb-3">Giriş Yap</button>
+                </form>
+            </div>
+
+            </div>
         </div>
     </div>
-            
+
     <!-- Main Content Shell -->
-    <div id="main-content" style="display: none;">
-        <!-- Top Header -->
-        <header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-primary">
-                    <i id="header-icon" data-lucide="house" class="w-5 h-5"></i>
+    <div id="main-content" class="app-shell" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="d-flex align-items-center gap-2">
+                <div class="avatar avatar-sm rounded bg-primary-lt text-primary">
+                    <i id="header-icon" class="ti ti-smart-home"></i>
                 </div>
-                <h1 id="page-title" class="text-xl font-bold text-primary">Puantör</h1>
+                <h2 id="page-title" class="h3 mb-0" style="font-weight: 700;">Puantör</h2>
             </div>
-            <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container shadow-sm">
-                <img id="header-avatar" alt="User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgE7YgdlBdt-gxbUVA4VZfBrnWhd_bmx52NT0xCP-77N-hcHn2NwfG5UxkGex018LCaNvbqnFr8wgGiMvDsrcrjUz2378vS3uWJuBQjF15pMs_R0B6X8VSgYttmodSNFHk8oMWRX2--FvLui5pps1JP0VzfZJhI5D89NtYYP1NlPAT4AUdaYh1gYOXAOElZT3Kwgd_s47EC1akerYj2-TcUl3iiwAEPNhwMHDvY6D565s-A7mrPDaiPxkkmeKEM5p212C_MDTU_jI" class="w-full h-full object-cover"/>
+            <div class="d-flex align-items-center gap-3">
+                <a href="javascript:void(0)" onclick="app.toggleTheme()" class="text-reset text-decoration-none">
+                    <i id="theme-icon" class="ti ti-moon fs-2"></i>
+                </a>
+                <div class="avatar avatar-sm rounded-circle bg-primary text-white" id="header-avatar-initials">
+                    ??
+                </div>
             </div>
         </header>
 
-        <main class="pt-20 px-6 pb-24 max-w-2xl mx-auto tab-wrapper">
-            <!-- Dashboard Tab (0.png) -->
+        <!-- Content -->
+        <main class="app-content">
+            
+            <!-- Dashboard Tab -->
             <div id="dashboard-tab" class="tab-content active">
-                <section class="mb-8">
-                    <p class="text-[10px] font-medium text-slate-400 uppercase tracking-widest mb-1">TEKRAR HOŞ GELDİN,</p>
-                    <h2 id="user-display-name" class="text-2xl font-bold tracking-tight text-primary">Ahmet Yılmaz</h2>
-                </section>
-
-                <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div class="col-span-2 stat-card relative overflow-hidden">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-primary">
-                                <i data-lucide="clock" class="w-5 h-5"></i>
-                            </div>
-                            <span class="text-[10px] font-semibold text-primary bg-primary-container px-2.5 py-1 rounded-full">+12% vs geçen ay</span>
-                        </div>
-                        <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">TOPLAM ÇALIŞMA SÜRESİ</p>
-                        <div class="flex items-baseline gap-1.5">
-                            <h3 id="total-hours" class="text-3xl font-bold tracking-tight text-primary">164.5</h3>
-                            <span class="text-xs font-semibold text-slate-400">saat</span>
-                        </div>
-                        <div class="mt-4 w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                            <div id="hours-progress" class="bg-primary h-full w-[78%] transition-all duration-1000"></div>
-                        </div>
+                <div class="mb-4 d-flex justify-content-between align-items-end">
+                    <div>
+                        <p class="text-muted small text-uppercase mb-0" style="letter-spacing: 1px;">TEKRAR HOŞ GELDİN,</p>
+                        <h1 id="user-display-name" class="h2 mb-0" style="font-weight: 800;">Yükleniyor...</h1>
                     </div>
-
-                    <div class="stat-card">
-                        <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-slate-500 mb-4">
-                            <i data-lucide="timer" class="w-5 h-5"></i>
-                        </div>
-                        <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-1">FAZLA MESAİ</p>
-                        <h3 id="dashboard-overtime" class="text-xl font-bold tracking-tight text-slate-900">12.5 s</h3>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-slate-500 mb-4">
-                            <i data-lucide="wallet" class="w-5 h-5"></i>
-                        </div>
-                        <p class="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-1">AVANSLAR</p>
-                        <h3 id="dashboard-advance" class="text-xl font-bold tracking-tight text-slate-900">2.450 TL</h3>
+                    <div class="avatar avatar-md rounded-circle bg-primary-lt text-primary fw-bold" id="dashboard-user-avatar">
+                        ??
                     </div>
                 </div>
 
-                <div class="mb-8">
-                    <button class="w-full h-20 bg-primary text-white rounded-3xl flex items-center justify-between px-8 shadow-xl shadow-primary/20 active:scale-[0.98] transition-all group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                                <i data-lucide="fingerprint" class="w-7 h-7"></i>
-                            </div>
-                            <span class="text-xl font-bold">Giriş / Çıkış Yap</span>
+                <div class="summary-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="avatar avatar-md rounded bg-white-20 text-white">
+                            <i class="ti ti-clock"></i>
                         </div>
-                        <i data-lucide="chevron-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
+                        <span class="badge bg-white-20 text-white" style="backdrop-filter: blur(4px);">BU AY</span>
+                    </div>
+                    <p class="text-white-80 small text-uppercase mb-1" style="font-weight: 600;">TOPLAM ÇALIŞMA SÜRESİ</p>
+                    <div class="d-flex align-items-baseline gap-2 mb-2">
+                        <h2 id="total-hours" class="h1 mb-0 text-white" style="font-size: 2.5rem; font-weight: 800;">0</h2>
+                        <span class="text-white-80">saat</span>
+                    </div>
+                    <div class="progress-premium">
+                        <div class="progress-premium-bar" style="width: 65%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 small text-white-80">
+                        <span>Aylık Hedef: 180s</span>
+                        <span>%65</span>
+                    </div>
                 </div>
 
-                <section>
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold text-slate-900">Son Aktiviteler</h3>
-                        <button class="text-xs font-bold text-primary uppercase tracking-widest" onclick="app.switchTab('attendance-tab')">TÜMÜ</button>
+                <!-- Quick Actions Grid -->
+                <div class="quick-actions-grid">
+                    <a href="javascript:void(0)" onclick="app.switchTab('advance-tab')" class="quick-action-card">
+                        <i class="ti ti-wallet"></i>
+                        <span>Avans İste</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="app.switchTab('attendance-tab')" class="quick-action-card">
+                        <i class="ti ti-calendar-event"></i>
+                        <span>Takvim</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="app.switchTab('profile-tab')" class="quick-action-card">
+                        <i class="ti ti-file-text"></i>
+                        <span>Belgeler</span>
+                    </a>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="mobile-card">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-sm rounded bg-blue-lt text-blue">
+                                    <i class="ti ti-timer"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted small text-uppercase mb-0" style="font-size: 0.65rem;">Fazla Mesai</p>
+                                    <h3 id="dashboard-overtime" class="mb-0" style="font-size: 1.1rem; font-weight: 700;">0 s</h3>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="recent-activity-list" class="space-y-4">
+                    <div class="col-6">
+                        <div class="mobile-card">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-sm rounded bg-green-lt text-green">
+                                    <i class="ti ti-plane-departure"></i>
+                                </div>
+                                <div>
+                                    <p class="text-muted small text-uppercase mb-0" style="font-size: 0.65rem;">Kalan İzin</p>
+                                    <h3 id="dashboard-leave-days" class="mb-0" style="font-size: 1.1rem; font-weight: 700;">12 G</h3>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </section>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h4 mb-0">Son Aktiviteler</h3>
+                    <a href="javascript:void(0)" onclick="app.switchTab('attendance-tab')" class="text-primary small fw-bold">TÜMÜ</a>
+                </div>
+                <div id="recent-activity-list" class="space-y-2">
+                    <!-- Dynamic -->
+                </div>
             </div>
 
-            <!-- Attendance/Calendar Tab (1.png) -->
+            <!-- Attendance Tab -->
             <div id="attendance-tab" class="tab-content">
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-slate-900">Puantaj Takvimi</h2>
-                    <p id="current-month-label" class="text-sm text-slate-500 font-medium">Mayıs 2024</p>
-                </div>
-
-                <div class="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm mb-8">
-                    <div class="flex justify-between items-center mb-8">
-                        <button onclick="app.changeMonth(-1)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-primary active:scale-90 transition-transform">
-                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                        </button>
-                        <span class="text-xs font-black text-slate-900 tracking-[0.2em] uppercase" id="calendar-title">MAYIS 2024</span>
-                        <button onclick="app.changeMonth(1)" class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-primary active:scale-90 transition-transform">
-                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                        </button>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h2 mb-0">Puantaj Takvimi</h2>
+                        <p id="current-month-label" class="text-muted small">Mayıs 2024</p>
                     </div>
-                    <div class="grid grid-cols-7 gap-y-4 text-center mb-6" id="calendar-grid">
-                        <div class="text-[11px] font-bold text-slate-400 uppercase">Pzt</div>
-                        <div class="text-[11px] font-bold text-slate-400 uppercase">Sal</div>
-                        <div class="text-[11px] font-bold text-slate-400 uppercase">Çar</div>
-                        <div class="text-[11px] font-bold text-slate-400 uppercase">Per</div>
-                        <div class="text-[11px] font-bold text-slate-400 uppercase">Cum</div>
-                        <div class="text-[11px] font-bold text-rose-400 uppercase">Cmt</div>
-                        <div class="text-[11px] font-bold text-rose-400 uppercase">Paz</div>
-                    </div>
-                    
-                    <div class="pt-6 border-t border-gray-50 flex justify-center gap-6">
-                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span><span class="text-[11px] font-bold text-slate-500">Vardiya</span></div>
-                        <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="text-[11px] font-bold text-slate-500">Tatil</span></div>
+                    <div class="d-flex gap-2">
+                        <button onclick="app.changeMonth(-1)" class="btn btn-icon btn-light rounded-circle">
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                        <button onclick="app.changeMonth(1)" class="btn btn-icon btn-light rounded-circle">
+                            <i class="ti ti-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
 
-                <div id="day-details" class="space-y-4 mb-8">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-bold text-slate-900" id="selected-day-label">Seçili Gün Detayı</h3>
+                <div class="mobile-card p-4">
+                    <div class="calendar-grid mb-4" id="calendar-grid">
+                        <!-- Dynamic -->
                     </div>
-                    
-                    <div class="bg-white border border-gray-100 p-5 rounded-2xl flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div id="day-icon-bg" class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-primary">
-                                <i id="day-icon" data-lucide="briefcase" class="w-5 h-5"></i>
+                    <div class="d-flex justify-content-center gap-4 border-top pt-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot status-primary"></span>
+                            <span class="small text-muted">Çalışma</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-dot status-danger"></span>
+                            <span class="small text-muted">Tatil</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="day-details" class="mb-4">
+                    <h3 id="selected-day-label" class="h4 mb-3">Seçili Gün Detayı</h3>
+                    <div class="mobile-card d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div id="day-icon-bg" class="avatar avatar-md rounded bg-primary-lt text-primary">
+                                <i id="day-icon" class="ti ti-briefcase"></i>
                             </div>
                             <div>
-                                <h4 id="day-status" class="font-bold text-slate-900">Normal Çalışma</h4>
-                                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Günlük Durum</p>
+                                <h4 id="day-status" class="mb-0">Normal Çalışma</h4>
+                                <p class="text-muted small mb-0">Günlük Durum</p>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <span id="day-duration-new" class="text-xl font-black text-primary">8s</span>
-                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Süre</p>
+                        <div class="text-end">
+                            <h3 id="day-duration-new" class="mb-0 text-primary">8s</h3>
+                            <p class="text-muted small mb-0">Süre</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Monthly Summary Section -->
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-bold text-slate-900" id="summary-title">Aylık Toplam Özet</h3>
+                <div class="row g-3">
+                    <div class="col-4">
+                        <div class="mobile-card text-center p-2">
+                            <span class="text-muted small d-block mb-1">Çalışma</span>
+                            <h4 id="summary-work-days" class="mb-0">0 Gün</h4>
+                        </div>
                     </div>
-                    
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="stat-card flex flex-col items-center justify-center py-4 text-center">
-                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
-                                <i data-lucide="briefcase" class="w-5 h-5"></i>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Çalışılan</span>
-                            <span id="summary-work-days" class="text-lg font-black text-slate-900 mt-1">0 Gün</span>
+                    <div class="col-4">
+                        <div class="mobile-card text-center p-2">
+                            <span class="text-muted small d-block mb-1">Tatil</span>
+                            <h4 id="summary-holidays" class="mb-0">0 Gün</h4>
                         </div>
-                        <div class="stat-card flex flex-col items-center justify-center py-4 text-center">
-                            <div class="w-9 h-9 rounded-xl bg-[#829375]/10 text-[#829375] flex items-center justify-center mb-2">
-                                <i data-lucide="sun" class="w-5 h-5"></i>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tatil</span>
-                            <span id="summary-holidays" class="text-lg font-black text-slate-900 mt-1">0 Gün</span>
-                        </div>
-                        <div class="stat-card flex flex-col items-center justify-center py-4 text-center">
-                            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-primary flex items-center justify-center mb-2">
-                                <i data-lucide="clock" class="w-5 h-5"></i>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Toplam Süre</span>
-                            <span id="summary-total-hours" class="text-lg font-black text-slate-900 mt-1">0 s</span>
+                    </div>
+                    <div class="col-4">
+                        <div class="mobile-card text-center p-2">
+                            <span class="text-muted small d-block mb-1">Toplam</span>
+                            <h4 id="summary-total-hours" class="mb-0">0 s</h4>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Advances Tab (3.png) -->
+            <!-- Advance Tab -->
             <div id="advance-tab" class="tab-content">
-                <section class="mb-8">
-                    <div class="bg-primary p-6 rounded-2xl text-white relative overflow-hidden shadow-sm">
-                        <div class="relative z-10">
-                            <span class="text-[10px] font-semibold opacity-90 uppercase tracking-widest block mb-1">Kullanılabilir Avans Limiti</span>
-                            <div class="flex items-baseline gap-1.5">
-                                <h3 id="available-advance-limit" class="text-3xl font-bold tracking-tight">0</h3>
-                                <span class="text-xs font-semibold opacity-90">TL</span>
-                            </div>
-                            <div class="mt-4 flex items-center gap-1.5 bg-white/10 w-fit px-2.5 py-1 rounded-full">
-                                <i data-lucide="info" class="w-3 h-3"></i>
-                                <span class="text-[10px] font-medium">Maaş dönemine mahsup edilir.</span>
-                            </div>
-                        </div>
+                <div class="summary-card mb-4" style="background: var(--tblr-success); box-shadow: 0 10px 20px rgba(47, 179, 68, 0.2);">
+                    <p class="text-white-50 small text-uppercase mb-1">Kullanılabilir Avans Limiti</p>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <h2 id="available-advance-limit" class="h1 mb-0 text-white">0</h2>
+                        <span class="text-white-50">TL</span>
                     </div>
-                </section>
-
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-slate-900">Taleplerim</h2>
-                    <span id="advance-count-badge" class="bg-gray-100 text-slate-500 text-[12px] px-2.5 py-0.5 rounded-full font-bold">0</span>
                 </div>
 
-                <div id="advance-list" class="space-y-4">
-                    <!-- Advance items dynamically loaded -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h3 mb-0">Taleplerim</h3>
+                    <span id="advance-count-badge" class="badge bg-light text-dark rounded-pill">0</span>
                 </div>
 
+                <div id="advance-list" class="space-y-2">
+                    <!-- Dynamic -->
+                </div>
             </div>
 
             <!-- Profile Tab -->
             <div id="profile-tab" class="tab-content">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-slate-900">Profil</h2>
+                <div class="mobile-card mb-4">
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="avatar avatar-xl rounded bg-primary-lt text-primary fw-bold" id="profile-initials-large">
+                            ??
+                        </div>
+                        <div>
+                            <h2 id="profile-name" class="h2 mb-1">İsim Soyisim</h2>
+                            <p id="profile-id" class="text-muted small mb-2">ID: EMP-000</p>
+                            <span id="profile-job" class="badge bg-primary-lt text-primary">Personel</span>
+                        </div>
+                    </div>
                 </div>
 
-                <section class="bg-white rounded-[32px] p-6 border border-gray-100 shadow-sm mb-8">
-                    <div class="flex items-center gap-6">
-                        <div class="relative">
-                            <div class="w-20 h-20 rounded-2xl border-4 border-primary-container overflow-hidden shadow-sm bg-gray-50">
-                                <div id="profile-initials" class="w-full h-full flex items-center justify-center text-2xl font-bold text-primary uppercase">??</div>
-                            </div>
-                            <div class="absolute -bottom-1 -right-1 bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center border-4 border-white">
-                                <i data-lucide="check" class="w-4 h-4"></i>
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <button onclick="app.showEditProfile()" class="btn btn-outline-primary w-100 py-3 d-flex flex-column gap-2">
+                            <i class="ti ti-user-edit fs-1"></i>
+                            <span class="small">Bilgileri Güncelle</span>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button onclick="app.showChangePassword()" class="btn btn-outline-danger w-100 py-3 d-flex flex-column gap-2">
+                            <i class="ti ti-lock-password fs-1"></i>
+                            <span class="small">Şifre Değiştir</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mobile-card">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex align-items-center gap-3 px-0">
+                            <i class="ti ti-phone text-muted fs-2"></i>
+                            <div>
+                                <p class="text-muted small mb-0">Telefon</p>
+                                <p id="profile-phone" class="fw-bold mb-0">-</p>
                             </div>
                         </div>
-                        <div class="flex flex-col">
-                            <h3 id="profile-name" class="text-xl font-bold text-slate-900">İsim Soyisim</h3>
-                            <p id="profile-id" class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">ID: EMP-0000</p>
-                            <div class="mt-2">
-                                <span id="profile-job" class="bg-primary-container text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Departman</span>
+                        <div class="list-group-item d-flex align-items-center gap-3 px-0">
+                            <i class="ti ti-mail text-muted fs-2"></i>
+                            <div>
+                                <p class="text-muted small mb-0">E-Posta</p>
+                                <p id="profile-email" class="fw-bold mb-0">-</p>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center gap-3 px-0">
+                            <i class="ti ti-credit-card text-muted fs-2"></i>
+                            <div>
+                                <p class="text-muted small mb-0">IBAN</p>
+                                <p id="profile-iban" class="fw-bold mb-0">-</p>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <section class="grid grid-cols-2 gap-4 mb-8">
-                    <button id="btn-edit-profile" class="flex flex-col items-start p-6 bg-white rounded-[32px] border border-gray-100 shadow-sm active:bg-gray-50 transition-all text-left group">
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-primary mb-4 group-active:scale-90 transition-transform">
-                            <i data-lucide="user" class="w-6 h-6"></i>
-                        </div>
-                        <span class="text-sm font-bold text-slate-900">Bilgileri Güncelle</span>
-                        <span class="text-[11px] font-medium text-slate-400 mt-1">Detayları düzenle</span>
-                    </button>
-                    <button id="btn-change-password" class="flex flex-col items-start p-6 bg-white rounded-[32px] border border-gray-100 shadow-sm active:bg-gray-50 transition-all text-left group">
-                        <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 mb-4 group-active:scale-90 transition-transform">
-                            <i data-lucide="lock" class="w-6 h-6"></i>
-                        </div>
-                        <span class="text-sm font-bold text-slate-900">Şifre Değiştir</span>
-                        <span class="text-[11px] font-medium text-slate-400 mt-1">Güvenlik ayarları</span>
-                    </button>
-                    
-                    <div class="col-span-2 bg-white rounded-[32px] border border-gray-100 shadow-sm p-8 space-y-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-slate-400">
-                                <i data-lucide="phone" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telefon</p>
-                                <p id="profile-phone" class="text-sm font-bold text-slate-900">05xx xxx xx xx</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-slate-400">
-                                <i data-lucide="mail" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">E-Posta</p>
-                                <p id="profile-email" class="text-sm font-bold text-slate-900">mail@example.com</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-slate-400">
-                                <i data-lucide="credit-card" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">IBAN</p>
-                                <p id="profile-iban" class="text-sm font-bold text-slate-900">TRxx xxxx xxxx xxxx xxxx xx</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <div class="flex justify-center mt-8">
-                    <button onclick="app.logout()" class="flex items-center gap-2 text-rose-500 font-bold py-3 px-8 rounded-2xl hover:bg-rose-50 active:scale-95 transition-all border border-rose-100">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                        Oturumu Kapat
+                <div class="text-center mt-4">
+                    <button onclick="app.logout()" class="btn btn-ghost-danger">
+                        <i class="ti ti-logout me-2"></i>Oturumu Kapat
                     </button>
                 </div>
             </div>
+
         </main>
 
-        <button id="btn-new-advance" class="fab-btn" style="display: none;">
-            <i data-lucide="plus" class="w-6 h-6" style="stroke:#fff"></i>
+        <!-- FAB -->
+        <button id="btn-new-advance" class="mobile-fab" style="display: none;">
+            <i class="ti ti-plus fs-1"></i>
         </button>
 
-        <!-- Bottom NavBar (Floating Pill) -->
-        <nav class="modern-nav">
-            <div class="nav-item active" onclick="app.switchTab('dashboard-tab')" data-tab="dashboard-tab">
-                <span class="icon-wrapper"><i data-lucide="house"></i></span>
-                <span class="nav-label">Anasayfa</span>
-            </div>
-            <div class="nav-item" onclick="app.switchTab('attendance-tab')" data-tab="attendance-tab">
-                <span class="icon-wrapper"><i data-lucide="calendar"></i></span>
-                <span class="nav-label">Takvim</span>
-            </div>
-            <div class="nav-item" onclick="app.switchTab('advance-tab')" data-tab="advance-tab">
-                <span class="icon-wrapper"><i data-lucide="credit-card"></i></span>
-                <span class="nav-label">Avans</span>
-            </div>
-            <div class="nav-item" onclick="app.switchTab('profile-tab')" data-tab="profile-tab">
-                <span class="icon-wrapper"><i data-lucide="user"></i></span>
-                <span class="nav-label">Profil</span>
-            </div>
+        <!-- Bottom Navigation -->
+        <nav class="app-nav">
+            <a href="javascript:void(0)" class="nav-item active" onclick="app.switchTab('dashboard-tab')" data-tab="dashboard-tab">
+                <i class="ti ti-smart-home"></i>
+                <span>Anasayfa</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="app.switchTab('attendance-tab')" data-tab="attendance-tab">
+                <i class="ti ti-calendar-event"></i>
+                <span>Takvim</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="app.switchTab('advance-tab')" data-tab="advance-tab">
+                <i class="ti ti-wallet"></i>
+                <span>Avans</span>
+            </a>
+            <a href="javascript:void(0)" class="nav-item" onclick="app.switchTab('profile-tab')" data-tab="profile-tab">
+                <i class="ti ti-user"></i>
+                <span>Profil</span>
+            </a>
         </nav>
-
     </div>
 
-    <!-- Modal Container -->
-    <div id="modal-container" class="modal-overlay">
-        <div class="modal-content shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h3 id="modal-title" class="font-headline-md text-primary">Modal Başlığı</h3>
-                <button class="close-modal w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div id="modal-body" class="no-scrollbar overflow-y-auto max-h-[70vh] px-1.5 py-1.5">
-                <!-- Modal content -->
+    <!-- Modals (Bootstrap 5) -->
+    <div class="modal modal-blur fade" id="app-modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="app-modal-title">Başlık</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="app-modal-body">
+                    <!-- Dynamic -->
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <i id="toast-icon" data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0"></i>
-        <span id="toast-msg">Mesaj</span>
-    </div>
-
+    <!-- JS Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            setTimeout(() => {
-                document.querySelector('.modern-nav').classList.add('ready');
-            }, 100);
-        });
     </script>
 </body>
 </html>

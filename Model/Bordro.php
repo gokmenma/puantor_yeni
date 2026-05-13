@@ -1,11 +1,10 @@
 <?php
 //tanımlı değilse tanımla
 !defined("ROOT") ? define("ROOT", $_SERVER["DOCUMENT_ROOT"]) : false;
-require_once 'BaseModel.php';
-require_once 'Bordro.php';
-require_once 'Puantaj.php';
-require_once 'Persons.php';
-require_once 'DefinesModel.php';
+require_once __DIR__ . '/BaseModel.php';
+require_once __DIR__ . '/Puantaj.php';
+require_once __DIR__ . '/Persons.php';
+require_once __DIR__ . '/DefinesModel.php';
 require_once ROOT . '/App/Helper/helper.php';
 require_once ROOT . '/App/Helper/date.php';
 

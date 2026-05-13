@@ -4,8 +4,8 @@
   "description": "Puantor Personel PWA Uygulaması",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#f8f9ff",
-  "theme_color": "#4f46e5",
+  "background_color": "#f6f8fb",
+  "theme_color": "#206bc4",
   "icons": [
     {
       "src": "/static/Logo-ai.svg",
