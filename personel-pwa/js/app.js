@@ -3,16 +3,60 @@ window.app = {
     currentMonth: new Date().getMonth() + 1,
     currentYear: new Date().getFullYear(),
     modal: null,
+    
+    toast(message, type = 'info') {
+        const colors = {
+            success: "linear-gradient(to right, #00b09b, #96c93d)",
+            error: "linear-gradient(to right, #ff5f6d, #ffc371)",
+            info: "linear-gradient(to right, #2193b0, #6dd5ed)",
+            warning: "linear-gradient(to right, #f2994a, #f2c94c)"
+        };
+        
+        Toastify({
+            text: message,
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "center",
+            stopOnFocus: true,
+            style: {
+                background: colors[type] || colors.info,
+                borderRadius: "50px",
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                margin: "1.5rem auto",
+                padding: "10px 24px",
+                textAlign: "center",
+                fontSize: "0.9rem",
+                fontWeight: "500",
+                width: "max-content",
+                maxWidth: "85%",
+                left: "0",
+                right: "0"
+            }
+        }).showToast();
+    },
 
     init() {
         // Modal will be initialized on demand in showModal if not ready
         this.initModal();
 
-        this.user = JSON.parse(localStorage.getItem('puantor_user'));
-        if (this.user) {
-            this.showMainApp();
+        // If user is not provided by PHP, check localStorage (fallback)
+        if (!this.user) {
+            this.user = JSON.parse(localStorage.getItem('puantor_user'));
         } else {
-            this.showLoginPage();
+            // Keep localStorage in sync for other features if any
+            localStorage.setItem('puantor_user', JSON.stringify(this.user));
+        }
+
+        if (this.user) {
+            // No need to call showMainApp here as PHP handles shell rendering
+            // But we might need to update UI
+            this.updateProfileUI();
+        } else {
+            // If on index.php without user, redirect to login.php
+            if (window.location.pathname.endsWith('index.php') || window.location.pathname.endsWith('/')) {
+                window.location.href = 'login.php';
+            }
         }
 
         this.bindEvents();
@@ -22,9 +66,17 @@ window.app = {
     initModal() {
         if (this.modal) return true;
         const modalEl = document.getElementById('app-modal');
-        if (modalEl && typeof bootstrap !== 'undefined') {
-            this.modal = new bootstrap.Modal(modalEl);
-            return true;
+        if (modalEl) {
+            try {
+                // Try bootstrap global first, then fallback to tabler's internal if accessible
+                const bootstrapObj = window.bootstrap || (window.tabler ? window.tabler.bootstrap : null);
+                if (bootstrapObj) {
+                    this.modal = new bootstrapObj.Modal(modalEl);
+                    return true;
+                }
+            } catch (e) {
+                console.error('Modal init error:', e);
+            }
         }
         return false;
     },
@@ -106,21 +158,14 @@ window.app = {
             if (result.status === 'success') {
                 this.user = result.user;
                 localStorage.setItem('puantor_user', JSON.stringify(this.user));
-                this.showMainApp();
+                this.toast('Giriş başarılı, yönlendiriliyorsunuz...', 'success');
+                setTimeout(() => this.showMainApp(), 1000);
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Hata',
-                    text: result.message || 'Hatalı giriş bilgileri.'
-                });
+                this.toast('Kullanıcı adı veya şifre hatalı.', 'error');
             }
         } catch (error) {
             console.error('Login error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Hata',
-                text: 'Giriş yapılırken bir hata oluştu.'
-            });
+            this.toast('Kullanıcı adı veya şifre hatalı.', 'error');
         }
     },
 
@@ -132,11 +177,18 @@ window.app = {
             showCancelButton: true,
             confirmButtonText: 'Evet, Çıkış Yap',
             cancelButtonText: 'İptal'
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
+                try {
+                    await fetch('api/auth.php', {
+                        method: 'POST',
+                        body: new URLSearchParams({ action: 'logout' })
+                    });
+                } catch (e) {}
+                
                 localStorage.removeItem('puantor_user');
                 this.user = null;
-                this.showLoginPage();
+                window.location.href = 'login.php';
             }
         });
     },
@@ -166,49 +218,20 @@ window.app = {
     },
 
     switchTab(tabId) {
-        // Toggle FAB visibility
+        // This is only for SPA mode or post-login initial state.
+        // In modular mode, PHP handles the 'active' classes.
+        // But we keep it for FAB visibility if needed on current page.
         const btnNewAdvance = document.getElementById('btn-new-advance');
         if (btnNewAdvance) {
-            btnNewAdvance.style.display = tabId === 'advance-tab' ? 'flex' : 'none';
+            btnNewAdvance.style.display = (tabId === 'advance-tab' || window.location.search.includes('route=advance')) ? 'flex' : 'none';
         }
-
-        // Update Header Icon and Title
-        const headerIcon = document.getElementById('header-icon');
-        const pageTitle = document.getElementById('page-title');
-        const icons = {
-            'dashboard-tab': 'ti ti-smart-home',
-            'attendance-tab': 'ti ti-calendar-event',
-            'advance-tab': 'ti ti-wallet',
-            'profile-tab': 'ti ti-user'
-        };
-        const titles = {
-            'dashboard-tab': 'Puantör',
-            'attendance-tab': 'Takvim',
-            'advance-tab': 'Avans Talepleri',
-            'profile-tab': 'Profil'
-        };
-
-        if (headerIcon) headerIcon.className = icons[tabId] || icons['dashboard-tab'];
-        if (pageTitle) pageTitle.textContent = titles[tabId] || titles['dashboard-tab'];
-
-        // Update Nav Active State
-        document.querySelectorAll('.nav-item').forEach(nav => {
-            nav.classList.remove('active');
-            if (nav.getAttribute('data-tab') === tabId) nav.classList.add('active');
-        });
-
-        // Update Tab Content visibility
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        const activeTab = document.getElementById(tabId);
-        if (activeTab) activeTab.classList.add('active');
 
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        if (tabId === 'advance-tab') this.loadAdvances();
-        if (tabId === 'attendance-tab') this.loadAttendance();
+        // Load data if on correct route
+        if (tabId === 'advance-tab' || window.location.search.includes('route=advance')) this.loadAdvances();
+        if (tabId === 'attendance-tab' || window.location.search.includes('route=attendance')) this.loadAttendance();
     },
 
     updateProfileUI() {
@@ -347,28 +370,28 @@ window.app = {
         this.showModal('Yeni Avans Talebi', `
             <form id="advance-form">
                 <div class="mb-3">
-                    <label class="form-label">Hedef Maaş Dönemi</label>
+                    <label class="form-label text-muted small fw-bold">HEDEF MAAŞ DÖNEMİ</label>
                     <div class="row g-2">
                         <div class="col-7">
-                            <select name="hedef_ay" class="form-select">${monthOptions}</select>
+                            <select name="hedef_ay" class="form-select form-select-lg" style="height: 58px;">${monthOptions}</select>
                         </div>
                         <div class="col-5">
-                            <select name="hedef_yil" class="form-select">
+                            <select name="hedef_yil" class="form-select form-select-lg" style="height: 58px;">
                                 <option value="${lastYear}" selected>${lastYear}</option>
                                 <option value="${lastYear+1}">${lastYear+1}</option>
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Talep Edilen Tutar (TL)</label>
-                    <input type="number" name="tutar" class="form-control" placeholder="0.00" required>
+                <div class="form-floating mb-3">
+                    <input type="number" name="tutar" class="form-control" id="adv-tutar" placeholder="0.00" required>
+                    <label for="adv-tutar">Talep Edilen Tutar (TL)</label>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Açıklama</label>
-                    <textarea name="aciklama" class="form-control" rows="3" placeholder="Talebinizle ilgili kısa bilgi..."></textarea>
+                <div class="form-floating mb-4">
+                    <textarea name="aciklama" class="form-control" id="adv-desc" placeholder="Açıklama" style="height: 100px"></textarea>
+                    <label for="adv-desc">Talebinizle ilgili kısa bilgi...</label>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 py-2">Talebi Gönder</button>
+                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">Talebi Gönder</button>
             </form>
         `);
 
@@ -404,15 +427,15 @@ window.app = {
         this.showModal('Talebi Güncelle', `
             <form id="edit-advance-form">
                 <input type="hidden" name="id" value="${id}">
-                <div class="mb-3">
-                    <label class="form-label">Avans Tutarı (TL)</label>
-                    <input name="tutar" type="number" step="0.01" class="form-control" value="${tutar}" required/>
+                <div class="form-floating mb-3">
+                    <input name="tutar" type="number" step="0.01" class="form-control" id="edit-adv-tutar" value="${tutar}" placeholder="0.00" required/>
+                    <label for="edit-adv-tutar">Avans Tutarı (TL)</label>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Açıklama</label>
-                    <textarea name="aciklama" rows="3" class="form-control" required>${aciklama === 'Açıklama belirtilmemiş' ? '' : aciklama}</textarea>
+                <div class="form-floating mb-4">
+                    <textarea name="aciklama" class="form-control" id="edit-adv-desc" placeholder="Açıklama" style="height: 100px" required>${aciklama === 'Açıklama belirtilmemiş' ? '' : aciklama}</textarea>
+                    <label for="edit-adv-desc">Açıklama</label>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 py-2">Güncelle ve Kaydet</button>
+                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">Güncelle ve Kaydet</button>
             </form>
         `);
 
@@ -446,7 +469,14 @@ window.app = {
         const y = this.currentYear;
         const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
         
-        document.getElementById('current-month-label').textContent = `${monthNames[m-1]} ${y}`;
+        const label = document.getElementById('current-month-label');
+        if (label) label.textContent = `${monthNames[m-1]} ${y}`;
+
+        // Show preloader
+        const grid = document.getElementById('calendar-grid');
+        if (grid) {
+            grid.innerHTML = '<div class="calendar-skeleton">' + Array(35).fill('<div class="calendar-skeleton-item shimmer rounded-circle"></div>').join('') + '</div>';
+        }
 
         try {
             const response = await fetch(`api/summary.php?person_id=${this.user.id}&month=${m}&year=${y}`);
@@ -545,19 +575,19 @@ window.app = {
     showEditProfile() {
         this.showModal('Bilgileri Güncelle', `
             <form id="profile-form">
-                <div class="mb-3">
-                    <label class="form-label">Telefon</label>
-                    <input type="text" name="phone" value="${this.user.phone || ''}" class="form-control" required>
+                <div class="form-floating mb-3">
+                    <input type="text" name="phone" id="prof-phone" value="${this.user.phone || ''}" class="form-control" placeholder="Telefon" required>
+                    <label for="prof-phone">Telefon</label>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">E-Posta</label>
-                    <input type="email" name="email" value="${this.user.email || ''}" class="form-control">
+                <div class="form-floating mb-3">
+                    <input type="email" name="email" id="prof-email" value="${this.user.email || ''}" class="form-control" placeholder="E-Posta">
+                    <label for="prof-email">E-Posta</label>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">IBAN</label>
-                    <input type="text" name="iban_number" value="${this.user.iban_number || ''}" class="form-control">
+                <div class="form-floating mb-4">
+                    <input type="text" name="iban_number" id="prof-iban" value="${this.user.iban_number || ''}" class="form-control" placeholder="IBAN">
+                    <label for="prof-iban">IBAN</label>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 py-2">Güncelle</button>
+                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">Bilgileri Güncelle</button>
             </form>
         `);
 
@@ -588,19 +618,19 @@ window.app = {
     showChangePassword() {
         this.showModal('Şifre Değiştir', `
             <form id="password-form">
-                <div class="mb-3">
-                    <label class="form-label">Mevcut Şifre</label>
-                    <input type="password" name="current_password" class="form-control" required>
+                <div class="form-floating mb-3">
+                    <input type="password" name="current_password" id="pw-current" class="form-control" placeholder="Mevcut Şifre" required>
+                    <label for="pw-current">Mevcut Şifre</label>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Yeni Şifre</label>
-                    <input type="password" name="new_password" class="form-control" required>
+                <div class="form-floating mb-3">
+                    <input type="password" name="new_password" id="pw-new" class="form-control" placeholder="Yeni Şifre" required>
+                    <label for="pw-new">Yeni Şifre</label>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Yeni Şifre (Tekrar)</label>
-                    <input type="password" name="confirm_password" class="form-control" required>
+                <div class="form-floating mb-4">
+                    <input type="password" name="confirm_password" id="pw-conf" class="form-control" placeholder="Yeni Şifre (Tekrar)" required>
+                    <label for="pw-conf">Yeni Şifre (Tekrar)</label>
                 </div>
-                <button type="submit" class="btn btn-danger w-100 py-2">Şifreyi Güncelle</button>
+                <button type="submit" class="btn btn-danger w-100 py-3 fw-bold">Şifreyi Güncelle</button>
             </form>
         `);
 
