@@ -20,7 +20,37 @@ $Defines = new DefinesModel();
 // Eğer personel beyaz yaka ise ve içinde bulunduğu ayda gelir tablosuna maaş eklenmediyse git o tabloya personelin aylık ücretini ekle
 
 // Gelir gider bilgierini getir
-$income_expenses = $bordro->getPersonWorkTransactions($id);
+$income_expenses_raw = $bordro->getPersonWorkTransactions($id);
+
+// Yürüyen bakiye hesaplamak için eskiden yeniye sırala
+usort($income_expenses_raw, function($a, $b) {
+    if ($a->gun == $b->gun) {
+        return (int)$a->id - (int)$b->id;
+    }
+    return strcmp($a->gun, $b->gun);
+});
+
+$running_balance = 0;
+foreach ($income_expenses_raw as &$item) {
+    $type = $financialHelper->getTransactionTypeById($item->kategori);
+    if ($type->type_id == 1) {
+        $running_balance += $item->tutar;
+    } else {
+        $running_balance -= $item->tutar;
+    }
+    $item->running_balance = $running_balance;
+}
+unset($item);
+
+// Şimdi yeniden eskiye sırala (Görünüm için)
+usort($income_expenses_raw, function($a, $b) {
+    if ($a->gun == $b->gun) {
+        return (int)$b->id - (int)$a->id;
+    }
+    return strcmp($b->gun, $a->gun);
+});
+
+$income_expenses = $income_expenses_raw;
 
 $month = Date::getMonth();
 
@@ -150,7 +180,7 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                                                 Bakiye
                                             </div>
                                             <div class="text-secondary">
-                                                <label for="" id="balance">
+                                                <label for="" id="balance" class="<?php echo $balance >= 0 ? 'text-success' : 'text-danger'; ?>">
                                                     <?php echo Helper::formattedMoney($balance); ?>
                                                 </label>
                                             </div>
@@ -175,6 +205,7 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                                 <th>Yıl</th>
                                 
                                 <th>Tutar</th>
+                                <th>Bakiye</th>
                                 <th>Açıklama</th>
                                 <th>İşlem Tarihi</th>
                                 <th class="no-export" style="width:2%">İşlem</th>
@@ -236,6 +267,7 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
 
                                   
                                     <td><?php echo Helper::formattedMoney($item->tutar); ?></td>
+                                    <td class="font-weight-bold <?php echo $item->running_balance >= 0 ? 'text-success' : 'text-danger'; ?>"><?php echo Helper::formattedMoney($item->running_balance); ?></td>
                                     <td><?php echo $is_puantaj ? '' : Helper::short($item->aciklama); ?></td>
                                     <td><?php echo $is_puantaj ? '' : $item->created_at; ?></td>
 

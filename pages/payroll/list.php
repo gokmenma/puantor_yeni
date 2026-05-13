@@ -71,7 +71,78 @@ $lastDay = Date::lastDay($month, $year);
 
 $case_id = $Cases->getDefaultCaseIdByFirm();
 
+$total_gelir = 0;
+$total_odeme = 0;
+$total_persons = 0;
+
+foreach ($persons as $item) {
+    $person = $personObj->find($item->id);
+    if ($person->job_end_date != null && $person->job_end_date != '') {
+        $job_end_date_ymd = Date::Ymd($person->job_end_date);
+        if ($job_end_date_ymd < $firstDay) {
+            continue;
+        }
+    }
+
+    if (isset($_POST["action"]) && ($_POST["action"] == 'payroll_calculate' || $_POST["action"] == 'update_personnel')) {
+        if ($firstDay <= Date::Ymd(date('Y-m-d'))) {
+            if (Date::isBetween($person->job_start_date, $firstDay, $lastDay) || Date::isBefore($person->job_start_date, $firstDay)) {
+                $bordro->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 16")->execute([$person->id, $month, $year]);
+                $bordro->connect()->prepare("UPDATE puantaj SET tutar = 0 WHERE person = ? AND gun >= ? AND gun <= ?")->execute([$person->id, $firstDay, $lastDay]);
+                $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+                if ($person->wage_type == 1 && $show_white_collar != 1) {
+                    $description = Date::monthName($month) . ' ' . $year . ' Maaş';
+                    $job_start = str_replace('.', '-', $person->job_start_date);
+                    $job_start_timestamp = strtotime($job_start);
+                    $month_start_timestamp = strtotime("$year-$month-01");
+                    if ($job_start_timestamp > $month_start_timestamp) {
+                        $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+                        $start_day = (int) date('d', $job_start_timestamp);
+                        $worked_days = $days_in_month - $start_day + 1;
+                        $daily_rate = $person->daily_wages / 30;
+                        $calculated_salary = $daily_rate * $worked_days;
+                        $bordro->addPersonMonthlyIncome($person->id, $month, $year, $calculated_salary, $description . " (Kıst Maaş)");
+                    } else {
+                        $bordro->addPersonMonthlyIncome($person->id, $month, $year, $person->daily_wages, $description);
+                    }
+                } else {
+                    $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
+                    $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
+                    $work_hour = str_replace(',', '.', $work_hour);
+                    $effective_base_wage = ($person->wage_type == 1) ? ($person->daily_wages / 30) : $person->daily_wages;
+                    $ucret = $effective_base_wage / $work_hour;
+                    foreach ($puantajRecords as $p_record) {
+                        $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
+                        if ($defined_wage > 0) {
+                            $effective_defined_wage = ($person->wage_type == 1) ? ($defined_wage / 30) : $defined_wage;
+                            $current_daily_wage = $effective_defined_wage / $work_hour;
+                        } else {
+                            $current_daily_wage = $ucret;
+                        }
+                        $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
+                        if ($puantaj_turu->Turu != 'Saatlik') {
+                            $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
+                            $tutar = floatval($saat) * $current_daily_wage;
+                        } else {
+                            $saat = $puantaj_turu->PuantajSaati;
+                            $tutar = floatval($saat) * $current_daily_wage;
+                        }
+                        $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
+                    }
+                }
+            }
+        }
+    }
+
+    $res = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay);
+    $total_gelir += ($res->gelir ?? 0);
+    $total_odeme += ($res->odeme ?? 0);
+    $total_persons++;
+}
+$total_kalan = $total_gelir - $total_odeme;
+
 ?>
+
 <div class="container-xl mt-3">
     <form action="" method="post" id="bordroInfoForm">
         <div class="row">
@@ -151,6 +222,95 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
     </form>
 </div>
 
+<div class="container-xl mt-3">
+    <div class="row row-cards">
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <i class="ti ti-download icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                <?php echo Helper::formattedMoney($total_gelir); ?>
+                            </div>
+                            <div class="text-secondary">
+                                Toplam Brüt
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-orange text-white avatar">
+                                <i class="ti ti-cash-register icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                <?php echo Helper::formattedMoney($total_odeme); ?>
+                            </div>
+                            <div class="text-secondary">
+                                Toplam Ödenen/Kesinti
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-green text-white avatar">
+                                <i class="ti ti-credit-card-pay icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                <?php echo Helper::formattedMoney($total_kalan); ?>
+                            </div>
+                            <div class="text-secondary">
+                                Toplam Ödenecek
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-azure text-white avatar">
+                                <i class="ti ti-users icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium">
+                                <?php echo $total_persons; ?>
+                            </div>
+                            <div class="text-secondary">
+                                Personel Sayısı
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <style>
     .dropdown-menu {
@@ -209,75 +369,6 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                     $job_end_date_ymd = Date::Ymd($person->job_end_date);
                                     if ($job_end_date_ymd < $firstDay) {
                                         continue;
-                                    }
-                                }
-
-                                // Hesaplama işlemi tetiklendiyse
-                                if (isset($_POST["action"]) && ($_POST["action"] == 'payroll_calculate' || $_POST["action"] == 'update_personnel')) {
-                                    // Eğer ayın ilk günü bugünden küçükse veya eşitse (geçmiş veya mevcut ay)
-                                    if ($firstDay <= Date::Ymd(date('Y-m-d'))) {
-                                        // Personel o tarihte çalışıyorsa
-                                        if (Date::isBetween($person->job_start_date, $firstDay, $lastDay) || Date::isBefore($person->job_start_date, $firstDay)) {
-                                            
-                                            // TEMİZLİK: Personelin o aya ait mevcut maaş (Kat 16) ve puantaj tutarlarını temizleyelim
-                                            // Tip değişikliği durumunda (Beyaz -> Mavi veya tersi) eski hesaplamaların kalmaması için gereklidir.
-                                            $bordro->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 16")->execute([$person->id, $month, $year]);
-                                            $bordro->connect()->prepare("UPDATE puantaj SET tutar = 0 WHERE person = ? AND gun >= ? AND gun <= ?")->execute([$person->id, $firstDay, $lastDay]);
-
-                                            $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
-
-                                            if ($person->wage_type == 1 && $show_white_collar != 1) {
-                                                // BEYAZ YAKA HESAPLAMA (SABİT MAAŞ)
-                                                $description = Date::monthName($month) . ' ' . $year . ' Maaş';
-                                                
-                                                $job_start = str_replace('.', '-', $person->job_start_date);
-                                                $job_start_timestamp = strtotime($job_start);
-                                                $month_start_timestamp = strtotime("$year-$month-01");
-
-                                                if ($job_start_timestamp > $month_start_timestamp) {
-                                                    // Ay içinde işe başlamışsa Kıst Maaş hesabı yap
-                                                    $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-                                                    $start_day = (int) date('d', $job_start_timestamp);
-                                                    $worked_days = $days_in_month - $start_day + 1;
-                                                    $daily_rate = $person->daily_wages / 30;
-                                                    $calculated_salary = $daily_rate * $worked_days;
-                                                    
-                                                    $bordro->addPersonMonthlyIncome($person->id, $month, $year, $calculated_salary, $description . " (Kıst Maaş)");
-                                                } else {
-                                                    // Tam maaş
-                                                    $bordro->addPersonMonthlyIncome($person->id, $month, $year, $person->daily_wages, $description);
-                                                }
-                                            } else {
-                                                // MAVİ YAKA VEYA PUANTAJLI BEYAZ YAKA HESAPLAMA
-                                                $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
-                                                $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
-                                                $work_hour = str_replace(',', '.', $work_hour);
-                                                
-                                                $effective_base_wage = ($person->wage_type == 1) ? ($person->daily_wages / 30) : $person->daily_wages;
-                                                $ucret = $effective_base_wage / $work_hour;
-
-                                                foreach ($puantajRecords as $p_record) {
-                                                    $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
-                                                    if ($defined_wage > 0) {
-                                                        $effective_defined_wage = ($person->wage_type == 1) ? ($defined_wage / 30) : $defined_wage;
-                                                        $current_daily_wage = $effective_defined_wage / $work_hour;
-                                                    } else {
-                                                        $current_daily_wage = $ucret;
-                                                    }
-
-                                                    $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
-                                                    if ($puantaj_turu->Turu != 'Saatlik') {
-                                                        $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
-                                                        $tutar = floatval($saat) * $current_daily_wage;
-                                                    } else {
-                                                        $saat = $puantaj_turu->PuantajSaati;
-                                                        $tutar = floatval($saat) * $current_daily_wage;
-                                                    }
-
-                                                    $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
-                                                }
-                                            }
-                                        }
                                     }
                                 }
 

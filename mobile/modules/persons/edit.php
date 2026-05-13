@@ -583,9 +583,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
         }
     }
     
-    // Tüm işlemleri birleştir ve tarihe göre sırala
+    // Tüm işlemleri birleştir ve yürüyen bakiye için eskiden yeniye sırala
     $all_items = array_merge(array_values($hakedisler), $diger_islemler);
     usort($all_items, function($a, $b) {
+        if ($a->gun == $b->gun) {
+            $id_a = isset($a->id) ? (int)$a->id : 0;
+            $id_b = isset($b->id) ? (int)$b->id : 0;
+            return $id_a - $id_b;
+        }
+        return strcmp($a->gun, $b->gun);
+    });
+
+    $running_balance = 0;
+    foreach ($all_items as &$item) {
+        $is_hakedis = ($item->type === 'hakedis');
+        if ($is_hakedis) {
+            $is_income = true;
+        } else {
+            $type_info = $financialHelper->getTransactionTypeById($item->kategori);
+            $is_income = ($type_info->type_id == 1);
+        }
+        
+        if ($is_income) {
+            $running_balance += $item->tutar;
+        } else {
+            $running_balance -= $item->tutar;
+        }
+        $item->running_balance = $running_balance;
+    }
+    unset($item);
+
+    // Şimdi yeniden eskiye sırala (Görünüm için)
+    usort($all_items, function($a, $b) {
+        if ($a->gun == $b->gun) {
+            $id_a = isset($a->id) ? (int)$a->id : 0;
+            $id_b = isset($b->id) ? (int)$b->id : 0;
+            return $id_b - $id_a;
+        }
         return strcmp($b->gun, $a->gun);
     });
     ?>
@@ -607,7 +641,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
       <div class="col-4">
         <div class="mobile-card p-2 text-center border-0 shadow-sm" style="background: #e8f1f9; color: #206bc4; border-radius: 16px;">
           <div class="text-xs font-weight-bold opacity-75 mb-1" style="font-size: 0.65rem; color: #206bc4;">BAKİYE</div>
-          <div class="text-bold small" style="font-size: 0.85rem;">₺ <?php echo Helper::formattedMoneyWithoutCurrency($balance); ?></div>
+          <div class="text-bold small <?php echo $balance >= 0 ? 'text-green' : 'text-red'; ?>" style="font-size: 0.85rem;">₺ <?php echo Helper::formattedMoneyWithoutCurrency($balance); ?></div>
         </div>
       </div>
     </div>
@@ -666,8 +700,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
                     </div>
                   </div>
                   <div class="text-end">
-                    <div class="text-bold <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 0.95rem; letter-spacing: -0.3px;">
+                    <div class="text-bold <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 0.95rem; letter-spacing: -0.3px; line-height: 1.1;">
                       <?php echo $is_income ? '+' : '-'; ?> ₺<?php echo Helper::formattedMoneyWithoutCurrency($item->tutar); ?>
+                    </div>
+                    <div class="<?php echo $item->running_balance >= 0 ? 'text-green' : 'text-red'; ?>" style="font-size: 0.7rem; margin-top: 2px; font-weight: 500;">
+                      <span class="opacity-75" style="color: var(--tblr-muted);">Bakiye:</span> ₺<?php echo Helper::formattedMoneyWithoutCurrency($item->running_balance); ?>
                     </div>
                   </div>
                 </div>
