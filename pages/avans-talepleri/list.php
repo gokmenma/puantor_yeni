@@ -254,7 +254,7 @@ $(document).ready(function() {
                     url: 'api/advances_admin.php',
                     type: 'POST',
                     data: { 
-                        action: 'update_status',
+                        func: 'update_status',
                         id: id, 
                         status: status 
                     },
@@ -294,7 +294,7 @@ $(document).ready(function() {
                     url: 'api/advances_admin.php',
                     type: 'POST',
                     data: { 
-                        action: 'delete',
+                        func: 'delete',
                         id: id
                     },
                     dataType: 'json',

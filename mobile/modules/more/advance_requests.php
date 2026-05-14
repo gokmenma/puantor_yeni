@@ -94,7 +94,7 @@ $(document).ready(function() {
     loadAdvances();
 
     function loadAdvances() {
-        $.get('../api/advances_admin.php?action=list')
+        $.get('../api/advances_admin.php?func=list')
         .done(function(response) {
             if (typeof response === 'string') {
                 try {
@@ -231,7 +231,7 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.post('../api/advances_admin.php', {
-                    action: 'update_status',
+                    func: 'update_status',
                     id: id,
                     status: status
                 }, function(response) {

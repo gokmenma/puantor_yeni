@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
@@ -24,7 +25,7 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-$action = $_REQUEST['action'] ?? '';
+$action = $_REQUEST['func'] ?? '';
 
 if ($action == 'list') {
     try {
