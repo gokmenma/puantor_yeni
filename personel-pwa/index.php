@@ -46,7 +46,7 @@ $title = $current_route['title'];
 <!DOCTYPE html>
 <html lang="tr">
 <?php include_once "inc/head.php"; ?>
-<body data-bs-theme="light">
+<body>
 
     <div id="main-content" class="app-shell">
         <!-- Header -->

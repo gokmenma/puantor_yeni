@@ -11,7 +11,7 @@ if (isset($_SESSION['personel_id'])) {
 $title = "Giriş Yap | Puantör";
 include_once "inc/head.php"; 
 ?>
-<body data-bs-theme="light">
+<body>
 
     <!-- Login Page -->
     <div id="login-page" class="login-screen">

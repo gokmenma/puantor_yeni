@@ -1,5 +1,12 @@
 <head>
     <meta charset="utf-8"/>
+    <script>
+        // Apply theme before rendering
+        (function() {
+            const theme = localStorage.getItem('puantor_theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
     <title><?php echo $title ?? 'Puantör Personel PWA'; ?></title>
     <link rel="manifest" href="manifest.json">

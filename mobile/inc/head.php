@@ -74,6 +74,6 @@
     }
   </style>
   <script>
-    window.API_PATH = '../api/';
+    window.API_PATH = 'api/';
   </script>
 </head>

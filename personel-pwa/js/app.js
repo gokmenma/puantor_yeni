@@ -122,14 +122,14 @@ window.app = {
 
     initTheme() {
         const theme = localStorage.getItem('puantor_theme') || 'light';
-        document.body.setAttribute('data-bs-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
         this.updateThemeIcon(theme);
     },
 
     toggleTheme() {
-        const currentTheme = document.body.getAttribute('data-bs-theme');
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.body.setAttribute('data-bs-theme', newTheme);
+        document.documentElement.setAttribute('data-bs-theme', newTheme);
         localStorage.setItem('puantor_theme', newTheme);
         this.updateThemeIcon(newTheme);
     },
