@@ -1,17 +1,46 @@
 <?php
-header('Content-Type: application/json');
-require_once __DIR__ . '/../../../Database/require.php';
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
+
+if (!defined('ROOT')) {
+    define("ROOT", dirname(__DIR__));
+}
+
+require_once ROOT . "/Database/require.php";
+require_once ROOT . "/Model/Auths.php";
+
+$Auths = new Auths();
+
+// Oturum ve yetki kontrolü
+if (!isset($_SESSION['user'])) {
+    ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'error', 'message' => 'Oturum kapalı.']);
+    exit;
+}
 
 $action = $_REQUEST['action'] ?? '';
 
 if ($action == 'list') {
-    $query = $db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as created_at 
-                           FROM personel_avans_talepleri a 
-                           JOIN persons p ON a.person_id = p.id 
-                           ORDER BY a.id DESC");
-    $query->execute();
-    $list = $query->fetchAll(PDO::FETCH_OBJ);
-    echo json_encode(['status' => 'success', 'list' => $list]);
+    try {
+        $query = $db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as created_at 
+                               FROM personel_avans_talepleri a 
+                               JOIN persons p ON a.person_id = p.id 
+                               ORDER BY a.id DESC");
+        $query->execute();
+        $list = $query->fetchAll(PDO::FETCH_OBJ);
+        
+        ob_clean();
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'success', 'list' => $list]);
+        exit;
+    } catch (Exception $e) {
+        ob_clean();
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        exit;
+    }
 
 } elseif ($action == 'update_status') {
     $id = $_POST['id'] ?? 0;
@@ -34,18 +63,14 @@ if ($action == 'list') {
 
         // If approved, create a deduction record
         if ($status == 1) {
-            $gun = date('Ymd');
             $ay = $request->hedef_ay ?? date('m');
             $yil = $request->hedef_yil ?? date('Y');
-            
-            // Format gun to be mid-month or target date if needed, but YYYYMMDD is the field
-            // Use target month/year for the 'gun' string too if that's how it's used
             $target_gun = sprintf("%04d%02d15", $yil, $ay); // Defaulting to 15th of target month
 
             $insert = $db->prepare("INSERT INTO maas_gelir_kesinti (user_id, person_id, gun, ay, yil, tutar, kategori, turu, aciklama) 
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $insert->execute([
-                0, // user_id (admin or system)
+                $_SESSION['user']->id ?? 0,
                 $request->person_id,
                 $target_gun,
                 $ay,
@@ -58,9 +83,20 @@ if ($action == 'list') {
         }
 
         $db->commit();
+        ob_clean();
+        header('Content-Type: application/json');
         echo json_encode(['status' => 'success', 'message' => 'Talep durumu güncellendi.']);
+        exit;
     } catch (Exception $e) {
         $db->rollBack();
+        ob_clean();
+        header('Content-Type: application/json');
         echo json_encode(['status' => 'error', 'message' => 'Hata: ' . $e->getMessage()]);
+        exit;
     }
 }
+
+ob_clean();
+header('Content-Type: application/json');
+echo json_encode(['status' => 'error', 'message' => 'Geçersiz işlem.']);
+exit;

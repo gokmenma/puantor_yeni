@@ -38,17 +38,37 @@ $financial_data = $query->fetchAll(PDO::FETCH_OBJ);
 // From puantaj (Working hours)
 $attendance_data = $PuantajModel->getPuantajByPersonAndDate($person_id, $start_day, $end_day);
 
-// Merge them for the calendar
-$merged_data = array_merge($financial_data, $attendance_data);
+// Calculate monthly totals
+$total_hours = 0;
+$overtime = 0;
+foreach ($attendance_data as $record) {
+    if (isset($record->saat)) {
+        $total_hours += (float)$record->saat;
+    }
+}
 
-// Calculate remaining leave (Mock or from DB if available)
-// For now, let's try to get it from persons table if exists, or default
+// Calculate monthly financial totals
+$monthly_advance = 0;
+foreach ($financial_data as $item) {
+    // Categories like 7 (Payment/Advance) or others based on business logic
+    if (in_array($item->kategori, [2, 7])) { // 2: Kesinti, 7: Ödeme/Advance
+        $monthly_advance += (float)$item->tutar;
+    }
+}
+
+// Calculate remaining leave
 $person = $Persons->find($person_id);
 $kalan_izin = $person->remaining_leave ?? 0;
 
 if (isset($balance)) {
+    $balance->total_hours = $total_hours;
+    $balance->overtime = $overtime;
     $balance->kalan_izin = $kalan_izin;
+    $balance->advance = $monthly_advance;
 }
+
+// Merge them for the calendar
+$merged_data = array_merge($financial_data, $attendance_data);
 
 echo json_encode([
     'status' => 'success',

@@ -267,6 +267,11 @@ switch ($route) {
         $page_file = "modules/more/index.php";
         $active_page = "more";
         break;
+    case 'advance-requests':
+        $title = "Avans Talepleri";
+        $page_file = "modules/more/advance_requests.php";
+        $active_page = "more";
+        break;
     case 'cari':
         if (!$Auths->hasPermission("cari_takip")) {
             header("Location: dashboard");

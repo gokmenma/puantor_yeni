@@ -128,6 +128,17 @@ $userId = $user->id ?? 0;
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
     <?php endif; ?>
+
+    <a href="advance-requests" class="list-group-item" data-id="advance-requests">
+      <div class="d-flex align-items-center gap-1">
+        <i class="ti ti-grip-vertical text-muted drag-handle"></i>
+        <div class="avatar avatar-sm rounded bg-yellow-lt me-2">
+          <i class="ti ti-cash-banknote text-yellow"></i>
+        </div>
+        <span class="text-semibold text-sm">Avans Talepleri</span>
+      </div>
+      <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
+    </a>
   </div>
 
   <!-- Destek ve Ayarlar -->

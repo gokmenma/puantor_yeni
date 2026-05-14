@@ -22,11 +22,11 @@
             <span class="text-white-80">saat</span>
         </div>
         <div class="progress-premium">
-            <div class="progress-premium-bar" style="width: 65%;"></div>
+            <div class="progress-premium-bar" style="width: 0%;"></div>
         </div>
         <div class="d-flex justify-content-between mt-2 small text-white-80">
             <span>Aylık Hedef: 180s</span>
-            <span>%65</span>
+            <span id="dashboard-progress-percent">%0</span>
         </div>
     </div>
 
@@ -68,7 +68,7 @@
                     </div>
                     <div>
                         <p class="text-muted small text-uppercase mb-0" style="font-size: 0.65rem;">Kalan İzin</p>
-                        <h3 id="dashboard-leave-days" class="mb-0" style="font-size: 1.1rem; font-weight: 700;">12 G</h3>
+                        <h3 id="dashboard-leave-days" class="mb-0" style="font-size: 1.1rem; font-weight: 700;">- G</h3>
                     </div>
                 </div>
             </div>

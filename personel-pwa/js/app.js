@@ -276,7 +276,23 @@ window.app = {
                 setSafeText('dashboard-overtime', `${result.summary.overtime || 0} s`);
                 setSafeText('dashboard-advance', `${result.summary.advance || 0} TL`);
                 setSafeText('dashboard-leave-days', `${result.summary.kalan_izin || 0} G`);
-                setSafeText('available-advance-limit', result.summary.balance || 0);
+                
+                const balanceFormatted = parseFloat(result.summary.balance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                const usedFormatted = parseFloat(result.summary.advance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                
+                setSafeText('available-advance-limit', balanceFormatted);
+                setSafeText('available-advance-limit-large', balanceFormatted);
+                setSafeText('used-advance-total', `₺ ${usedFormatted}`);
+                setSafeText('remaining-limit-total', `₺ ${balanceFormatted}`);
+
+                // Update progress bar
+                const target = 180;
+                const current = result.summary.total_hours || 0;
+                const percentage = Math.min(Math.round((current / target) * 100), 100);
+                const bar = document.querySelector('.progress-premium-bar');
+                const percentLabel = document.getElementById('dashboard-progress-percent');
+                if (bar) bar.style.width = `${percentage}%`;
+                if (percentLabel) percentLabel.textContent = `%${percentage}`;
 
                 const recentContainer = document.getElementById('recent-activity-list');
                 if (recentContainer) {
@@ -314,21 +330,22 @@ window.app = {
                 
                 const container = document.getElementById('advance-list');
                 container.innerHTML = result.list.map(item => {
-                    let statusClass = 'bg-secondary-lt';
+                    let statusClass = 'text-warning';
+                    let icon = 'ti-hourglass-low';
                     let statusText = 'Bekleyen';
-                    let icon = 'ti-clock';
-
+                    let iconBg = 'bg-warning-lt';
+                    
                     if (item.durum == 1) {
-                        statusClass = 'bg-success-lt';
+                        statusClass = 'text-success';
                         statusText = 'Onaylandı';
                         icon = 'ti-check';
+                        iconBg = 'bg-success-lt';
                     } else if (item.durum == 2) {
-                        statusClass = 'bg-danger-lt';
+                        statusClass = 'text-danger';
                         statusText = 'Reddedildi';
                         icon = 'ti-x';
+                        iconBg = 'bg-danger-lt';
                     }
-
-                    const periodText = item.hedef_ay ? `${item.hedef_ay}/${item.hedef_yil} Dönemi` : '';
 
                     return `
                         <div class="swipe-item" data-id="${item.id}">
@@ -337,23 +354,23 @@ window.app = {
                                     <i class="ti ti-trash"></i>
                                 </button>
                             </div>
-                            <div onclick="app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\'")}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')" 
-                                 class="swipe-content mobile-card d-flex flex-column gap-2 cursor-pointer">
-                                <div class="d-flex justify-content-between align-items-center">
+                            <div onclick="if(!this.dataset.swiping) app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\'")}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')" 
+                                 class="swipe-content cursor-pointer py-3 px-4">
+                                <div class="d-flex align-items-center justify-content-between w-100">
                                     <div class="d-flex align-items-center gap-3">
-                                        <div class="avatar avatar-sm rounded bg-primary-lt text-primary">
-                                            <i class="ti ti-cash"></i>
+                                        <div class="avatar avatar-md rounded-circle ${iconBg} ${statusClass} border-0 shadow-none">
+                                            <i class="ti ${icon} fs-2"></i>
                                         </div>
                                         <div>
-                                            <h4 class="mb-0 fw-bold">${parseFloat(item.tutar).toFixed(2)} TL</h4>
-                                            <p class="text-muted extra-small mb-0">${item.created_at} ${periodText ? '• ' + periodText : ''}</p>
+                                            <h4 class="mb-0 fw-bold text-dark">Avans Talebi</h4>
+                                            <p class="text-muted extra-small mb-0">${item.created_at} • <span class="fw-bold ${statusClass}">${statusText}</span></p>
+                                            <p class="text-secondary extra-small mb-0 mt-1 italic opacity-75">"${item.aciklama || 'Açıklama belirtilmemiş'}"</p>
                                         </div>
                                     </div>
-                                    <span class="badge ${statusClass} rounded-pill">
-                                        <i class="ti ${icon} me-1"></i> ${statusText}
-                                    </span>
+                                    <div class="text-end">
+                                        <h3 class="mb-0 fw-bold text-dark" style="font-size: 1.15rem;">₺ ${parseFloat(item.tutar).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</h3>
+                                    </div>
                                 </div>
-                                <p class="text-muted small mb-0 text-truncate">${item.aciklama || 'Açıklama belirtilmemiş'}</p>
                             </div>
                         </div>
                     `;
@@ -378,6 +395,7 @@ window.app = {
                 startX = e.touches[0].clientX;
                 isSwiping = true;
                 content.style.transition = 'none';
+                delete content.dataset.swiping;
             });
 
             content.addEventListener('touchmove', (e) => {
@@ -385,25 +403,30 @@ window.app = {
                 currentX = e.touches[0].clientX;
                 let diff = startX - currentX;
                 
-                // Sensitivity threshold: only start moving if swiped more than 20px
                 if (Math.abs(diff) < 20) return;
                 
+                content.dataset.swiping = "true"; // Flag to ignore click
+                
                 if (diff > 0) { // Swipe left
-                    let moveX = diff - 20; // Subtract threshold for smoother start
-                    if (moveX > 80) moveX = 80 + (moveX - 80) * 0.2; // Resistance
+                    let moveX = diff - 20;
+                    if (moveX > 80) moveX = 80 + (moveX - 80) * 0.2;
                     content.style.transform = `translateX(-${moveX}px)`;
                 }
             });
 
             content.addEventListener('touchend', (e) => {
                 isSwiping = false;
-                content.style.transition = 'transform 0.2s ease-out';
-                let diff = startX - currentX;
-                if (diff > 50) { // Increased threshold for "open" state
+                content.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                let diff = startX - (currentX || startX);
+                if (diff > 50) {
                     content.style.transform = 'translateX(-80px)';
+                    content.dataset.swiping = "true";
                 } else {
                     content.style.transform = 'translateX(0)';
+                    // Delay clearing swiping flag to catch the click event
+                    setTimeout(() => delete content.dataset.swiping, 100);
                 }
+                currentX = 0;
             });
 
             // Close other items on touch
@@ -508,7 +531,7 @@ window.app = {
                 if (res.status === 'success') {
                     this.hideModal();
                     this.loadAdvances();
-                    Swal.fire('Başarılı', 'Avans talebiniz başarıyla oluşturuldu.', 'success');
+                    this.toast('Avans talebiniz başarıyla oluşturuldu.', 'success');
                 } else {
                     Swal.fire('Hata', res.message || 'Bir hata oluştu.', 'error');
                 }
@@ -576,7 +599,7 @@ window.app = {
                 if (res.status === 'success') {
                     this.hideModal();
                     this.loadAdvances();
-                    Swal.fire('Başarılı', 'Talebiniz başarıyla güncellendi.', 'success');
+                    this.toast('Talebiniz başarıyla güncellendi.', 'success');
                 } else {
                     Swal.fire('Hata', res.message || 'Bir hata oluştu.', 'error');
                 }
@@ -790,7 +813,7 @@ window.app = {
                     localStorage.setItem('puantor_user', JSON.stringify(this.user));
                     this.updateProfileUI();
                     this.hideModal();
-                    Swal.fire('Başarılı', 'Profil güncellendi.', 'success');
+                    this.toast('Profil güncellendi.', 'success');
                 } else {
                     Swal.fire('Hata', res.message, 'error');
                 }
@@ -834,7 +857,7 @@ window.app = {
                 const res = await response.json();
                 if (res.status === 'success') {
                     this.hideModal();
-                    Swal.fire('Başarılı', 'Şifre değiştirildi.', 'success');
+                    this.toast('Şifre değiştirildi.', 'success');
                 } else {
                     Swal.fire('Hata', res.message, 'error');
                 }
