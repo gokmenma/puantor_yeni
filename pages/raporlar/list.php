@@ -4,6 +4,9 @@ require_once 'App/Helper/date.php';
 require_once 'Model/Persons.php';
 require_once 'App/Helper/security.php';
 
+require_once 'Model/Bordro.php';
+require_once 'App/Helper/security.php';
+
 use App\Helper\Date;
 use App\Helper\Helper;
 use App\Helper\Security;
@@ -24,6 +27,8 @@ $endDate = date('Y-m-d', strtotime($lastDayStr));
 // Get personnel counts for context box
 $personList = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDayStr, $lastDayStr);
 $personCount = count($personList);
+
+$bordroObj = new Bordro();
 
 $displayMonth = mb_strtoupper(Date::monthName($month), 'UTF-8');
 $displayTitle = "Raporlar";
@@ -327,6 +332,178 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                         </table>
                     </div>
                 </div>
+            <?php elseif($report_type == 'banka'): ?>
+                <!-- --- BANK LIST REPORT RENDERING --- -->
+                <?php
+                // Get all personnel for this month
+                $personsForBank = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDayStr, $lastDayStr);
+                $bankData = [];
+                foreach($personsForBank as $p_item) {
+                    $p = $personObj->find($p_item->id);
+                    // Use the same logic as payroll/list.php
+                    $res = $bordroObj->getPersonSalaryAndWageCut($p->id, $firstDayStr, $lastDayStr);
+                    $netPay = ($res->gelir ?? 0) - ($res->odeme ?? 0);
+                    
+                    if($netPay > 0) {
+                        $bankData[] = (object)[
+                            'id' => $p->id,
+                            'full_name' => $p->full_name,
+                            'kimlik_no' => Security::safeDecrypt($p->kimlik_no ?? ''),
+                            'iban_number' => Security::safeDecrypt($p->iban_number ?? ''),
+                            'amount' => $netPay
+                        ];
+                    }
+                }
+                ?>
+                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-light">
+                        <div>
+                            <h3 class="card-title fw-bold mb-0">Banka Ödeme Listesi</h3>
+                            <span class="badge bg-info-lt mt-1"><?= $displayMonth ?> <?= $year ?> Dönemi</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="btn-group shadow-sm" role="group" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <a href="index.php?p=raporlar/list&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-white px-3" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;" title="Geri Dön">
+                                    <i class="ti ti-arrow-left fs-2 text-secondary"></i>
+                                </a>
+                                <button type="button" class="btn btn-white px-3 text-success" title="Excel'e Aktar" onclick="exportBankList('excel')">
+                                    <i class="ti ti-file-spreadsheet fs-2"></i>
+                                </button>
+                                <button type="button" class="btn btn-white px-3 text-danger" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" title="PDF Olarak İndir" onclick="exportBankList('pdf')">
+                                    <i class="ti ti-file-type-pdf fs-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-vcenter text-nowrap mb-0" id="bankDataTable">
+                            <thead>
+                                <tr>
+                                    <th>Personel Adı</th>
+                                    <th>TC Kimlik No</th>
+                                    <th>IBAN No</th>
+                                    <th class="text-end">Ödenecek Tutar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if(empty($bankData)): ?>
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">Bu dönem için ödeme verisi bulunamadı.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach($bankData as $b): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar avatar-xs rounded-circle bg-info-lt text-info font-weight-bold me-2">
+                                                    <?= mb_substr($b->full_name, 0, 1, 'UTF-8') ?>
+                                                </span>
+                                                <span class="fw-semibold text-dark"><?= htmlspecialchars($b->full_name) ?></span>
+                                            </div>
+                                        </td>
+                                        <td><?= htmlspecialchars($b->kimlik_no ?? '-') ?></td>
+                                        <td><?= htmlspecialchars($b->iban_number ?? '-') ?></td>
+                                        <td class="text-end fw-bold text-success"><?= Helper::formattedMoney($b->amount) ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <script>
+                    function exportBankList(type) {
+                        if(type === 'excel') {
+                            window.location.href = 'pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>';
+                        } else {
+                            window.print();
+                        }
+                    }
+                </script>
+
+            <?php elseif($report_type == 'bordro'): ?>
+                <!-- --- BORDRO SELECTION RENDERING --- -->
+                <?php
+                $personsForBordro = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDayStr, $lastDayStr);
+                ?>
+                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-light">
+                        <div>
+                            <h3 class="card-title fw-bold mb-0">Bordro Yazdırma Listesi</h3>
+                            <span class="badge bg-teal-lt mt-1">Lütfen yazdırılacak personelleri seçiniz</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                             <a href="index.php?p=raporlar/list&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-white shadow-sm">
+                                <i class="ti ti-arrow-left me-1"></i> Geri
+                            </a>
+                            <button type="button" class="btn btn-primary shadow-sm" id="btnPrintSelectedBordro">
+                                <i class="ti ti-printer me-1"></i> Seçilileri Yazdır
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-vcenter text-nowrap mb-0" id="bordroSelectionTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 1%"><input type="checkbox" class="form-check-input" id="selectAllBordro"></th>
+                                    <th>Personel Adı</th>
+                                    <th>TC Kimlik No</th>
+                                    <th>Ünvan</th>
+                                    <th class="text-center">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if(empty($personsForBordro)): ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">Bu dönem için personel bulunamadı.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach($personsForBordro as $p_item): 
+                                        $p = $personObj->find($p_item->id);
+                                    ?>
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input row-check" value="<?= Security::encrypt($p->id) ?>"></td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar avatar-xs rounded-circle bg-teal-lt text-teal font-weight-bold me-2">
+                                                    <?= mb_substr($p->full_name, 0, 1, 'UTF-8') ?>
+                                                </span>
+                                                <span class="fw-semibold text-dark"><?= htmlspecialchars($p->full_name) ?></span>
+                                            </div>
+                                        </td>
+                                        <td><?= htmlspecialchars(Security::safeDecrypt($p->kimlik_no ?? '')) ?></td>
+                                        <td class="small text-secondary"><?= htmlspecialchars($p->job ?? '-') ?></td>
+                                        <td class="text-center">
+                                            <a href="index.php?p=payroll/pay-slip&id=<?= Security::encrypt($p->id) ?>&month=<?= Security::encrypt($month) ?>&year=<?= Security::encrypt($year) ?>" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary" title="Görüntüle">
+                                                <i class="ti ti-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <script>
+                    document.getElementById('selectAllBordro').addEventListener('change', function() {
+                        document.querySelectorAll('.row-check').forEach(cb => cb.checked = this.checked);
+                    });
+                    
+                    document.getElementById('btnPrintSelectedBordro').addEventListener('click', function() {
+                        const selected = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+                        if(selected.length === 0) {
+                            alert('Lütfen en az bir personel seçiniz.');
+                            return;
+                        }
+                        
+                        const ids = selected.join(',');
+                        const url = `index.php?p=raporlar/bordro-yazdir&ids=${ids}&month=<?= Security::encrypt($month) ?>&year=<?= Security::encrypt($year) ?>`;
+                        window.open(url, '_blank');
+                    });
+                </script>
             <?php else: ?>
                 <!-- --- DASHBOARD CARDS RENDERING --- -->
                 <div class="row row-cards g-3">
@@ -334,10 +511,10 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                         <?php renderReportCard("İcmal Raporu", "Dönem bazlı personel maaş özet raporu. Brüt maaş, kesintiler ve net bilgileri.", "ti-chart-bar", "bg-dark-lt text-dark") ?>
                     </div>
                     <div class="col-xl-4 col-md-6">
-                        <?php renderReportCard("Bordro", "Personel bazlı detaylı bordro çıktısı. Yazdırılabilir ve PDF formatında.", "ti-file-invoice", "bg-teal-lt text-teal") ?>
+                        <?php renderReportCard("Bordro", "Personel bazlı detaylı bordro çıktısı. Yazdırılabilir ve PDF formatında.", "ti-file-invoice", "bg-teal-lt text-teal", "index.php?p=raporlar/list&report=bordro&year=$year&months=$month", true) ?>
                     </div>
                     <div class="col-xl-4 col-md-6">
-                        <?php renderReportCard("Banka Listesi", "Bankaya gönderilecek ödeme listesi. IBAN ve hesap tutarlarını içerir.", "ti-building-bank", "bg-info-lt text-info") ?>
+                        <?php renderReportCard("Banka Listesi", "Bankaya gönderilecek ödeme listesi. IBAN ve hesap tutarlarını içerir.", "ti-building-bank", "bg-info-lt text-info", "index.php?p=raporlar/list&report=banka&year=$year&months=$month", true) ?>
                     </div>
                     <div class="col-xl-4 col-md-6">
                         <!-- Activated Module -->
@@ -368,16 +545,16 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     <div class="card-body p-3">
                         <div class="row g-2">
                             <div class="col-md-3 col-6">
-                                <a href="#" class="btn btn-outline-teal w-100 text-nowrap"><i class="ti ti-file-spreadsheet me-1"></i> İcmal (Excel)</a>
+                                <a href="#" class="btn btn-outline-teal w-100 text-nowrap disabled opacity-50"><i class="ti ti-file-spreadsheet me-1"></i> İcmal (Excel)</a>
                             </div>
                             <div class="col-md-3 col-6">
-                                <a href="#" class="btn btn-outline-info w-100 text-nowrap"><i class="ti ti-building-bank me-1"></i> Banka (Excel)</a>
+                                <a href="pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-info w-100 text-nowrap"><i class="ti ti-building-bank me-1"></i> Banka (Excel)</a>
                             </div>
                             <div class="col-md-3 col-6">
-                                <a href="#" class="btn btn-outline-success w-100 text-nowrap"><i class="ti ti-tools-kitchen-2 me-1"></i> Sodexo (Excel)</a>
+                                <a href="#" class="btn btn-outline-success w-100 text-nowrap disabled opacity-50"><i class="ti ti-tools-kitchen-2 me-1"></i> Sodexo (Excel)</a>
                             </div>
                             <div class="col-md-3 col-6">
-                                <a href="#" class="btn btn-outline-dark w-100 text-nowrap"><i class="ti ti-printer me-1"></i> Bordroları Yazdır</a>
+                                <a href="index.php?p=raporlar/list&report=bordro&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-outline-dark w-100 text-nowrap"><i class="ti ti-printer me-1"></i> Bordroları Yazdır</a>
                             </div>
                         </div>
                     </div>
