@@ -34,7 +34,7 @@
             </div>
             <div class="flex-fill">
                 <p class="text-muted small mb-0">Telefon</p>
-                <p id="profile-phone" class="fw-bold mb-0 text-dark">-</p>
+                <p id="profile-phone" class="fw-bold mb-0">-</p>
             </div>
         </div>
         <div class="profile-info-item">
@@ -43,7 +43,7 @@
             </div>
             <div class="flex-fill">
                 <p class="text-muted small mb-0">E-Posta</p>
-                <p id="profile-email" class="fw-bold mb-0 text-dark">-</p>
+                <p id="profile-email" class="fw-bold mb-0">-</p>
             </div>
         </div>
         <div class="profile-info-item">
@@ -52,7 +52,7 @@
             </div>
             <div class="flex-fill">
                 <p class="text-muted small mb-0">IBAN</p>
-                <p id="profile-iban" class="fw-bold mb-0 text-dark" style="font-size: 0.85rem;">-</p>
+                <p id="profile-iban" class="fw-bold mb-0" style="font-size: 0.85rem;">-</p>
             </div>
         </div>
     </div>

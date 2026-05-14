@@ -22,8 +22,8 @@ if ($action == 'update') {
 
     $data = [
         'id' => $person_id,
-        'phone' => $phone,
-        'email' => $email,
+        'phone' => Security::encrypt($phone),
+        'email' => Security::encrypt($email),
         'iban_number' => Security::encrypt($iban)
     ];
 
@@ -34,6 +34,15 @@ if ($action == 'update') {
     $Persons = new Persons();
     try {
         $Persons->saveWithAttr($data);
+        
+        // Update session
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $person = $_SESSION['personel_user'];
+        $person->phone = $phone;
+        $person->email = $email;
+        $person->iban_number = $iban;
+        $_SESSION['personel_user'] = $person;
+
         echo json_encode(['status' => 'success', 'message' => 'Profil güncellendi.']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'message' => 'Hata: ' . $e->getMessage()]);

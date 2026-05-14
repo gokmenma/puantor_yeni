@@ -12,6 +12,13 @@ if (!isset($_SESSION['personel_id'])) {
 $route = $_GET['route'] ?? 'dashboard';
 $user = $_SESSION['personel_user'];
 
+// Ensure data is decrypted (fallback for legacy sessions)
+require_once __DIR__ . "/../App/Helper/security.php";
+use App\Helper\Security;
+if (isset($user->phone)) $user->phone = Security::safeDecrypt($user->phone);
+if (isset($user->email)) $user->email = Security::safeDecrypt($user->email);
+if (isset($user->iban_number)) $user->iban_number = Security::safeDecrypt($user->iban_number);
+
 // Route to file mapping
 $routes = [
     'dashboard' => [

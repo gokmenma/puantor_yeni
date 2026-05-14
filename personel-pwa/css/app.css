@@ -38,6 +38,7 @@ html, body {
 [data-bs-theme="dark"] html,
 [data-bs-theme="dark"] body {
   background-color: #0f172a;
+  color: #f4f6fa;
 }
 
 /* App Containers */
@@ -324,6 +325,10 @@ html, body {
     overflow: hidden;
 }
 
+[data-bs-theme="dark"] .login-screen {
+    background-color: #0f172a;
+}
+
 /* Blob Backgrounds */
 .bg-blob {
     position: absolute;
@@ -360,6 +365,12 @@ html, body {
     animation: fadeIn 0.4s ease-out forwards;
 }
 
+[data-bs-theme="dark"] .login-container {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
 .login-subtitle {
     font-size: 0.875rem;
     color: #64748b;
@@ -369,12 +380,41 @@ html, body {
     border-radius: 8px;
     background-color: #ffffff;
     border: 1px solid #d1d5db;
+    color: inherit;
+}
+
+[data-bs-theme="dark"] .form-floating > .form-control {
+    background-color: #0f172a;
+    border-color: #334155;
 }
 
 .form-floating > .form-control:focus {
     background-color: #ffffff;
     border-color: #206bc4;
     box-shadow: 0 0 0 4px rgba(32, 107, 196, 0.08);
+}
+
+[data-bs-theme="dark"] .form-floating > .form-control:focus {
+    background-color: #0f172a;
+}
+
+.form-floating > label {
+    color: #64748b;
+}
+
+[data-bs-theme="dark"] .form-floating > label {
+    color: #94a3b8;
+}
+
+.form-select {
+    border-radius: 8px;
+    border-color: #d1d5db;
+}
+
+[data-bs-theme="dark"] .form-select {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
 }
 
 .login-middle-form {
@@ -415,6 +455,11 @@ html, body {
         padding: 0;
         align-items: stretch;
     }
+    
+    [data-bs-theme="dark"] .login-screen {
+        background-color: #0f172a;
+    }
+
     .bg-blob {
         display: none;
     }
@@ -429,6 +474,10 @@ html, body {
         flex-direction: column;
         justify-content: center;
         padding: 2rem 1.75rem;
+    }
+
+    [data-bs-theme="dark"] .login-container {
+        background: #0f172a;
     }
 }
 

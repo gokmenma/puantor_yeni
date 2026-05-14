@@ -66,6 +66,12 @@ try {
             // Başarılı giriş - denemeleri sıfırla
             $_SESSION['login_attempts'] = 0;
             
+            // Decrypt sensitive fields for session and frontend
+            $person->kimlik_no = Security::safeDecrypt($person->kimlik_no);
+            $person->phone = Security::safeDecrypt($person->phone);
+            $person->email = Security::safeDecrypt($person->email);
+            $person->iban_number = Security::safeDecrypt($person->iban_number);
+            
             // Session'a kullanıcı bilgilerini yaz
             $_SESSION['personel_user'] = $person;
             $_SESSION['personel_id'] = $person->id;
@@ -74,10 +80,6 @@ try {
             // Remove sensitive data for JSON response
             $person_response = clone $person;
             unset($person_response->password);
-            
-            // Decrypt sensitive fields for frontend display
-            $person_response->kimlik_no = Security::safeDecrypt($person->kimlik_no);
-            $person_response->iban_number = Security::safeDecrypt($person->iban_number);
             
             echo json_encode(['status' => 'success', 'user' => $person_response]);
             exit;
