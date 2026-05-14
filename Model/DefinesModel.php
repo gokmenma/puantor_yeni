@@ -87,12 +87,17 @@ class DefinesModel extends Model
         }
 
         if (!empty($ids)) {
-            if ($type == 2 && !in_array(7, $ids)) {
-                $ids[] = 7; // Her zaman Avans kategorisini giderlere dahil et
+            if ($type == 2) {
+                if (!in_array(7, $ids)) {
+                    $ids[] = 7; // Her zaman Avans kategorisini giderlere dahil et
+                }
+                if (!in_array(15, $ids)) {
+                    $ids[] = 15; // Her zaman Kesinti kategorisini giderlere dahil et
+                }
             }
             return implode(',', $ids);
         } else {
-            return $type == 2 ? "7" : ""; // Return category 7 as default for expense if list is empty
+            return $type == 2 ? "7,15" : ""; // Return categories 7 and 15 as default for expense if list is empty
         }
     }
 

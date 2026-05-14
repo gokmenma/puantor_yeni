@@ -504,6 +504,105 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                         window.open(url, '_blank');
                     });
                 </script>
+            <?php elseif($report_type == 'kesinti'): ?>
+                <!-- --- KESİNTİ REPORT RENDERING --- -->
+                <?php
+                require_once 'Model/DefinesModel.php';
+                $definesObj = new DefinesModel();
+                $db = $personObj->connect();
+                $kesinti_ids = $definesObj->getExpenseTypes(2); // Get deduction IDs
+                
+                $queryStr = "
+                SELECT 
+                    p.full_name,
+                    mgk.turu,
+                    mgk.tutar,
+                    mgk.gun,
+                    mgk.aciklama,
+                    dt.name as kategori_adi
+                FROM maas_gelir_kesinti mgk
+                JOIN persons p ON mgk.person_id = p.id
+                LEFT JOIN defines dt ON mgk.kategori = dt.id
+                WHERE p.firm_id = ? 
+                  AND mgk.kategori IN ($kesinti_ids)
+                  AND CAST(REPLACE(mgk.gun, '-', '') AS UNSIGNED) >= ? 
+                  AND CAST(REPLACE(mgk.gun, '-', '') AS UNSIGNED) <= ?
+                ORDER BY mgk.gun DESC
+                ";
+                $stmt = $db->prepare($queryStr);
+                $stmt->execute([$firm_id, $firstDayStr, $lastDayStr]);
+                $kesintiData = $stmt->fetchAll(PDO::FETCH_OBJ);
+                ?>
+                <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-light">
+                        <div>
+                            <h3 class="card-title fw-bold mb-0">Kesinti Detay Raporu</h3>
+                            <span class="badge bg-danger-lt mt-1"><?= $displayMonth ?> <?= $year ?> Dönemi</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="btn-group shadow-sm" role="group" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <a href="index.php?p=raporlar/list&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-white px-3" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;" title="Geri Dön">
+                                    <i class="ti ti-arrow-left fs-2 text-secondary"></i>
+                                </a>
+                                <button type="button" class="btn btn-white px-3 text-success" title="Excel'e Aktar" onclick="exportKesintiList('excel')">
+                                    <i class="ti ti-file-spreadsheet fs-2"></i>
+                                </button>
+                                <button type="button" class="btn btn-white px-3 text-danger" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" title="PDF Olarak İndir" onclick="exportKesintiList('pdf')">
+                                    <i class="ti ti-file-type-pdf fs-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-vcenter text-nowrap mb-0" id="kesintiDataTable">
+                            <thead>
+                                <tr>
+                                    <th>Personel Adı</th>
+                                    <th>Tarih</th>
+                                    <th>Kategori</th>
+                                    <th>Kesinti Türü</th>
+                                    <th>Açıklama</th>
+                                    <th class="text-end">Tutar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if(empty($kesintiData)): ?>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">Bu dönem için kesinti kaydı bulunamadı.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach($kesintiData as $k): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="avatar avatar-xs rounded-circle bg-danger-lt text-danger font-weight-bold me-2">
+                                                    <?= mb_substr($k->full_name, 0, 1, 'UTF-8') ?>
+                                                </span>
+                                                <span class="fw-semibold text-dark"><?= htmlspecialchars($k->full_name) ?></span>
+                                            </div>
+                                        </td>
+                                        <td><?= date('d.m.Y', strtotime($k->gun)) ?></td>
+                                        <td><span class="badge bg-light text-dark"><?= htmlspecialchars($k->kategori_adi ?? 'Diğer') ?></span></td>
+                                        <td class="small text-secondary"><?= htmlspecialchars($k->turu) ?></td>
+                                        <td class="small text-muted"><?= htmlspecialchars($k->aciklama ?? '-') ?></td>
+                                        <td class="text-end fw-bold text-danger">-<?= Helper::formattedMoney($k->tutar) ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <script>
+                    function exportKesintiList(type) {
+                        if(type === 'excel') {
+                             window.location.href = 'pages/raporlar/kesinti-list-excel.php?month=<?= $month ?>&year=<?= $year ?>';
+                        } else {
+                            window.print();
+                        }
+                    }
+                </script>
             <?php else: ?>
                 <!-- --- DASHBOARD CARDS RENDERING --- -->
                 <div class="row row-cards g-3">
@@ -530,7 +629,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                         <?php renderReportCard("Maliyet Raporu", "İşveren maliyet analizi raporu. Toplam personel maliyeti dağılımı.", "ti-chart-pie", "bg-dark-lt text-secondary") ?>
                     </div>
                     <div class="col-xl-4 col-md-6">
-                        <?php renderReportCard("Kesinti Raporu", "Personel kesintilerinin (İcra, Avans vb.) detaylı filtrelemeli listesi.", "ti-scissors", "bg-dark-lt text-muted") ?>
+                        <?php renderReportCard("Kesinti Raporu", "Personel kesintilerinin (İcra, Avans vb.) detaylı filtrelemeli listesi.", "ti-scissors", "bg-dark-lt text-muted", "index.php?p=raporlar/list&report=kesinti&year=$year&months=$month", true) ?>
                     </div>
                     <div class="col-xl-4 col-md-6">
                         <?php renderReportCard("Sodexo Raporu", "Personel yemek (Sodexo) ödemelerinin listesi ve dışa aktarımı.", "ti-tools-kitchen-2", "bg-success-lt text-success") ?>
@@ -551,7 +650,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                 <a href="pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-info w-100 text-nowrap"><i class="ti ti-building-bank me-1"></i> Banka (Excel)</a>
                             </div>
                             <div class="col-md-3 col-6">
-                                <a href="#" class="btn btn-outline-success w-100 text-nowrap disabled opacity-50"><i class="ti ti-tools-kitchen-2 me-1"></i> Sodexo (Excel)</a>
+                                <a href="pages/raporlar/kesinti-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-danger w-100 text-nowrap"><i class="ti ti-scissors me-1"></i> Kesinti (Excel)</a>
                             </div>
                             <div class="col-md-3 col-6">
                                 <a href="index.php?p=raporlar/list&report=bordro&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-outline-dark w-100 text-nowrap"><i class="ti ti-printer me-1"></i> Bordroları Yazdır</a>
