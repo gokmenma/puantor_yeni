@@ -43,6 +43,8 @@ $showWhiteCollar = $Settings->getSettings("show_white_collar_in_puantaj")->set_v
 $first_day = Date::firstDay($month, $year);
 
 if ($project_id > 0 && !$projects->belongsToFirm($project_id, $firm_id)) {
+    setcookie('p_projects', '', time() - 3600, '/');
+    $project_id = 0;
     $persons = [];
 } elseif ($project_id == 0 || $project_id == '') {
     // Proje id boş ise Firma id'sine göre tüm mavi yakalı, işe başlama tarihi o ayın son gününden önce olan personelleri getirir
