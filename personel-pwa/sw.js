@@ -1,4 +1,4 @@
-const CACHE_NAME = 'puantor-personel-v10';
+const CACHE_NAME = 'puantor-personel-v11';
 const ASSETS = [
   './',
   './index.php',

@@ -96,7 +96,10 @@ class Puantaj extends Model
         $end_nodash = str_replace('-', '', $end_date);
 
         // Hem tireli aralığı hem de tiresiz aralığı kapsayacak şekilde OR şartı ekle
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE person = ? AND ((gun >= ? AND gun <= ?) OR (gun >= ? AND gun <= ?))");
+        $sql = $this->db->prepare("SELECT p.*, pt.PuantajAdi, pt.PuantajKod, pt.Turu as attendance_type, pt.ArkaPlanRengi, pt.FontRengi 
+                                   FROM $this->table p 
+                                   LEFT JOIN puantajturu pt ON p.puantaj_id = pt.id
+                                   WHERE p.person = ? AND ((p.gun >= ? AND p.gun <= ?) OR (p.gun >= ? AND p.gun <= ?))");
         $sql->execute([$person_id, $start_dash, $end_dash, $start_nodash, $end_nodash]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }

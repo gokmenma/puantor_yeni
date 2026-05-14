@@ -20,14 +20,15 @@ window.app = {
             position: "center",
             stopOnFocus: true,
             style: {
-                background: colors[type] || colors.info,
-                borderRadius: "50px",
+                background: "#206bc4", // Tabler Primary
+                borderRadius: "8px",
                 boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                 margin: "1.5rem auto",
                 padding: "10px 24px",
                 textAlign: "center",
-                fontSize: "0.9rem",
-                fontWeight: "500",
+                fontSize: "0.875rem",
+                fontWeight: "600",
+                color: "#ffffff",
                 width: "max-content",
                 maxWidth: "85%",
                 left: "0",
@@ -327,29 +328,125 @@ window.app = {
                         icon = 'ti-x';
                     }
 
+                    const periodText = item.hedef_ay ? `${item.hedef_ay}/${item.hedef_yil} Dönemi` : '';
+
                     return `
-                        <div onclick="app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\'")}', ${item.durum})" class="mobile-card d-flex flex-column gap-2 cursor-pointer">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="avatar avatar-sm rounded bg-primary-lt text-primary">
-                                        <i class="ti ti-cash"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="mb-0 fw-bold">${item.tutar} TL</h4>
-                                        <p class="text-muted small mb-0">${item.created_at}</p>
-                                    </div>
-                                </div>
-                                <span class="badge ${statusClass} rounded-pill">
-                                    <i class="${icon} me-1"></i> ${statusText}
-                                </span>
+                        <div class="swipe-item" data-id="${item.id}">
+                            <div class="swipe-actions">
+                                <button onclick="event.stopPropagation(); app.deleteAdvance('${item.id}')" class="btn-swipe-delete">
+                                    <i class="ti ti-trash"></i>
+                                </button>
                             </div>
-                            <p class="text-muted small mb-0 text-truncate">${item.aciklama || 'Açıklama belirtilmemiş'}</p>
+                            <div onclick="app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\'")}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')" 
+                                 class="swipe-content mobile-card d-flex flex-column gap-2 cursor-pointer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar avatar-sm rounded bg-primary-lt text-primary">
+                                            <i class="ti ti-cash"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="mb-0 fw-bold">${parseFloat(item.tutar).toFixed(2)} TL</h4>
+                                            <p class="text-muted extra-small mb-0">${item.created_at} ${periodText ? '• ' + periodText : ''}</p>
+                                        </div>
+                                    </div>
+                                    <span class="badge ${statusClass} rounded-pill">
+                                        <i class="ti ${icon} me-1"></i> ${statusText}
+                                    </span>
+                                </div>
+                                <p class="text-muted small mb-0 text-truncate">${item.aciklama || 'Açıklama belirtilmemiş'}</p>
+                            </div>
                         </div>
                     `;
                 }).join('') || '<div class="text-center py-4 text-muted small">Henüz avans talebiniz yok.</div>';
+
+                this.initSwipeToDelete();
             }
         } catch (error) {
             console.error('Load advances error:', error);
+        }
+    },
+
+    initSwipeToDelete() {
+        const items = document.querySelectorAll('.swipe-item');
+        items.forEach(item => {
+            const content = item.querySelector('.swipe-content');
+            let startX = 0;
+            let currentX = 0;
+            let isSwiping = false;
+
+            content.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isSwiping = true;
+                content.style.transition = 'none';
+            });
+
+            content.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.touches[0].clientX;
+                let diff = startX - currentX;
+                
+                // Sensitivity threshold: only start moving if swiped more than 20px
+                if (Math.abs(diff) < 20) return;
+                
+                if (diff > 0) { // Swipe left
+                    let moveX = diff - 20; // Subtract threshold for smoother start
+                    if (moveX > 80) moveX = 80 + (moveX - 80) * 0.2; // Resistance
+                    content.style.transform = `translateX(-${moveX}px)`;
+                }
+            });
+
+            content.addEventListener('touchend', (e) => {
+                isSwiping = false;
+                content.style.transition = 'transform 0.2s ease-out';
+                let diff = startX - currentX;
+                if (diff > 50) { // Increased threshold for "open" state
+                    content.style.transform = 'translateX(-80px)';
+                } else {
+                    content.style.transform = 'translateX(0)';
+                }
+            });
+
+            // Close other items on touch
+            document.addEventListener('touchstart', (e) => {
+                if (!item.contains(e.target)) {
+                    content.style.transform = 'translateX(0)';
+                }
+            });
+        });
+    },
+
+    async deleteAdvance(id) {
+        const result = await Swal.fire({
+            title: 'Silmek istediğinize emin misiniz?',
+            text: "Bu işlem geri alınamaz!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'İptal'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch('api/advance.php', {
+                    method: 'POST',
+                    body: new URLSearchParams({
+                        action: 'delete',
+                        id: id,
+                        person_id: this.user.id
+                    })
+                });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    this.toast(res.message, 'success');
+                    this.loadAdvances();
+                } else {
+                    this.toast(res.message, 'error');
+                }
+            } catch (error) {
+                this.toast('Bir hata oluştu.', 'error');
+            }
         }
     },
 
@@ -421,19 +518,44 @@ window.app = {
         });
     },
 
-    editAdvance(id, tutar, aciklama, durum) {
+    editAdvance(id, tutar, aciklama, durum, ay, yil) {
         if (durum !== 0) return;
+
+        const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        const monthOptions = monthNames.map((name, i) => `
+            <option value="${i+1}" ${parseInt(ay) === i+1 ? 'selected' : ''}>${name}</option>
+        `).join('');
+
+        const currentYear = new Date().getFullYear();
+        const yearOptions = `
+            <option value="${currentYear-1}" ${parseInt(yil) === currentYear-1 ? 'selected' : ''}>${currentYear-1}</option>
+            <option value="${currentYear}" ${parseInt(yil) === currentYear ? 'selected' : ''}>${currentYear}</option>
+            <option value="${currentYear+1}" ${parseInt(yil) === currentYear+1 ? 'selected' : ''}>${currentYear+1}</option>
+        `;
 
         this.showModal('Talebi Güncelle', `
             <form id="edit-advance-form">
                 <input type="hidden" name="id" value="${id}">
+                <div class="mb-3">
+                    <label class="form-label text-muted small fw-bold">HEDEF MAAŞ DÖNEMİ</label>
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <select name="hedef_ay" class="form-select form-select-lg" style="height: 58px;">${monthOptions}</select>
+                        </div>
+                        <div class="col-5">
+                            <select name="hedef_yil" class="form-select form-select-lg" style="height: 58px;">
+                                ${yearOptions}
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-floating mb-3">
                     <input name="tutar" type="number" step="0.01" class="form-control" id="edit-adv-tutar" value="${tutar}" placeholder="0.00" required/>
-                    <label for="edit-adv-tutar">Avans Tutarı (TL)</label>
+                    <label for="edit-adv-tutar">Talep Edilen Tutar (TL)</label>
                 </div>
                 <div class="form-floating mb-4">
                     <textarea name="aciklama" class="form-control" id="edit-adv-desc" placeholder="Açıklama" style="height: 100px" required>${aciklama === 'Açıklama belirtilmemiş' ? '' : aciklama}</textarea>
-                    <label for="edit-adv-desc">Açıklama</label>
+                    <label for="edit-adv-desc">Talebinizle ilgili kısa bilgi...</label>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">Güncelle ve Kaydet</button>
             </form>
@@ -517,21 +639,42 @@ window.app = {
 
         for (let i = 1; i <= daysInMonth; i++) {
             const dayStr = `${year}${month.toString().padStart(2, '0')}${i.toString().padStart(2, '0')}`;
-            const record = data.find(r => r.gun === dayStr);
+            const record = data.find(r => r.gun === dayStr || r.gun === `${year}-${month.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`);
             const isToday = new Date().toDateString() === new Date(year, month-1, i).toDateString();
             const isSunday = new Date(year, month-1, i).getDay() === 0;
-            const hasRecord = record && parseFloat(record.saat) > 0;
             
-            if (isSunday) totalHolidays++;
-            else if (hasRecord) { totalWorkDays++; totalWorkHours += parseFloat(record.saat); }
-            else if (record && record.type === 'holiday') totalHolidays++;
+            // Logic: Record data takes precedence over Sunday
+            let isHoliday = isSunday;
+            let isWork = false;
+            let customStyle = "";
+
+            if (record) {
+                // If it's a known work type, it's work
+                if (record.attendance_type === 'Normal Çalışma' || record.attendance_type === 'Saatlik') {
+                    isWork = true;
+                    isHoliday = false;
+                } else if (record.attendance_type === 'Ücretsiz' || record.attendance_type === 'Ücretli İzin') {
+                    isHoliday = true;
+                    isWork = false;
+                }
+                
+                if (record.ArkaPlanRengi) {
+                    customStyle = `style="background-color: ${record.ArkaPlanRengi}; color: ${record.FontRengi || '#fff'};"`;
+                }
+            }
+
+            if (isHoliday) totalHolidays++;
+            else if (isWork || (record && parseFloat(record.saat) > 0)) { 
+                totalWorkDays++; 
+                totalWorkHours += parseFloat(record.saat || 0); 
+            }
 
             let cls = "calendar-day";
-            if (isSunday) cls += " weekend";
-            if (hasRecord) cls += " active";
+            if (isSunday && !isWork) cls += " weekend";
+            if (isWork || (record && parseFloat(record.saat) > 0)) cls += " active";
             if (isToday) cls += " today";
             
-            html += `<div class="${cls}" onclick="app.showDayDetails('${dayStr}', ${JSON.stringify(record || {}).replace(/"/g, '&quot;')})">${i}</div>`;
+            html += `<div class="${cls}" ${customStyle} onclick="app.showDayDetails('${dayStr}', ${JSON.stringify(record || {}).replace(/"/g, '&quot;')})">${i}</div>`;
         }
         grid.innerHTML = html;
 
@@ -554,21 +697,63 @@ window.app = {
         const iconEl = document.getElementById('day-icon');
         const iconBgEl = document.getElementById('day-icon-bg');
         
-        if (date.getDay() === 0) {
-            statusEl.textContent = 'Hafta Tatili';
-            durationEl.textContent = '0 s';
-            iconEl.className = 'ti ti-sun';
-            iconBgEl.className = 'avatar avatar-md rounded bg-danger-lt text-danger';
-        } else if (record && record.saat) {
-            statusEl.textContent = record.puantaj_turu || record.turu || 'Normal Çalışma';
-            durationEl.textContent = `${parseFloat(record.saat).toFixed(1).replace('.0', '')} s`;
-            iconEl.className = 'ti ti-briefcase';
-            iconBgEl.className = 'avatar avatar-md rounded bg-primary-lt text-primary';
+        const isSunday = date.getDay() === 0;
+        const isWork = record && (record.attendance_type === 'Normal Çalışma' || record.attendance_type === 'Saatlik');
+
+        if (record && record.PuantajAdi) {
+            statusEl.textContent = record.PuantajAdi;
+            durationEl.textContent = `${parseFloat(record.saat || 0).toFixed(1).replace('.0', '')} s`;
+            
+            if (record.PuantajKod) {
+                iconEl.style.display = 'none';
+                let codeEl = iconBgEl.querySelector('.day-code');
+                if (!codeEl) {
+                    codeEl = document.createElement('span');
+                    codeEl.className = 'day-code fw-bold fs-3';
+                    iconBgEl.prepend(codeEl);
+                }
+                codeEl.textContent = record.PuantajKod;
+                codeEl.style.display = 'block';
+            } else {
+                iconEl.style.display = 'block';
+                const codeEl = iconBgEl.querySelector('.day-code');
+                if (codeEl) codeEl.style.display = 'none';
+            }
+
+            if (isWork) {
+                iconEl.className = 'ti ti-briefcase';
+                iconBgEl.className = 'avatar avatar-md rounded bg-primary-lt text-primary';
+            } else {
+                iconEl.className = 'ti ti-calendar-event';
+                iconBgEl.className = 'avatar avatar-md rounded bg-info-lt text-info';
+            }
+
+            // Apply custom color if available
+            if (record.ArkaPlanRengi) {
+                iconBgEl.style.backgroundColor = record.ArkaPlanRengi;
+                iconBgEl.style.color = record.FontRengi || '#fff';
+            } else {
+                iconBgEl.style.backgroundColor = '';
+                iconBgEl.style.color = '';
+            }
         } else {
-            statusEl.textContent = 'Kayıt Bulunmuyor';
-            durationEl.textContent = '0 s';
-            iconEl.className = 'ti ti-calendar-off';
-            iconBgEl.className = 'avatar avatar-md rounded bg-secondary-lt text-secondary';
+            iconEl.style.display = 'block';
+            const codeEl = iconBgEl.querySelector('.day-code');
+            if (codeEl) codeEl.style.display = 'none';
+
+            if (isSunday) {
+                statusEl.textContent = 'Hafta Tatili';
+                durationEl.textContent = '0 s';
+                iconEl.className = 'ti ti-sun';
+                iconBgEl.className = 'avatar avatar-md rounded bg-danger-lt text-danger';
+            } else {
+                statusEl.textContent = 'Kayıt Bulunmuyor';
+                durationEl.textContent = '0 s';
+                iconEl.className = 'ti ti-calendar-off';
+                iconBgEl.className = 'avatar avatar-md rounded bg-secondary-lt text-secondary';
+            }
+            iconBgEl.style.backgroundColor = '';
+            iconBgEl.style.color = '';
         }
     },
 

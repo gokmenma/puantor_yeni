@@ -373,6 +373,20 @@ $projectNamesCache[0] = "Proje Yok";
         z-index: 1000 !important;
     }
 
+    /* Sayfa kaydırıldığında sticky header'ın çalışması için */
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible !important;
+    }
+
+    /* Ayarlar dropdown stili */
+    .dropdown-menu-settings {
+        min-width: 250px;
+        padding: 0.5rem 0;
+        z-index: 1060;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
     .cursor-pointer {
         cursor: pointer !important;
     }
@@ -593,6 +607,21 @@ $projectNamesCache[0] = "Proje Yok";
                                 </label>
                             </div>
                         </div>
+
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-icon dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Ayarlar">
+                                <i class="ti ti-settings icon"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-settings">
+                                <h6 class="dropdown-header">Puantaj Ayarları</h6>
+                                <div class="dropdown-item">
+                                    <label class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="setting-auto-open-modal">
+                                        <span class="form-check-label">Seçim Yapınca Puantaj Türleri Açılsın</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                 <?php } ?>
 
                     </div>
@@ -765,6 +794,14 @@ $projectNamesCache[0] = "Proje Yok";
             if ($.fn.DataTable.isDataTable('#puantajTable')) {
                 $('#puantajTable').DataTable().columns.adjust();
             }
+        });
+
+        // Ayarların yüklenmesi
+        const autoOpenSetting = localStorage.getItem('autoOpenPuantajTypes') === 'true';
+        $('#setting-auto-open-modal').prop('checked', autoOpenSetting);
+
+        $('#setting-auto-open-modal').on('change', function() {
+            localStorage.setItem('autoOpenPuantajTypes', $(this).is(':checked'));
         });
     });
 </script>

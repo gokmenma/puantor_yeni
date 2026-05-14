@@ -36,7 +36,8 @@ $(document).on("click", ".gun", function (e) {
   }
 
   // $(this).addClass("clicked");
-  if (e.which === 1 && e.ctrlKey) {
+  const autoOpen = localStorage.getItem('autoOpenPuantajTypes') === 'true';
+  if (e.which === 1 && (e.ctrlKey || autoOpen)) {
     if ($(this).hasClass("clicked")) {
       $("#modal-default").modal("show");
     }
@@ -98,7 +99,8 @@ $(document).on("mousedown", ".gun:not(.selected)", function (event) {
 $(document).on("mouseup", ".gun:not(.selected)", function (event) {
   isMouseDown = false;
 
-  if ($(".gun.clicked").length > 0 && event.ctrlKey) {
+  const autoOpen = localStorage.getItem('autoOpenPuantajTypes') === 'true';
+  if ($(".gun.clicked").length > 0 && (event.ctrlKey || autoOpen)) {
     $("#modal-default").modal("show");
   }
 });

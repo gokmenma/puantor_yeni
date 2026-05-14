@@ -688,23 +688,35 @@ body[data-bs-theme="dark"] .profile-info-icon {
     padding: 0 !important;
 }
 
+/* Bottom Sheet Modal Styling */
+.modal-bottom-sheet.fade .modal-dialog {
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modal-bottom-sheet.show .modal-dialog {
+    transform: translateY(0) !important;
+}
+
+/* Fix for closing jump: Suppress Bootstrap's default scale/fade animation on the dialog */
+.modal-bottom-sheet.fade:not(.show) .modal-dialog {
+    transform: translateY(100%) !important;
+}
+
+.modal-bottom-sheet.show {
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
 .modal-bottom-sheet .modal-dialog {
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     min-height: auto !important;
-    transition: transform 0.35s cubic-bezier(0.15, 1, 0.3, 1) !important;
     display: flex;
     align-items: flex-end;
-}
-
-/* Transition when closing */
-.modal-bottom-sheet:not(.show) .modal-dialog {
-    transform: translateY(100%) !important;
-}
-
-.modal-bottom-sheet.show .modal-dialog {
-    transform: translateY(0) !important;
 }
 
 .modal-bottom-sheet .modal-content {
@@ -714,6 +726,51 @@ body[data-bs-theme="dark"] .profile-info-icon {
     margin: 0 !important;
     padding-bottom: env(safe-area-inset-bottom, 20px) !important;
     width: 100%;
+}
+
+/* Swipe-to-Delete Styling */
+.swipe-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    margin-bottom: 0.75rem;
+    background: #ef4444; /* Delete background */
+}
+
+.swipe-content {
+    position: relative;
+    z-index: 2;
+    background: #fff;
+    transition: transform 0.2s ease-out;
+    margin-bottom: 0 !important; /* Reset mobile-card margin */
+}
+
+body[data-bs-theme="dark"] .swipe-content {
+    background: #1e293b;
+}
+
+.swipe-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.btn-swipe-delete {
+    background: none;
+    border: none;
+    color: #fff;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
 }
 
 .modal-bottom-sheet .modal-header {

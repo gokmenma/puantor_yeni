@@ -59,4 +59,30 @@ if ($action == 'list') {
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'message' => 'Hata: ' . $e->getMessage()]);
     }
+} elseif ($action == 'delete') {
+    $id = $_POST['id'] ?? 0;
+    $person_id = $_POST['person_id'] ?? 0;
+
+    // Only pending advances can be deleted
+    $check = $db->prepare("SELECT durum FROM personel_avans_talepleri WHERE id = ? AND person_id = ?");
+    $check->execute([$id, $person_id]);
+    $durum = $check->fetchColumn();
+
+    if ($durum === false) {
+        echo json_encode(['status' => 'error', 'message' => 'Talep bulunamadı.']);
+        exit;
+    }
+
+    if ($durum != 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Onaylanmış veya reddedilmiş talepler silinemez.']);
+        exit;
+    }
+
+    $query = $db->prepare("DELETE FROM personel_avans_talepleri WHERE id = ? AND person_id = ?");
+    try {
+        $query->execute([$id, $person_id]);
+        echo json_encode(['status' => 'success', 'message' => 'Talep silindi.']);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'message' => 'Hata: ' . $e->getMessage()]);
+    }
 }
