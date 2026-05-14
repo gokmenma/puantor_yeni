@@ -646,7 +646,19 @@ function saveMobilePuantaj(selectedOption) {
 }
 
 function setAll(typeCode) {
-    if (!confirm('Tüm personelleri \"Geldi\" yapmak istediğinize emin misiniz?')) return;
+    Swal.fire({
+        title: 'Emin misiniz?',
+        text: 'Tüm personelleri "Geldi" yapmak istediğinize emin misiniz?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Evet, yap!',
+        cancelButtonText: 'Vazgeç',
+        background: $('body').attr('data-bs-theme') === 'dark' ? '#1e293b' : '#ffffff',
+        color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b'
+    }).then((result) => {
+        if (result.isConfirmed) {
     
     const typeOption = document.querySelector(`.type-option-row[data-type-code=\"${typeCode}\"]`);
     if (!typeOption) {
@@ -709,6 +721,8 @@ function setAll(typeCode) {
         },
         error: function() {
             alert('Sunucuyla iletişim kurulurken bir hata oluştu.');
+        }
+    });
         }
     });
 }

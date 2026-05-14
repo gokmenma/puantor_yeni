@@ -11,7 +11,7 @@ use App\Helper\Security;
 
 $cari_id_enc = $_GET['id'] ?? null;
 if (!$cari_id_enc) {
-    echo "<script>window.location.href='?p=cari/index';</script>";
+    echo "<script>window.location.href='cari';</script>";
     exit;
 }
 
@@ -20,7 +20,7 @@ $cariModel = new Cari();
 $cari = $cariModel->find($cari_id);
 
 if (!$cari || $cari->firma != $_SESSION['firm_id']) {
-    echo "<script>window.location.href='?p=cari/index';</script>";
+    echo "<script>window.location.href='cari';</script>";
     exit;
 }
 
@@ -96,7 +96,7 @@ body[data-bs-theme="dark"] .transaction-item-content {
 
 <div class="container px-0">
     <div class="mb-4 d-flex align-items-center gap-3 px-2">
-        <a href="?p=cari/index" class="btn btn-icon btn-light rounded-circle" style="width: 40px; height: 40px;">
+        <a href="cari" class="btn btn-icon btn-light rounded-circle" style="width: 40px; height: 40px;">
             <i class="ti ti-arrow-left"></i>
         </a>
         <div>
@@ -317,48 +317,101 @@ $(document).ready(function() {
 
     $(document).on('click', '.btn-delete-movement', function() {
         var id = $(this).data('id');
-        if (confirm('Bu hareketi silmek istediğinize emin misiniz?')) {
-            $.ajax({
-                url: '/api/cari/delete_movement.php',
-                type: 'POST',
-                data: { id: id },
-                success: function(response) {
-                    var data = JSON.parse(response);
-                    if(data.status === 'success') {
-                        location.reload();
-                    } else {
-                        Swal.fire('Hata', data.message, 'error');
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu hareketi silmek istediğinize emin misiniz?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'Vazgeç',
+            background: $('body').attr('data-bs-theme') === 'dark' ? '#1e293b' : '#ffffff',
+            color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/cari/delete_movement.php',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(response) {
+                        var data = JSON.parse(response);
+                        if(data.status === 'success') {
+                            location.reload();
+                        } else {
+                            Swal.fire('Hata', data.message, 'error');
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
     });
 
     // Swipe functionality
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchMoveX = 0;
+    let touchMoveY = 0;
+    let isHorizontalSwipe = false;
+    let isVerticalScroll = false;
     const swipeThreshold = 70;
+    const minMovement = 10;
 
     $(document).on('touchstart', '.transaction-item-content', function(e) {
         touchStartX = e.originalEvent.touches[0].clientX;
-        $('.transaction-item-content').not($(this)).css('transform', 'translateX(0)');
+        touchStartY = e.originalEvent.touches[0].clientY;
+        touchMoveX = touchStartX;
+        touchMoveY = touchStartY;
+        isHorizontalSwipe = false;
+        isVerticalScroll = false;
+        
+        // Sadece diğerlerini kapat
+        $('.transaction-item-content').not($(this)).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
     });
 
     $(document).on('touchmove', '.transaction-item-content', function(e) {
         touchMoveX = e.originalEvent.touches[0].clientX;
-        let diff = touchStartX - touchMoveX;
-        if (diff > 0) {
-            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
-            $(this).css('transition', 'none').css('transform', 'translateX(-' + diff + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
+        touchMoveY = e.originalEvent.touches[0].clientY;
+        
+        let diffX = touchStartX - touchMoveX;
+        let diffY = Math.abs(touchStartY - touchMoveY);
+
+        if (isVerticalScroll) return;
+
+        if (!isHorizontalSwipe && !isVerticalScroll) {
+            if (Math.abs(diffX) > minMovement && Math.abs(diffX) > diffY) {
+                isHorizontalSwipe = true;
+            } else if (diffY > minMovement) {
+                isVerticalScroll = true;
+                return;
+            }
+        }
+
+        if (isHorizontalSwipe) {
+            if (e.cancelable) e.preventDefault();
+            
+            if (diffX > 0) {
+                let moveAmount = diffX;
+                if (moveAmount > swipeThreshold + 30) moveAmount = swipeThreshold + 30;
+                $(this).css('transition', 'none').css('transform', 'translateX(-' + moveAmount + 'px)');
+            } else {
+                $(this).css('transition', 'none').css('transform', 'translateX(0)');
+            }
         }
     });
 
     $(document).on('touchend', '.transaction-item-content', function(e) {
-        let diff = touchStartX - touchMoveX;
+        if (!isHorizontalSwipe) {
+            if (!isVerticalScroll) {
+                 $(this).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
+            }
+            return;
+        }
+
+        let diffX = touchStartX - touchMoveX;
         $(this).css('transition', 'transform 0.2s ease-out');
-        if (diff > swipeThreshold / 2) {
+        
+        if (diffX > swipeThreshold) {
             $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
         } else {
             $(this).css('transform', 'translateX(0)');

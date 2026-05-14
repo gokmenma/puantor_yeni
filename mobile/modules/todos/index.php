@@ -496,38 +496,69 @@ $(document).ready(function() {
 
     // Swipe to delete functionality matches finance perfectly
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchMoveX = 0;
-    let currentSwipeItem = null;
+    let touchMoveY = 0;
+    let isHorizontalSwipe = false;
+    let isVerticalScroll = false;
     const swipeThreshold = 70;
+    const minMovement = 10;
 
     $(document).on('touchstart', '.todo-item-content', function(e) {
         touchStartX = e.originalEvent.touches[0].clientX;
+        touchStartY = e.originalEvent.touches[0].clientY;
         touchMoveX = touchStartX;
-        currentSwipeItem = $(this);
+        touchMoveY = touchStartY;
+        isHorizontalSwipe = false;
+        isVerticalScroll = false;
         
-        // Reset other open items
-        $('.todo-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
+        // Sadece diğerlerini kapat
+        $('.todo-item-content').not($(this)).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
     });
 
     $(document).on('touchmove', '.todo-item-content', function(e) {
         touchMoveX = e.originalEvent.touches[0].clientX;
-        let diff = touchStartX - touchMoveX;
+        touchMoveY = e.originalEvent.touches[0].clientY;
         
-        // Only swipe left
-        if (diff > 0) {
-            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20; // Limit over-swipe
-            $(this).css('transition', 'none');
-            $(this).css('transform', 'translateX(-' + diff + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
+        let diffX = touchStartX - touchMoveX;
+        let diffY = Math.abs(touchStartY - touchMoveY);
+
+        if (isVerticalScroll) return;
+
+        if (!isHorizontalSwipe && !isVerticalScroll) {
+            if (Math.abs(diffX) > minMovement && Math.abs(diffX) > diffY) {
+                isHorizontalSwipe = true;
+            } else if (diffY > minMovement) {
+                isVerticalScroll = true;
+                return;
+            }
+        }
+
+        if (isHorizontalSwipe) {
+            if (e.cancelable) e.preventDefault();
+            
+            if (diffX > 0) {
+                let moveAmount = diffX;
+                if (moveAmount > swipeThreshold + 30) moveAmount = swipeThreshold + 30;
+                $(this).css('transition', 'none').css('transform', 'translateX(-' + moveAmount + 'px)');
+            } else {
+                $(this).css('transition', 'none').css('transform', 'translateX(0)');
+            }
         }
     });
 
     $(document).on('touchend', '.todo-item-content', function(e) {
-        let diff = touchStartX - touchMoveX;
+        if (!isHorizontalSwipe) {
+            if (!isVerticalScroll) {
+                 $(this).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
+            }
+            return;
+        }
+
+        let diffX = touchStartX - touchMoveX;
         $(this).css('transition', 'transform 0.2s ease-out');
         
-        if (diff > swipeThreshold / 2) {
+        if (diffX > swipeThreshold) {
             $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
         } else {
             $(this).css('transform', 'translateX(0)');
@@ -537,7 +568,7 @@ $(document).ready(function() {
     // Close swipe on click elsewhere
     $(document).on('touchstart', function(e) {
         if (!$(e.target).closest('.todo-item-wrapper').length) {
-            $('.todo-item-content').css('transform', 'translateX(0)');
+            $('.todo-item-content').css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
         }
     });
 });

@@ -305,13 +305,16 @@ body[data-bs-theme="dark"] .transaction-item-content {
         $case_name = $casesCache[$t->case_id]->case_name ?? 'Kasa';
         $item_date = date('d.m.Y', strtotime($t->date));
       ?>
-        <div class="transaction-item-wrapper transaction-item" data-type="<?php echo $is_income ? 'income' : 'expense'; ?>">
+        <?php $can_delete = empty($t->sub_type) || $t->sub_type == 0; ?>
+        <div class="transaction-item-wrapper transaction-item <?php echo $can_delete ? 'can-swipe' : ''; ?>" data-type="<?php echo $is_income ? 'income' : 'expense'; ?>">
+          <?php if ($can_delete): ?>
           <div class="transaction-item-actions">
             <button class="btn-swipe-delete btn-delete-transaction" data-id="<?php echo Security::encrypt($t->id); ?>">
               <i class="ti ti-trash"></i>
               <span>Sil</span>
             </button>
           </div>
+          <?php endif; ?>
           <div class="transaction-item-content d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
               <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: <?php echo $is_income ? 'rgba(47, 179, 68, 0.15)' : 'rgba(214, 63, 63, 0.15)'; ?>; color: <?php echo $is_income ? '#2fb344' : '#d63f3f'; ?>;">
@@ -643,70 +646,121 @@ $(document).ready(function() {
         var btn = $(this);
         var id = btn.data('id');
         
-        if (confirm('Bu kasa hareketini silmek istediğinize emin misiniz?')) {
-            jQuery.post('/api/financial/transaction.php?type=1', {
-                action: 'deleteTransaction',
-                id: id
-            }, function(response) {
-                try {
-                    var res = typeof response === 'object' ? response : JSON.parse(response);
-                    if (res.status === 'success') {
-                        showToast(res.message, false);
-                        btn.closest('.transaction-item').fadeOut(300, function() {
-                            $(this).remove();
-                            // If no items left, show empty state
-                            if ($('#transactions-list .transaction-item').length === 0) {
-                                $('#transactions-list').html(
-                                    '<div class="text-center py-5 bg-white rounded-3 border">' +
-                                    '<i class="ti ti-receipt-off text-muted mb-2" style="font-size: 2.5rem; opacity: 0.5;"></i>' +
-                                    '<p class="text-muted text-sm mb-0">Kasa hareketi bulunamadı.</p>' +
-                                    '</div>'
-                                );
-                            }
-                        });
-                    } else {
-                        showToast(res.message || 'Silme işlemi gerçekleştirilemedi.', true);
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu kasa hareketini silmek istediğinize emin misiniz?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'Vazgeç',
+            background: $('body').attr('data-bs-theme') === 'dark' ? '#1e293b' : '#ffffff',
+            color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                jQuery.post('/api/financial/transaction.php?type=1', {
+                    action: 'deleteTransaction',
+                    id: id
+                }, function(response) {
+                    try {
+                        var res = typeof response === 'object' ? response : JSON.parse(response);
+                        if (res.status === 'success') {
+                            showToast(res.message, false);
+                            btn.closest('.transaction-item').fadeOut(300, function() {
+                                $(this).remove();
+                                // If no items left, show empty state
+                                if ($('#transactions-list .transaction-item').length === 0) {
+                                    $('#transactions-list').html(
+                                        '<div class="text-center py-5 bg-white rounded-3 border">' +
+                                        '<i class="ti ti-receipt-off text-muted mb-2" style="font-size: 2.5rem; opacity: 0.5;"></i>' +
+                                        '<p class="text-muted text-sm mb-0">Kasa hareketi bulunamadı.</p>' +
+                                        '</div>'
+                                    );
+                                }
+                            });
+                        } else {
+                            showToast(res.message || 'Silme işlemi gerçekleştirilemedi.', true);
+                        }
+                    } catch (err) {
+                        showToast('Cevap işlenemedi.', true);
                     }
-                } catch (err) {
-                    showToast('Cevap işlenemedi.', true);
-                }
-            });
-        }
+                });
+            }
+        });
     });
 
     // 8. Swipe to delete functionality
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchMoveX = 0;
-    let currentSwipeItem = null;
-    const swipeThreshold = 60;
+    let touchMoveY = 0;
+    let isHorizontalSwipe = false;
+    let isVerticalScroll = false;
+    const swipeThreshold = 70;
+    const minMovement = 10;
 
+    let canSwipeCurrent = false;
     $(document).on('touchstart', '.transaction-item-content', function(e) {
+        const wrapper = $(this).closest('.transaction-item-wrapper');
+        canSwipeCurrent = wrapper.hasClass('can-swipe');
+
         touchStartX = e.originalEvent.touches[0].clientX;
-        currentSwipeItem = $(this);
+        touchStartY = e.originalEvent.touches[0].clientY;
+        touchMoveX = touchStartX;
+        touchMoveY = touchStartY;
+        isHorizontalSwipe = false;
+        isVerticalScroll = false;
         
-        // Reset other open items
-        $('.transaction-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
+        // Sadece diğerlerini kapat
+        $('.transaction-item-content').not($(this)).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
     });
 
     $(document).on('touchmove', '.transaction-item-content', function(e) {
+        if (!canSwipeCurrent) return;
         touchMoveX = e.originalEvent.touches[0].clientX;
-        let diff = touchStartX - touchMoveX;
+        touchMoveY = e.originalEvent.touches[0].clientY;
         
-        // Only swipe left
-        if (diff > 0) {
-            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20; // Limit over-swipe
-            $(this).css('transition', 'none');
-            $(this).css('transform', 'translateX(-' + diff + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
+        let diffX = touchStartX - touchMoveX;
+        let diffY = Math.abs(touchStartY - touchMoveY);
+
+        if (isVerticalScroll) return;
+
+        if (!isHorizontalSwipe && !isVerticalScroll) {
+            if (Math.abs(diffX) > minMovement && Math.abs(diffX) > diffY) {
+                isHorizontalSwipe = true;
+            } else if (diffY > minMovement) {
+                isVerticalScroll = true;
+                return;
+            }
+        }
+
+        if (isHorizontalSwipe) {
+            if (e.cancelable) e.preventDefault();
+            
+            if (diffX > 0) {
+                let moveAmount = diffX;
+                if (moveAmount > swipeThreshold + 30) moveAmount = swipeThreshold + 30;
+                $(this).css('transition', 'none').css('transform', 'translateX(-' + moveAmount + 'px)');
+            } else {
+                $(this).css('transition', 'none').css('transform', 'translateX(0)');
+            }
         }
     });
 
     $(document).on('touchend', '.transaction-item-content', function(e) {
-        let diff = touchStartX - touchMoveX;
+        if (!canSwipeCurrent) return;
+        if (!isHorizontalSwipe) {
+            if (!isVerticalScroll) {
+                 $(this).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
+            }
+            return;
+        }
+
+        let diffX = touchStartX - touchMoveX;
         $(this).css('transition', 'transform 0.2s ease-out');
         
-        if (diff > swipeThreshold / 2) {
+        if (diffX > swipeThreshold) {
             $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
         } else {
             $(this).css('transform', 'translateX(0)');
@@ -716,7 +770,7 @@ $(document).ready(function() {
     // Close swipe on click elsewhere
     $(document).on('touchstart', function(e) {
         if (!$(e.target).closest('.transaction-item-wrapper').length) {
-            $('.transaction-item-content').css('transform', 'translateX(0)');
+            $('.transaction-item-content').css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
         }
     });
 });

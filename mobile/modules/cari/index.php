@@ -147,7 +147,7 @@ body[data-bs-theme="dark"] .transaction-item-content {
                                     <span>Sil</span>
                                 </button>
                             </div>
-                            <a href="?p=cari/movements&id=<?php echo $id; ?>" class="transaction-item-content p-3" style="background: #fff; display: flex; width: 100%;">
+                            <a href="cari-movements?id=<?php echo $id; ?>" class="transaction-item-content p-3" style="background: #fff; display: flex; width: 100%;">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(32, 107, 196, 0.1); color: #206bc4;">
                                         <i class="ti ti-user" style="font-size: 1.25rem;"></i>
@@ -299,51 +299,121 @@ $(document).ready(function() {
 
     $(document).on('click', '.btn-delete-cari', function() {
         var id = $(this).data('id');
-        if (confirm('Bu cari kaydını silmek istediğinize emin misiniz?')) {
-            $.ajax({
-                url: '/api/cari/delete_cari.php',
-                type: 'POST',
-                data: { id: id },
-                success: function(response) {
-                    var data = JSON.parse(response);
-                    if(data.status === 'success') {
-                        location.reload();
-                    } else {
-                        Swal.fire('Hata', data.message, 'error');
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu cari kaydını silmek istediğinize emin misiniz?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'Vazgeç',
+            background: $('body').attr('data-bs-theme') === 'dark' ? '#1e293b' : '#ffffff',
+            color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/cari/delete_cari.php',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(response) {
+                        var data = JSON.parse(response);
+                        if(data.status === 'success') {
+                            location.reload();
+                        } else {
+                            Swal.fire('Hata', data.message, 'error');
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
     });
 
     // Swipe functionality
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchMoveX = 0;
+    let touchMoveY = 0;
+    let isHorizontalSwipe = false;
+    let isVerticalScroll = false;
     const swipeThreshold = 70;
+    const minMovement = 10;
 
     $(document).on('touchstart', '.transaction-item-content', function(e) {
         touchStartX = e.originalEvent.touches[0].clientX;
-        $('.transaction-item-content').not($(this)).css('transform', 'translateX(0)');
+        touchStartY = e.originalEvent.touches[0].clientY;
+        touchMoveX = touchStartX;
+        touchMoveY = touchStartY;
+        isHorizontalSwipe = false;
+        isVerticalScroll = false;
+        
+        // Sadece diğerlerini kapat, tıklanana dokunma (belki zaten açıktır)
+        $('.transaction-item-content').not($(this)).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
     });
 
     $(document).on('touchmove', '.transaction-item-content', function(e) {
         touchMoveX = e.originalEvent.touches[0].clientX;
-        let diff = touchStartX - touchMoveX;
-        if (diff > 0) {
-            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
-            $(this).css('transition', 'none').css('transform', 'translateX(-' + diff + 'px)');
+        touchMoveY = e.originalEvent.touches[0].clientY;
+        
+        let diffX = touchStartX - touchMoveX;
+        let diffY = Math.abs(touchStartY - touchMoveY);
+
+        // Eğer dikey kaydırma olduğu kesinleştiyse yatay hareketi engelle
+        if (isVerticalScroll) return;
+
+        // Henüz ne olduğu belli değilse kontrol et
+        if (!isHorizontalSwipe && !isVerticalScroll) {
+            if (Math.abs(diffX) > minMovement && Math.abs(diffX) > diffY) {
+                isHorizontalSwipe = true;
+            } else if (diffY > minMovement) {
+                isVerticalScroll = true;
+                return;
+            }
+        }
+
+        if (isHorizontalSwipe) {
+            // Yatay kaydırma ise tarayıcının varsayılan (sayfa kaydırma) hareketini durdur
+            if (e.cancelable) e.preventDefault();
+            
+            if (diffX > 0) {
+                // Sola kaydırma (sil butonu açma)
+                let moveAmount = diffX;
+                if (moveAmount > swipeThreshold + 30) moveAmount = swipeThreshold + 30;
+                $(this).css('transition', 'none').css('transform', 'translateX(-' + moveAmount + 'px)');
+            } else {
+                // Sağa kaydırma (kapatma)
+                $(this).css('transition', 'none').css('transform', 'translateX(0)');
+            }
+        }
+    });
+
+    $(document).on('touchend', '.transaction-item-content', function(e) {
+        if (!isHorizontalSwipe) {
+            // Eğer sadece tıklandıysa veya dikey kaydırıldıysa transformu sıfırla (eğer hafif kıpırdadıysa)
+            if (!isVerticalScroll) {
+                 $(this).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
+            }
+            return;
+        }
+
+        let diffX = touchStartX - touchMoveX;
+        $(this).css('transition', 'transform 0.2s ease-out');
+        
+        if (diffX > swipeThreshold) {
+            $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
         } else {
             $(this).css('transform', 'translateX(0)');
         }
     });
 
-    $(document).on('touchend', '.transaction-item-content', function(e) {
-        let diff = touchStartX - touchMoveX;
-        $(this).css('transition', 'transform 0.2s ease-out');
-        if (diff > swipeThreshold / 2) {
-            $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
+    // Tıklama kontrolü: Eğer öğe açıkken (swiped) tıklandıysa gitme, sadece kapat
+    $(document).on('click', '.transaction-item-content', function(e) {
+        let transform = $(this).css('transform');
+        // Matrix kontrolü (translateX'i kontrol eder)
+        let matrix = new WebKitCSSMatrix(transform);
+        if (matrix.m41 < -10) {
+            e.preventDefault();
+            $(this).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
         }
     });
 });

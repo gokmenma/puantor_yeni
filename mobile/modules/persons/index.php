@@ -306,40 +306,74 @@ $(document).ready(function() {
 
   // Smooth swipe gestures matching finance and todos perfectly
   let touchStartX = 0;
+  let touchStartY = 0;
   let touchMoveX = 0;
-  let currentSwipeItem = null;
+  let touchMoveY = 0;
+  let isHorizontalSwipe = false;
+  let isVerticalScroll = false;
   const swipeThresholdLeft = 70;  // For delete
   const swipeThresholdRight = 210; // For 3 buttons (70 * 3)
+  const minMovement = 10;
 
   $(document).on('touchstart', '.person-item-content', function(e) {
       touchStartX = e.originalEvent.touches[0].clientX;
+      touchStartY = e.originalEvent.touches[0].clientY;
       touchMoveX = touchStartX;
-      currentSwipeItem = $(this);
-      $('.person-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
+      touchMoveY = touchStartY;
+      isHorizontalSwipe = false;
+      isVerticalScroll = false;
+      
+      $('.person-item-content').not($(this)).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
   });
 
   $(document).on('touchmove', '.person-item-content', function(e) {
       touchMoveX = e.originalEvent.touches[0].clientX;
-      let diff = touchStartX - touchMoveX;
+      touchMoveY = e.originalEvent.touches[0].clientY;
       
-      $(this).css('transition', 'none');
-      if (diff > 0) { // Swiping Left (reveal Delete)
-          if (diff > swipeThresholdLeft + 20) diff = swipeThresholdLeft + 20;
-          $(this).css('transform', 'translateX(-' + diff + 'px)');
-      } else { // Swiping Right (reveal Actions)
-          let absDiff = Math.abs(diff);
-          if (absDiff > swipeThresholdRight + 20) absDiff = swipeThresholdRight + 20;
-          $(this).css('transform', 'translateX(' + absDiff + 'px)');
+      let diffX = touchStartX - touchMoveX;
+      let diffY = Math.abs(touchStartY - touchMoveY);
+
+      if (isVerticalScroll) return;
+
+      if (!isHorizontalSwipe && !isVerticalScroll) {
+          if (Math.abs(diffX) > minMovement && Math.abs(diffX) > diffY) {
+              isHorizontalSwipe = true;
+          } else if (diffY > minMovement) {
+              isVerticalScroll = true;
+              return;
+          }
+      }
+
+      if (isHorizontalSwipe) {
+          if (e.cancelable) e.preventDefault();
+          
+          $(this).css('transition', 'none');
+          if (diffX > 0) { // Swiping Left (reveal Delete)
+              let moveAmount = diffX;
+              if (moveAmount > swipeThresholdLeft + 20) moveAmount = swipeThresholdLeft + 20;
+              $(this).css('transform', 'translateX(-' + moveAmount + 'px)');
+          } else { // Swiping Right (reveal Actions)
+              let absDiff = Math.abs(diffX);
+              if (absDiff > swipeThresholdRight + 20) absDiff = swipeThresholdRight + 20;
+              $(this).css('transform', 'translateX(' + absDiff + 'px)');
+          }
       }
   });
 
   $(document).on('touchend', '.person-item-content', function(e) {
-      let diff = touchStartX - touchMoveX;
+      if (!isHorizontalSwipe) {
+          if (!isVerticalScroll) {
+              $(this).css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
+          }
+          return;
+      }
+
+      let diffX = touchStartX - touchMoveX;
       $(this).css('transition', 'transform 0.2s ease-out');
       
-      if (diff > swipeThresholdLeft / 2) {
+      if (diffX > swipeThresholdLeft / 2) {
           $(this).css('transform', 'translateX(-' + swipeThresholdLeft + 'px)');
-      } else if (diff < -(swipeThresholdRight / 4)) {
+      } else if (diffX < -(swipeThresholdRight / 4)) {
           $(this).css('transform', 'translateX(' + swipeThresholdRight + 'px)');
       } else {
           $(this).css('transform', 'translateX(0)');
@@ -349,7 +383,7 @@ $(document).ready(function() {
   // Close swipe on click elsewhere
   $(document).on('touchstart', function(e) {
       if (!$(e.target).closest('.person-item-wrapper').length) {
-          $('.person-item-content').css('transform', 'translateX(0)');
+          $('.person-item-content').css('transition', 'transform 0.2s ease-out').css('transform', 'translateX(0)');
       }
   });
 

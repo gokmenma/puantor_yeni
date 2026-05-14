@@ -13,7 +13,6 @@ require_once ROOT . "/Model/Cases.php";
 use App\Helper\Security;
 
 $Auths = new Auths();
-$db = new \Database\Db();
 
 // Oturum kontrolü
 if (!isset($_SESSION['user'])) {
@@ -22,14 +21,16 @@ if (!isset($_SESSION['user'])) {
 }
 
 $func = $_REQUEST['func'] ?? '';
+$firm_id = $_SESSION['firm_id'] ?? 0;
 
 try {
     if ($func == 'list') {
         $query = $db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as created_at 
                                FROM personel_avans_talepleri a 
                                JOIN persons p ON a.person_id = p.id 
+                               WHERE a.firm_id = ?
                                ORDER BY a.id DESC");
-        $query->execute();
+        $query->execute([$firm_id]);
         $list = $query->fetchAll(PDO::FETCH_OBJ);
         echo json_encode(['status' => 'success', 'list' => $list]);
         exit;
@@ -40,11 +41,11 @@ try {
 
         $db->beginTransaction();
         
-        $query = $db->prepare("SELECT * FROM personel_avans_talepleri WHERE id = ?");
-        $query->execute([$id]);
+        $query = $db->prepare("SELECT * FROM personel_avans_talepleri WHERE id = ? AND firm_id = ?");
+        $query->execute([$id, $firm_id]);
         $request = $query->fetch(PDO::FETCH_OBJ);
 
-        if (!$request) throw new Exception("Talep bulunamadı.");
+        if (!$request) throw new Exception("Talep bulunamadı veya bu işlem için yetkiniz yok.");
         if ($request->durum == $status) {
             $db->commit();
             echo json_encode(['status' => 'success', 'message' => 'Talep zaten güncellenmiş.']);
@@ -59,8 +60,8 @@ try {
         $db->prepare("DELETE FROM case_transactions WHERE person_id = ? AND description LIKE ?")
            ->execute([$request->person_id, "%" . $identifier . "%"]);
 
-        $db->prepare("UPDATE personel_avans_talepleri SET durum = ? WHERE id = ?")
-           ->execute([$status, $id]);
+        $db->prepare("UPDATE personel_avans_talepleri SET durum = ? WHERE id = ? AND firm_id = ?")
+           ->execute([$status, $id, $firm_id]);
 
         if ($status == 1) {
             $ay = $request->hedef_ay ?? date('m');
@@ -73,7 +74,7 @@ try {
             $db->prepare("INSERT INTO maas_gelir_kesinti (user_id, person_id, case_id, gun, ay, yil, tutar, kategori, turu, aciklama) 
                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                ->execute([
-                   $_SESSION['firm_id'] ?? 0,
+                   $firm_id,
                    $request->person_id,
                    $default_case_id,
                    $target_gun_db,
@@ -96,8 +97,8 @@ try {
 
         $db->beginTransaction();
         
-        $query = $db->prepare("SELECT * FROM personel_avans_talepleri WHERE id = ?");
-        $query->execute([$id]);
+        $query = $db->prepare("SELECT * FROM personel_avans_talepleri WHERE id = ? AND firm_id = ?");
+        $query->execute([$id, $firm_id]);
         $request = $query->fetch(PDO::FETCH_OBJ);
 
         if ($request) {
@@ -108,7 +109,7 @@ try {
                ->execute([$request->person_id, "%" . $identifier . "%"]);
         }
 
-        $db->prepare("DELETE FROM personel_avans_talepleri WHERE id = ?")->execute([$id]);
+        $db->prepare("DELETE FROM personel_avans_talepleri WHERE id = ? AND firm_id = ?")->execute([$id, $firm_id]);
         
         $db->commit();
         echo json_encode(['status' => 'success', 'message' => 'Talep ve bağlı kayıtlar silindi.']);
