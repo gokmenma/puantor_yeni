@@ -113,18 +113,42 @@ class Financial extends Db
     //Defines tablosuından id'ye göre name değeri döndürür
     public function getTransactionTypeById($id)
     {
+        if (empty($id)) return null;
         $query = $this->db->prepare("SELECT * FROM defines WHERE id = ?");
         $query->execute([$id]);
-        return $query->fetch(PDO::FETCH_OBJ);
+        $result = $query->fetch(PDO::FETCH_OBJ);
+        
+        if (!$result) {
+            // Fallback for core types not in defines table
+            $name = self::getTransactionType($id);
+            if ($name) {
+                return (object)[
+                    'id' => $id,
+                    'name' => $name,
+                    'type_id' => ($id == 1 || $id == 14 || $id == 16) ? 1 : 2 // 1: Income, 2: Expense
+                ];
+            }
+            return null;
+        }
+        return $result;
     }
 
     //Gelen id'ye göre defines tablosundan icon_code ve icon_color değerini döndürür
     // return "<i class='ti $icon icon $color me-1'></i>";
     public function getTransactionIcon($id)
     {
+        if (empty($id)) return "";
         $query = $this->db->prepare("SELECT * FROM defines WHERE id = ?");
         $query->execute([$id]);
         $result = $query->fetch(PDO::FETCH_OBJ);
+        
+        if (!$result || empty($result->icon_code)) {
+            // Default icons for core types
+            if ($id == 14) return "<i class='ti ti-calendar-event icon text-azure me-1'></i>";
+            if ($id == 16) return "<i class='ti ti-cash icon text-green me-1'></i>";
+            if ($id == 7) return "<i class='ti ti-user-check icon text-orange me-1'></i>";
+            return "<i class='ti ti-help icon text-muted me-1'></i>";
+        }
         return "<i class='ti $result->icon_code icon $result->icon_color me-1'></i>";    
     }
 

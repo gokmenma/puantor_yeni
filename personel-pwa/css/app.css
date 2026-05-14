@@ -1,5 +1,6 @@
 /* 
    Puantor Personnel PWA Stylesheet
+   Version: 1.2
    Design System: Glassmorphic Modern App Shell (Adapted from Mobile Design)
 */
 
@@ -726,37 +727,46 @@ body[data-bs-theme="dark"] .profile-info-icon {
     overflow: hidden !important;
     border-radius: 0 !important;
     margin-bottom: 0 !important;
-    background: #ef4444 !important;
+    background: transparent !important;
     display: block !important;
+}
+
+body[data-bs-theme="dark"] .swipe-item {
+    background: #1e293b !important;
 }
 
 .swipe-content {
     position: relative;
     z-index: 2;
-    background: #ffffff;
+    background: #ffffff !important;
     border: none;
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 0 !important;
-    padding: 1rem 1.25rem !important;
+    padding: 1.25rem !important;
     border-radius: 0;
     box-shadow: none;
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
 body[data-bs-theme="dark"] .swipe-content {
-    background: #1e293b;
+    background: #1e293b !important;
     border-color: rgba(255, 255, 255, 0.05);
 }
 
 .swipe-actions {
     position: absolute;
     top: 0;
+    bottom: 0;
     right: 0;
-    height: 100%;
     width: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1;
+    background: #ef4444 !important;
+    height: 100%;
 }
 
 .btn-swipe-delete {
@@ -865,5 +875,14 @@ body[data-bs-theme="dark"] .divide-y > * + * {
 
 .extra-small {
     font-size: 0.7rem;
+}
+
+/* Global Override for Tabler's .divide-y padding issue */
+.divide-y > :not(template):not(:last-child) {
+    padding-bottom: 0 !important;
+}
+
+.divide-y > :not(template):not(:first-child) {
+    padding-top: 0 !important;
 }
 

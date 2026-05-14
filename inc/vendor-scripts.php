@@ -37,7 +37,7 @@ if (
     $page == 'defines/project-status/list' ||
     $page == 'todos/list' ||
     $page == "users/manage" || $page == "cari/list" || $page == "cari/movements" ||
-    $page == "raporlar/list"
+    $page == "raporlar/list" || $page == "avans-talepleri/list"
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }

@@ -373,10 +373,11 @@ $projectNamesCache[0] = "Proje Yok";
         z-index: 1000 !important;
     }
 
-    /* Sayfa kaydırıldığında sticky header'ın çalışması için */
+    /* Tablo içeriğinin kaydırılabilir olması ve başlıkların sabit kalması için */
     .table-responsive {
-        overflow-x: auto;
-        overflow-y: visible !important;
+        max-height: 70vh;
+        overflow: auto !important;
+        border: 1px solid #e2e8f0;
     }
 
     /* Ayarlar dropdown stili */

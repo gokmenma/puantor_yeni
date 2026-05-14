@@ -33,7 +33,7 @@ usort($income_expenses_raw, function($a, $b) {
 $running_balance = 0;
 foreach ($income_expenses_raw as &$item) {
     $type = $financialHelper->getTransactionTypeById($item->kategori);
-    if ($type->type_id == 1) {
+    if ($type && $type->type_id == 1) {
         $running_balance += $item->tutar;
     } else {
         $running_balance -= $item->tutar;
@@ -243,9 +243,9 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                                     $type = $financialHelper->getTransactionTypeById($item->kategori);
 
                                     // İşlem türüne göre renk belirle
-                                    if($type->type_id == 1){
+                                    if($type && $type->type_id == 1){
                                         echo "<label class='text-success'>$type->name</label>";
-                                    }else if($type->type_id == 2){
+                                    }else if($type && $type->type_id == 2){
                                         echo "<label class='text-danger'>$type->name</label>";
                                     }
                                     ?>

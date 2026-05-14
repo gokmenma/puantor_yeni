@@ -87,9 +87,12 @@ class DefinesModel extends Model
         }
 
         if (!empty($ids)) {
+            if ($type == 2 && !in_array(7, $ids)) {
+                $ids[] = 7; // Her zaman Avans kategorisini giderlere dahil et
+            }
             return implode(',', $ids);
         } else {
-            return ""; // Return empty string to prevent 'IN ()' syntax errors if accessed. 
+            return $type == 2 ? "7" : ""; // Return category 7 as default for expense if list is empty
         }
     }
 

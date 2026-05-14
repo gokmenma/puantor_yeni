@@ -2,13 +2,8 @@
 // Puantor Mobil - Dashboard Ana Sayfası
 require_once ROOT . "/Model/Persons.php";
 require_once ROOT . "/Model/Projects.php";
-require_once ROOT . "/Model/GorevModel.php";
-require_once ROOT . "/App/Helper/security.php";
-use App\Helper\Security;
-
 $personsModel = new Persons();
 $projectsModel = new Projects();
-$gorevModel = new GorevModel();
 
 $firm_id = $_SESSION['firm_id'] ?? 0;
 $user = $_SESSION['user'] ?? null;
@@ -16,13 +11,6 @@ $user = $_SESSION['user'] ?? null;
 // Canlı Veri Sayımları
 $active_persons = count($personsModel->getPersonsByFirm($firm_id));
 $active_projects = count($projectsModel->getProjectsByFirm($firm_id));
-$todos = $gorevModel->getTumGorevler($firm_id);
-$pending_todos_count = 0;
-foreach ($todos as $t) {
-    if (($t->tamamlandi ?? 0) == 0) {
-        $pending_todos_count++;
-    }
-}
 $active_firm = null;
 foreach ($myFirms as $firm) {
     if ($firm->id == $firm_id) {
@@ -31,6 +19,20 @@ foreach ($myFirms as $firm) {
     }
 }
 $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
+
+// Bekleyen Avans Taleplerini Çek
+$db = $personsModel->getDb();
+$pending_advances_query = $db->prepare("SELECT a.*, p.full_name 
+                                       FROM personel_avans_talepleri a 
+                                       JOIN persons p ON a.person_id = p.id 
+                                       WHERE a.firm_id = ? AND a.durum = 0 
+                                       ORDER BY a.id DESC");
+$pending_advances_query->execute([$firm_id]);
+$pending_advances = $pending_advances_query->fetchAll(PDO::FETCH_OBJ);
+$pending_advances_count = count($pending_advances);
+
+$advance_auth = $Auths->getAuthIdByTitle("Avans Talepleri");
+$has_advance_auth = (!$advance_auth || $Auths->AuthorizeByAuthId($advance_auth->id));
 ?>
 
 <div class="container px-0">
@@ -123,12 +125,15 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
     </a>
     <?php endif; ?>
 
-    <?php 
-    $todos_auth = $Auths->getAuthIdByTitle("Yapılacaklar");
-    if (!$todos_auth || $Auths->AuthorizeByAuthId($todos_auth->id)): ?>
-    <a href="todos" class="quick-action-btn">
-      <i class="ti ti-checklist" style="color: #f59e0b; font-size: 1.35rem;"></i>
-      <span>Yapılacaklar</span>
+    <?php if ($has_advance_auth): ?>
+    <a href="advance-requests" class="quick-action-btn position-relative">
+      <i class="ti ti-wallet" style="color: #f59e0b; font-size: 1.35rem;"></i>
+      <span>Avans<br>Talepleri</span>
+      <?php if ($pending_advances_count > 0): ?>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-white" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
+          <?php echo $pending_advances_count; ?>
+        </span>
+      <?php endif; ?>
     </a>
     <?php endif; ?>
     <a href="https://wa.me/905000000000" target="_blank" class="quick-action-btn">
@@ -137,65 +142,41 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
     </a>
   </div>
 
-  <?php 
-  $todos_auth = $Auths->getAuthIdByTitle("Yapılacaklar");
-  if (!$todos_auth || $Auths->AuthorizeByAuthId($todos_auth->id)): ?>
-  <!-- Yapılacaklar Listesi (Recent Todos) -->
+  <?php if ($has_advance_auth): ?>
+  <!-- Bekleyen Avans Talepleri Listesi -->
   <div class="d-flex align-items-center justify-content-between mb-3 mt-2">
-    <h4 class="mb-0 text-semibold" style="font-size: 0.9rem; letter-spacing: -0.2px; opacity: 0.9;">Yapılacaklar (<?php echo $pending_todos_count; ?>)</h4>
-    <a href="todos" class="text-primary text-xs text-semibold text-decoration-none">Tümünü Gör</a>
+    <h4 class="mb-0 text-semibold" style="font-size: 0.9rem; letter-spacing: -0.2px; opacity: 0.9;">Bekleyen Avanslar (<?php echo $pending_advances_count; ?>)</h4>
+    <a href="advance-requests" class="text-primary text-xs text-semibold text-decoration-none">Tümünü Gör</a>
   </div>
 
-  <?php if (empty($todos)): ?>
+  <?php if (empty($pending_advances)): ?>
     <div class="mobile-card text-center py-4">
       <i class="ti ti-circle-check text-muted mb-2" style="font-size: 2rem;"></i>
-      <p class="text-muted text-xs mb-0">Hiç yapılacak işiniz yok!</p>
+      <p class="text-muted text-xs mb-0">Bekleyen avans talebi yok.</p>
     </div>
   <?php else: ?>
     <div class="mobile-card p-0 overflow-hidden mb-4" style="border-radius: 18px; border: 1px solid rgba(0,0,0,0.05);">
-      <div class="list-group list-group-flush" id="dashboard-todos">
+      <div class="list-group list-group-flush">
         <?php 
         $count = 0;
-        $total_todos = 0;
-        // First count how many we will show to handle borders correctly
-        foreach($todos as $t) if(($t->tamamlandi ?? 0) == 0) $total_todos++;
-        
-        foreach ($todos as $todo): 
+        foreach ($pending_advances as $advance): 
           if ($count >= 3) break;
-          if (($todo->tamamlandi ?? 0) == 1) continue;
           $count++;
-          $todo_id_enc = Security::encrypt($todo->id);
-          $is_last = ($count == min(3, $total_todos));
+          $is_last = ($count == min(3, $pending_advances_count));
         ?>
           <div class="swipe-item-wrapper <?php echo !$is_last ? 'border-bottom' : ''; ?>" style="border-bottom-color: rgba(0,0,0,0.03) !important;">
-            <div class="swipe-actions-left">
-              <button class="btn-swipe-action bg-primary" onclick="showDashboardTodoDetail('<?php echo $todo_id_enc; ?>')">
-                <i class="ti ti-info-circle"></i>
-                <span>Detay</span>
-              </button>
-            </div>
-            <a href="todos" class="swipe-item-content d-flex align-items-center justify-content-between py-3 text-decoration-none"
-                 style="padding-left: 1rem; padding-right: 1rem; color: inherit;"
-                 data-id="<?php echo $todo_id_enc; ?>"
-                 data-title="<?php echo htmlspecialchars($todo->baslik ?? ''); ?>"
-                 data-description="<?php echo htmlspecialchars($todo->aciklama ?? 'Açıklama yok.'); ?>"
-                 data-date="<?php echo !empty($todo->tarih) && $todo->tarih != '0000-00-00' ? date('d.m.Y', strtotime($todo->tarih)) : 'Süresiz'; ?>"
-                 data-time="<?php echo $todo->saat ? substr($todo->saat, 0, 5) : ''; ?>"
-                 data-list="<?php echo htmlspecialchars($todo->liste_adi ?? 'Genel'); ?>">
+            <a href="advance-requests" class="swipe-item-content d-flex align-items-center justify-content-between py-3 text-decoration-none"
+                 style="padding-left: 1rem; padding-right: 1rem; color: inherit;">
               <div class="d-flex align-items-center gap-3">
-                <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(32, 107, 196, 0.1); color: var(--mobile-primary); border: 1.5px solid rgba(32, 107, 196, 0.1); flex-shrink: 0;">
-                  <i class="ti ti-square" style="font-size: 1.25rem;"></i>
+                <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1.5px solid rgba(245, 158, 11, 0.1); flex-shrink: 0;">
+                  <i class="ti ti-wallet" style="font-size: 1.25rem;"></i>
                 </div>
                 <div>
-                  <div class="text-bold text-sm" style="color: #1d273b; line-height: 1.2;"><?php echo htmlspecialchars($todo->baslik ?? 'Görev'); ?></div>
+                  <div class="text-bold text-sm" style="color: #1d273b; line-height: 1.2;"><?php echo htmlspecialchars($advance->full_name); ?></div>
                   <div class="text-muted text-xs d-flex align-items-center gap-1 mt-0.5">
-                    <?php if (!empty($todo->liste_adi)): ?>
-                      <span><?php echo htmlspecialchars($todo->liste_adi); ?></span>
-                      <span class="text-muted-50">•</span>
-                    <?php endif; ?>
-                    <span class="<?php echo !empty($todo->tarih) && strtotime($todo->tarih) < time() ? 'text-danger text-bold' : ''; ?>">
-                      <?php echo !empty($todo->tarih) && $todo->tarih !== '0000-00-00' ? date('d.m.Y', strtotime($todo->tarih)) : 'Süresiz'; ?>
-                    </span>
+                    <span class="text-primary text-bold"><?php echo number_format($advance->tutar, 2, ',', '.'); ?> ₺</span>
+                    <span class="text-muted-50">•</span>
+                    <span><?php echo date('d.m.Y', strtotime($advance->created_at)); ?></span>
                   </div>
                 </div>
               </div>
@@ -353,104 +334,6 @@ $active_firm_name = $active_firm ? $active_firm->firm_name : 'Firma Seçilmedi';
 
 </div>
 
-<!-- Görev Detay Modali -->
-<div class="modal fade" id="dashboardTodoDetailModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius: 24px; border: none; overflow: hidden;">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title text-semibold">Görev Detayı</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-      </div>
-      <div class="modal-body pt-3">
-        <div class="mb-3">
-          <div class="badge bg-primary-lt mb-2" id="detail-list-badge">Liste Adı</div>
-          <h3 class="mb-1 text-bold" id="detail-title">Görev Başlığı</h3>
-          <div class="d-flex align-items-center gap-2 text-muted text-xs">
-            <i class="ti ti-calendar"></i>
-            <span id="detail-date">Tarih</span>
-            <span id="detail-time-wrapper"><i class="ti ti-clock ms-2"></i> <span id="detail-time">Saat</span></span>
-          </div>
-        </div>
-        <div class="p-3 bg-light rounded-3 mb-3">
-          <label class="text-xs text-muted text-uppercase tracking-wider font-weight-bold mb-1 d-block">Açıklama</label>
-          <p class="mb-0 text-sm" id="detail-description" style="white-space: pre-wrap;">Görev açıklaması buraya gelecek.</p>
-        </div>
-      </div>
-      <div class="modal-footer border-0 pt-0">
-        <a href="todos" class="btn btn-primary w-100 py-2.5 text-semibold" style="border-radius: 12px;">Tüm Yapılacaklara Git</a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-$(document).ready(function() {
-    let touchStartX = 0;
-    let touchMoveX = 0;
-    const swipeThreshold = 65; // Only 1 button now (65px)
-
-    $(document).on('touchstart', '.swipe-item-content', function(e) {
-        touchStartX = e.originalEvent.touches[0].clientX;
-        touchMoveX = touchStartX;
-        $('.swipe-item-content').not(this).css('transform', 'translateX(0)');
-    });
-
-    $(document).on('touchmove', '.swipe-item-content', function(e) {
-        touchMoveX = e.originalEvent.touches[0].clientX;
-        let diff = touchMoveX - touchStartX;
-        
-        // Swiping right reveals left actions
-        if (diff > 0) {
-            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
-            $(this).css('transition', 'none');
-            $(this).css('transform', 'translateX(' + diff + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
-        }
-    });
-
-    $(document).on('touchend', '.swipe-item-content', function(e) {
-        let diff = touchMoveX - touchStartX;
-        $(this).css('transition', 'transform 0.2s ease-out');
-        
-        if (diff > swipeThreshold / 2) {
-            $(this).css('transform', 'translateX(' + swipeThreshold + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
-        }
-    });
-
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.swipe-item-wrapper').length) {
-            $('.swipe-item-content').css('transform', 'translateX(0)');
-        }
-    });
-});
-
-function showDashboardTodoDetail(id) {
-    const content = $(`.swipe-item-content[data-id="${id}"]`);
-    if (!content.length) return;
-
-    $('#detail-title').text(content.attr('data-title'));
-    $('#detail-description').text(content.attr('data-description'));
-    $('#detail-date').text(content.attr('data-date'));
-    $('#detail-list-badge').text(content.attr('data-list'));
-    
-    const time = content.attr('data-time');
-    if (time) {
-        $('#detail-time').text(time);
-        $('#detail-time-wrapper').show();
-    } else {
-        $('#detail-time-wrapper').hide();
-    }
-
-    // Reset swipe
-    content.css('transform', 'translateX(0)');
-    
-    const modal = new bootstrap.Modal($('#dashboardTodoDetailModal'));
-    modal.show();
-}
-</script>
 
 <!-- Firma Seçim Modali (Bottom Sheet tarzı) -->
 <div class="modal fade" id="firmSelectionModal" tabindex="-1" aria-labelledby="firmSelectionModalLabel" aria-hidden="true">

@@ -212,6 +212,9 @@ $(document).ready(function() {
 
     function updateStatus(id, status) {
         const actionText = status == 1 ? 'onaylamak' : 'reddetmek';
+        const confirmButtonText = status == 1 ? 'Evet, Onayla' : 'Evet, Reddet';
+        const cancelButtonText = status == 1 ? 'İptal Et' : 'Vazgeç';
+
         const confirmButtonColor = status == 1 ? '#10b981' : '#ef4444';
 
         Swal.fire({
@@ -219,8 +222,8 @@ $(document).ready(function() {
             text: `Bu avans talebini ${actionText} istediğinize emin misiniz?`,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Evet, Devam Et',
-            cancelButtonText: 'Vazgeç',
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: cancelButtonText,
             confirmButtonColor: confirmButtonColor,
             background: $('body').attr('data-bs-theme') === 'dark' ? '#1e293b' : '#ffffff',
             color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b',

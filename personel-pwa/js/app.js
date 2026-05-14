@@ -1,4 +1,5 @@
 window.app = {
+    version: '1.5',
     user: null,
     currentMonth: new Date().getMonth() + 1,
     currentYear: new Date().getFullYear(),
@@ -347,27 +348,36 @@ window.app = {
                         iconBg = 'bg-danger-lt';
                     }
 
+                    const isPending = item.durum == 0;
+                    const swipeActions = isPending ? `
+                        <div class="swipe-actions">
+                            <button onclick="event.stopPropagation(); app.deleteAdvance('${item.id}')" class="btn-swipe-delete">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    ` : '';
+
+                    const editAction = isPending 
+                        ? `onclick="if(!this.dataset.swiping) app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\\\'")}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')"`
+                        : 'onclick="app.toast(\'Sadece bekleyen talepler düzenlenebilir.\', \'warning\')"';
+
                     return `
                         <div class="swipe-item" data-id="${item.id}">
-                            <div class="swipe-actions">
-                                <button onclick="event.stopPropagation(); app.deleteAdvance('${item.id}')" class="btn-swipe-delete">
-                                    <i class="ti ti-trash"></i>
-                                </button>
-                            </div>
-                            <div onclick="if(!this.dataset.swiping) app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\'")}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')" 
-                                 class="swipe-content cursor-pointer py-3 px-4">
+                            ${swipeActions}
+                            <div ${editAction} class="swipe-content cursor-pointer">
                                 <div class="d-flex align-items-center justify-content-between w-100">
                                     <div class="d-flex align-items-center gap-3">
-                                        <div class="avatar avatar-md rounded-circle ${iconBg} ${statusClass} border-0 shadow-none">
+                                        <div class="avatar avatar-md rounded-circle ${iconBg} ${statusClass} border-0 shadow-none flex-shrink-0">
                                             <i class="ti ${icon} fs-2"></i>
                                         </div>
                                         <div>
                                             <h4 class="mb-0 fw-bold text-dark">Avans Talebi</h4>
-                                            <p class="text-muted extra-small mb-0">${item.created_at} • <span class="fw-bold ${statusClass}">${statusText}</span></p>
-                                            <p class="text-secondary extra-small mb-0 mt-1 italic opacity-75">"${item.aciklama || 'Açıklama belirtilmemiş'}"</p>
+                                            <p class="text-muted extra-small mb-0">${item.created_at}</p>
+                                            ${item.aciklama ? `<p class="text-secondary extra-small mb-0 mt-1 italic opacity-75">"${item.aciklama}"</p>` : ''}
                                         </div>
                                     </div>
-                                    <div class="text-end">
+                                    <div class="text-end flex-shrink-0 ms-2">
+                                        <div class="badge ${iconBg} ${statusClass} border-0 extra-small mb-1 fw-bold uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">${statusText}</div>
                                         <h3 class="mb-0 fw-bold text-dark" style="font-size: 1.15rem;">₺ ${parseFloat(item.tutar).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</h3>
                                     </div>
                                 </div>
@@ -400,6 +410,10 @@ window.app = {
 
             content.addEventListener('touchmove', (e) => {
                 if (!isSwiping) return;
+                
+                // Only allow swipe if the item has actions (isPending)
+                if (!item.querySelector('.swipe-actions')) return;
+
                 currentX = e.touches[0].clientX;
                 let diff = startX - currentX;
                 

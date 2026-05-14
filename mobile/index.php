@@ -268,6 +268,11 @@ switch ($route) {
         $active_page = "more";
         break;
     case 'advance-requests':
+        $advance_auth = $Auths->getAuthIdByTitle("Avans Talepleri");
+        if ($advance_auth && !$Auths->AuthorizeByAuthId($advance_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
         $title = "Avans Talepleri";
         $page_file = "modules/more/advance_requests.php";
         $active_page = "more";
