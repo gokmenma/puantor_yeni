@@ -264,6 +264,25 @@ window.app = {
     },
 
     async loadSummary() {
+        const recentContainer = document.getElementById('recent-activity-list');
+        if (recentContainer) {
+            recentContainer.innerHTML = Array(3).fill(`
+                <div class="mobile-card d-flex align-items-center justify-content-between p-3 opacity-50">
+                    <div class="d-flex align-items-center gap-3 w-100">
+                        <div class="avatar avatar-sm rounded shimmer"></div>
+                        <div class="w-50">
+                            <div class="shimmer w-75 mb-2" style="height: 12px"></div>
+                            <div class="shimmer w-50" style="height: 8px"></div>
+                        </div>
+                    </div>
+                    <div class="text-end w-25">
+                        <div class="shimmer w-100 mb-1" style="height: 14px"></div>
+                        <div class="shimmer w-75 ms-auto" style="height: 8px"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         try {
             const response = await fetch(`api/summary.php?person_id=${this.user.id}`);
             const result = await response.json();
@@ -322,10 +341,36 @@ window.app = {
     },
 
     async loadAdvances() {
+        const container = document.getElementById('advance-list');
+        if (container) {
+            container.innerHTML = Array(3).fill(`
+                <div class="swipe-item opacity-50">
+                    <div class="swipe-content">
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar avatar-md rounded-circle shimmer"></div>
+                                <div style="width: 120px">
+                                    <div class="shimmer w-100 mb-2" style="height: 14px"></div>
+                                    <div class="shimmer w-75" style="height: 10px"></div>
+                                </div>
+                            </div>
+                            <div class="text-end" style="width: 80px">
+                                <div class="shimmer w-100 mb-2" style="height: 12px"></div>
+                                <div class="shimmer w-75 ms-auto" style="height: 16px"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         try {
             const response = await fetch(`api/advance.php?action=list&person_id=${this.user.id}`);
             const result = await response.json();
             if (result.status === 'success') {
+                // Track pending status
+                this.hasPendingAdvance = result.list.some(item => item.durum == 0);
+                
                 const countBadge = document.getElementById('advance-count-badge');
                 if (countBadge) countBadge.textContent = result.list.length;
                 
@@ -488,6 +533,16 @@ window.app = {
     },
 
     showNewAdvanceModal() {
+        if (this.hasPendingAdvance) {
+            Swal.fire({
+                title: 'Uyarı',
+                text: 'Hali hazırda bekleyen bir avans talebiniz bulunmaktadır. Yeni bir talep oluşturmadan önce mevcut talebinizin sonuçlanmasını beklemelisiniz.',
+                icon: 'warning',
+                confirmButtonText: 'Anladım'
+            });
+            return;
+        }
+
         const now = new Date();
         let lastMonth = now.getMonth();
         let lastYear = now.getFullYear();
@@ -634,7 +689,10 @@ window.app = {
         // Show preloader
         const grid = document.getElementById('calendar-grid');
         if (grid) {
-            grid.innerHTML = '<div class="calendar-skeleton">' + Array(35).fill('<div class="calendar-skeleton-item shimmer rounded-circle"></div>').join('') + '</div>';
+            const weekdays = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pa'];
+            const headerHtml = weekdays.map(day => `<div class="small fw-bold text-muted">${day}</div>`).join('');
+            const skeletonItems = Array(35).fill('<div class="calendar-skeleton-item shimmer rounded-circle"></div>').join('');
+            grid.innerHTML = headerHtml + skeletonItems;
         }
 
         try {

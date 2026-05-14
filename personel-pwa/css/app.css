@@ -45,6 +45,7 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   position: relative;
   overflow: hidden;
@@ -77,7 +78,7 @@ html, body {
   margin-bottom: var(--app-nav-height);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 1.5rem 1.25rem;
+  padding: 1.5rem 1.25rem calc(2.5rem + var(--safe-area-bottom)); /* Increased bottom padding */
 }
 
 /* Bottom Navigation Bar */
@@ -831,34 +832,37 @@ body[data-bs-theme="dark"] .modal-bottom-sheet .btn-close {
 
 /* Loading Shimmer Effect */
 .shimmer {
-    background: #f6f7f8;
-    background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+    background: #f1f5f9;
+    background-image: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
     background-repeat: no-repeat;
-    background-size: 800px 104px; 
+    background-size: 200% 100%; 
     display: inline-block;
     position: relative; 
-    animation-duration: 1s;
-    animation-fill-mode: forwards; 
-    animation-iteration-count: infinite;
-    animation-name: placeholderShimmer;
-    animation-timing-function: linear;
+    animation: placeholderShimmer 1.5s ease-in-out infinite;
     border-radius: 4px;
 }
 
+[data-bs-theme="dark"] .shimmer {
+    background: #1e293b;
+    background-image: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+}
+
 @keyframes placeholderShimmer {
-    0% { background-position: -468px 0; }
-    100% { background-position: 468px 0; }
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
 }
 
 .calendar-skeleton {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
+    gap: 12px;
+    padding: 10px 0;
 }
 
 .calendar-skeleton-item {
-    height: 40px;
-    width: 40px;
+    aspect-ratio: 1/1;
+    width: 100%;
+    max-width: 42px;
     margin: auto;
 }
 

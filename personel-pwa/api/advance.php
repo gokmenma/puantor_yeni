@@ -24,6 +24,14 @@ if ($action == 'list') {
     $hedef_ay = $_POST['hedef_ay'] ?? null;
     $hedef_yil = $_POST['hedef_yil'] ?? null;
 
+    // Check for existing pending request
+    $check = $db->prepare("SELECT id FROM personel_avans_talepleri WHERE person_id = ? AND durum = 0");
+    $check->execute([$person_id]);
+    if ($check->fetch()) {
+        echo json_encode(['status' => 'error', 'message' => 'Hali hazırda bekleyen bir avans talebiniz bulunmaktadır. Yeni bir talep oluşturmadan önce mevcut talebinizin sonuçlanmasını beklemelisiniz.']);
+        exit;
+    }
+
     $query = $db->prepare("INSERT INTO personel_avans_talepleri (person_id, firm_id, tutar, aciklama, hedef_ay, hedef_yil) VALUES (?, ?, ?, ?, ?, ?)");
     try {
         $query->execute([$person_id, $firm_id, $tutar, $aciklama, $hedef_ay, $hedef_yil]);
