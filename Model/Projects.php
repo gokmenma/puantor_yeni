@@ -53,6 +53,13 @@ class Projects extends Model
         return $query->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function belongsToFirm($project_id, $firm_id)
+    {
+        $query = $this->db->prepare('SELECT COUNT(*) as total FROM projects WHERE id = ? AND firm_id = ?');
+        $query->execute([(int) $project_id, (int) $firm_id]);
+        return ((int) ($query->fetch(PDO::FETCH_OBJ)->total ?? 0)) > 0;
+    }
+
     public function addPersontoProject($data)
     {
         $this->table = 'project_person';
@@ -150,6 +157,13 @@ class Projects extends Model
 
     public function getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false)
     {
+        $firm_id = (int) ($_SESSION['firm_id'] ?? 0);
+        $project_id = (int) $project_id;
+
+        if ($project_id <= 0 || $firm_id <= 0 || !$this->belongsToFirm($project_id, $firm_id)) {
+            return [];
+        }
+
         // Yetki kontrolü
         $user = $_SESSION['user'] ?? null;
         $is_main_user = (isset($user->is_main_user) && $user->is_main_user == 1) || (isset($user->parent_id) && $user->parent_id == 0);
@@ -164,12 +178,13 @@ class Projects extends Model
         $sql = "SELECT p.*
                         FROM persons p
                         WHERE $wage_type_sql
+                        AND p.firm_id = ?
                         AND (
                             EXISTS (SELECT 1 FROM project_person WHERE project_id = ? and person_id = p.id) 
                             OR EXISTS (SELECT 1 FROM puantaj WHERE project_id = ? AND person = p.id AND gun >= ? AND gun <= ?)
                         )
                         AND p.deleted_at IS NULL";
-        $params = [$project_id, $project_id, $first_day, $last_day];
+        $params = [$firm_id, $project_id, $project_id, $first_day, $last_day];
 
         if ($job_group > 0) {
             $sql .= ' AND job_group = ?';

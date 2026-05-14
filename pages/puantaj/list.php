@@ -22,30 +22,35 @@ $puantajObj = new Puantaj();
 $jobsHelper = new Jobs();
 $teamsHelper = new Teams();
 
-$firm_id = $_SESSION['firm_id'];
+if (isset($Auths)) {
+    $Auths->checkFirmReturn();
+}
 
-$year = isset($_REQUEST['year']) ? $_REQUEST['year'] : ($_COOKIE['p_year'] ?? date('Y'));
-$month = isset($_REQUEST['months']) ? $_REQUEST['months'] : ($_COOKIE['p_months'] ?? date('m'));
+$firm_id = (int) ($_SESSION['firm_id'] ?? 0);
+
+$year = (int) (isset($_REQUEST['year']) ? $_REQUEST['year'] : ($_COOKIE['p_year'] ?? date('Y')));
+$month = (int) (isset($_REQUEST['months']) ? $_REQUEST['months'] : ($_COOKIE['p_months'] ?? date('m')));
 $last_day = Date::Ymd(Date::lastDay($month, $year));
-$project_id = isset($_REQUEST['projects']) ? $_REQUEST['projects'] : ($_COOKIE['p_projects'] ?? 0);
-$job_group = isset($_REQUEST['job_groups']) ? $_REQUEST['job_groups'] : ($_COOKIE['p_job_groups'] ?? 0);
-$team_id = isset($_REQUEST['team_id']) ? $_REQUEST['team_id'] : ($_COOKIE['p_team_id'] ?? 0);
+$project_id = (int) (isset($_REQUEST['projects']) ? $_REQUEST['projects'] : ($_COOKIE['p_projects'] ?? 0));
+$job_group = (int) (isset($_REQUEST['job_groups']) ? $_REQUEST['job_groups'] : ($_COOKIE['p_job_groups'] ?? 0));
+$team_id = (int) (isset($_REQUEST['team_id']) ? $_REQUEST['team_id'] : ($_COOKIE['p_team_id'] ?? 0));
 
 
 require_once 'Model/SettingsModel.php';
 
 $Settings = new SettingsModel();
 $showWhiteCollar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+$first_day = Date::firstDay($month, $year);
 
-if ($project_id == 0 || $project_id == '') {
+if ($project_id > 0 && !$projects->belongsToFirm($project_id, $firm_id)) {
+    $persons = [];
+} elseif ($project_id == 0 || $project_id == '') {
     // Proje id boş ise Firma id'sine göre tüm mavi yakalı, işe başlama tarihi o ayın son gününden önce olan personelleri getirir
     // Akıllı görünürlük: Yeni başlayanlar veya bu ay puantajı olanlar her zaman görünür
-    $first_day = Date::firstDay($month, $year);
     $persons = $personObj->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar);
 } else {
     // Proje id dolu ise projeye ait, işe başlama tarihi o ayın son gününden önce olan mavi yakalı personelleri getirir
     // Akıllı görünürlük: Projeye atanmış olanlar veya bu ay bu projede puantajı olanlar
-    $first_day = Date::firstDay($month, $year);
     $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar);
 }
 // Ayın son gününü bulma
