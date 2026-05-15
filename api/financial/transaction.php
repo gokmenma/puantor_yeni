@@ -52,7 +52,9 @@ $Person = new Persons();
 
 $Auths->checkFirmReturn();
 
-if ($_POST["action"] == "saveTransaction") {
+$action = $_REQUEST["action"] ?? $_REQUEST["func"] ?? '';
+
+if ($action == "saveTransaction") {
     $id = isset($_POST["transaction_id"]) && $_POST["transaction_id"] != 0 ? Security::decrypt($_POST["transaction_id"]) : 0;
 
     //Kasa boş gelmesini engelle
@@ -134,7 +136,7 @@ if ($_POST["action"] == "saveTransaction") {
     exit;
 }
 
-if ($_POST["action"] == "deleteTransaction") {
+if ($action == "deleteTransaction") {
 
     //Kasa hareketi silme yetkisi var mı?
     $Auths->hasPermissionReturn("delete_income_expense");
@@ -165,7 +167,7 @@ if ($_POST["action"] == "deleteTransaction") {
     exit;
 }
 
-if ($_POST["action"] == "getSubTypes") {
+if ($action == "getSubTypes") {
     $type = $_POST["type"];
     $subTypes = $define->getIncExpTypesByFirmandType($type);
     $res = [
@@ -179,7 +181,7 @@ if ($_POST["action"] == "getSubTypes") {
 
 
 //Projeden Ödeme Al
-if ($_POST["action"] == "getPaymentFromProject") {
+if ($action == "getPaymentFromProject") {
     $id = $_POST["id"] != 0 ? Security::decrypt($_POST["id"]) : 0;
     $project_id = $_POST["fp_project_name"];
 
@@ -221,7 +223,7 @@ if ($_POST["action"] == "getPaymentFromProject") {
 }
 
 //Personel Ödemesi Yap
-if ($_POST["action"] == "payToPerson") {
+if ($action == "payToPerson") {
     $id = (isset($_POST["id"]) && $_POST["id"] != 0) ? Security::decrypt($_POST["id"]) : 0;
     $person_id = $_POST["tp_person_name"];
     $amount = Helper::formattedMoneyToNumber($_POST["tp_amount"]);
@@ -267,7 +269,7 @@ if ($_POST["action"] == "payToPerson") {
 }
 
 //Personellere Ödeme Yap
-if ($_POST["action"] == "payToPersons") {
+if ($action == "payToPersons") {
 
     //gelen değeri virgülden ayırarak diziye çevir
     $person_ids = explode(",", $_POST["person_ids"]);
@@ -318,7 +320,7 @@ if ($_POST["action"] == "payToPersons") {
 
 
 //Firma Ödemesi Yap
-if ($_POST["action"] == "payToCompany") {
+if ($action == "payToCompany") {
     $id = $_POST["id"] != 0 ? Security::decrypt($_POST["id"]) : 0;
     $company_id = $_POST["tc_company_name"];
     $amount = Helper::formattedMoneyToNumber($_POST["tc_amount"]);
@@ -360,7 +362,7 @@ if ($_POST["action"] == "payToCompany") {
 }
 
 //Alınan Proje Masrafı Ekle
-if ($_POST["action"] == "addExpenseReceivedProject") {
+if ($action == "addExpenseReceivedProject") {
     $id = $_POST["id"] != 0 ? Security::decrypt($_POST["id"]) : 0;
     $project_id = $_POST["rp_project_name"];
     $amount = Helper::formattedMoneyToNumber($_POST["rp_amount"]);
@@ -403,7 +405,7 @@ if ($_POST["action"] == "addExpenseReceivedProject") {
 
 
 //Güncelleme için verileri getir
-if ($_POST["action"] == "getTransaction") {
+if ($action == "getTransaction") {
     $id = $_POST["id"];
     $projects = $_POST["projects"];
     $persons = $_POST["persons"];
@@ -471,7 +473,7 @@ if ($_POST["action"] == "getTransaction") {
 }
 
 //Kasalar arası virman yapmak için transfer yapılacak kasaları getir
-if ($_POST["action"] == "getCaseTransfer") {
+if ($action == "getCaseTransfer") {
     //Kasalararası virman yetkisi var mı kontrol et
     //$Auths->hasPermissionReturn("intercash_transfer");
     try {

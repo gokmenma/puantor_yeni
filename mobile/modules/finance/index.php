@@ -78,7 +78,7 @@ foreach ($active_cases as $c) {
     $casesCache[$c->id] = $c;
 }
 ?>
-<?php $apiUrl = '/api/financial/transaction.php'; ?>
+<?php $apiUrl = 'api/financial.php'; ?>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/tr.js"></script>
@@ -531,8 +531,8 @@ $(document).ready(function() {
 
     // 3. Load Sub-Types on load and on change
     function fetchSubTypes(type) {
-        jQuery.post('/api/financial/transaction.php', {
-            action: 'getSubTypes',
+        jQuery.post(apiUrl, {
+            func: 'getSubTypes',
             type: type
         }, function(response) {
             try {
@@ -612,11 +612,11 @@ $(document).ready(function() {
         }
 
         var formData = form.serializeArray();
-        formData.push({ name: 'action', value: 'saveTransaction' });
+        formData.push({ name: 'func', value: 'saveTransaction' });
 
         jQuery.ajax({
             type: 'POST',
-            url: '/api/financial/transaction.php',
+            url: apiUrl,
             data: formData,
             success: function(response) {
                 try {
@@ -659,8 +659,8 @@ $(document).ready(function() {
             color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b'
         }).then((result) => {
             if (result.isConfirmed) {
-                jQuery.post('/api/financial/transaction.php?type=1', {
-                    action: 'deleteTransaction',
+                jQuery.post(apiUrl + '?type=1', {
+                    func: 'deleteTransaction',
                     id: id
                 }, function(response) {
                     try {

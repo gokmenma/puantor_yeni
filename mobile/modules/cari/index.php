@@ -275,9 +275,9 @@ $(document).ready(function() {
     $('#saveMobileCari').click(function() {
         var formData = $('#mobileCariForm').serialize();
         $.ajax({
-            url: 'api/cari.php?func=save_cari',
+            url: 'api/cari.php',
             type: 'POST',
-            data: formData,
+            data: formData + '&action=saveCari',
             dataType: 'json',
             success: function(data) {
                 if(data.status === 'success') {
@@ -313,9 +313,9 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: 'api/cari.php?func=delete_cari',
+                    url: 'api/cari.php',
                     type: 'POST',
-                    data: { id: id },
+                    data: { id: id, action: 'deleteCari' },
                     dataType: 'json',
                     success: function(data) {
                         if(data.status === 'success') {

@@ -283,6 +283,7 @@ $(document).ready(function() {
         var amount = $('#mAmount').val();
         
         var formData = {
+            action: 'saveMovement',
             id: $('#mobileMovementForm input[name="id"]').val(),
             cari_id: $('#mobileMovementForm input[name="cari_id"]').val(),
             islem_tarihi: $('#mIslemTarihi').val(),
@@ -293,7 +294,7 @@ $(document).ready(function() {
         };
 
         $.ajax({
-            url: 'api/cari.php?func=save_movement',
+            url: 'api/cari.php',
             type: 'POST',
             data: formData,
             dataType: 'json',
@@ -331,9 +332,9 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: 'api/cari.php?func=delete_movement',
+                    url: 'api/cari.php',
                     type: 'POST',
-                    data: { id: id },
+                    data: { id: id, action: 'deleteMovement' },
                     dataType: 'json',
                     success: function(data) {
                         if(data.status === 'success') {

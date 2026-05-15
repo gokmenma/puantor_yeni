@@ -1,36 +1,25 @@
 <?php
 /**
  * Mobile Cari API Proxy
- * Avoids WAF/reCAPTCHA issues by using a standardized endpoint in the mobile directory
+ * Standardized proxy matching the persons/person.php pattern
  */
-header('Content-Type: application/json');
-$func = $_REQUEST['func'] ?? '';
 
-$target_dir = __DIR__ . '/../../api/cari/';
+$action = $_POST['action'] ?? $_GET['action'] ?? 'none';
+$id = $_POST['id'] ?? 'none';
 
-switch($func) {
-    case 'save_cari':
-        $target = $target_dir . 'save_cari.php';
-        break;
-    case 'delete_cari':
-        $target = $target_dir . 'delete_cari.php';
-        break;
-    case 'save_movement':
-        $target = $target_dir . 'save_movement.php';
-        break;
-    case 'delete_movement':
-        $target = $target_dir . 'delete_movement.php';
-        break;
-    case 'list':
-        $target = $target_dir . 'get_cari.php';
-        break;
-    default:
-        echo json_encode(['status' => 'error', 'message' => 'Invalid function: ' . $func]);
-        exit;
+$target = __DIR__ . "/../../api/cari/cari.php";
+
+if (!file_exists($target)) {
+    header('Content-Type: application/json');
+    echo json_encode(["status" => "error", "message" => "API target not found"]);
+    exit;
 }
 
-if (file_exists($target)) {
-    require_once $target;
-} else {
-    echo json_encode(['status' => 'error', 'message' => 'API target not found: ' . $func]);
+// Set correct working directory and include target
+try {
+    chdir(dirname($target));
+    require $target; 
+} catch (Throwable $e) {
+    header('Content-Type: application/json');
+    echo json_encode(["status" => "error", "message" => "Proxy Error: " . $e->getMessage()]);
 }
