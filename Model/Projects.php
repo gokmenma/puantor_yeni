@@ -187,15 +187,13 @@ class Projects extends Model
                             EXISTS (SELECT 1 FROM project_person WHERE project_id = ? and person_id = p.id) 
                             OR EXISTS (SELECT 1 FROM puantaj WHERE project_id = ? AND person = p.id AND gun >= ? AND gun <= ?)
                         )
-                        AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
+                        AND (p.job_end_date IS NULL OR p.job_end_date = '')";
             $params[] = $project_id;
             $params[] = $project_id;
             $params[] = $first_day;
             $params[] = $last_day;
-            $params[] = $first_day;
         } elseif ($person_status === 'passive') {
-            $sql .= " AND p.job_end_date IS NOT NULL AND p.job_end_date != '' AND STR_TO_DATE(p.job_end_date, '%d.%m.%Y') < ?";
-            $params[] = $first_day;
+            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '')";
         } else {
             // all
             $sql .= " AND (

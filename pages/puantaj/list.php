@@ -494,24 +494,30 @@ $projectNamesCache[0] = "Proje Yok";
                 <label for="team_id" class="form-label">Ekip:</label>
                 <?php echo $teamsHelper->teamsSelect('team_id', $team_id); ?>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="form-label">Personel Durumu:</label>
                 <div class="form-selectgroup">
                     <label class="form-selectgroup-item">
+                        <input type="radio" name="person_status" value="all" class="form-selectgroup-input" <?php echo $person_status == 'all' ? 'checked' : ''; ?>>
+                        <span class="form-selectgroup-label">
+                            <i class="ti ti-users icon me-1"></i> Tümü
+                        </span>
+                    </label>
+                    <label class="form-selectgroup-item">
                         <input type="radio" name="person_status" value="active" class="form-selectgroup-input" <?php echo $person_status == 'active' ? 'checked' : ''; ?>>
-                        <span class="form-selectgroup-label" title="Aktif Personeller">Aktif</span>
+                        <span class="form-selectgroup-label">
+                            <i class="ti ti-user-check icon me-1 text-success"></i> Aktif
+                        </span>
                     </label>
                     <label class="form-selectgroup-item">
                         <input type="radio" name="person_status" value="passive" class="form-selectgroup-input" <?php echo $person_status == 'passive' ? 'checked' : ''; ?>>
-                        <span class="form-selectgroup-label" title="Pasif Personeller">Pasif</span>
-                    </label>
-                    <label class="form-selectgroup-item">
-                        <input type="radio" name="person_status" value="all" class="form-selectgroup-input" <?php echo $person_status == 'all' ? 'checked' : ''; ?>>
-                        <span class="form-selectgroup-label" title="Tüm Personeller">Tümü</span>
+                        <span class="form-selectgroup-label">
+                            <i class="ti ti-user-x icon me-1 text-danger"></i> Pasif
+                        </span>
                     </label>
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <label for="actions" class="form-label">İşlem</label>
                 <div class="d-flex gap-1">
                     <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"

@@ -88,13 +88,9 @@ class Persons extends Model
         $params = [$firm_id];
 
         if ($person_status === 'active') {
-            $sql .= " AND STR_TO_DATE(job_start_date, '%d.%m.%Y') <= ? 
-                      AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
-            $params[] = $last_day;
-            $params[] = $first_day;
+            $sql .= " AND (p.job_end_date IS NULL OR p.job_end_date = '')";
         } elseif ($person_status === 'passive') {
-            $sql .= " AND p.job_end_date IS NOT NULL AND p.job_end_date != '' AND STR_TO_DATE(p.job_end_date, '%d.%m.%Y') < ?";
-            $params[] = $first_day;
+            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '')";
         }
 
         if ($job_group > 0) {

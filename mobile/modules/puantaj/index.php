@@ -695,13 +695,13 @@ foreach ($all_projects as $proj) {
                         </div>
                         <div class="btn-group w-100" role="group">
                             <input type="radio" class="btn-check" name="person_status" id="status_active" value="active" <?php echo $selected_person_status == 'active' ? 'checked' : ''; ?>>
-                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_active">Aktif</label>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_active"><i class="ti ti-user-check me-1"></i> Aktif</label>
 
                             <input type="radio" class="btn-check" name="person_status" id="status_passive" value="passive" <?php echo $selected_person_status == 'passive' ? 'checked' : ''; ?>>
-                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_passive">Pasif</label>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_passive"><i class="ti ti-user-x me-1"></i> Pasif</label>
 
                             <input type="radio" class="btn-check" name="person_status" id="status_all" value="all" <?php echo $selected_person_status == 'all' ? 'checked' : ''; ?>>
-                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_all">Tümü</label>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_all"><i class="ti ti-users me-1"></i> Tümü</label>
                         </div>
                     </div>
 
