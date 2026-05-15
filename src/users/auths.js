@@ -70,6 +70,52 @@ $(document).ready(function () {
     $(".accordion-collapse").removeClass("show");
     $(".accordion-button").addClass("collapsed").attr("aria-expanded", "false");
   });
+
+  // Real-time Search Filtering
+  $(document).on("input keyup", "#authSearch", function() {
+    var query = $(this).val().toLocaleLowerCase('tr-TR').trim();
+    
+    if (query === "") {
+      $(".accordion-item").show();
+      $(".form-selectgroup-item").closest(".col-12").show();
+      return;
+    }
+
+    $(".accordion-item").each(function() {
+      var $item = $(this);
+      // Kategori başlığı ve açıklamasını içeren header metnini al
+      var $header = $item.find(".accordion-header");
+      var headerText = $header.text().toLocaleLowerCase('tr-TR');
+      
+      var categoryMatches = headerText.includes(query);
+      var visibleSubCount = 0;
+
+      // Alt yetkileri kontrol et
+      $item.find(".form-selectgroup-item").each(function() {
+        var $sub = $(this);
+        var subText = $sub.text().toLocaleLowerCase('tr-TR');
+        
+        if (subText.includes(query) || categoryMatches) {
+          $sub.closest(".col-12").show();
+          visibleSubCount++;
+        } else {
+          $sub.closest(".col-12").hide();
+        }
+      });
+
+      // Kategori veya herhangi bir alt yetki eşleşiyorsa göster
+      if (categoryMatches || visibleSubCount > 0) {
+        $item.show();
+        // Eğer kategori eşleşmiyorsa ama alt yetki eşleşiyorsa otomatik aç
+        if (visibleSubCount > 0 && !categoryMatches) {
+           $item.find(".accordion-collapse").addClass("show");
+           $item.find(".accordion-button").removeClass("collapsed").attr("aria-expanded", "true");
+        }
+      } else {
+        $item.hide();
+      }
+    });
+  });
 });
 
 $(document).on("click", "#authsSave", function () {

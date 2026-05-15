@@ -17,7 +17,7 @@ class Auths extends Model
 
     public function auths()
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 ORDER BY title ASC");
         $sql->execute([0]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
@@ -25,7 +25,7 @@ class Auths extends Model
     //alt yetkiler getirilir
     public function subAuths($id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 ORDER BY title ASC");
         $sql->execute([$id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }

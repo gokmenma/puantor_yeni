@@ -112,6 +112,14 @@ $perm->checkAuthorize( "transaction_permissions");
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><?php echo $role->roleName ?? ''; ?></h3>
+                    <div class="col ms-5 me-5">
+                        <div class="input-icon">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-search icon text-primary"></i>
+                            </span>
+                            <input type="text" id="authSearch" class="form-control form-control-rounded" placeholder="Yetki veya kategori ara...">
+                        </div>
+                    </div>
                     <div class="col-auto ms-auto d-flex align-items-center">
                         <div class="btn-group me-3">
                             <button type="button" class="btn btn-sm btn-outline-primary" id="expandAll">

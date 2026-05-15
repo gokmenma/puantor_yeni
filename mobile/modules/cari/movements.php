@@ -293,11 +293,11 @@ $(document).ready(function() {
         };
 
         $.ajax({
-            url: '/api/cari/save_movement.php',
+            url: 'api/cari.php?func=save_movement',
             type: 'POST',
             data: formData,
-            success: function(response) {
-                var data = JSON.parse(response);
+            dataType: 'json',
+            success: function(data) {
                 if(data.status === 'success') {
                     Swal.fire({
                         title: 'Başarılı',
@@ -331,11 +331,11 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/api/cari/delete_movement.php',
+                    url: 'api/cari.php?func=delete_movement',
                     type: 'POST',
                     data: { id: id },
-                    success: function(response) {
-                        var data = JSON.parse(response);
+                    dataType: 'json',
+                    success: function(data) {
                         if(data.status === 'success') {
                             location.reload();
                         } else {

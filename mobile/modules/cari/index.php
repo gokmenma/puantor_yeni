@@ -275,11 +275,11 @@ $(document).ready(function() {
     $('#saveMobileCari').click(function() {
         var formData = $('#mobileCariForm').serialize();
         $.ajax({
-            url: '/api/cari/save_cari.php',
+            url: 'api/cari.php?func=save_cari',
             type: 'POST',
             data: formData,
-            success: function(response) {
-                var data = JSON.parse(response);
+            dataType: 'json',
+            success: function(data) {
                 if(data.status === 'success') {
                     Swal.fire({
                         title: 'Başarılı',
@@ -313,11 +313,11 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/api/cari/delete_cari.php',
+                    url: 'api/cari.php?func=delete_cari',
                     type: 'POST',
                     data: { id: id },
-                    success: function(response) {
-                        var data = JSON.parse(response);
+                    dataType: 'json',
+                    success: function(data) {
                         if(data.status === 'success') {
                             location.reload();
                         } else {
