@@ -2,6 +2,10 @@
 // Puantor Mobile - Advance API Proxy
 // This proxy file is used to avoid WAF/LiteSpeed security triggers that often occur with direct root-level API calls.
 
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

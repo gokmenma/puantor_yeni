@@ -1,5 +1,7 @@
-<?php
 header('Content-Type: application/json; charset=utf-8');
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
 
 if (!defined('ROOT')) {
     define("ROOT", dirname(__DIR__, 2));
@@ -33,6 +35,7 @@ try {
                                ORDER BY a.id DESC");
         $query->execute([$firm_id]);
         $list = $query->fetchAll(PDO::FETCH_OBJ);
+        ob_clean();
         echo json_encode(['status' => 'success', 'list' => $list]);
         exit;
 
@@ -49,6 +52,7 @@ try {
         if (!$request) throw new Exception("Talep bulunamadı veya bu işlem için yetkiniz yok.");
         if ($request->durum == $status) {
             $db->commit();
+            ob_clean();
             echo json_encode(['status' => 'success', 'message' => 'Talep zaten güncellenmiş.']);
             exit;
         }
@@ -92,6 +96,7 @@ try {
         }
 
         $db->commit();
+        ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'Talep güncellendi.']);
         exit;
 
@@ -121,11 +126,13 @@ try {
         $db->prepare("DELETE FROM personel_avans_talepleri WHERE id = ? AND firm_id = ?")->execute([$id, $firm_id]);
         
         $db->commit();
+        ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'Talep ve bağlı kayıtlar silindi.']);
         exit;
     }
 } catch (Exception $e) {
-    if ($db->inTransaction()) $db->rollBack();
+    if (isset($db) && $db->inTransaction()) $db->rollBack();
+    ob_clean();
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     exit;
 }
