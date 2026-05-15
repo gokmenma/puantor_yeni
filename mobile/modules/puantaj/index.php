@@ -27,6 +27,9 @@ $selected_team_id = $_GET['team_id'] ?? 0;
 $selected_collar_type = $_GET['collar_type'] ?? 'all'; // all, blue, white
 $selected_person_status = $_GET['person_status'] ?? 'active'; // active, passive, all
 
+// Filtre uygulanmış mı kontrol et
+$isFiltered = ($selected_project_id != 0 || $selected_job_group != 0 || $selected_team_id != 0 || $selected_collar_type != 'all' || $selected_person_status != 'active');
+
 // Filtreye göre beyaz yakalıları dahil etme durumu
 $showWhiteCollar = ($selected_collar_type === 'white' || $selected_collar_type === 'all') ? 1 : 0;
 // Eğer filtre 'all' ise ama sistem ayarı kapalıysa, sadece mavileri getir (Masaüstü davranışı)
@@ -404,7 +407,7 @@ foreach ($all_projects as $proj) {
             <button class="btn btn-sm btn-pill <?php echo $selected_date == date('Y-m-d', strtotime('-1 day')) ? 'btn-primary' : 'btn-outline-primary'; ?>"
                     onclick="location.href='<?php echo $yesterday_url; ?>'">Dün</button>
             <button class="btn btn-sm btn-pill btn-outline-secondary" onclick="openBulkPuantajModal()">Tümünü işaretle</button>
-            <button class="btn btn-sm btn-icon btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#filterModal" style="width: 32px; height: 32px; min-height: auto !important;">
+            <button class="btn btn-sm btn-icon <?php echo $isFiltered ? 'btn-primary' : 'btn-outline-secondary'; ?> rounded-pill" data-bs-toggle="modal" data-bs-target="#filterModal" style="width: 32px; height: 32px; min-height: auto !important;">
                 <i class="ti ti-filter fs-3"></i>
             </button>
         </div>
