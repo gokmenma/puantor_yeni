@@ -44,7 +44,7 @@ require_once "Database/require.php";
 $(document).ready(function() {
     const table = $('#advance-requests-table').DataTable({
         ajax: {
-            url: 'api/advances_admin.php?action=list',
+            url: 'api/advances/advances.php?action=list',
             dataSrc: 'list'
         },
         columns: [
@@ -105,7 +105,7 @@ $(document).ready(function() {
     });
 
     function updateStatus(id, status) {
-        $.post('api/advances_admin.php', {
+        $.post('api/advances/advances.php', {
             action: 'update_status',
             id: id,
             status: status

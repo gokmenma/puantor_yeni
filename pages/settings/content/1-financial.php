@@ -1,8 +1,6 @@
 <?php
 $sub_limit = $Settings->getSettings("cases_sub_limit")->set_value ?? 0;
-
-
-
+$personnel_advance_request_visible = $Settings->getSettings("personnel_advance_request_visible")->set_value ?? 1;
 ?>
 <div class="card-body">
 
@@ -26,9 +24,25 @@ $sub_limit = $Settings->getSettings("cases_sub_limit")->set_value ?? 0;
             
 
             <form action="" id="settingsFinancialForm">
-                <div class="col-md-2">
-                    <input type="text" class="form-control money" name="sub_limit" placeholder="Örn:0"
-                        value="<?php echo $sub_limit ; ?>">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Kasa Alt Limiti (₺)</label>
+                        <input type="text" class="form-control money" name="sub_limit" placeholder="Örn:0"
+                            value="<?php echo $sub_limit ; ?>">
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="form-label">Uygulama Görünürlük Ayarları</div>
+                        <div>
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="personnel_advance_request_visible" <?php echo $personnel_advance_request_visible == 1 ? 'checked' : ''; ?>>
+                                <span class="form-check-label">Personel Avans Talepleri Sayfası</span>
+                                <small class="form-hint text-muted mt-1">Açık olduğunda personel uygulamasında avans talepleri sayfası görünür.</small>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </form>
         <?php } ?>

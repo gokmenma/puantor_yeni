@@ -61,6 +61,18 @@ $prev_date = date('Y-m-d', strtotime($selected_date . ' -1 day'));
 $next_date = date('Y-m-d', strtotime($selected_date . ' +1 day'));
 $today = date('Y-m-d');
 $is_today_or_future = ($selected_date >= $today);
+
+// OPTİMİZASYON: Toplu veri çekme (N+1 query problemini çözer)
+$person_ids = array_map(function($p) { return $p->id; }, $persons);
+$all_puantaj_data = $puantajModel->getAllPuantajForPersons($person_ids, $selected_date, $selected_date);
+$all_puantaj_types = $puantajModel->getAllPuantajTurleri();
+$date_nodash_global = str_replace('-', '', $selected_date);
+
+// Proje isimlerini indexle (N+1 query'den kurtulmak için)
+$project_names_indexed = [];
+foreach ($all_projects as $proj) {
+    $project_names_indexed[$proj->id] = $proj->project_name;
+}
 ?>
 
 <style>
@@ -421,16 +433,11 @@ $is_today_or_future = ($selected_date >= $today);
             $date_dash = $selected_date; // 2026-05-08
             $date_nodash = str_replace('-', '', $selected_date); // 20260508
             
-            // Masaüstü ile tam uyumlu olması için: Önce herhangi bir projedeki kaydı bul
-            $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_dash, -1);
-            if (empty($current_status_id)) {
-                $current_status_id = $puantajModel->getPuantajTuruId($person->id, $date_nodash, -1);
-            }
-
-            $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_dash, -1);
-            if (empty($puantaj_project_id)) {
-                $puantaj_project_id = $puantajModel->getPuantajProjectId($person->id, $date_nodash, -1);
-            }
+            // TOPLU VERİDEN ÇEK (Eski N+1 metodları yerine)
+            $person_puantaj = $all_puantaj_data[$person->id][$date_nodash] ?? null;
+            
+            $current_status_id = $person_puantaj->puantaj_id ?? '';
+            $puantaj_project_id = $person_puantaj->project_id ?? 0;
 
             // Hafta sonu (Pazar) HT otomatik gösterme (Sadece hiç kayıt yoksa)
             if (empty($current_status_id) && Date::isWeekend($selected_date)) {
@@ -441,12 +448,12 @@ $is_today_or_future = ($selected_date >= $today);
             $disabled_project_name = '';
             if ($selected_project_id > 0 && $puantaj_project_id > 0 && $puantaj_project_id != $selected_project_id) {
                 $is_disabled = true;
-                $disabled_project_name = $projectHelper->getProjectName($puantaj_project_id);
+                $disabled_project_name = $project_names_indexed[$puantaj_project_id] ?? 'Bilinmeyen Proje';
             }
 
             $current_type = null;
             if (!empty($current_status_id)) {
-                $current_type = $puantajModel->getPuantajTuruById($current_status_id);
+                $current_type = $all_puantaj_types[$current_status_id] ?? null;
             }
         ?>
             <div class="person-item-wrapper" data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>">
@@ -484,7 +491,7 @@ $is_today_or_future = ($selected_date >= $today);
                                 <?php else: ?>
                                     <?php 
                                     if ($puantaj_project_id > 0 && $selected_project_id == 0) {
-                                        $proj_name = $projectHelper->getProjectName($puantaj_project_id);
+                                        $proj_name = $project_names_indexed[$puantaj_project_id] ?? 'Bilinmeyen Proje';
                                         echo '<span class="text-primary" style="font-weight: 600;"><i class="ti ti-subtask me-1"></i>' . htmlspecialchars($proj_name) . '</span>';
                                     } else {
                                         echo !empty($person->job) ? htmlspecialchars($person->job) : 'Görev eklenmedi'; 

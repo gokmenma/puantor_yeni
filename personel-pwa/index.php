@@ -19,6 +19,11 @@ if (isset($user->phone)) $user->phone = Security::safeDecrypt($user->phone);
 if (isset($user->email)) $user->email = Security::safeDecrypt($user->email);
 if (isset($user->iban_number)) $user->iban_number = Security::safeDecrypt($user->iban_number);
 
+// Load settings
+require_once __DIR__ . "/../Model/SettingsModel.php";
+$Settings = new SettingsModel();
+$personnel_advance_request_visible = $Settings->getSettings("personnel_advance_request_visible")->set_value ?? 1;
+
 // Route to file mapping
 $routes = [
     'dashboard' => [
@@ -44,6 +49,11 @@ $routes = [
 ];
 
 if (!isset($routes[$route])) {
+    $route = 'dashboard';
+}
+
+// Check if advance requests are disabled
+if ($route == 'advance' && $personnel_advance_request_visible == 0) {
     $route = 'dashboard';
 }
 

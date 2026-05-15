@@ -32,10 +32,12 @@
 
     <!-- Quick Actions Grid -->
     <div class="quick-actions-grid">
+        <?php if ($personnel_advance_request_visible == 1): ?>
         <a href="?route=advance" class="quick-action-card">
             <i class="ti ti-wallet"></i>
             <span>Avans İste</span>
         </a>
+        <?php endif; ?>
         <a href="?route=attendance" class="quick-action-card">
             <i class="ti ti-calendar-event"></i>
             <span>Takvim</span>

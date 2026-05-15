@@ -129,6 +129,9 @@ $userId = $user->id ?? 0;
     </a>
     <?php endif; ?>
 
+    <?php 
+    $advance_auth = $Auths->getAuthIdByTitle("Avans Talepleri");
+    if (!$advance_auth || $Auths->AuthorizeByAuthId($advance_auth->id)): ?>
     <a href="advance-requests" class="list-group-item" data-id="advance-requests">
       <div class="d-flex align-items-center gap-1">
         <i class="ti ti-grip-vertical text-muted drag-handle"></i>
@@ -139,6 +142,7 @@ $userId = $user->id ?? 0;
       </div>
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
+    <?php endif; ?>
   </div>
 
   <!-- Destek ve Ayarlar -->

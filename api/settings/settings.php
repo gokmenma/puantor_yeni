@@ -119,18 +119,11 @@ if ($_POST["action"] == "homeSettings") {
 if ($_POST["action"] == "financialSettings") {
 
     $sub_limit = $_POST["sub_limit"];
-    //$id = $Settings->getSettingIdByUserAndAction($_SESSION["user"]->id, "work_hour")->id ?? 0;
-    $id = $Settings->getSettings("cases_sub_limit")->id ?? 0;
+    $personnel_advance_request_visible = isset($_POST["personnel_advance_request_visible"]) ? 1 : 0;
 
-    $data = [
-        "id" => $id,
-        "firm_id" => $_SESSION["firm_id"],
-        "user_id" => $_SESSION["user"]->id,
-        "set_name" => "cases_sub_limit",
-        "set_value" =>Helper::formattedMoneyToNumber($sub_limit)
-    ];
     try {
-        $lastInsertId = $Settings->saveWithAttr($data) ?? $id;
+        $Settings->upsertSetting("cases_sub_limit", Helper::formattedMoneyToNumber($sub_limit));
+        $Settings->upsertSetting("personnel_advance_request_visible", $personnel_advance_request_visible);
         $status = "success";
         $message = "Ayarlar başarıyla tamamlandı.";
     } catch (PDOException $e) {

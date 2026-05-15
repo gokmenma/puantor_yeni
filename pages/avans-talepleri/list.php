@@ -251,10 +251,10 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: 'api/advances_admin.php',
+                    url: 'api/advances/advances.php',
                     type: 'POST',
                     data: { 
-                        func: 'update_status',
+                        action: 'update_status',
                         id: id, 
                         status: status 
                     },
@@ -291,10 +291,10 @@ $(document).ready(function() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: 'api/advances_admin.php',
+                    url: 'api/advances/advances.php',
                     type: 'POST',
                     data: { 
-                        func: 'delete',
+                        action: 'delete',
                         id: id
                     },
                     dataType: 'json',

@@ -22,6 +22,7 @@ $firmId = $_SESSION['firm_id'];
 // Get settings
 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+$personnel_advance_request_visible = $Settings->getSettings("personnel_advance_request_visible")->set_value ?? 1;
 
 // Get package info
 $user_package = $UsersPackages->getSelectUserPackage($userId);
@@ -116,12 +117,22 @@ if ($view_mode == 'system' && !$can_view_settings) {
                 <?php $sub_limit = $Settings->getSettings("cases_sub_limit")->set_value ?? 0; ?>
                 <div class="mobile-card p-3 mb-3 mx-2">
                     <form id="settingsFinancialForm">
-                        <label class="form-label text-semibold text-xs text-uppercase tracking-wider">Kasa Ayarları</label>
-                        <p class="text-muted text-xxs mb-3">Kasa alt limitlerini yönetin</p>
+                        <label class="form-label text-semibold text-xs text-uppercase tracking-wider">Kasa & Uygulama Ayarları</label>
+                        <p class="text-muted text-xxs mb-3">Finansal limitleri ve uygulama görünürlüğünü yönetin</p>
 
                         <div class="form-floating mb-3">
                             <input type="number" class="form-control" name="sub_limit" id="sub_limit" placeholder="0" value="<?php echo htmlspecialchars($sub_limit); ?>">
                             <label for="sub_limit">Kasa Alt Limiti (₺)</label>
+                        </div>
+
+                        <div class="form-check form-switch mobile-switch p-0 mb-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label class="form-check-label" for="personnel_advance_request_visible">
+                                    Personel Avans Talepleri Sayfası
+                                    <small class="d-block text-muted text-xxs mt-1">Personel uygulamasında avans talebi görünürlüğünü kontrol eder.</small>
+                                </label>
+                                <input class="form-check-input" type="checkbox" name="personnel_advance_request_visible" id="personnel_advance_request_visible" <?php echo $personnel_advance_request_visible == 1 ? 'checked' : ''; ?>>
+                            </div>
                         </div>
 
                         <button type="button" class="btn btn-primary w-100 py-2 mt-2" id="financial_save">

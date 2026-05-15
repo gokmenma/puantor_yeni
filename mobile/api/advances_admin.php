@@ -1,3 +1,5 @@
 <?php
 // Forward the request to the main advances admin API
-require_once __DIR__ . '/../../api/advances_admin.php';
+// Forward to the unified API controller
+chdir('../../api/advances');
+require_once 'advances.php';
