@@ -1,8 +1,12 @@
 <?php
 ob_start();
-error_reporting(0);
-ini_set('display_errors', 0);
-// Forward the request to the main advances admin API
-// Forward to the unified API controller
-chdir('../../api/advances');
-require_once 'advances.php';
+
+$apiPath = dirname(__DIR__, 2) . '/api/advances/advances.php';
+if (file_exists($apiPath)) {
+    require_once $apiPath;
+} else {
+    ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'error', 'message' => 'API dosyasi bulunamadi.']);
+    exit;
+}

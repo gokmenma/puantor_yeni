@@ -721,16 +721,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
     </a>
   </div>
 
-  <!-- Tab: Evraklar -->
   <div id="tab-documents" class="person-tab-content <?php echo $activeTab != 'documents' ? 'd-none' : ''; ?>">
-     <div class="mobile-card p-5 text-center text-muted">
-          <i class="ti ti-files fs-1 mb-3 opacity-20"></i>
-          <h4 class="mb-1">Evrak Arşivi</h4>
-          <p class="text-xs">Bu personele ait dökümanlar yakında burada listelenecek.</p>
-          <button class="btn btn-outline-primary btn-sm rounded-pill mt-3">Yeni Evrak Yükle</button>
+    <!-- Compliance Progress -->
+    <div class="mobile-card p-3 shadow-sm mb-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-xs text-muted text-uppercase font-weight-bold">Evrak Tamamlanma</span>
+        <span class="badge bg-blue-lt text-blue" id="mobile-compliance-percent">0%</span>
+      </div>
+      <div class="progress progress-sm" style="height: 6px; border-radius: 3px;">
+        <div class="progress-bar bg-blue" id="mobile-compliance-bar" role="progressbar" style="width: 0%"></div>
+      </div>
+      <div class="mt-2 text-xs text-muted" id="mobile-compliance-text">0 / 7 Zorunlu Belge</div>
+    </div>
+
+    <!-- Standard Documents -->
+    <div class="mb-2 px-1">
+      <h5 class="text-uppercase text-muted font-weight-bold mb-3" style="font-size: 0.7rem; letter-spacing: 0.5px;">Zorunlu Özlük Belgeleri</h5>
+      <div id="mobile-standard-docs-container">
+        <!-- Spinner -->
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Documents -->
+    <div class="mb-4 px-1 mt-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="text-uppercase text-muted font-weight-bold mb-0" style="font-size: 0.7rem; letter-spacing: 0.5px;">Ek / Diğer Belgeler</h5>
+        <button class="btn btn-ghost-primary btn-sm rounded-pill py-1" id="btn-mobile-add-custom-doc">
+          <i class="ti ti-plus me-1"></i> Ekle
+        </button>
+      </div>
+      <div id="mobile-custom-docs-container">
+        <!-- List -->
+      </div>
+    </div>
   </div>
 
-  <!-- FAB code removed from here -->
 </div>
 
 <!-- Payroll Detail Modal -->
@@ -843,6 +871,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
         <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Vazgeç</button>
         <button type="button" class="btn btn-primary px-4" id="submit-person-transaction">Kaydet</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Document Upload Modal (Mobile Optimized) -->
+<div class="modal modal-blur fade" id="modal-mobile-doc-upload" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content" style="border-radius: 24px; border: none;">
+      <form id="form-mobile-doc-upload" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="upload">
+        <input type="hidden" name="person_id" value="<?php echo Security::encrypt($id); ?>">
+        <input type="hidden" name="doc_type" id="mobile-upload-doc-type" value="">
+
+        <div class="modal-header py-3" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+          <h5 class="modal-title text-semibold" id="mobile-upload-title">Belge Yükle</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <div id="mobile-standard-badge-area" class="mb-4 d-none">
+            <label class="form-label text-xs text-muted text-uppercase mb-2">Seçilen Belge Türü</label>
+            <div class="d-flex align-items-center p-3 bg-primary-lt rounded-3 border border-primary-subtle">
+              <i class="ti ti-file-info fs-2 me-3 text-primary"></i>
+              <span class="font-weight-600 text-primary" id="mobile-standard-badge-name">Standart Belge</span>
+            </div>
+          </div>
+
+          <div id="mobile-custom-title-area" class="mb-4 d-none">
+            <div class="form-floating">
+              <input type="text" class="form-control" name="doc_title" id="mobile-upload-doc-title" placeholder="Belge Adı">
+              <label for="mobile-upload-doc-title">Belge Başlığı (*)</label>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label text-xs text-muted text-uppercase mb-3">Dosya veya Fotoğraf</label>
+            <div class="mobile-upload-area" id="mobile-file-trigger">
+              <input type="file" name="document_file" id="mobile-upload-input" class="d-none" accept="image/*,application/pdf" capture="environment">
+              <div class="text-center py-4 border-2 border-dashed rounded-4 bg-light cursor-pointer" style="border-color: #cbd5e1 !important;">
+                <div class="avatar avatar-lg bg-white shadow-sm rounded-circle mb-3 mx-auto text-primary">
+                  <i class="ti ti-camera fs-1"></i>
+                </div>
+                <h5 class="mb-1 font-weight-700">Taramak veya Yüklemek için Dokun</h5>
+                <p class="text-xs text-muted mb-0">PDF veya Görsel (Maks 5MB)</p>
+              </div>
+            </div>
+            <div id="mobile-file-preview" class="mt-3 p-2 bg-success-lt rounded-3 d-none align-items-center">
+              <i class="ti ti-check-circle text-success fs-2 me-2"></i>
+              <span class="text-xs font-weight-600 text-success text-truncate" id="mobile-file-name">dosya.pdf</span>
+              <button type="button" class="btn-close ms-auto" id="btn-remove-mobile-file" style="font-size: 0.6rem;"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer p-3 border-0">
+          <button type="button" class="btn btn-link text-muted me-auto" data-bs-dismiss="modal">İptal</button>
+          <button type="submit" class="btn btn-primary px-4 rounded-pill font-weight-bold" id="btn-mobile-upload-submit">
+            <i class="ti ti-upload me-1"></i> YÜKLE
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -1254,30 +1343,237 @@ $(document).ready(function() {
         }
     });
 
-    // 6. Ajax Calendar Navigation
-    $(document).on('click', '.btn-calendar-nav', function(e) {
-        e.preventDefault();
-        var url = $(this).attr('href');
+    // 7. Evrak Yönetimi (Mobile)
+    const personIdEncrypted = '<?php echo Security::encrypt($id); ?>';
+
+    function loadMobileDocuments() {
+        $.post('api/persons/documents.php', { action: 'list', person_id: personIdEncrypted }, function(res) {
+            try {
+                const response = typeof res === 'object' ? res : JSON.parse(res);
+                if (response.status === 'success') {
+                    renderMobileDocs(response);
+                }
+            } catch (e) { console.error(e); }
+        });
+    }
+
+    function renderMobileDocs(data) {
+        const standardContainer = $('#mobile-standard-docs-container');
+        const customContainer = $('#mobile-custom-docs-container');
+        standardContainer.empty();
+        customContainer.empty();
+
+        let uploadedStandard = 0;
+        const totalStandard = Object.keys(data.standard_docs).length;
+
+        // Standart Belgeler
+        Object.keys(data.standard_docs).forEach(key => {
+            const title = data.standard_docs[key];
+            const file = data.standard_files[key];
+            const isUploaded = !!file;
+            if (isUploaded) uploadedStandard++;
+
+            const html = `
+                <div class="mobile-card p-3 shadow-sm mb-2 border-0 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar rounded-circle ${isUploaded ? 'bg-success-lt text-success' : 'bg-warning-lt text-warning'}" style="width: 38px; height: 38px; border: none;">
+                            <i class="ti ${isUploaded ? 'ti-file-check' : 'ti-file-alert'}"></i>
+                        </div>
+                        <div>
+                            <div class="text-bold text-sm text-dark">${title}</div>
+                            <div class="text-xs ${isUploaded ? 'text-success' : 'text-muted'}">
+                                ${isUploaded ? '<i class="ti ti-circle-check me-1"></i>Yüklendi' : 'Eksik Belge'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        ${isUploaded ? `
+                            <a href="api/persons/documents.php?action=download&person_id=${personIdEncrypted}&doc_type=${key}" target="_blank" class="btn btn-icon btn-ghost-primary rounded-circle">
+                                <i class="ti ti-download"></i>
+                            </a>
+                            <button class="btn btn-icon btn-ghost-danger rounded-circle btn-delete-mobile-doc" data-type="${key}">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        ` : `
+                            <button class="btn btn-primary btn-sm rounded-pill px-3 btn-upload-mobile-trigger" data-type="${key}" data-title="${title}">
+                                Yükle
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+            standardContainer.append(html);
+        });
+
+        // Özel Belgeler
+        if (data.custom_files.length === 0) {
+            customContainer.append('<div class="text-center py-4 text-muted text-xs bg-light rounded-4">Henüz ek belge bulunmuyor.</div>');
+        } else {
+            data.custom_files.forEach(file => {
+                const html = `
+                    <div class="mobile-card p-3 shadow-sm mb-2 border-0 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar rounded-circle bg-blue-lt text-blue" style="width: 38px; height: 38px; border: none;">
+                                <i class="ti ti-file-text"></i>
+                            </div>
+                            <div style="max-width: 150px;">
+                                <div class="text-bold text-sm text-dark text-truncate">${file.title}</div>
+                                <div class="text-xs text-muted text-truncate">${file.original_name}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="api/persons/documents.php?action=download&person_id=${personIdEncrypted}&doc_type=custom&custom_id=${file.id}" target="_blank" class="btn btn-icon btn-ghost-primary rounded-circle">
+                                <i class="ti ti-download"></i>
+                            </a>
+                            <button class="btn btn-icon btn-ghost-danger rounded-circle btn-delete-mobile-doc" data-type="custom" data-id="${file.id}">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                customContainer.append(html);
+            });
+        }
+
+        // Stats
+        const percent = Math.round((uploadedStandard / totalStandard) * 100);
+        $('#mobile-compliance-percent').text(percent + '%');
+        $('#mobile-compliance-bar').css('width', percent + '%');
+        $('#mobile-compliance-text').text(`${uploadedStandard} / ${totalStandard} Zorunlu Belge`);
+    }
+
+    // Modal Trigger (Standard)
+    $(document).on('click', '.btn-upload-mobile-trigger', function() {
+        const type = $(this).data('type');
+        const title = $(this).data('title');
         
-        var $tabPuantaj = $('#tab-puantaj');
-        var originalContent = $tabPuantaj.html();
+        $('#mobile-upload-doc-type').val(type);
+        $('#mobile-upload-title').text('Belge Yükle');
+        $('#mobile-standard-badge-name').text(title);
         
-        $tabPuantaj.html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Takvim Yükleniyor...</p></div>');
+        $('#mobile-standard-badge-area').removeClass('d-none');
+        $('#mobile-custom-title-area').addClass('d-none');
+        $('#mobile-upload-doc-title').prop('required', false);
         
-        $.get(url, function(data) {
-            var newContent = $(data).find('#tab-puantaj').html();
-            if(newContent) {
-                $tabPuantaj.html(newContent);
-                window.history.pushState({ path: url }, '', url);
-            } else {
-                $tabPuantaj.html(originalContent);
-                Swal.fire('Hata', 'Takvim verisi alınamadı.', 'error');
+        resetMobileUploadForm();
+        $('#modal-mobile-doc-upload').modal('show');
+    });
+
+    // Modal Trigger (Custom)
+    $(document).on('click', '#btn-mobile-add-custom-doc', function() {
+        $('#mobile-upload-doc-type').val('custom');
+        $('#mobile-upload-title').text('Özel Belge Ekle');
+        
+        $('#mobile-standard-badge-area').addClass('d-none');
+        $('#mobile-custom-title-area').removeClass('d-none');
+        $('#mobile-upload-doc-title').val('').prop('required', true);
+        
+        resetMobileUploadForm();
+        $('#modal-mobile-doc-upload').modal('show');
+    });
+
+    function resetMobileUploadForm() {
+        $('#mobile-upload-input').val('');
+        $('#mobile-file-preview').addClass('d-none');
+        $('#mobile-file-trigger').removeClass('d-none');
+    }
+
+    $(document).on('click', '#mobile-file-trigger', function() {
+        $('#mobile-upload-input').click();
+    });
+
+    $(document).on('change', '#mobile-upload-input', function() {
+        const file = this.files[0];
+        if (file) {
+            // Check 5MB limit on client side too
+            if (file.size > 5 * 1024 * 1024) {
+                Swal.fire('Hata', 'Dosya boyutu 5MB\'dan büyük olamaz.', 'error');
+                this.value = '';
+                return;
             }
-        }).fail(function() {
-            $tabPuantaj.html(originalContent);
-            Swal.fire('Hata', 'Bağlantı hatası oluştu.', 'error');
+            $('#mobile-file-name').text(file.name);
+            $('#mobile-file-preview').removeClass('d-none').addClass('d-flex');
+            $('#mobile-file-trigger').addClass('d-none');
+        }
+    });
+
+    $(document).on('click', '#btn-remove-mobile-file', function(e) {
+        e.stopPropagation();
+        resetMobileUploadForm();
+    });
+
+    $('#form-mobile-doc-upload').on('submit', function(e) {
+        e.preventDefault();
+        const btn = $('#btn-mobile-upload-submit');
+        const originalHtml = btn.html();
+        
+        if (!$('#mobile-upload-input')[0].files[0]) {
+            Swal.fire('Uyarı', 'Lütfen bir dosya seçin veya fotoğraf çekin.', 'warning');
+            return;
+        }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Yükleniyor...');
+        
+        const formData = new FormData(this);
+        $.ajax({
+            url: 'api/persons/documents.php',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            success: function(response) {
+                btn.prop('disabled', false).html(originalHtml);
+                if (response.status === 'success') {
+                    $('#modal-mobile-doc-upload').modal('hide');
+                    Swal.fire({ icon: 'success', title: 'Başarılı', text: response.message, timer: 1500, showConfirmButton: false });
+                    loadMobileDocuments();
+                } else {
+                    Swal.fire('Hata', response.message, 'error');
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).html(originalHtml);
+                Swal.fire('Hata', 'Sunucu hatası oluştu.', 'error');
+            }
         });
     });
+
+    $(document).on('click', '.btn-delete-mobile-doc', function() {
+        const type = $(this).data('type');
+        const id = $(this).data('id') || '';
+        
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu belge silinecek.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'Vazgeç'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('api/persons/documents.php', { action: 'delete', person_id: personIdEncrypted, doc_type: type, custom_id: id }, function(res) {
+                    try {
+                        const response = typeof res === 'object' ? res : JSON.parse(res);
+                        if (response.status === 'success') {
+                            Swal.fire({ icon: 'success', title: 'Silindi', timer: 1000, showConfirmButton: false });
+                            loadMobileDocuments();
+                        }
+                    } catch (e) { }
+                });
+            }
+        });
+    });
+
+    // Load documents when tab clicked
+    $(document).on('click', '.tab-trigger[data-tab="documents"]', function() {
+        loadMobileDocuments();
+    });
+
+    // If initial tab is documents, load them
+    if (urlParams.get('tab') === 'documents') {
+        loadMobileDocuments();
+    }
 
     // Duplicate urlParams removed for error fix
 

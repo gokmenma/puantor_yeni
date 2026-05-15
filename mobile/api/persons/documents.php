@@ -1,5 +1,5 @@
 <?php
-// mobile/api/persons/person.php -> root/api/persons/person.php
+// mobile/api/persons/documents.php -> root/api/persons/documents.php
 error_reporting(0);
 ini_set('display_errors', 0);
 
@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$target = __DIR__ . "/../../../api/persons/person.php";
+$target = __DIR__ . "/../../../api/persons/documents.php";
 
 if (!file_exists($target)) {
     header('Content-Type: application/json');

@@ -1,3 +1,4 @@
+<?php
 header('Content-Type: application/json; charset=utf-8');
 ob_start();
 error_reporting(0);
@@ -7,26 +8,27 @@ if (!defined('ROOT')) {
     define("ROOT", dirname(__DIR__, 2));
 }
 
-require_once ROOT . "/Database/require.php";
-require_once ROOT . "/Model/Auths.php";
-require_once ROOT . "/App/Helper/security.php";
-require_once ROOT . "/Model/Cases.php";
-
 use App\Helper\Security;
 
-$Auths = new Auths();
-
-// Oturum kontrolü
-if (!isset($_SESSION['user'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Oturum kapalı.']);
-    exit;
-}
-
-// Hem 'action' hem 'func' parametresini destekle (WAF bypass için 'action' önerilir)
-$action = $_REQUEST['action'] ?? $_REQUEST['func'] ?? '';
-$firm_id = $_SESSION['firm_id'] ?? 0;
-
 try {
+    require_once ROOT . "/Database/require.php";
+    require_once ROOT . "/Model/Auths.php";
+    require_once ROOT . "/App/Helper/security.php";
+    require_once ROOT . "/Model/Cases.php";
+
+    $Auths = new Auths();
+
+    // Oturum kontrolü
+    if (!isset($_SESSION['user'])) {
+        if (ob_get_length()) ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Oturum kapalı.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // Hem 'action' hem 'func' parametresini destekle (WAF bypass için 'action' önerilir)
+    $action = $_REQUEST['action'] ?? $_REQUEST['func'] ?? '';
+    $firm_id = $_SESSION['firm_id'] ?? 0;
+
     if ($action == 'list') {
         $query = $db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as created_at 
                                FROM personel_avans_talepleri a 
@@ -35,8 +37,12 @@ try {
                                ORDER BY a.id DESC");
         $query->execute([$firm_id]);
         $list = $query->fetchAll(PDO::FETCH_OBJ);
-        ob_clean();
-        echo json_encode(['status' => 'success', 'list' => $list]);
+        $json = json_encode(['status' => 'success', 'list' => $list], JSON_UNESCAPED_UNICODE);
+        if ($json === false) {
+            throw new Exception("JSON Encode Hatasi: " . json_last_error_msg());
+        }
+        if (ob_get_length()) ob_clean();
+        echo $json;
         exit;
 
     } elseif ($action == 'update_status') {
@@ -52,8 +58,8 @@ try {
         if (!$request) throw new Exception("Talep bulunamadı veya bu işlem için yetkiniz yok.");
         if ($request->durum == $status) {
             $db->commit();
-            ob_clean();
-            echo json_encode(['status' => 'success', 'message' => 'Talep zaten güncellenmiş.']);
+            if (ob_get_length()) ob_clean();
+            echo json_encode(['status' => 'success', 'message' => 'Talep zaten güncellenmiş.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
 
@@ -96,8 +102,8 @@ try {
         }
 
         $db->commit();
-        ob_clean();
-        echo json_encode(['status' => 'success', 'message' => 'Talep güncellendi.']);
+        if (ob_get_length()) ob_clean();
+        echo json_encode(['status' => 'success', 'message' => 'Talep güncellendi.'], JSON_UNESCAPED_UNICODE);
         exit;
 
     } elseif ($action == 'delete') {
@@ -126,13 +132,18 @@ try {
         $db->prepare("DELETE FROM personel_avans_talepleri WHERE id = ? AND firm_id = ?")->execute([$id, $firm_id]);
         
         $db->commit();
-        ob_clean();
-        echo json_encode(['status' => 'success', 'message' => 'Talep ve bağlı kayıtlar silindi.']);
+        if (ob_get_length()) ob_clean();
+        echo json_encode(['status' => 'success', 'message' => 'Talep ve bağlı kayıtlar silindi.'], JSON_UNESCAPED_UNICODE);
         exit;
     }
-} catch (Exception $e) {
+} catch (Throwable $e) {
     if (isset($db) && $db->inTransaction()) $db->rollBack();
-    ob_clean();
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    if (ob_get_length()) ob_clean();
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
     exit;
 }
+
+// Fallback for unmatched actions
+if (ob_get_length()) ob_clean();
+echo json_encode(['status' => 'error', 'message' => 'Gecersiz islem istegi. (' . $action . ')'], JSON_UNESCAPED_UNICODE);
+exit;

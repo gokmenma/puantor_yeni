@@ -138,6 +138,7 @@ class Auths extends Model
                 "status" => "error",
                 "message" => "Yetkiniz yok"
             ];
+            ob_clean();
             echo json_encode($res);
             exit;
         }
@@ -151,6 +152,7 @@ class Auths extends Model
                 "status" => "error",
                 "message" => "Bu işlemi yapma yetkiniz yok"
             ];
+            ob_clean();
             echo json_encode($res);
             exit;
         }

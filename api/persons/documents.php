@@ -1,6 +1,8 @@
 <?php
 error_reporting(0);
 ini_set('display_errors', 0);
+ob_start();
+header('Content-Type: application/json');
 
 !defined("ROOT") ? define("ROOT", dirname(dirname(__DIR__))) : false;
 require_once "../../Database/require.php";
@@ -24,6 +26,7 @@ $person_id_encrypted = $_POST['person_id'] ?? $_GET['person_id'] ?? '';
 $person_id = Security::decrypt($person_id_encrypted);
 
 if (!$person_id) {
+    ob_clean();
     echo json_encode(['status' => 'error', 'message' => 'Geçersiz Personel Kimliği']);
     exit;
 }
@@ -31,6 +34,7 @@ if (!$person_id) {
 // Personelin varlığını ve firmaya ait olduğunu doğrula
 $person = $Persons->find($person_id);
 if (!$person || $person->firm_id != $_SESSION['firm_id']) {
+    ob_clean();
     echo json_encode(['status' => 'error', 'message' => 'Personel bulunamadı veya yetkiniz yok']);
     exit;
 }
@@ -114,12 +118,20 @@ if ($action == 'list') {
     syncMetadataWithFiles($upload_dir, $meta);
     saveMetadata($metadata_file, $meta);
 
-    echo json_encode([
+    $json = json_encode([
         'status' => 'success',
         'standard_docs' => $standard_docs,
         'standard_files' => $meta['standard_files'],
         'custom_files' => $meta['custom_files']
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
+
+    if ($json === false) {
+        throw new Exception("JSON Encode Hatasi: " . json_last_error_msg());
+    }
+
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo $json;
     exit;
 }
 
@@ -128,25 +140,37 @@ if ($action == 'upload') {
     $doc_title = $_POST['doc_title'] ?? '';
 
     if (empty($doc_type)) {
+        ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Lütfen belge türünü seçin.']);
         exit;
     }
 
     if ($doc_type == 'custom' && empty($doc_title)) {
+        ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Özel belgeler için lütfen başlık girin.']);
         exit;
     }
 
     if (!isset($_FILES['document_file']) || $_FILES['document_file']['error'] != UPLOAD_ERR_OK) {
+        ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Dosya yüklenirken bir hata oluştu.']);
         exit;
     }
 
     $file = $_FILES['document_file'];
+
+    // 5MB Limit Kontrolü
+    $max_size = 5 * 1024 * 1024; // 5MB
+    if ($file['size'] > $max_size) {
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Dosya boyutu çok büyük. Maksimum 5MB yüklenebilir.']);
+        exit;
+    }
     $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
     $allowed_exts = ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'xls', 'xlsx', 'txt'];
 
     if (!in_array(strtolower($ext), $allowed_exts)) {
+        ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Sadece PDF, PNG, JPG, JPEG, DOC, DOCX, XLS, XLSX ve TXT dosyalarına izin verilir.']);
         exit;
     }
@@ -184,9 +208,13 @@ if ($action == 'upload') {
                 'uploaded_at' => date('Y-m-d H:i:s')
             ];
             saveMetadata($metadata_file, $meta);
-            echo json_encode(['status' => 'success', 'message' => 'Belge başarıyla yüklendi ve şifrelendi.']);
+            if (ob_get_length()) ob_clean();
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success', 'message' => 'Belge başarıyla yüklendi ve şifrelendi.'], JSON_UNESCAPED_UNICODE);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Dosya kaydedilemedi.']);
+            if (ob_get_length()) ob_clean();
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Dosya kaydedilemedi.'], JSON_UNESCAPED_UNICODE);
         }
     } else {
         $custom_id = uniqid();
@@ -210,9 +238,13 @@ if ($action == 'upload') {
                 'uploaded_at' => date('Y-m-d H:i:s')
             ];
             saveMetadata($metadata_file, $meta);
-            echo json_encode(['status' => 'success', 'message' => 'Özel belge başarıyla yüklendi ve şifrelendi.']);
+            if (ob_get_length()) ob_clean();
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success', 'message' => 'Özel belge başarıyla yüklendi ve şifrelendi.'], JSON_UNESCAPED_UNICODE);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Dosya kaydedilemedi.']);
+            if (ob_get_length()) ob_clean();
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Dosya kaydedilemedi.'], JSON_UNESCAPED_UNICODE);
         }
     }
     exit;
@@ -223,6 +255,7 @@ if ($action == 'delete') {
     $custom_id = $_POST['custom_id'] ?? '';
 
     if (empty($doc_type)) {
+        ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Lütfen silinecek belge türünü belirtin.']);
         exit;
     }
@@ -252,7 +285,9 @@ if ($action == 'delete') {
     }
 
     saveMetadata($metadata_file, $meta);
-    echo json_encode(['status' => 'success', 'message' => 'Belge başarıyla silindi.']);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'success', 'message' => 'Belge başarıyla silindi.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -338,5 +373,7 @@ if ($action == 'download') {
     exit;
 }
 
-echo json_encode(['status' => 'error', 'message' => 'Bilinmeyen Eylem']);
+if (ob_get_length()) ob_clean();
+header('Content-Type: application/json');
+echo json_encode(['status' => 'error', 'message' => 'Bilinmeyen Eylem'], JSON_UNESCAPED_UNICODE);
 exit;

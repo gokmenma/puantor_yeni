@@ -1,19 +1,23 @@
 <?php
 /**
  * Mobile Financial API Proxy
- * Avoids WAF/reCAPTCHA issues and path resolution problems
  */
+error_reporting(0);
+ini_set('display_errors', 0);
 header('Content-Type: application/json');
-$func = $_REQUEST['func'] ?? '';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $target = __DIR__ . '/../../api/financial/transaction.php';
 
 if (file_exists($target)) {
-    // Ensure ROOT is defined for the target
     if (!defined('ROOT')) {
         define("ROOT", dirname(dirname(__DIR__)));
     }
     require_once $target;
 } else {
     echo json_encode(['status' => 'error', 'message' => 'Financial API target not found']);
+    exit;
 }

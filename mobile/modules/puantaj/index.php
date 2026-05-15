@@ -343,6 +343,24 @@ foreach ($all_projects as $proj) {
     #clearSearchBtn:active {
         transform: scale(0.95);
     }
+
+    /* Spinner Animation */
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .loading-spinner-inner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(0,0,0,0.1);
+        border-top-color: var(--mobile-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    body[data-bs-theme="dark"] .loading-spinner-inner {
+        border-color: rgba(255,255,255,0.1);
+        border-top-color: var(--mobile-primary);
+    }
 </style>
 
 <div class="container px-0">
@@ -825,9 +843,9 @@ function clearPuantaj(personId, personName) {
     const originalContent = badge.outerHTML;
     
     // Anlık geri bildirim
-    badge.innerText = "...";
+    badge.innerHTML = '<div class="loading-spinner-inner"></div>';
     badge.style.backgroundColor = '#f1f5f9';
-    badge.style.color = '#94a3b8';
+    badge.style.color = 'transparent';
 
     jQuery.ajax({
         url: 'modules/puantaj/api/puantaj-delete.php',
@@ -1095,9 +1113,9 @@ function saveBulkPuantaj(selectedOption) {
             targets.forEach(personId => {
                 const badge = document.getElementById(`status-badge-${personId}`);
                 if(badge) {
-                    badge.innerText = "...";
+                    badge.innerHTML = '<div class="loading-spinner-inner"></div>';
                     badge.style.backgroundColor = '#f1f5f9';
-                    badge.style.color = '#94a3b8';
+                    badge.style.color = 'transparent';
                 }
             });
 
@@ -1161,9 +1179,9 @@ function saveSelectedPuantaj(selectedOption) {
     const badge = document.getElementById(`status-badge-${currentSelectedPersonId}`);
     const originalContent = badge.outerHTML;
     
-    badge.innerText = "...";
+    badge.innerHTML = '<div class="loading-spinner-inner"></div>';
     badge.style.backgroundColor = '#f1f5f9';
-    badge.style.color = '#94a3b8';
+    badge.style.color = 'transparent';
     
     var modalEl = document.getElementById('puantajModal');
     var modal = bootstrap.Modal.getInstance(modalEl);

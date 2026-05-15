@@ -1,15 +1,15 @@
 <?php
 // Puantor Mobile - Advance API Proxy
-// This proxy file is used to avoid WAF/LiteSpeed security triggers that often occur with direct root-level API calls.
-
-ob_start();
-error_reporting(0);
-ini_set('display_errors', 0);
+header('Content-Type: application/json; charset=utf-8');
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Redirect to the unified API controller
-chdir('../../api/advances');
-require_once 'advances.php';
+$apiPath = dirname(__DIR__, 2) . '/api/advances/advances.php';
+if (file_exists($apiPath)) {
+    require_once $apiPath;
+} else {
+    echo json_encode(['status' => 'error', 'message' => 'API dosyasi bulunamadi.']);
+    exit;
+}

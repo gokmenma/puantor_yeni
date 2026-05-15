@@ -132,7 +132,10 @@ if ($action == "saveTransaction") {
     ];
     ob_clean();
     header('Content-Type: application/json');
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
     exit;
 }
 
@@ -163,7 +166,10 @@ if ($action == "deleteTransaction") {
     ];
     ob_clean();
     header('Content-Type: application/json');
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
     exit;
 }
 
@@ -175,7 +181,10 @@ if ($action == "getSubTypes") {
     ];
     ob_clean();
     header('Content-Type: application/json');
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
     exit;
 }
 
@@ -219,7 +228,10 @@ if ($action == "getPaymentFromProject") {
         "message" => $message,
 
     ];
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 //Personel Ödemesi Yap
@@ -264,7 +276,10 @@ if ($action == "payToPerson") {
     ];
     ob_clean();
     header('Content-Type: application/json');
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
     exit;
 }
 
@@ -315,7 +330,10 @@ if ($action == "payToPersons") {
         "message" => $message,
 
     ];
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 
@@ -358,7 +376,10 @@ if ($action == "payToCompany") {
         "message" => $message,
 
     ];
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 //Alınan Proje Masrafı Ekle
@@ -400,7 +421,10 @@ if ($action == "addExpenseReceivedProject") {
         "message" => $message,
 
     ];
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 
@@ -469,7 +493,10 @@ if ($action == "getTransaction") {
         "transaction" => $transaction,
 
     ];
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 //Kasalar arası virman yapmak için transfer yapılacak kasaları getir
@@ -491,11 +518,14 @@ if ($action == "getCaseTransfer") {
         "cases" => $cases
     ];
 
-    echo json_encode($res);
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
+    exit;
 
 }
 // Fallback response if no action matched
 ob_clean();
 header('Content-Type: application/json');
-echo json_encode(['status' => 'error', 'message' => 'Gecersiz islem istegi.']);
+echo json_encode(['status' => 'error', 'message' => 'Gecersiz islem istegi.'], JSON_UNESCAPED_UNICODE);
 exit;
