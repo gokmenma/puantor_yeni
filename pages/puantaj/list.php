@@ -86,7 +86,7 @@ $projectNamesCache[0] = "Proje Yok";
     .gun {
         width: 35px;
         min-width: 35px;
-        background-color: white;
+        background-color: var(--tblr-bg-surface);
         text-align: center;
         cursor: pointer;
         font-weight: 600;
@@ -152,12 +152,12 @@ $projectNamesCache[0] = "Proje Yok";
         border-collapse: separate !important;
         border-spacing: 0 !important;
         margin: 0 !important;
-        border: 1px solid #e2e8f0 !important;
+        border: 1px solid var(--tblr-border-color) !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     #puantajTable th, #puantajTable td {
-        border: 1px solid #e2e8f0 !important;
+        border: 1px solid var(--tblr-border-color) !important;
         padding: 8px 6px !important;
         vertical-align: middle !important;
         white-space: nowrap !important;
@@ -199,7 +199,7 @@ $projectNamesCache[0] = "Proje Yok";
 
     .table tr td,
     .table th {
-        border: 1px solid #ddd !important;
+        border: 1px solid var(--tblr-border-color) !important;
     }
 
     .gun.clicked {
@@ -208,7 +208,7 @@ $projectNamesCache[0] = "Proje Yok";
     }
 
     .unclicked {
-        background-color: white;
+        background-color: var(--tblr-bg-surface);
     }
 
     th:hover {
@@ -365,10 +365,10 @@ $projectNamesCache[0] = "Proje Yok";
     #puantajTable thead th {
         position: -webkit-sticky !important;
         position: sticky !important;
-        background: #f8fafc !important;
+        background: var(--tblr-bg-surface) !important;
         z-index: 1000 !important;
-        border-bottom: 1px solid #ddd !important;
-        border-right: 1px solid #ddd !important;
+        border-bottom: 1px solid var(--tblr-border-color) !important;
+        border-right: 1px solid var(--tblr-border-color) !important;
     }
 
     #puantajTable thead tr:nth-child(1) th {
@@ -385,7 +385,7 @@ $projectNamesCache[0] = "Proje Yok";
     .table-responsive {
         max-height: 70vh;
         overflow: auto !important;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--tblr-border-color);
     }
 
     /* Ayarlar dropdown stili */
@@ -401,7 +401,7 @@ $projectNamesCache[0] = "Proje Yok";
     }
 
     #puantajTable thead th.cursor-pointer:hover {
-        background-color: #f1f5f9 !important;
+        background-color: var(--tblr-bg-surface-secondary) !important;
     }
 
     #puantajTable thead th.cursor-pointer {
