@@ -25,6 +25,7 @@ $selected_project_id = intval($_GET['project_id'] ?? 0);
 $selected_job_group = $_GET['job_group'] ?? 0;
 $selected_team_id = $_GET['team_id'] ?? 0;
 $selected_collar_type = $_GET['collar_type'] ?? 'all'; // all, blue, white
+$selected_person_status = $_GET['person_status'] ?? 'active'; // active, passive, all
 
 // Filtreye göre beyaz yakalıları dahil etme durumu
 $showWhiteCollar = ($selected_collar_type === 'white' || $selected_collar_type === 'all') ? 1 : 0;
@@ -41,9 +42,9 @@ $last_day_ymd = date('Ymd', strtotime(date('Y-m-t', strtotime($selected_date))))
 $all_projects = $projectsModel->getProjectsByFirm($firm_id);
 
 if ($selected_project_id == 0) {
-    $persons = $personsModel->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day_ymd, $last_day_ymd, $selected_job_group, $selected_team_id, $showWhiteCollar);
+    $persons = $personsModel->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day_ymd, $last_day_ymd, $selected_job_group, $selected_team_id, $showWhiteCollar, $selected_person_status);
 } else {
-    $persons = $projectsModel->getPersonIdByFromProjectCurrentMonth($selected_project_id, $first_day_ymd, $last_day_ymd, $selected_job_group, $selected_team_id, $showWhiteCollar);
+    $persons = $projectsModel->getPersonIdByFromProjectCurrentMonth($selected_project_id, $first_day_ymd, $last_day_ymd, $selected_job_group, $selected_team_id, $showWhiteCollar, $selected_person_status);
 }
 
 $conn = $puantajModel->getDb();
@@ -688,6 +689,22 @@ foreach ($all_projects as $proj) {
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 0.05em;">PERSONEL DURUMU</label>
+                        </div>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="person_status" id="status_active" value="active" <?php echo $selected_person_status == 'active' ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_active">Aktif</label>
+
+                            <input type="radio" class="btn-check" name="person_status" id="status_passive" value="passive" <?php echo $selected_person_status == 'passive' ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_passive">Pasif</label>
+
+                            <input type="radio" class="btn-check" name="person_status" id="status_all" value="all" <?php echo $selected_person_status == 'all' ? 'checked' : ''; ?>>
+                            <label class="btn btn-outline-primary border-0 bg-secondary-lt" for="status_all">Tümü</label>
+                        </div>
+                    </div>
+
 
                     <div class="form-floating mb-3 form-floating-select2">
                         <?php echo $jobsHelper->jobGroupsSelect('job_group', $selected_job_group); ?>
@@ -896,6 +913,7 @@ function applyFilters() {
     url.searchParams.set('job_group', formData.get('job_group'));
     url.searchParams.set('team_id', formData.get('team_id'));
     url.searchParams.set('collar_type', formData.get('collar_type'));
+    url.searchParams.set('person_status', formData.get('person_status'));
     
     location.href = url.toString();
 }

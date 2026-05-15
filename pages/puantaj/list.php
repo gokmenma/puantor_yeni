@@ -34,6 +34,7 @@ $last_day = Date::Ymd(Date::lastDay($month, $year));
 $project_id = (int) (isset($_REQUEST['projects']) ? $_REQUEST['projects'] : ($_COOKIE['p_projects'] ?? 0));
 $job_group = (int) (isset($_REQUEST['job_groups']) ? $_REQUEST['job_groups'] : ($_COOKIE['p_job_groups'] ?? 0));
 $team_id = (int) (isset($_REQUEST['team_id']) ? $_REQUEST['team_id'] : ($_COOKIE['p_team_id'] ?? 0));
+$person_status = isset($_REQUEST['person_status']) ? $_REQUEST['person_status'] : ($_COOKIE['p_person_status'] ?? 'active');
 
 
 require_once 'Model/SettingsModel.php';
@@ -49,11 +50,11 @@ if ($project_id > 0 && !$projects->belongsToFirm($project_id, $firm_id)) {
 } elseif ($project_id == 0 || $project_id == '') {
     // Proje id boş ise Firma id'sine göre tüm mavi yakalı, işe başlama tarihi o ayın son gününden önce olan personelleri getirir
     // Akıllı görünürlük: Yeni başlayanlar veya bu ay puantajı olanlar her zaman görünür
-    $persons = $personObj->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar);
+    $persons = $personObj->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar, $person_status);
 } else {
     // Proje id dolu ise projeye ait, işe başlama tarihi o ayın son gününden önce olan mavi yakalı personelleri getirir
     // Akıllı görünürlük: Projeye atanmış olanlar veya bu ay bu projede puantajı olanlar
-    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar);
+    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar, $person_status);
 }
 // Ayın son gününü bulma
 $days = Date::daysInMonth($month, $year);
@@ -477,11 +478,11 @@ $projectNamesCache[0] = "Proje Yok";
                 <label for="projects" class="form-label">Proje:</label>
                 <?php echo $projectHelper->getProjectSelect('projects', $project_id); ?>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <label for="months" class="form-label">Ay:</label>
                 <?php echo Date::getMonthsSelect('months', $month); ?>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <label for="year" class="form-label">Yıl:</label>
                 <?php echo Date::getYearsSelect('year', $year); ?>
             </div>
@@ -494,29 +495,43 @@ $projectNamesCache[0] = "Proje Yok";
                 <?php echo $teamsHelper->teamsSelect('team_id', $team_id); ?>
             </div>
             <div class="col-md-2">
+                <label class="form-label">Personel Durumu:</label>
+                <div class="form-selectgroup">
+                    <label class="form-selectgroup-item">
+                        <input type="radio" name="person_status" value="active" class="form-selectgroup-input" <?php echo $person_status == 'active' ? 'checked' : ''; ?>>
+                        <span class="form-selectgroup-label" title="Aktif Personeller">Aktif</span>
+                    </label>
+                    <label class="form-selectgroup-item">
+                        <input type="radio" name="person_status" value="passive" class="form-selectgroup-input" <?php echo $person_status == 'passive' ? 'checked' : ''; ?>>
+                        <span class="form-selectgroup-label" title="Pasif Personeller">Pasif</span>
+                    </label>
+                    <label class="form-selectgroup-item">
+                        <input type="radio" name="person_status" value="all" class="form-selectgroup-input" <?php echo $person_status == 'all' ? 'checked' : ''; ?>>
+                        <span class="form-selectgroup-label" title="Tüm Personeller">Tümü</span>
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-2">
                 <label for="actions" class="form-label">İşlem</label>
-                <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
-                    autocomplete="off">
-                <label for="btn-radio-toolbar-1" data-tooltip="İndir" class="btn btn-icon" id="export_excel_puantaj">
-                    <i class="ti ti-file-type-xls icon"></i>
-                </label>
+                <div class="d-flex gap-1">
+                    <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
+                        autocomplete="off">
+                    <label for="btn-radio-toolbar-1" data-tooltip="İndir" class="btn btn-icon" id="export_excel_puantaj">
+                        <i class="ti ti-file-type-xls icon"></i>
+                    </label>
 
-                <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
-                    autocomplete="off">
-                <label for="btn-radio-toolbar-1" data-tooltip="Yazdır" class="btn btn-icon">
-                    <i class="ti ti-printer icon"></i>
-                </label>
+                    <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
+                        autocomplete="off">
+                    <label for="btn-radio-toolbar-1" data-tooltip="Yazdır" class="btn btn-icon">
+                        <i class="ti ti-printer icon"></i>
+                    </label>
 
-                <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
-                    autocomplete="off">
-                <label for="btn-radio-toolbar-1" data-tooltip="Personele Gönder" class="btn btn-icon">
-                    <i class="ti ti-send icon"></i>
-                </label>
-
-             
-
-
-
+                    <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
+                        autocomplete="off">
+                    <label for="btn-radio-toolbar-1" data-tooltip="Personele Gönder" class="btn btn-icon">
+                        <i class="ti ti-send icon"></i>
+                    </label>
+                </div>
             </div>
         </div>
     </form>
@@ -689,7 +704,7 @@ $projectNamesCache[0] = "Proje Yok";
                                 if ($person->job_end_date != null && $person->job_end_date != '') {
                                     $job_end_date_ymd = Date::Ymd($person->job_end_date);
                                     if ($job_end_date_ymd < Date::firstDay($month, $year)) {
-                                        continue;
+                                        // continue; // Artık model seviyesinde yapıyoruz ama güvenlik için kalabilir
                                     }
                                 }
 
@@ -706,7 +721,7 @@ $projectNamesCache[0] = "Proje Yok";
                                 ?>
                                 <tr>
                                     <td class="text-nowrap" data-id="<?php echo $id ?>"><a class="btn-user-modal"
-                                            type="button">
+                                             type="button">
                                             <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
                                                 target="_blank"><?php echo $person->full_name ?></a></td>
 

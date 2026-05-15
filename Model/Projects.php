@@ -155,7 +155,7 @@ class Projects extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
-    public function getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false)
+    public function getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false, $person_status = 'active')
     {
         $firm_id = (int) ($_SESSION['firm_id'] ?? 0);
         $project_id = (int) $project_id;
@@ -179,12 +179,34 @@ class Projects extends Model
                         FROM persons p
                         WHERE $wage_type_sql
                         AND p.firm_id = ?
-                        AND (
+                        AND p.deleted_at IS NULL";
+        $params = [$firm_id];
+
+        if ($person_status === 'active') {
+            $sql .= " AND (
                             EXISTS (SELECT 1 FROM project_person WHERE project_id = ? and person_id = p.id) 
                             OR EXISTS (SELECT 1 FROM puantaj WHERE project_id = ? AND person = p.id AND gun >= ? AND gun <= ?)
                         )
-                        AND p.deleted_at IS NULL";
-        $params = [$firm_id, $project_id, $project_id, $first_day, $last_day];
+                        AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
+            $params[] = $project_id;
+            $params[] = $project_id;
+            $params[] = $first_day;
+            $params[] = $last_day;
+            $params[] = $first_day;
+        } elseif ($person_status === 'passive') {
+            $sql .= " AND p.job_end_date IS NOT NULL AND p.job_end_date != '' AND STR_TO_DATE(p.job_end_date, '%d.%m.%Y') < ?";
+            $params[] = $first_day;
+        } else {
+            // all
+            $sql .= " AND (
+                            EXISTS (SELECT 1 FROM project_person WHERE project_id = ? and person_id = p.id) 
+                            OR EXISTS (SELECT 1 FROM puantaj WHERE project_id = ? AND person = p.id AND gun >= ? AND gun <= ?)
+                        )";
+            $params[] = $project_id;
+            $params[] = $project_id;
+            $params[] = $first_day;
+            $params[] = $last_day;
+        }
 
         if ($job_group > 0) {
             $sql .= ' AND job_group = ?';

@@ -216,6 +216,7 @@ function storeLastValues() {
   $("#projects, #year, #months, #job_groups, #team_id").each(function() {
     lastValues[this.id] = $(this).val();
   });
+  lastValues['person_status'] = $("input[name='person_status']:checked").val();
 }
 
 function setCookie(name, value, days) {
@@ -240,6 +241,11 @@ $(document).ready(function () {
     setCookie('p_job_groups', $("#job_groups").val(), 30);
     setCookie('p_team_id', $("#team_id").val(), 30);
     
+    Route();
+  });
+
+  $("input[name='person_status']").on("change", function() {
+    setCookie('p_person_status', $(this).val(), 30);
     Route();
   });
 });
@@ -268,6 +274,7 @@ function Route() {
       } else {
         // Kullanıcı vazgeçti. Dropdown'u eski haline çekmeliyiz ki kafa karışıklığı olmasın
         $("#projects, #year, #months, #job_groups, #team_id").off("change select2:select");
+        $("input[name='person_status']").off("change");
         
         $("#projects").val(lastValues.projects).trigger("change");
         $("#year").val(lastValues.year).trigger("change");
@@ -275,8 +282,14 @@ function Route() {
         $("#job_groups").val(lastValues.job_groups).trigger("change");
         $("#team_id").val(lastValues.team_id).trigger("change");
         
+        // Radio button'u eski haline getir
+        $("input[name='person_status'][value='" + lastValues.person_status + "']").prop('checked', true);
+        
         // Dinleyicileri geri yükle
         $("#projects, #year, #months, #job_groups, #team_id").on("change select2:select", function () {
+          Route();
+        });
+        $("input[name='person_status']").on("change", function() {
           Route();
         });
       }

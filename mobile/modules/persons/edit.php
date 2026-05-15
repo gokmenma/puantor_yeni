@@ -615,12 +615,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
 
     // Şimdi yeniden eskiye sırala (Görünüm için)
     usort($all_items, function($a, $b) {
-        if ($a->gun == $b->gun) {
+        $dateA = str_replace('-', '', $a->gun);
+        $dateB = str_replace('-', '', $b->gun);
+        
+        if ($dateA == $dateB) {
             $id_a = isset($a->id) ? (int)$a->id : 0;
             $id_b = isset($b->id) ? (int)$b->id : 0;
             return $id_b - $id_a;
         }
-        return strcmp($b->gun, $a->gun);
+        return strcmp($dateB, $dateA);
     });
     ?>
 
@@ -681,20 +684,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
                    style="cursor: pointer;">
                 <div class="list-group-item border-0 py-3.5 px-3 w-100 bg-transparent d-flex align-items-center justify-content-between">
                   <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center" 
+                    <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
                          style="width: 40px; height: 40px; border: none; background: <?php echo $is_income ? 'rgba(47, 179, 68, 0.12)' : 'rgba(214, 63, 63, 0.12)'; ?>; color: <?php echo $is_income ? '#2fb344' : '#d63f3f'; ?>;">
                       <i class="ti <?php echo $is_income ? 'ti-arrow-up-right' : 'ti-arrow-down-left'; ?>" style="font-size: 1.2rem;"></i>
                     </div>
-                    <div>
-                      <div class="text-bold <?php echo $is_hakedis ? 'text-primary' : 'text-dark'; ?>" style="font-size: 0.9rem; margin-bottom: 1px;">
+                    <div style="flex: 1; min-width: 0;">
+                      <div class="text-bold <?php echo $is_hakedis ? 'text-primary' : 'text-dark'; ?> text-truncate" style="font-size: 0.9rem; margin-bottom: 1px;">
                         <?php echo htmlspecialchars($is_hakedis ? ($item->aciklama ?: 'Hakedişi') : ($item->turu ?: 'İşlem')); ?>
                       </div>
                       <div class="text-muted text-xs d-flex align-items-center gap-1">
-                        <span><?php echo $is_hakedis ? 'Bordro İşlemi' : ($item->aciklama ?: 'İşlem Detayı'); ?></span>
+                        <span class="text-truncate" style="max-width: 140px;"><?php echo $is_hakedis ? 'Bordro İşlemi' : ($item->aciklama ?: 'İşlem Detayı'); ?></span>
                         <span class="opacity-50">•</span>
-                        <span><?php echo Date::dmY($item->gun); ?></span>
+                        <span class="flex-shrink-0"><?php echo Date::dmY($item->gun); ?></span>
                         <?php if ($is_hakedis): ?>
-                          <span class="ms-1 px-1.5 py-0.5 bg-primary-lt text-uppercase font-weight-bold" style="font-size: 0.55rem; border-radius: 4px; letter-spacing: 0.2px;">HAKEDİŞ</span>
+                          <span class="ms-1 px-1.5 py-0.5 bg-primary-lt text-uppercase font-weight-bold flex-shrink-0" style="font-size: 0.55rem; border-radius: 4px; letter-spacing: 0.2px;">HAKEDİŞ</span>
                         <?php endif; ?>
                       </div>
                     </div>
@@ -716,7 +719,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
     </div>
 
     <!-- Floating Action Button for Finance (Moved higher to avoid overlap with Menu FAB) -->
-    <a href="#" class="mobile-fab shadow-lg" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="bottom: 155px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4);">
+    <a href="#" class="mobile-fab shadow-lg" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="right: 1rem; bottom: 145px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4);">
       <i class="ti ti-plus"></i>
     </a>
   </div>
@@ -907,14 +910,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
 
           <div class="mb-2">
             <label class="form-label text-xs text-muted text-uppercase mb-3">Dosya veya Fotoğraf</label>
-            <div class="mobile-upload-area" id="mobile-file-trigger">
-              <input type="file" name="document_file" id="mobile-upload-input" class="d-none" accept="image/*,application/pdf" capture="environment">
-              <div class="text-center py-4 border-2 border-dashed rounded-4 bg-light cursor-pointer" style="border-color: #cbd5e1 !important;">
-                <div class="avatar avatar-lg bg-white shadow-sm rounded-circle mb-3 mx-auto text-primary">
-                  <i class="ti ti-camera fs-1"></i>
+            <div class="mobile-upload-area">
+              <input type="file" name="document_file" id="mobile-upload-input" class="d-none">
+              <div class="row g-2">
+                <div class="col-6">
+                  <div id="btn-mobile-trigger-scan" class="text-center py-4 border-2 border-dashed rounded-4 bg-light cursor-pointer h-100" style="border-color: #cbd5e1 !important;">
+                    <div class="avatar avatar-md bg-white shadow-sm rounded-circle mb-2 mx-auto text-primary">
+                      <i class="ti ti-camera fs-2"></i>
+                    </div>
+                    <h5 class="mb-0 font-weight-700" style="font-size: 0.8rem;">Döküman Tara</h5>
+                    <p class="text-xs text-muted mb-0">Kamerayı Kullan</p>
+                  </div>
                 </div>
-                <h5 class="mb-1 font-weight-700">Taramak veya Yüklemek için Dokun</h5>
-                <p class="text-xs text-muted mb-0">PDF veya Görsel (Maks 5MB)</p>
+                <div class="col-6">
+                  <div id="btn-mobile-trigger-file" class="text-center py-4 border-2 border-dashed rounded-4 bg-light cursor-pointer h-100" style="border-color: #cbd5e1 !important;">
+                    <div class="avatar avatar-md bg-white shadow-sm rounded-circle mb-2 mx-auto text-info">
+                      <i class="ti ti-file-search fs-2"></i>
+                    </div>
+                    <h5 class="mb-0 font-weight-700" style="font-size: 0.8rem;">Dosya Seç</h5>
+                    <p class="text-xs text-muted mb-0">PDF veya Görsel</p>
+                  </div>
+                </div>
               </div>
             </div>
             <div id="mobile-file-preview" class="mt-3 p-2 bg-success-lt rounded-3 d-none align-items-center">
@@ -1473,19 +1489,22 @@ $(document).ready(function() {
     });
 
     function resetMobileUploadForm() {
-        $('#mobile-upload-input').val('');
+        $('#mobile-upload-input').val('').removeAttr('accept').removeAttr('capture');
         $('#mobile-file-preview').addClass('d-none');
-        $('#mobile-file-trigger').removeClass('d-none');
+        $('.mobile-upload-area').removeClass('d-none');
     }
 
-    $(document).on('click', '#mobile-file-trigger', function() {
-        $('#mobile-upload-input').click();
+    $(document).on('click', '#btn-mobile-trigger-scan', function() {
+        $('#mobile-upload-input').attr('accept', 'image/*').attr('capture', 'environment').click();
+    });
+
+    $(document).on('click', '#btn-mobile-trigger-file', function() {
+        $('#mobile-upload-input').attr('accept', 'image/*,application/pdf').removeAttr('capture').click();
     });
 
     $(document).on('change', '#mobile-upload-input', function() {
         const file = this.files[0];
         if (file) {
-            // Check 5MB limit on client side too
             if (file.size > 5 * 1024 * 1024) {
                 Swal.fire('Hata', 'Dosya boyutu 5MB\'dan büyük olamaz.', 'error');
                 this.value = '';
@@ -1493,7 +1512,7 @@ $(document).ready(function() {
             }
             $('#mobile-file-name').text(file.name);
             $('#mobile-file-preview').removeClass('d-none').addClass('d-flex');
-            $('#mobile-file-trigger').addClass('d-none');
+            $('.mobile-upload-area').addClass('d-none');
         }
     });
 
@@ -1582,6 +1601,10 @@ $(document).ready(function() {
         if (!$(e.target).closest('.dropdown, .dropup').length) {
             $('.dropdown-menu').removeClass('show');
         }
+    });
+    $('#modal-mobile-doc-upload').on('hidden.bs.modal', function() {
+        resetMobileUploadForm();
+        $('#form-mobile-doc-upload')[0].reset();
     });
 });
 </script>
@@ -1720,7 +1743,7 @@ body[data-bs-theme="dark"] .calendar-day.empty {
 </style>
 
 <!-- Floating Action Button (FAB) for Personnel Menu -->
-<div class="dropup position-fixed" style="right: 1.25rem; bottom: 100px; z-index: 1060;">
+<div class="dropup position-fixed" style="right: 1rem; bottom: 80px; z-index: 1060;">
   <button class="mobile-fab border-0 shadow-lg dropdown-toggle no-caret" id="personTabsDropdown" type="button" aria-expanded="false" style="position: static; box-shadow: 0 4px 20px rgba(32, 107, 196, 0.5) !important;">
     <i class="ti ti-dots-vertical"></i>
   </button>

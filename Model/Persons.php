@@ -79,18 +79,23 @@ class Persons extends Model
         $query->execute([$firm_id,2]);
         return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
-    public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false)
+    public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false, $person_status = 'active')
     {
         $wage_type_sql = $include_white_collar ? 'p.wage_type IN (1, 2)' : 'p.wage_type = 2';
         $sql = "SELECT * FROM persons p 
                 WHERE firm_id = ? AND $wage_type_sql 
-                AND STR_TO_DATE(job_start_date, '%d.%m.%Y') <= ? 
-                AND deleted_at IS NULL
-                AND (
-                    p.job_end_date IS NULL OR p.job_end_date = ''
-                    OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?
-                )";
-        $params = [$firm_id, $last_day, $first_day];
+                AND deleted_at IS NULL";
+        $params = [$firm_id];
+
+        if ($person_status === 'active') {
+            $sql .= " AND STR_TO_DATE(job_start_date, '%d.%m.%Y') <= ? 
+                      AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
+            $params[] = $last_day;
+            $params[] = $first_day;
+        } elseif ($person_status === 'passive') {
+            $sql .= " AND p.job_end_date IS NOT NULL AND p.job_end_date != '' AND STR_TO_DATE(p.job_end_date, '%d.%m.%Y') < ?";
+            $params[] = $first_day;
+        }
 
         if ($job_group > 0) {
             $sql .= ' AND job_group = ?';
