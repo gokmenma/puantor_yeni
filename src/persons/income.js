@@ -37,35 +37,7 @@ $(document).on("click", "#income_addButton", function () {
       $("#total_expense").text(income_expense.total_expense);
       $("#balance").text(income_expense.balance);
 
-      var table = $("#person_paymentTable").DataTable();
-      table.row
-        .add([
-          income.id,
-          income.gun,
-          income.turu,
-          income.ay,
-          income.yil,
-          `<i class='ti ti-upload icon color-yellow me-1' ></i>
-          ${income.kategori}`,
-          income.tutar,
-          income.aciklama,
-          income.created_at,
-          `<div class="dropdown">
-                      <button class="btn dropdown-toggle align-text-top"
-                          data-bs-toggle="dropdown">İşlem</button>
-                      <div class="dropdown-menu dropdown-menu-end">
-                          <a class="dropdown-item route-link"
-                              data-page="reports/ysc&id=<?php echo $item->id ?>" href="#">
-                              <i class="ti ti-edit icon me-3"></i> Güncelle
-                          </a>
-                          <a class="dropdown-item delete-payment" href="#" data-id='${income.id}'>
-                              <i class="ti ti-trash icon me-3"></i> Sil
-                          </a>
-                      </div>
-                  </div>`,
-        ])
-        .order([8, "desc"])
-        .draw(false);
+      // DataTables row addition removed because location.reload() automatically redraws the updated table.
 
       if (data.status == "success") {
         title = "Başarılı!";
@@ -78,9 +50,13 @@ $(document).on("click", "#income_addButton", function () {
         icon: data.status,
         confirmButtonText: "Tamam",
       }).then((result) => {
-        if (result.isConfirmed) {
-          $("#income-modal").modal("hide");
-          form.trigger("reset");
+        if (data.status == "success") {
+          location.reload();
+        } else {
+          if (result.isConfirmed) {
+            $("#income-modal").modal("hide");
+            form.trigger("reset");
+          }
         }
       });
     });

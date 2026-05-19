@@ -31,6 +31,12 @@ use App\Helper\Helper;
         border-top-left-radius: 4px;
         border-top-right-radius: 4px;
     }
+    
+    [data-bs-theme="dark"] .mac-titlebar {
+        background: #1d2735;
+        border-bottom: 1px solid #2d394b;
+    }
+
     .mac-buttons {
         display: flex;
         gap: 6px;
@@ -49,6 +55,7 @@ use App\Helper\Helper;
     .mac-close { background-color: #ff5f56; }
     .mac-min { background-color: #ffbd2e; }
     .mac-max { background-color: #27c93f; }
+    
     .mac-title {
         font-size: 11px;
         font-weight: 600;
@@ -57,11 +64,21 @@ use App\Helper\Helper;
         letter-spacing: 0.5px;
         margin: 0;
     }
+
+    [data-bs-theme="dark"] .mac-title {
+        color: #94a3b8;
+    }
+
     .drag-handle {
         cursor: grab;
+        color: #adb5bd;
     }
     .drag-handle:active {
         cursor: grabbing;
+    }
+    
+    [data-bs-theme="dark"] .drag-handle {
+        color: #4b5563;
     }
     .sortable-ghost {
         opacity: 0.4;

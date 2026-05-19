@@ -24,10 +24,12 @@ $income_expenses_raw = $bordro->getPersonWorkTransactions($id);
 
 // Yürüyen bakiye hesaplamak için eskiden yeniye sırala
 usort($income_expenses_raw, function($a, $b) {
-    if ($a->gun == $b->gun) {
+    $dateA = str_replace('-', '', $a->gun);
+    $dateB = str_replace('-', '', $b->gun);
+    if ($dateA == $dateB) {
         return (int)$a->id - (int)$b->id;
     }
-    return strcmp($a->gun, $b->gun);
+    return strcmp($dateA, $dateB);
 });
 
 $running_balance = 0;
@@ -44,10 +46,12 @@ unset($item);
 
 // Şimdi yeniden eskiye sırala (Görünüm için)
 usort($income_expenses_raw, function($a, $b) {
-    if ($a->gun == $b->gun) {
+    $dateA = str_replace('-', '', $a->gun);
+    $dateB = str_replace('-', '', $b->gun);
+    if ($dateA == $dateB) {
         return (int)$b->id - (int)$a->id;
     }
-    return strcmp($b->gun, $a->gun);
+    return strcmp($dateB, $dateA);
 });
 
 $income_expenses = $income_expenses_raw;
@@ -106,6 +110,10 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                                 </a>
                                 <a class="dropdown-item add-wage-cut" href="#" data-id="<?php echo $encrypted_person_id; ?>">
                                     <i class="ti ti-cut icon me-3"></i> Kesinti Ekle
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="pages/persons/statement.php?id=<?php echo $encrypted_person_id; ?>" target="_blank">
+                                    <i class="ti ti-printer icon me-3 text-primary"></i> <span class="text-primary font-weight-bold">Ekstre Yazdır</span>
                                 </a>
 
                             </div>
@@ -266,7 +274,12 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                                     <td><?php echo $item->yil; ?></td>
 
                                   
-                                    <td><?php echo Helper::formattedMoney($item->tutar); ?></td>
+                                    <td class="font-weight-bold <?php echo ($type && $type->type_id == 1) ? 'text-success' : 'text-danger'; ?>">
+                                         <?php 
+                                         $sign = ($type && $type->type_id == 1) ? '+' : '-';
+                                         echo $sign . Helper::formattedMoney($item->tutar); 
+                                         ?>
+                                    </td>
                                     <td class="font-weight-bold <?php echo $item->running_balance >= 0 ? 'text-success' : 'text-danger'; ?>"><?php echo Helper::formattedMoney($item->running_balance); ?></td>
                                     <td><?php echo $is_puantaj ? '' : Helper::short($item->aciklama); ?></td>
                                     <td><?php echo $is_puantaj ? '' : $item->created_at; ?></td>
@@ -281,7 +294,18 @@ if (!$Auths->Authorize("person_page_income_expence_info")) {
                                                 <button class="btn dropdown-toggle align-text-top"
                                                     data-bs-toggle="dropdown">İşlem</button>
                                                 <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item edit-payment">
+                                                    <a class="dropdown-item edit-payment" 
+                                                       href="#"
+                                                       data-id="<?php echo $item_id; ?>"
+                                                       data-person="<?php echo Security::encrypt($item->person_id); ?>"
+                                                       data-kategori="<?php echo $item->kategori; ?>"
+                                                       data-turu="<?php echo htmlspecialchars($item->turu); ?>"
+                                                       data-tutar="<?php echo $item->tutar; ?>"
+                                                       data-ay="<?php echo $item->ay; ?>"
+                                                       data-yil="<?php echo $item->yil; ?>"
+                                                       data-aciklama="<?php echo htmlspecialchars($item->aciklama); ?>"
+                                                       data-case="<?php echo isset($item->case_id) ? Security::encrypt($item->case_id) : ''; ?>"
+                                                       data-tablename="<?php echo $item->tablename; ?>">
                                                         <i class="ti ti-edit icon me-3"></i> Güncelle
                                                     </a>
                                                     <a class="dropdown-item delete-payment" href="#"
@@ -414,6 +438,113 @@ $(document).ready(function() {
                 $('#puantaj_detail_rows').html('<tr><td colspan="5" class="text-center text-danger py-4">Sistem hatası</td></tr>');
             }
         });
+    });
+
+    // İşlem Güncelleme Click Handler
+    $(document).on('click', '.edit-payment', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const personId = $(this).data('person');
+        const kategori = parseInt($(this).data('kategori'));
+        const turu = $(this).data('turu');
+        const tutar = $(this).data('tutar');
+        const ay = $(this).data('ay');
+        const parsedAy = ay ? parseInt(ay, 10) : '';
+        const yil = $(this).data('yil');
+        const aciklama = $(this).data('aciklama');
+        const caseId = $(this).data('case');
+        const tablename = $(this).data('tablename') || 'maas_gelir_kesinti';
+        
+        const personName = $('.full-name').text().trim();
+        
+        if (kategori === 7) { // Ödeme Yap (Payment)
+            const modal = $('#payment-modal');
+            const form = $('#payment_modalForm');
+            modal.find('#person_name_payment').text(personName);
+            form.find('[name="id"]').val(id);
+            form.find('[name="person_id_payment"]').val(personId);
+            if (form.find('[name="tablename"]').length === 0) {
+                form.append('<input type="hidden" name="tablename" value="">');
+            }
+            form.find('[name="tablename"]').val(tablename);
+            form.find('[name="payment_type"]').val(turu);
+            form.find('[name="payment_amount"]').val(tutar);
+            form.find('[name="payment_month"]').val(parsedAy).trigger('change');
+            form.find('[name="payment_year"]').val(yil).trigger('change');
+            form.find('[name="payment_cases"]').val(caseId).trigger('change');
+            form.find('[name="payment_description"]').val(aciklama);
+            modal.find('#payment_addButton').text('Ödeme Güncelle');
+            modal.modal('show');
+        } else if (kategori === 1 || kategori === 16) { // Gelir Ekle (Income/Salary)
+            const modal = $('#income_modal');
+            const form = $('#income_modalForm');
+            modal.find('#person_name_income').text(personName);
+            form.find('[name="id"]').val(id);
+            form.find('[name="person_id_income"]').val(personId);
+            if (form.find('[name="tablename"]').length === 0) {
+                form.append('<input type="hidden" name="tablename" value="">');
+            }
+            form.find('[name="tablename"]').val(tablename);
+            form.find('[name="income_type"]').val(turu);
+            form.find('[name="income_amount"]').val(tutar);
+            form.find('[name="income_month"]').val(parsedAy).trigger('change');
+            form.find('[name="income_year"]').val(yil).trigger('change');
+            form.find('[name="income_description"]').val(aciklama);
+            modal.find('#income_addButton').text('Gelir Güncelle');
+            modal.modal('show');
+        } else if (kategori === 15) { // Kesinti Ekle (Wage Cut)
+            const modal = $('#wage_cut_modal');
+            const form = $('#wage_cut_modalForm');
+            modal.find('#person_name_wage_cut').text(personName);
+            form.find('[name="wage_cut_id"]').val(id);
+            form.find('[name="person_id_wage_cut"]').val(personId);
+            if (form.find('[name="tablename"]').length === 0) {
+                form.append('<input type="hidden" name="tablename" value="">');
+            }
+            form.find('[name="tablename"]').val(tablename);
+            form.find('[name="wage_cut_type"]').val(turu);
+            form.find('[name="wage_cut_amount"]').val(tutar);
+            form.find('[name="wage_cut_month"]').val(parsedAy).trigger('change');
+            form.find('[name="wage_cut_year"]').val(yil).trigger('change');
+            form.find('[name="wage_cut_description"]').val(aciklama);
+            modal.find('#wage_cut_addButton').text('Kesinti Güncelle');
+            modal.modal('show');
+        }
+    });
+
+    // Reset modal forms for Add operations
+    $(document).on('click', '.add-payment', function() {
+        const form = $('#payment_modalForm');
+        form.trigger('reset');
+        form.find('[name="id"]').val(0);
+        if (form.find('[name="tablename"]').length === 0) {
+            form.append('<input type="hidden" name="tablename" value="maas_gelir_kesinti">');
+        } else {
+            form.find('[name="tablename"]').val('maas_gelir_kesinti');
+        }
+        $('#payment_addButton').text('Ödeme Yap');
+    });
+    $(document).on('click', '.add-income', function() {
+        const form = $('#income_modalForm');
+        form.trigger('reset');
+        form.find('[name="id"]').val(0);
+        if (form.find('[name="tablename"]').length === 0) {
+            form.append('<input type="hidden" name="tablename" value="maas_gelir_kesinti">');
+        } else {
+            form.find('[name="tablename"]').val('maas_gelir_kesinti');
+        }
+        $('#income_addButton').text('Gelir Ekle');
+    });
+    $(document).on('click', '.add-wage-cut', function() {
+        const form = $('#wage_cut_modalForm');
+        form.trigger('reset');
+        form.find('[name="wage_cut_id"]').val(0);
+        if (form.find('[name="tablename"]').length === 0) {
+            form.append('<input type="hidden" name="tablename" value="maas_gelir_kesinti">');
+        } else {
+            form.find('[name="tablename"]').val('maas_gelir_kesinti');
+        }
+        $('#wage_cut_addButton').text('Kesinti Ekle');
     });
 });
 </script>

@@ -12,6 +12,7 @@ listItems.click(function () {
   const avatarDataid = avatar.attr("data-id");
   const calismaTuru = avatar.attr("data-tooltip");
 
+  const rowsToRecalculate = new Set();
   clickedCells.each(function () {
     let cell = $(this);
     cell.text(avatarText);
@@ -21,9 +22,18 @@ listItems.click(function () {
     cell.attr("data-tooltip", calismaTuru);
     cell.attr("data-project", current_project_id);
     cell.css("background-color", avatarBgColor);
+
+    let parentTr = cell.closest("tr");
+    if (parentTr.length > 0) {
+      rowsToRecalculate.add(parentTr[0]);
+    }
   });
   clickedCells.removeClass("clicked");
   $("#modal-default").modal("hide");
+
+  rowsToRecalculate.forEach(function(tr) {
+    calculateRowTotals($(tr));
+  });
 });
 
 //********************************************** */
@@ -68,14 +78,25 @@ $(".head-date, .gunadi").on("click", function () {
 $(document).keydown(function (event) {
   // 'Delete' tuşunun keycode'u 46'dır
   if (event.keyCode === 46) {
+    const rowsToRecalculate = new Set();
     // .clicked sınıfına sahip tüm td elemanlarını seç ve içeriğini temizle
     $("td.clicked").each(function () {
-      $(this).attr("data-id", 0);
-      $(this).empty();
-      $(this).attr("data-change", "true");
-      $(this).css("background-color", "white");
-      $(this).removeAttr("data-tooltip");
-      $(this).removeClass("clicked");
+      let cell = $(this);
+      cell.attr("data-id", 0);
+      cell.empty();
+      cell.attr("data-change", "true");
+      cell.css("background-color", "white");
+      cell.removeAttr("data-tooltip");
+      cell.removeClass("clicked");
+
+      let parentTr = cell.closest("tr");
+      if (parentTr.length > 0) {
+        rowsToRecalculate.add(parentTr[0]);
+      }
+    });
+
+    rowsToRecalculate.forEach(function(tr) {
+      calculateRowTotals($(tr));
     });
   }
 });
@@ -324,3 +345,39 @@ $(document).on("change", ".column-toggle-check", function() {
 $(document).on("click", ".dropdown-menu-column-selector", function (e) {
     e.stopPropagation();
 });
+
+// Satır toplamlarını (Toplam Gün ve Toplam Fazla Mesai) dinamik olarak yeniden hesaplar
+function calculateRowTotals(row) {
+  let totalDays = 0;
+  let totalOvertime = 0;
+
+  row.find("td.gun").each(function() {
+    let td = $(this);
+    let id = td.attr("data-id");
+    let text = td.text().trim();
+
+    // Sadece işe başlama/ayrılma tarihleri dışındaki hücreleri geç (--- olanlar)
+    if (text === "---") {
+      return;
+    }
+
+    if (id && id !== "0" && id !== "") {
+      if (typeof allPuantajTurleri !== 'undefined' && allPuantajTurleri[id]) {
+        let type = allPuantajTurleri[id];
+        if (type.Turu !== "Ücretsiz") {
+          totalDays++;
+        }
+        if (type.Turu === "Fazla Çalışma") {
+          let hours = parseFloat(type.EklenecekSaat) || 0;
+          totalOvertime += hours;
+        }
+      }
+    } else {
+      // Eğer hücre boşsa/temizlendiyse ve Pazar günü ise varsayılan HT (53) 'Ücretsiz' olduğu için gün toplamına eklemiyoruz
+    }
+  });
+
+  row.find(".td-toplam-gun").text(totalDays);
+  let otText = totalOvertime > 0 ? totalOvertime.toFixed(1).replace('.0', '') : '0';
+  row.find(".td-toplam-fazla-mesai").text(otText);
+}

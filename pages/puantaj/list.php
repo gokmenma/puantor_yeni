@@ -141,7 +141,7 @@ $projectNamesCache[0] = "Proje Yok";
     }
 
     /* İsim ve Unvan sütunları için genişlik */
-    #puantajTable .extra-grup, #puantajTable .extra-ekip { 
+    #puantajTable .extra-grup, #puantajTable .extra-ekip, #puantajTable .extra-unvan { 
         width: 140px !important;
         min-width: 140px !important;
     }
@@ -627,12 +627,24 @@ $projectNamesCache[0] = "Proje Yok";
                             <div class="dropdown-menu dropdown-menu-end dropdown-menu-column-selector">
                                 <h6 class="dropdown-header">Sütun Görünümü</h6>
                                 <label class="dropdown-item cursor-pointer">
+                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-unvan">
+                                    Unvan
+                                </label>
+                                <label class="dropdown-item cursor-pointer">
                                     <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-grup">
                                     İş Grubu
                                 </label>
                                 <label class="dropdown-item cursor-pointer">
                                     <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-ekip">
                                     Ekip
+                                </label>
+                                <label class="dropdown-item cursor-pointer">
+                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-toplam-gun" checked>
+                                    Toplam Gün
+                                </label>
+                                <label class="dropdown-item cursor-pointer">
+                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-toplam-fazla-mesai" checked>
+                                    Toplam Fazla Mesai
                                 </label>
                             </div>
                         </div>
@@ -663,7 +675,7 @@ $projectNamesCache[0] = "Proje Yok";
                         <thead class="sticky">
                             <tr>
                                 <th class="ld cursor-pointer" onclick="sortPuantaj(0)">Adı Soyadı</th>
-                                <th class="ld cursor-pointer" style="width: 150px !important;" onclick="sortPuantaj(1)">Unvanı</th>
+                                <th class="ld extra-column extra-unvan cursor-pointer" style="display:none; width: 150px !important;" onclick="sortPuantaj(1)">Unvanı</th>
                                 <th class="ld extra-column extra-grup cursor-pointer" style="display:none; width: 120px !important;" onclick="sortPuantaj(2)">İş Grubu</th>
                                 <th class="ld extra-column extra-ekip cursor-pointer" style="display:none; width: 120px !important;" onclick="sortPuantaj(3)">Ekip</th>
 
@@ -679,11 +691,13 @@ $projectNamesCache[0] = "Proje Yok";
                                     echo ' <th class="gunadi" style="' . $style . '">' . Date::gunadi($date) . '</th>';
                                     ?>
                                 <?php endforeach; ?>
+                                <th class="ld extra-column extra-toplam-gun text-center" style="width: 80px !important;">Toplam Gün</th>
+                                <th class="ld extra-column extra-toplam-fazla-mesai text-center" style="width: 80px !important;">Toplam FM</th>
                             </tr>
 
                             <tr>
                                 <th class="ld"></th>
-                                <th class="ld" style="width: 150px !important;"></th>
+                                <th class="ld extra-column extra-unvan" style="display:none; width: 150px !important;"></th>
                                 <th class="ld extra-column extra-grup" style="display:none; width: 120px !important;"></th>
                                 <th class="ld extra-column extra-ekip" style="display:none; width: 120px !important;"></th>
 
@@ -697,6 +711,8 @@ $projectNamesCache[0] = "Proje Yok";
                                     echo '<th class="head-date" style="' . $style . '"><span>' . date('d', strtotime($date)) . '</span></th>';
                                     ?>
                                 <?php endforeach; ?>
+                                <th class="ld extra-column extra-toplam-gun" style="width: 80px !important;"></th>
+                                <th class="ld extra-column extra-toplam-fazla-mesai" style="width: 80px !important;"></th>
                             </tr>
 
                         </thead>
@@ -724,14 +740,43 @@ $projectNamesCache[0] = "Proje Yok";
                                 // Bu personelin aylık puantaj verisini cache'den al
                                 $personPuantaj = $allPuantajData[$person->id] ?? [];
 
+                                // Calculate totals for this person
+                                $totalDays = 0;
+                                $totalOvertime = 0;
+                                foreach ($dates as $date) {
+                                    if ($jobStartDate <= $date && $jobEndDate >= $date) {
+                                        $puantajRecord = $personPuantaj[$date] ?? null;
+                                        $puantaj_id = $puantajRecord->puantaj_id ?? '';
+
+                                        if ($puantaj_id >= 0 && $puantaj_id !== '') {
+                                            $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
+                                            if ($puantajTuru) {
+                                                if ($puantajTuru->Turu != 'Ücretsiz') {
+                                                    $totalDays++;
+                                                }
+                                                if ($puantajTuru->Turu == 'Fazla Çalışma') {
+                                                    $totalOvertime += floatval($puantajTuru->EklenecekSaat);
+                                                }
+                                            }
+                                        } else {
+                                            if (Date::isWeekend($date)) {
+                                                $weekendTuru = $allPuantajTurleri[53] ?? null;
+                                                if ($weekendTuru) {
+                                                    // HT is 'Ücretsiz', do not count in total days
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 ?>
                                 <tr>
                                     <td class="text-nowrap" data-id="<?php echo $id ?>"><a class="btn-user-modal"
                                              type="button">
-                                            <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
-                                                target="_blank"><?php echo $person->full_name ?></a></td>
+                                             <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                                 target="_blank"><?php echo $person->full_name ?></a></td>
 
-                                    <td class="text-nowrap" style="width: 150px !important;">
+                                    <td class="text-nowrap extra-column extra-unvan" style="display:none; width: 150px !important;">
                                         <?php echo $person->job ?>
                                     </td>
 
@@ -799,6 +844,8 @@ $projectNamesCache[0] = "Proje Yok";
                                         ?>
 
                                     <?php endforeach; ?>
+                                    <td class="text-center extra-column extra-toplam-gun td-toplam-gun fw-semibold" style="width: 80px !important;"><?php echo $totalDays; ?></td>
+                                    <td class="text-center extra-column extra-toplam-fazla-mesai td-toplam-fazla-mesai text-danger fw-bold" style="width: 80px !important;"><?php echo $totalOvertime > 0 ? str_replace('.0', '', (string)$totalOvertime) : '0'; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -810,6 +857,8 @@ $projectNamesCache[0] = "Proje Yok";
     </div>
 </div>
 <script>
+    var allPuantajTurleri = <?php echo json_encode($allPuantajTurleri); ?>;
+
     $(document).ready(function() {
         // DataTable yüklendikten sonra sütun genişliklerini ayarla
         setTimeout(function() {

@@ -120,6 +120,153 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
         className: "d-none", // Butonu gizliyoruz
         exportOptions: {
           columns: ":visible:not(.no-export)" // .no-export sınıfına sahip sütunları dışa aktarma
+        },
+        customize: function (xlsx) {
+          var sheet = xlsx.xl.worksheets['sheet1.xml'];
+          var styles = xlsx.xl['styles.xml'];
+
+          // 1. DOM'daki tüm görünür satır ve hücreleri topla (1:1 eşleşme için)
+          var domRows = [];
+
+          // Başlık satırı 1
+          var headerRow1 = [];
+          $('#puantajTable thead tr').eq(0).find('th:visible').each(function () {
+            headerRow1.push($(this));
+          });
+          domRows.push(headerRow1);
+
+          // Başlık satırı 2
+          var headerRow2 = [];
+          $('#puantajTable thead tr').eq(1).find('th:visible').each(function () {
+            headerRow2.push($(this));
+          });
+          domRows.push(headerRow2);
+
+          // Gövde satırları
+          $('#puantajTable tbody tr').each(function () {
+            var rowCells = [];
+            $(this).find('td:visible').each(function () {
+              rowCells.push($(this));
+            });
+            domRows.push(rowCells);
+          });
+
+          // 2. XML stillerini al
+          var fills = $('fills', styles);
+          var fillCount = parseInt(fills.attr('count'), 10);
+
+          var fonts = $('fonts', styles);
+          var fontCount = parseInt(fonts.attr('count'), 10);
+
+          var cellXfs = $('cellXfs', styles);
+          var xfCount = parseInt(cellXfs.attr('count'), 10);
+
+          var styleRegistry = {};
+
+          // Yardımcı Fonksiyonlar
+          function excelColToIndex(colStr) {
+            var match = colStr.match(/[A-Z]+/);
+            if (!match) return 0;
+            var letters = match[0];
+            var index = 0;
+            for (var i = 0; i < letters.length; i++) {
+              index = index * 26 + (letters.charCodeAt(i) - 64);
+            }
+            return index - 1;
+          }
+
+          function rgbToHex(rgbStr) {
+            if (!rgbStr) return null;
+            if (rgbStr.startsWith('#')) {
+              var hex = rgbStr.replace('#', '').toUpperCase();
+              if (hex.length === 3) {
+                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+              }
+              return 'FF' + hex;
+            }
+            if (rgbStr === 'transparent' || rgbStr === 'rgba(0, 0, 0, 0)' || rgbStr === 'none') {
+              return null;
+            }
+            var match = rgbStr.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+            if (match) {
+              var r = parseInt(match[1], 10).toString(16).padStart(2, '0');
+              var g = parseInt(match[2], 10).toString(16).padStart(2, '0');
+              var b = parseInt(match[3], 10).toString(16).padStart(2, '0');
+              return 'FF' + (r + g + b).toUpperCase();
+            }
+            return null;
+          }
+
+          function getOrCreateStyle(bgHex, fgHex) {
+            var key = (bgHex || '') + '-' + (fgHex || '');
+            if (styleRegistry[key] !== undefined) {
+              return styleRegistry[key];
+            }
+
+            var fillId = 0;
+            if (bgHex) {
+              var newFill = '<fill><patternFill patternType="solid"><fgColor rgb="' + bgHex + '"/><bgColor indexed="64"/></patternFill></fill>';
+              fills.append(newFill);
+              fillId = fillCount;
+              fillCount++;
+              fills.attr('count', fillCount);
+            }
+
+            var fontId = 0;
+            if (fgHex) {
+              var baseFont = fonts.find('font').first().clone();
+              baseFont.find('color').replaceWith('<color rgb="' + fgHex + '"/>');
+              fonts.append(baseFont);
+              fontId = fontCount;
+              fontCount++;
+              fonts.attr('count', fontCount);
+            }
+
+            var baseXf = cellXfs.find('xf').first().clone();
+            if (bgHex) {
+              baseXf.attr('fillId', fillId);
+              baseXf.attr('applyFill', '1');
+            }
+            if (fgHex) {
+              baseXf.attr('fontId', fontId);
+              baseXf.attr('applyFont', '1');
+            }
+
+            cellXfs.append(baseXf);
+            var styleId = xfCount;
+            xfCount++;
+            cellXfs.attr('count', xfCount);
+
+            styleRegistry[key] = styleId;
+            return styleId;
+          }
+
+          // 3. XML'deki satır ve hücreleri dön, stilleri ata
+          $('row', sheet).each(function (rIdx) {
+            var $row = $(this);
+            var domRow = domRows[rIdx];
+            if (!domRow) return;
+
+            $row.find('c').each(function () {
+              var $cell = $(this);
+              var colLetter = $cell.attr('r').replace(/[0-9]/g, '');
+              var colIdx = excelColToIndex(colLetter);
+              var $domCell = domRow[colIdx];
+              if (!$domCell) return;
+
+              var bg = rgbToHex($domCell.css('background-color'));
+              var fg = rgbToHex($domCell.css('color'));
+
+              // Eğer beyaz ya da varsayılan arka plan ise stil oluşturup XML'i şişirme
+              if (bg === 'FFFFFFFF') bg = null;
+              if (fg === 'FF000000') fg = null;
+
+              if (bg || fg) {
+                var styleId = getOrCreateStyle(bg, fg);
+                $cell.attr('s', styleId);
+              }
+            });
+          });
         }
       }
     ],

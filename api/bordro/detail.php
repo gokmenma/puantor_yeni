@@ -78,18 +78,18 @@ try {
 <div class="row g-3">
     <!-- Özet Kartları -->
     <div class="col-6">
-        <div class="card card-sm bg-blue-lt border-0 shadow-none">
-            <div class="card-body p-2 text-center">
-                <div class="text-xs text-uppercase font-weight-bold opacity-75">Toplam Gelir</div>
-                <div class="h3 mb-0 text-blue" id="modal-total-income">...</div>
+        <div class="card card-sm bg-primary-lt border-0 shadow-sm" style="border-radius: 10px;">
+            <div class="card-body p-3 text-center">
+                <div class="text-uppercase font-weight-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em; opacity: 0.8;">TOPLAM GELİR</div>
+                <div class="h2 mb-0 text-primary" id="modal-total-income">...</div>
             </div>
         </div>
     </div>
     <div class="col-6">
-        <div class="card card-sm bg-red-lt border-0 shadow-none">
-            <div class="card-body p-2 text-center">
-                <div class="text-xs text-uppercase font-weight-bold opacity-75">Toplam Kesinti</div>
-                <div class="h3 mb-0 text-red" id="modal-total-expense">...</div>
+        <div class="card card-sm bg-danger-lt border-0 shadow-sm" style="border-radius: 10px;">
+            <div class="card-body p-3 text-center">
+                <div class="text-uppercase font-weight-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em; opacity: 0.8;">TOPLAM KESİNTİ</div>
+                <div class="h2 mb-0 text-danger" id="modal-total-expense">...</div>
             </div>
         </div>
     </div>

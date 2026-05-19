@@ -1215,4 +1215,35 @@ min-height: 100px !important;} */
     border-left: 4px solid #ff9900 !important;
 }
 
+/* Modal and Card Header Dark Mode Refinements */
+[data-bs-theme="dark"] .modal-content {
+    background-color: #151f2c;
+    border: 1px solid #2d394b;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+}
 
+[data-bs-theme="dark"] .card-header.bg-light,
+[data-bs-theme="dark"] .bg-light {
+    background-color: #1d2735 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .card-header.bg-primary-lt,
+[data-bs-theme="dark"] .bg-primary-lt {
+    background-color: rgba(32, 107, 196, 0.1) !important;
+    color: #4299e1 !important;
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer {
+    border-color: #2d394b;
+}
+
+[data-bs-theme="dark"] .table.sticky-top,
+[data-bs-theme="dark"] thead.sticky-top tr th {
+    background-color: #1d2735 !important;
+}
+
+[data-bs-theme="dark"] .modal-blur.fade.show {
+    backdrop-filter: blur(4px) brightness(0.8);
+}

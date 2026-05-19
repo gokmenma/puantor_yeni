@@ -151,7 +151,7 @@ $personProjectsIds = rtrim($personProjectsIds, ',');
                         <div class="card-header">
                             <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <a href="#tabs-home-3" class="nav-link active" data-bs-toggle="tab"
+                                    <a href="#tabs-home-3" class="nav-link" data-bs-toggle="tab"
                                         aria-selected="true" role="tab">
                                         <!-- Download SVG icon from http://tabler-icons.io/i/home -->
                                         <i class="ti ti-home icon me-1"></i>
@@ -204,7 +204,7 @@ $personProjectsIds = rtrim($personProjectsIds, ',');
                         </div>
                         <div class="card-body">
                             <div class="tab-content">
-                                <div class="tab-pane active show" id="tabs-home-3" role="tabpanel">
+                                <div class="tab-pane" id="tabs-home-3" role="tabpanel">
                                     <?php include_once 'content/0-home.php' ?>
                                 </div>
                                 <?php if ($id > 0): ?>
@@ -233,3 +233,32 @@ $personProjectsIds = rtrim($personProjectsIds, ',');
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    var activeTab = localStorage.getItem('active_personel_tab');
+    if (!activeTab || !document.querySelector('a[href="' + activeTab + '"]')) {
+        activeTab = '#tabs-home-3';
+    }
+    
+    // Aktif sekme butonuna active sınıfını ekle
+    var tabLink = document.querySelector('a[href="' + activeTab + '"]');
+    if (tabLink) {
+        tabLink.classList.add('active');
+        tabLink.setAttribute('aria-selected', 'true');
+    }
+    
+    // Aktif sekme paneline active show sınıfını ekle
+    var tabPane = document.querySelector(activeTab);
+    if (tabPane) {
+        tabPane.classList.add('active', 'show');
+    }
+})();
+
+$(document).ready(function() {
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+        var target = $(e.target).attr("href");
+        localStorage.setItem('active_personel_tab', target);
+    });
+});
+</script>

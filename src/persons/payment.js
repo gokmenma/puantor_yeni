@@ -65,44 +65,16 @@ $(document).on("click", "#payment_addButton", function () {
         $("#total_income").text(data.income_expense.total_income);
         $("#total_expense").text(data.income_expense.total_expense);
         $("#balance").text(data.income_expense.balance);
-        var table = $("#person_paymentTable").DataTable();
-        table.row
-          .add([
-            data.payment.id,
-            data.payment.gun,
-            data.payment.turu,
-            data.payment.ay,
-            data.payment.yil,
-            `<i class='ti ti-upload icon color-yellow me-1' ></i>
-            ${data.payment.kategori}`,
-            data.payment.tutar,
-            data.payment.aciklama,
-            data.payment.created_at,
-            `<div class="dropdown">
-                        <button class="btn dropdown-toggle align-text-top"
-                            data-bs-toggle="dropdown">İşlem</button>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item"
-                                 href="#">
-                                <i class="ti ti-edit icon me-3"></i> Güncelle
-                            </a>
-                            <a class="dropdown-item delete-payment" href="#" data-id='${data.payment.id}'>
-                                <i class="ti ti-trash icon me-3"></i> Sil
-                            </a>
-                        </div>
-                    </div>`,
-          ])
-          .order([8, 'desc'])
-          .draw(false);
+        // DataTables row addition removed because location.reload() automatically redraws the updated table.
 
         // $("#payment-modal").modal("hide");
         form.trigger("reset");
         Swal.fire({
           icon: "success",
           title: "Başarılı!",
-          text: "Ödeme başarıyla eklendi.",
+          text: data.message || "Ödeme başarıyla eklendi.",
         }).then(() => {
-          // location.reload();
+          location.reload();
         });
       } else {
         Swal.fire({
