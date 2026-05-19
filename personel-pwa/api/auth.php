@@ -29,7 +29,7 @@ try {
         }
 
         if (empty($kimlik_no) || empty($password)) {
-            echo json_encode(['status' => 'error', 'message' => 'Kimlik bilgileri ve şifre gereklidir.']);
+            echo json_encode(['status' => 'error', 'message' => 'Giriş bilgileri ve şifre gereklidir.']);
             exit;
         }
 

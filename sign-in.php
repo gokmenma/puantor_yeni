@@ -99,11 +99,11 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
 
               // Email adresi boş ise
               if (empty($email)) {
-                echo alertdanger('Email adresi boş bırakılamaz');
+                echo alertdanger('E-posta, telefon veya kullanıcı adı boş bırakılamaz');
               } elseif (empty($password)) {
                 echo alertdanger('Şifre boş bırakılamaz');
               } else {
-                $user = $User->getUserByEmail($email);
+                $user = $User->getUserByLoginField($email);
                 // Kullanıcı bulunamadıysa
                 if (!$user) {
                   echo alertdanger('Kullanıcı bulunamadı');
@@ -195,7 +195,7 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
                     }
 
                   } else {
-                    echo alertdanger('Hatalı şifre veya email adresi');
+                    echo alertdanger('Hatalı şifre, e-posta veya telefon');
                   }
                 }
               }
@@ -207,9 +207,9 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
                 <form method="POST" action="#" autocomplete="off">
 
                   <div class="mb-3">
-                    <label class="form-label">Email Adresi</label>
-                    <input type="email" class="form-control" name="email" value="<?php echo $email ?? '' ?>"
-                      placeholder="Email adresinizi girin" autocomplete="off">
+                    <label class="form-label">E-posta, Telefon veya Kullanıcı Adı</label>
+                    <input type="text" class="form-control" name="email" value="<?php echo $email ?? '' ?>"
+                      placeholder="E-posta, telefon veya kullanıcı adı girin" autocomplete="off">
                   </div>
                   <div class="mb-2">
                     <label class="form-label">

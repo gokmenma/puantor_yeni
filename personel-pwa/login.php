@@ -148,8 +148,8 @@ include_once "inc/head.php";
             <div class="login-middle-form">
                 <form id="loginForm">
                     <div class="form-floating mb-3">
-                        <input type="text" id="kimlik_no" class="form-control" placeholder="00000000000" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)" required autocomplete="username">
-                        <label for="kimlik_no">T.C. Kimlik veya Telefon</label>
+                        <input type="text" id="kimlik_no" class="form-control" placeholder="T.C. Kimlik, Telefon, E-posta veya Kullanıcı Adı" required autocomplete="username">
+                        <label for="kimlik_no">T.C. Kimlik, Telefon, E-posta veya Kullanıcı Adı</label>
                     </div>
                     <div class="form-floating mb-3 position-relative">
                         <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">

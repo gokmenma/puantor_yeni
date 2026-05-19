@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($email) || empty($password)) {
             $error = "Lütfen tüm alanları doldurun.";
         } else {
-            $user = $User->getUserByEmail($email);
+            $user = $User->getUserByLoginField($email);
             if ($user && password_verify($password, $user->password)) {
                 if ($user->status == 1) {
                     $_SESSION['user'] = $user;
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = "Hesabınız henüz aktif değil.";
                 }
             } else {
-                $error = "Hatalı email adresi veya şifre.";
+                $error = "Hatalı şifre, e-posta veya telefon.";
             }
         }
     } elseif (isset($_POST['forgot'])) {
@@ -408,8 +408,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php else: ?>
                 <form method="POST" action="">
                     <div class="form-floating mb-3">
-                        <input type="email" name="email" class="form-control" id="floatingEmail" placeholder="ad@sirket.com" required autocomplete="email" value="<?php echo htmlspecialchars($email ?? ''); ?>">
-                        <label for="floatingEmail">Email Adresi</label>
+                        <input type="text" name="email" class="form-control" id="floatingEmail" placeholder="E-posta, telefon veya kullanıcı adı" required autocomplete="username" value="<?php echo htmlspecialchars($email ?? ''); ?>">
+                        <label for="floatingEmail">E-posta, Telefon veya Kullanıcı Adı</label>
                     </div>
                     <div class="form-floating mb-3 position-relative">
                         <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">

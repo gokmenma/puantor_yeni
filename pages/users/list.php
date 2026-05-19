@@ -54,6 +54,7 @@ $users = $userObj->getUsersByFirm($firm_id);
                                 <th style="width:7%">Sıra</th>
                                 <th style="width:10%">Pozisyon</th>
                                 <th>Adı Soyadı</th>
+                                <th style="width:15%">Kullanıcı Adı</th>
                                 <th style="width:20%">Email</th>
                                 <th style="width:10%">Telefon</th>
                                 <th style="width:10%">Ana Kullanıcı</th>
@@ -73,6 +74,7 @@ $users = $userObj->getUsersByFirm($firm_id);
                                     <td class="text-center"><?php echo $i; ?></td>
                                     <td><?php echo $userObj->roleName($user->user_roles ?? ''); ?></td>
                                     <td><?php echo $user->full_name; ?></td>
+                                    <td><?php echo htmlspecialchars($user->username ?? ''); ?></td>
                                     <td><?php echo $user->email; ?></td>
                                     <td class="text-start"><?php echo $user->phone; ?></td>
                                     <td class="text-center">

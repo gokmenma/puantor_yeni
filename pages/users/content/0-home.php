@@ -24,17 +24,35 @@ $userHelper = new UserHelper();; ?>
 <div class="row mb-3">
 
     <div class="col-md-2">
+        <label for="username" class="align-middle">Kullanıcı Adı</label>
+    </div>
+    <div class="col-md-4 mb-3">
+        <input type="text" class="form-control" name="username" value="<?php echo $user->username ?? '' ?>" id="username" required>
+    </div>
+
+    <div class="col-md-2">
         <label for="" class="align-middle">Eposta Adresi</label>
     </div>
     <div class="col-md-4 mb-3">
         <input type="text" class="form-control" name="email" value="<?php echo $user->email ?? '' ?>" id="email" required>
     </div>
 
+</div>
+
+<div class="row mb-3">
+
     <div class="col-md-2">
         <label for="" class="align-middle">Telefon</label>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 mb-3">
         <input type="text" class="form-control" name="phone" value="<?php echo $user->phone ?? '' ?>" id="phone" >
+    </div>
+
+    <div class="col-md-2">
+        <label for="" class="align-middle">Mesleği</label>
+    </div>
+    <div class="col-md-4">
+        <input type="text" class="form-control" name="job" value="<?php echo $user->job ?? '' ?>" id="job" >
     </div>
 
 </div>
@@ -46,14 +64,6 @@ $userHelper = new UserHelper();; ?>
     </div>
     <div class="col-md-4 mb-3">
         <?php echo $userHelper->userRoles("user_roles",$user->user_roles ?? '') ?>
-    </div>
-
-    <div class="col-md-2">
-        <label for="" class="align-middle">Mesleği</label>
-    </div>
-
-    <div class="col-md-4 col-sm-6">
-        <input type="text" class="form-control" name="job" value="<?php echo $user->job ?? '' ?>" id="job" >
     </div>
 
 </div>

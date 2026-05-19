@@ -163,11 +163,11 @@ window.app = {
                 this.toast('Giriş başarılı, yönlendiriliyorsunuz...', 'success');
                 setTimeout(() => this.showMainApp(), 1000);
             } else {
-                this.toast('Kullanıcı adı veya şifre hatalı.', 'error');
+                this.toast(result.message || 'Giriş bilgileri veya şifre hatalı.', 'error');
             }
         } catch (error) {
             console.error('Login error:', error);
-            this.toast('Kullanıcı adı veya şifre hatalı.', 'error');
+            this.toast('Bağlantı hatası oluştu.', 'error');
         }
     },
 

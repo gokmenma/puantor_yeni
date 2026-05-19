@@ -136,22 +136,66 @@ class Persons extends Model
 
     public function getPersonByAuthField($value)
     {
+        $value = trim($value);
+        if (empty($value)) {
+            return null;
+        }
+
         $sql = "SELECT * FROM $this->table WHERE deleted_at IS NULL";
         $query = $this->db->prepare($sql);
         $query->execute();
         $persons = $query->fetchAll(PDO::FETCH_OBJ);
 
         $matches = [];
+        
+        $cleanValuePhone = preg_replace('/[^0-9]/', '', $value);
+        $valueLower = mb_strtolower($value, 'UTF-8');
+
         foreach ($persons as $person) {
             $decryptedKimlik = Security::safeDecrypt($person->kimlik_no);
             $decryptedPhone = Security::safeDecrypt($person->phone);
-            
-            // Temizleme: Sadece rakamları karşılaştır
-            $cleanValue = preg_replace('/[^0-9]/', '', $value);
+            $decryptedEmail = Security::safeDecrypt($person->email);
+            $fullNameLower = mb_strtolower($person->full_name, 'UTF-8');
+
             $cleanKimlik = preg_replace('/[^0-9]/', '', $decryptedKimlik);
             $cleanPhone = preg_replace('/[^0-9]/', '', $decryptedPhone);
+            $emailLower = mb_strtolower($decryptedEmail, 'UTF-8');
 
-            if (($cleanKimlik && $cleanKimlik == $cleanValue) || ($cleanPhone && $cleanPhone == $cleanValue)) {
+            $isMatch = false;
+
+            // 1. T.C. Kimlik veya Telefon Kontrolü (Girişte rakam varsa)
+            if (!empty($cleanValuePhone)) {
+                if ($cleanKimlik && $cleanKimlik === $cleanValuePhone) {
+                    $isMatch = true;
+                }
+                if ($cleanPhone) {
+                    $basePhoneInput = ltrim($cleanValuePhone, '0');
+                    if (substr($basePhoneInput, 0, 2) === '90' && strlen($basePhoneInput) > 10) {
+                        $basePhoneInput = substr($basePhoneInput, 2);
+                    }
+                    
+                    $basePhoneDB = ltrim($cleanPhone, '0');
+                    if (substr($basePhoneDB, 0, 2) === '90' && strlen($basePhoneDB) > 10) {
+                        $basePhoneDB = substr($basePhoneDB, 2);
+                    }
+
+                    if ($basePhoneDB === $basePhoneInput || $cleanPhone === $cleanValuePhone) {
+                        $isMatch = true;
+                    }
+                }
+            }
+
+            // 2. E-posta Kontrolü
+            if ($emailLower && $emailLower === $valueLower) {
+                $isMatch = true;
+            }
+
+            // 3. Kullanıcı Adı (Ad Soyad) Kontrolü
+            if ($fullNameLower && $fullNameLower === $valueLower) {
+                $isMatch = true;
+            }
+
+            if ($isMatch) {
                 // Eğer şifresi olan bir kayıt bulursak hemen döndür (en öncelikli)
                 if (!empty($person->password)) {
                     return $person;

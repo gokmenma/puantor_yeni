@@ -46,6 +46,51 @@ class UserModel extends Model
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 
+    public function getUserByLoginField($identifier)
+    {
+        $identifier = trim($identifier);
+        if (empty($identifier)) {
+            return null;
+        }
+
+        // 1. Email check (if it contains '@')
+        if (strpos($identifier, '@') !== false) {
+            return $this->getUserByEmail($identifier);
+        }
+
+        // 2. Phone check (if it has digits)
+        $cleanPhone = preg_replace('/[^0-9]/', '', $identifier);
+        if (!empty($cleanPhone) && strlen($cleanPhone) >= 7) {
+            $basePhone = ltrim($cleanPhone, '0');
+            if (substr($basePhone, 0, 2) === '90' && strlen($basePhone) > 10) {
+                $basePhone = substr($basePhone, 2);
+            }
+
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE 
+                email = :raw OR 
+                username = :raw OR
+                full_name = :raw OR
+                phone = :raw OR
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') LIKE :phoneMatch
+            ");
+            
+            $phoneMatch = '%' . $basePhone;
+            $sql->execute([
+                'raw' => $identifier,
+                'phoneMatch' => $phoneMatch
+            ]);
+            $user = $sql->fetch(PDO::FETCH_OBJ);
+            if ($user) {
+                return $user;
+            }
+        }
+
+        // 3. Fallback to searching by email, username, full_name, or phone directly
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = :raw OR username = :raw OR full_name = :raw OR phone = :raw");
+        $sql->execute(['raw' => $identifier]);
+        return $sql->fetch(PDO::FETCH_OBJ);
+    }
+
     function getUsersByFirm($firm_id)
     {
         $user_id = $_SESSION["user"]->id;
@@ -109,6 +154,25 @@ class UserModel extends Model
         $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ?");
         $sql->execute([$email]);
         return $sql->fetch(PDO::FETCH_OBJ);
+    }
+
+    public function isUsernameExists($username, $excludeId = 0)
+    {
+        $username = trim($username);
+        if (empty($username)) {
+            return false;
+        }
+        if ($excludeId > 0) {
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE username = :username AND id != :excludeId");
+            $sql->execute([
+                'username' => $username,
+                'excludeId' => $excludeId
+            ]);
+        } else {
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE username = :username");
+            $sql->execute(['username' => $username]);
+        }
+        return $sql->fetch(PDO::FETCH_OBJ) ? true : false;
     }
 
     //Giriş işlemleri kayıt altına alınıyor

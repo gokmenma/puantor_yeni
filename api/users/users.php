@@ -34,6 +34,21 @@ if ($_POST["action"] == "userSave") {
             exit;
         }
 
+        //Kullanıcı adı ile kayıtlı başka bir kullanıcı varsa kayıt yapılmaz
+        $username = trim($_POST["username"] ?? '');
+        if (!empty($username)) {
+            if ($User->isUsernameExists($username, $id)) {
+                $status = "error";
+                $message = "Bu kullanıcı adı zaten başka bir kullanıcı tarafından kullanılıyor.";
+                $res = [
+                    "status" => $status,
+                    "message" => $message,
+                ];
+                echo json_encode($res);
+                exit;
+            }
+        }
+
         $responsible_projects = isset($_POST["responsible_projects"]) ? implode(',', $_POST["responsible_projects"]) : '';
         $responsible_persons = isset($_POST["responsible_map"]) ? json_encode($_POST["responsible_map"], JSON_UNESCAPED_UNICODE) : '';
         $responsible_modules = '';
@@ -45,6 +60,7 @@ if ($_POST["action"] == "userSave") {
             "firm_id" => $_SESSION["firm_id"],
             "full_name" => $_POST["full_name"],
             "email" => $_POST["email"],
+            "username" => $username,
             "user_roles" => $_POST["user_roles"],
             "phone" => $_POST["phone"],
             "job" => $_POST["job"],

@@ -7,6 +7,9 @@ $(document).on("click", "#kullanici_kaydet", function () {
       full_name: {
         required: true
       },
+      username: {
+        required: true
+      },
       email: {
         required: true,
         email: true
@@ -22,6 +25,9 @@ $(document).on("click", "#kullanici_kaydet", function () {
     },
     messages: {
       full_name: {
+        required: "Lütfen ad soyad giriniz"
+      },
+      username: {
         required: "Lütfen kullanıcı adını giriniz"
       },
       email: {
