@@ -337,8 +337,46 @@ $(document).on("change", ".column-toggle-check", function() {
     } else {
         $("." + columnClass).hide();
     }
+
+    // Seçilen sütunların durumunu localStorage'a kaydet
+    var columnStates = {};
+    $(".column-toggle-check").each(function() {
+        columnStates[$(this).data("column")] = $(this).is(":checked");
+    });
+    localStorage.setItem("puantajColumnStates", JSON.stringify(columnStates));
+
     // DataTable yerleşimini yeniden hesapla
     $("#puantajTable").DataTable().columns.adjust().draw();
+});
+
+// Sayfa yüklendiğinde kaydedilmiş sütun görünürlük ayarlarını uygula
+$(document).ready(function() {
+    var storedStates = localStorage.getItem("puantajColumnStates");
+    if (storedStates) {
+        try {
+            var columnStates = JSON.parse(storedStates);
+            $(".column-toggle-check").each(function() {
+                var columnClass = $(this).data("column");
+                if (columnClass in columnStates) {
+                    var isVisible = columnStates[columnClass];
+                    $(this).prop("checked", isVisible);
+                    if (isVisible) {
+                        $("." + columnClass).show();
+                    } else {
+                        $("." + columnClass).hide();
+                    }
+                }
+            });
+            // DataTable yerleşimini yeniden hesapla
+            setTimeout(function() {
+                if ($.fn.DataTable.isDataTable('#puantajTable')) {
+                    $('#puantajTable').DataTable().columns.adjust().draw();
+                }
+            }, 100);
+        } catch (e) {
+            console.error("Sütun görünürlük ayarları yüklenemedi:", e);
+        }
+    }
 });
 
 // Dropdown içindeki tıklamalarda menünün kapanmasını engelle
