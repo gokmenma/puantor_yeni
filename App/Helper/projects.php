@@ -38,14 +38,18 @@ class ProjectHelper extends Db
     {
        //kayıtlı projeler varsa diziye çevir
         if($project_ids != null){
-            $project_ids = explode(",",$project_ids);
+            if (is_array($project_ids)) {
+                $project_ids = array_map('intval', $project_ids);
+            } else {
+                $project_ids = array_filter(array_map('intval', explode(",",$project_ids)));
+            }
         }else{
             $project_ids = [];
         }
         
         $results = $this->Projects->getProjectsByFirm($_SESSION["firm_id"]);
 
-        $select = '<select name="' . $name . '[]" class="form-select select2" id="' . $name . '" style="width:100%" multiple>';
+        $select = '<select name="' . $name . '[]" class="form-select select2" id="' . $name . '" style="width:100%" multiple data-placeholder="Projeleri Seçiniz">';
         $select .= '<option value="0" disabled>Projeleri Seçiniz</option>';
         foreach ($results as $row) { // $results üzerinde döngü
             $selected = in_array($row->id, $project_ids) ? ' selected' : ''; // Eğer id varsa seçili yap

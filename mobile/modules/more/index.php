@@ -143,6 +143,21 @@ $userId = $user->id ?? 0;
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
     <?php endif; ?>
+
+    <?php 
+    $reports_auth = $Auths->getAuthIdByTitle("Raporlar");
+    if (!$reports_auth || $Auths->AuthorizeByAuthId($reports_auth->id)): ?>
+    <a href="reports" class="list-group-item" data-id="reports">
+      <div class="d-flex align-items-center gap-1">
+        <i class="ti ti-grip-vertical text-muted drag-handle"></i>
+        <div class="avatar avatar-sm rounded bg-teal-lt me-2">
+          <i class="ti ti-chart-dots-3 text-teal"></i>
+        </div>
+        <span class="text-semibold text-sm">Raporlar</span>
+      </div>
+      <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
+    </a>
+    <?php endif; ?>
   </div>
 
   <!-- Destek ve Ayarlar -->

@@ -8,10 +8,14 @@ $start_date = Date::firstDay($month, $year);
 $end_date = Date::lastDay($month, $year);
 
 // 1. TOPLAM PROJE HESAPLAMA
-if ($project_id > 0) {
-    $total_projects = 1;
-    $project_name = $projectHelper->getProjectName($project_id);
-    $project_desc = "Seçili: " . htmlspecialchars($project_name);
+if (!empty($valid_project_ids)) {
+    $total_projects = count($valid_project_ids);
+    if ($total_projects === 1) {
+        $project_name = $projectHelper->getProjectName($valid_project_ids[0]);
+        $project_desc = "Seçili: " . htmlspecialchars($project_name);
+    } else {
+        $project_desc = "Çoklu Seçim (" . $total_projects . " Proje)";
+    }
 } else {
     // Bu ay çalışılan projeler
     $proj_sql = $db->prepare("
@@ -35,13 +39,15 @@ $total_personnel = count($persons);
 $personnel_desc = "Aktif Çalışan";
 
 // 3. TOPLAM ÇALIŞMA (GÜN / SAAT) HESAPLAMA
-if ($project_id > 0) {
+if (!empty($valid_project_ids)) {
+    $placeholders = implode(',', array_fill(0, count($valid_project_ids), '?'));
     $work_sql = $db->prepare("
         SELECT COUNT(*) as total_days, SUM(saat) as total_hours 
         FROM puantaj 
-        WHERE project_id = ? AND gun >= ? AND gun <= ?
+        WHERE project_id IN ($placeholders) AND gun >= ? AND gun <= ?
     ");
-    $work_sql->execute([$project_id, $start_date, $end_date]);
+    $params = array_merge($valid_project_ids, [$start_date, $end_date]);
+    $work_sql->execute($params);
 } else {
     $work_sql = $db->prepare("
         SELECT COUNT(*) as total_days, SUM(saat) as total_hours 
@@ -56,16 +62,18 @@ $total_days = $work_res->total_days ?? 0;
 $total_hours = $work_res->total_hours ?? 0;
 
 // PUANTAJ DAĞILIMI
-if ($project_id > 0) {
+if (!empty($valid_project_ids)) {
+    $placeholders = implode(',', array_fill(0, count($valid_project_ids), '?'));
     $breakdown_sql = $db->prepare("
         SELECT pt.PuantajAdi, pt.PuantajKod, pt.Turu, pt.ArkaPlanRengi, pt.FontRengi, COUNT(p.id) as count 
         FROM puantaj p
         INNER JOIN puantajturu pt ON p.puantaj_id = pt.id
-        WHERE p.project_id = ? AND p.gun >= ? AND p.gun <= ?
+        WHERE p.project_id IN ($placeholders) AND p.gun >= ? AND p.gun <= ?
         GROUP BY p.puantaj_id
         ORDER BY count DESC
     ");
-    $breakdown_sql->execute([$project_id, $start_date, $end_date]);
+    $params = array_merge($valid_project_ids, [$start_date, $end_date]);
+    $breakdown_sql->execute($params);
 } else {
     $breakdown_sql = $db->prepare("
         SELECT pt.PuantajAdi, pt.PuantajKod, pt.Turu, pt.ArkaPlanRengi, pt.FontRengi, COUNT(p.id) as count 

@@ -22,7 +22,7 @@ $stats = [
 // Puantaj türlerini tek tek sorgulamak yerine bir kerede veya ihtiyaç anında çekelim
 foreach ($puantaj as $item) {
     // Puantaj türü bilgisini al
-    $stmt = $puantajObj->db->prepare("SELECT * FROM puantajturu WHERE id = ?");
+    $stmt = $puantajObj->getDb()->prepare("SELECT * FROM puantajturu WHERE id = ?");
     $stmt->execute([$item->puantaj_id]);
     $turu = $stmt->fetch(PDO::FETCH_OBJ);
     

@@ -3,27 +3,52 @@ const listItems = $(".modal .nav-item"); // Açılan Modaldeki puantaj türü se
 //********************************************** */
 listItems.click(function () {
   const clickedCells = $("table td.clicked");
-  const current_project_id = $("#projects option:selected").val();
+  
+  // Get array of selected projects
+  const current_projects = $("#projects").val() || [];
 
   const avatar = $(this).find(".avatar");
   const avatarText = avatar.text();
   const avatarColor = avatar.css("color");
   const avatarBgColor = avatar.css("background-color");
   const avatarDataid = avatar.attr("data-id");
-  const calismaTuru = avatar.attr("data-tooltip");
 
   const rowsToRecalculate = new Set();
   clickedCells.each(function () {
     let cell = $(this);
+    let parentTr = cell.closest("tr");
+    let rowDefaultProject = parentTr.attr("data-default-project") || "0";
+
+    // Determine target project ID
+    let cellProj = cell.attr("data-project");
+    if (!cellProj || cellProj === "0" || cellProj === "") {
+      cellProj = rowDefaultProject;
+    }
+
+    if (current_projects.length > 0) {
+      if (cellProj === "0" || !current_projects.includes(cellProj)) {
+        cellProj = current_projects[0];
+      }
+    }
+
+    // Resolve project name for tooltip
+    let cellProjName = "Proje Yok";
+    if (cellProj && cellProj !== "0" && cellProj !== "") {
+      let opt = $("#projects option[value='" + cellProj + "']");
+      if (opt.length > 0) {
+        cellProjName = opt.text().trim();
+      }
+    }
+
     cell.text(avatarText);
     cell.css("color", avatarColor);
     cell.attr("data-id", avatarDataid);
     cell.attr("data-change", "true");
-    cell.attr("data-tooltip", calismaTuru);
-    cell.attr("data-project", current_project_id);
+    cell.attr("data-tooltip", cellProjName);
+    cell.attr("title", cellProjName);
+    cell.attr("data-project", cellProj);
     cell.css("background-color", avatarBgColor);
 
-    let parentTr = cell.closest("tr");
     if (parentTr.length > 0) {
       rowsToRecalculate.add(parentTr[0]);
     }
@@ -87,6 +112,8 @@ $(document).keydown(function (event) {
       cell.attr("data-change", "true");
       cell.css("background-color", "white");
       cell.removeAttr("data-tooltip");
+      cell.removeAttr("title");
+      cell.attr("data-project", "0");
       cell.removeClass("clicked");
 
       let parentTr = cell.closest("tr");
@@ -146,7 +173,8 @@ $(document).keydown(function (event) {
 });
 
 function puantaj_olustur() {
-  var project_id = $("#projects option:selected").val();
+  var project_ids = $("#projects").val() || [];
+  var project_id = project_ids.length > 0 ? project_ids[0] : "0";
   var year = $("#year").val();
   var month = $("#months").val().padStart(2, "0");
   
@@ -250,23 +278,61 @@ function setCookie(name, value, days) {
   document.cookie = name + "=" + (value || "") + expires + "; path=/";
 }
 
-$(document).ready(function () {
-  // Mevcut değerleri kaydet
-  storeLastValues();
-
-  $("#projects, #year, #months, #job_groups, #team_id").on("change select2:select", function () {
-    // Save current values to Cookies for PHP to read on next fresh load
-    setCookie('p_projects', $("#projects").val(), 30);
+function bindFilters() {
+  // Bind standard filters (excluding projects)
+  $("#year, #months, #job_groups, #team_id").on("change select2:select select2:unselect", function () {
     setCookie('p_year', $("#year").val(), 30);
     setCookie('p_months', $("#months").val(), 30);
     setCookie('p_job_groups', $("#job_groups").val(), 30);
     setCookie('p_team_id', $("#team_id").val(), 30);
-    
     Route();
+  });
+
+  // Bind projects filter to save cookie on change, but do NOT reload immediately
+  $("#projects").on("change select2:select select2:unselect", function () {
+    setCookie('p_projects', $(this).val(), 30);
+  });
+
+  // Bind projects close event to trigger Route if values changed
+  $("#projects").on("select2:close", function () {
+    const currentValue = $(this).val() || [];
+    const lastValue = lastValues.projects || [];
+    
+    // Order-independent array comparison
+    const isSame = currentValue.length === lastValue.length && 
+                   [...currentValue].sort().every((val, idx) => val === [...lastValue].sort()[idx]);
+                   
+    if (!isSame) {
+      Route();
+    }
   });
 
   $("input[name='person_status']").on("change", function() {
     setCookie('p_person_status', $(this).val(), 30);
+    Route();
+  });
+}
+
+function unbindFilters() {
+  $("#projects, #year, #months, #job_groups, #team_id").off("change select2:select select2:unselect select2:close");
+  $("input[name='person_status']").off("change");
+}
+
+$(document).ready(function () {
+  // Mevcut değerleri kaydet
+  storeLastValues();
+
+  // Filtreleri bağla
+  bindFilters();
+
+  // Ayarların yüklenmesi (only active project)
+  const onlyActiveSetting = localStorage.getItem('onlyActiveProjectDays') === 'true';
+  $('#setting-only-active-project').prop('checked', onlyActiveSetting);
+
+  $('#setting-only-active-project').on('change', function() {
+    const isChecked = $(this).is(':checked');
+    localStorage.setItem('onlyActiveProjectDays', isChecked);
+    setCookie('p_only_active_project', isChecked ? '1' : '0', 30);
     Route();
   });
 });
@@ -294,8 +360,7 @@ function Route() {
         $("#puantajInfoForm").submit();
       } else {
         // Kullanıcı vazgeçti. Dropdown'u eski haline çekmeliyiz ki kafa karışıklığı olmasın
-        $("#projects, #year, #months, #job_groups, #team_id").off("change select2:select");
-        $("input[name='person_status']").off("change");
+        unbindFilters();
         
         $("#projects").val(lastValues.projects).trigger("change");
         $("#year").val(lastValues.year).trigger("change");
@@ -307,12 +372,7 @@ function Route() {
         $("input[name='person_status'][value='" + lastValues.person_status + "']").prop('checked', true);
         
         // Dinleyicileri geri yükle
-        $("#projects, #year, #months, #job_groups, #team_id").on("change select2:select", function () {
-          Route();
-        });
-        $("input[name='person_status']").on("change", function() {
-          Route();
-        });
+        bindFilters();
       }
     });
   } else {
@@ -380,7 +440,7 @@ $(document).ready(function() {
 });
 
 // Dropdown içindeki tıklamalarda menünün kapanmasını engelle
-$(document).on("click", ".dropdown-menu-column-selector", function (e) {
+$(document).on("click", ".dropdown-menu-column-selector, .dropdown-menu-settings", function (e) {
     e.stopPropagation();
 });
 
@@ -389,10 +449,15 @@ function calculateRowTotals(row) {
   let totalDays = 0;
   let totalOvertime = 0;
 
+  // Let's get the settings for only active project calculation
+  const onlyActiveProject = localStorage.getItem('onlyActiveProjectDays') === 'true';
+  const activeProjects = $("#projects").val() || []; // array of selected projects (as strings)
+
   row.find("td.gun").each(function() {
     let td = $(this);
     let id = td.attr("data-id");
     let text = td.text().trim();
+    let cellProj = td.attr("data-project") || "0";
 
     // Sadece işe başlama/ayrılma tarihleri dışındaki hücreleri geç (--- olanlar)
     if (text === "---") {
@@ -400,14 +465,23 @@ function calculateRowTotals(row) {
     }
 
     if (id && id !== "0" && id !== "") {
-      if (typeof allPuantajTurleri !== 'undefined' && allPuantajTurleri[id]) {
-        let type = allPuantajTurleri[id];
-        if (type.Turu !== "Ücretsiz") {
-          totalDays++;
+      let shouldCount = true;
+      if (onlyActiveProject && activeProjects.length > 0) {
+        if (!activeProjects.includes(cellProj)) {
+          shouldCount = false;
         }
-        if (type.Turu === "Fazla Çalışma") {
-          let hours = parseFloat(type.EklenecekSaat) || 0;
-          totalOvertime += hours;
+      }
+
+      if (shouldCount) {
+        if (typeof allPuantajTurleri !== 'undefined' && allPuantajTurleri[id]) {
+          let type = allPuantajTurleri[id];
+          if (type.Turu !== "Ücretsiz") {
+            totalDays++;
+          }
+          if (type.Turu === "Fazla Çalışma") {
+            let hours = parseFloat(type.EklenecekSaat) || 0;
+            totalOvertime += hours;
+          }
         }
       }
     } else {
@@ -419,3 +493,128 @@ function calculateRowTotals(row) {
   let otText = totalOvertime > 0 ? totalOvertime.toFixed(1).replace('.0', '') : '0';
   row.find(".td-toplam-fazla-mesai").text(otText);
 }
+
+// Excel download preview modal functionality
+function generateExcelPreview() {
+  var viewFormat = $('input[name="excel_view_format"]:checked').val() || 'code';
+  window.excelExportType = viewFormat;
+  
+  var previewContainer = $("#excel-preview-container");
+  previewContainer.empty();
+  
+  var previewTable = $('<table class="table table-bordered m-0"></table>');
+  
+  // Build header
+  var thead = $('<thead></thead>');
+  $('#puantajTable thead tr').each(function() {
+    var headerRow = $('<tr></tr>');
+    $(this).find('th:visible:not(.no-export)').each(function() {
+      var th = $(this);
+      var clonedTh = $('<th></th>');
+      clonedTh.text(th.text().trim());
+      
+      // Copy background color, color and classes
+      var bg = th.css('background-color');
+      var color = th.css('color');
+      if (bg) clonedTh.css('background-color', bg);
+      if (color) clonedTh.css('color', color);
+      
+      // Copy classes except search or sorting ones
+      var classes = th.attr('class');
+      if (classes) {
+        var cleanClasses = classes.replace(/\bsorting\S*/g, '').replace(/\bsearch\S*/g, '');
+        clonedTh.addClass(cleanClasses);
+      }
+      
+      headerRow.append(clonedTh);
+    });
+    thead.append(headerRow);
+  });
+  previewTable.append(thead);
+  
+  // Build body
+  var tbody = $('<tbody></tbody>');
+  var table = $("#puantajTable").DataTable();
+  var rows = table.rows({ search: 'applied' }).nodes();
+  
+  $(rows).each(function() {
+    var tr = $('<tr></tr>');
+    $(this).find('td:visible:not(.no-export)').each(function() {
+      var td = $(this);
+      var clonedTd = $('<td></td>');
+      
+      // Copy alignment classes
+      if (td.hasClass('text-start')) {
+        clonedTd.addClass('text-start');
+      } else if (td.hasClass('text-end')) {
+        clonedTd.addClass('text-end');
+      }
+      
+      if (td.hasClass('gun') || td.hasClass('noselect')) {
+        var text = td.text().trim();
+        if (text === "---") {
+          clonedTd.text("---");
+        } else {
+          if (viewFormat === 'hour') {
+            var id = td.attr('data-id');
+            if (id && id !== '0' && id !== '') {
+              var hr = window.getCellHour(id);
+              clonedTd.text(hr !== "" ? hr : "");
+            } else {
+              clonedTd.text("");
+            }
+          } else {
+            clonedTd.text(text);
+          }
+        }
+      } else {
+        clonedTd.text(td.text().trim());
+      }
+      
+      // Copy background and text color for all cells (including names and totals)
+      var bg = td.css('background-color');
+      var color = td.css('color');
+      if (bg) clonedTd.css('background-color', bg);
+      if (color) clonedTd.css('color', color);
+      
+      tr.append(clonedTd);
+    });
+    tbody.append(tr);
+  });
+  
+  previewTable.append(tbody);
+  previewContainer.append(previewTable);
+  
+  // Update row count
+  $('#excel-preview-row-count').text(rows.length + ' Satır');
+}
+
+$(document).ready(function() {
+  // Override default Excel export button to open the preview modal instead
+  $("#export_excel_puantaj").off("click").on("click", function (e) {
+    e.preventDefault();
+    // Generate preview
+    generateExcelPreview();
+    // Show modal
+    $("#modal-excel-preview").modal("show");
+  });
+  
+  // Listen for radio button change inside the modal
+  $('input[name="excel_view_format"]').on('change', function() {
+    generateExcelPreview();
+  });
+  
+  // Listen for confirm button click
+  $("#btn-confirm-excel-export").on("click", function() {
+    var viewFormat = $('input[name="excel_view_format"]:checked').val() || 'code';
+    window.excelExportType = viewFormat;
+    
+    // Hide modal
+    $("#modal-excel-preview").modal("hide");
+    
+    // Trigger actual DataTables Excel export
+    var table = $("#puantajTable").DataTable();
+    table.button(".buttons-excel").trigger();
+  });
+});
+

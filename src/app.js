@@ -98,6 +98,35 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
     table_puantaj_info.button(".buttons-excel").trigger();
   });
 
+  window.excelExportType = "code";
+  window.getCellHour = function(id) {
+    if (!id || !window.allPuantajTurleri || !window.allPuantajTurleri[id]) return "";
+    var type = window.allPuantajTurleri[id];
+    var operant = type.operant;
+    if (operant === '+' || operant === '-' || operant === '*' || operant === '/') {
+      var saat = parseFloat(String(type.EklenecekSaat).replace(',', '.')) || 0;
+      var wHour = parseFloat(String(window.workHour || 8).replace(',', '.')) || 8;
+      var res = 0;
+      switch (operant) {
+        case '+':
+          res = saat + wHour;
+          break;
+        case '-':
+          res = saat - wHour;
+          break;
+        case '*':
+          res = saat * wHour;
+          break;
+        case '/':
+          res = wHour !== 0 ? (saat / wHour) : 0;
+          break;
+      }
+      return Number(res.toFixed(2));
+    } else {
+      return parseFloat(type.PuantajSaati) || 0;
+    }
+  };
+
   //Puantaj tablosu için
   var puantaj_table = $("#puantajTable").DataTable({
     autoWidth: false,
@@ -119,7 +148,27 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
         extend: "excelHtml5",
         className: "d-none", // Butonu gizliyoruz
         exportOptions: {
-          columns: ":visible:not(.no-export)" // .no-export sınıfına sahip sütunları dışa aktarma
+          columns: ":visible:not(.no-export)", // .no-export sınıfına sahip sütunları dışa aktarma
+          format: {
+            body: function (data, row, column, node) {
+              var $node = $(node);
+              if ($node.hasClass("gun") || $node.hasClass("noselect")) {
+                var text = $node.text().trim();
+                if (text === "---") return "---";
+                if (window.excelExportType === "hour") {
+                  var id = $node.attr("data-id");
+                  if (id && id !== "0" && id !== "") {
+                    var hr = window.getCellHour(id);
+                    return hr !== "" ? hr : "";
+                  }
+                  return "";
+                } else {
+                  return text;
+                }
+              }
+              return $node.text().trim();
+            }
+          }
         },
         customize: function (xlsx) {
           var sheet = xlsx.xl.worksheets['sheet1.xml'];

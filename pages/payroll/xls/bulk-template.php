@@ -28,7 +28,7 @@ $last_day = Date::Ymd(Date::lastDay($month, $year));
 $firstDay = Date::firstDay($month, $year);
 
 if ($project_id > 0) {
-    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $last_day);
+    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $firstDay, $last_day);
 } else {
     $persons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $last_day, false);
 }

@@ -1,6 +1,8 @@
 <?php
 session_start();
-define('ROOT', $_SERVER["DOCUMENT_ROOT"]);
+if (!defined('ROOT')) {
+    define('ROOT', dirname(__DIR__, 2));
+}
 
 require ROOT . '/vendor/autoload.php';
 require_once ROOT . '/Model/Persons.php';

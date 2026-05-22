@@ -295,6 +295,17 @@ switch ($route) {
         $page_file = "modules/cari/movements.php";
         $active_page = "more";
         break;
+    case 'reports':
+    case 'raporlar':
+        $reports_auth = $Auths->getAuthIdByTitle("Raporlar");
+        if ($reports_auth && !$Auths->AuthorizeByAuthId($reports_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
+        $title = "Raporlar";
+        $page_file = "modules/reports/index.php";
+        $active_page = "more";
+        break;
     default:
         $title = "Puantaj Takip";
         $page_file = "modules/dashboard/index.php";

@@ -31,10 +31,30 @@ $firm_id = (int) ($_SESSION['firm_id'] ?? 0);
 $year = (int) (isset($_REQUEST['year']) ? $_REQUEST['year'] : ($_COOKIE['p_year'] ?? date('Y')));
 $month = (int) (isset($_REQUEST['months']) ? $_REQUEST['months'] : ($_COOKIE['p_months'] ?? date('m')));
 $last_day = Date::Ymd(Date::lastDay($month, $year));
-$project_id = (int) (isset($_REQUEST['projects']) ? $_REQUEST['projects'] : ($_COOKIE['p_projects'] ?? 0));
+$project_ids = [];
+if (isset($_REQUEST['projects'])) {
+    if (is_array($_REQUEST['projects'])) {
+        $project_ids = array_map('intval', $_REQUEST['projects']);
+    } else {
+        $project_ids = array_filter(array_map('intval', explode(',', $_REQUEST['projects'])));
+    }
+} elseif (isset($_COOKIE['p_projects']) && $_COOKIE['p_projects'] !== '') {
+    $project_ids = array_filter(array_map('intval', explode(',', $_COOKIE['p_projects'])));
+}
+
+$valid_project_ids = [];
+foreach ($project_ids as $p_id) {
+    if ($p_id > 0) {
+        if ($projects->belongsToFirm($p_id, $firm_id)) {
+            $valid_project_ids[] = $p_id;
+        }
+    }
+}
+
 $job_group = (int) (isset($_REQUEST['job_groups']) ? $_REQUEST['job_groups'] : ($_COOKIE['p_job_groups'] ?? 0));
 $team_id = (int) (isset($_REQUEST['team_id']) ? $_REQUEST['team_id'] : ($_COOKIE['p_team_id'] ?? 0));
 $person_status = isset($_REQUEST['person_status']) ? $_REQUEST['person_status'] : ($_COOKIE['p_person_status'] ?? 'active');
+$only_active_project = (int) ($_COOKIE['p_only_active_project'] ?? 0);
 
 
 require_once 'Model/SettingsModel.php';
@@ -43,18 +63,14 @@ $Settings = new SettingsModel();
 $showWhiteCollar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
 $first_day = Date::firstDay($month, $year);
 
-if ($project_id > 0 && !$projects->belongsToFirm($project_id, $firm_id)) {
-    setcookie('p_projects', '', time() - 3600, '/');
-    $project_id = 0;
-    $persons = [];
-} elseif ($project_id == 0 || $project_id == '') {
+if (empty($valid_project_ids)) {
     // Proje id boş ise Firma id'sine göre tüm mavi yakalı, işe başlama tarihi o ayın son gününden önce olan personelleri getirir
     // Akıllı görünürlük: Yeni başlayanlar veya bu ay puantajı olanlar her zaman görünür
     $persons = $personObj->getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar, $person_status);
 } else {
     // Proje id dolu ise projeye ait, işe başlama tarihi o ayın son gününden önce olan mavi yakalı personelleri getirir
     // Akıllı görünürlük: Projeye atanmış olanlar veya bu ay bu projede puantajı olanlar
-    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar, $person_status);
+    $persons = $projects->getPersonIdByFromProjectCurrentMonth($valid_project_ids, $first_day, $last_day, $job_group, $team_id, $showWhiteCollar, $person_status);
 }
 // Ayın son gününü bulma
 $days = Date::daysInMonth($month, $year);
@@ -81,6 +97,18 @@ foreach ($allProjects as $proj) {
     $projectNamesCache[$proj->id] = $proj->project_name;
 }
 $projectNamesCache[0] = "Proje Yok";
+
+// 4) Tüm personellerin proje üyeliklerini tek sorguda çek
+$personProjectsMap = [];
+if (!empty($person_ids)) {
+    $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+    $query = $projects->getDb()->prepare("SELECT person_id, project_id FROM project_person WHERE person_id IN ($placeholders)");
+    $query->execute($person_ids);
+    $pp_results = $query->fetchAll(PDO::FETCH_OBJ);
+    foreach ($pp_results as $row) {
+        $personProjectsMap[$row->person_id][] = (int)$row->project_id;
+    }
+}
 // ===== OPTİMİZASYON SONU =====?>
 <style>
     .gun {
@@ -186,13 +214,23 @@ $projectNamesCache[0] = "Proje Yok";
     }
 
     /* Gün hücrelerini her koşulda sabitle */
-    .gun, .gunadi, .head-date {
+    .gunadi, .head-date {
         width: 40px !important;
         min-width: 40px !important;
         max-width: 40px !important;
         padding: 4px 0 !important;
         text-align: center !important;
         overflow: hidden !important;
+        white-space: nowrap !important;
+        font-size: 13px !important;
+    }
+
+    .gun {
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+        padding: 4px 0 !important;
+        text-align: center !important;
         white-space: nowrap !important;
         font-size: 13px !important;
     }
@@ -396,6 +434,12 @@ $projectNamesCache[0] = "Proje Yok";
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
 
+    /* Dropdown okunu (caret) icon-only butonlar için gizle */
+    .btn-icon.dropdown-toggle::after,
+    .btn-icon::after {
+        display: none !important;
+    }
+
     .cursor-pointer {
         cursor: pointer !important;
     }
@@ -460,6 +504,173 @@ $projectNamesCache[0] = "Proje Yok";
         0%, 100% { opacity: 1; transform: scale(1); }
         50% { opacity: .8; transform: scale(1.08); }
     }
+
+    /* Select2 Multi-Select Custom Styling to match Tabler's .form-select */
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid var(--tblr-border-color, #dadce0) !important;
+        border-radius: 4px !important; /* Matches standard Tabler border-radius */
+        background-color: var(--tblr-bg-surface, #fff) !important;
+        min-height: 40px !important; /* Matches standard Tabler select2-selection--single height of 40px */
+        height: 40px !important; /* Matches standard Tabler select2-selection--single height of 40px */
+        padding: 0 2rem 0 0.75rem !important; /* Left-right padding, right padding room for arrow */
+        display: flex !important;
+        align-items: center !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 0.75rem center !important;
+        background-size: 16px 12px !important;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #90bbf9 !important;
+        outline: 0 !important;
+        box-shadow: 0 0 0 0.25rem rgba(32, 107, 196, 0.25) !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        list-style: none !important;
+        gap: 0px !important;
+        height: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-search--inline {
+        display: flex !important;
+        align-items: center !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        font-size: 0.875rem !important;
+        font-family: inherit !important;
+        color: #495057 !important;
+        height: 100% !important;
+        line-height: 40px !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
+        color: #9ca3af !important;
+        opacity: 1 !important;
+    }
+
+    /* Hide search input when there is at least one selection */
+    .select2-container--default .select2-selection--multiple:has(.select2-selection__choice) .select2-search--inline {
+        display: none !important;
+    }
+
+    /* Ensure search input spans full width when empty to fully display placeholder */
+    .select2-container--default .select2-selection--multiple:not(:has(.select2-selection__choice)) .select2-search--inline,
+    .select2-container--default .select2-selection--multiple:not(:has(.select2-selection__choice)) .select2-search__field {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background: transparent !important;
+        color: var(--tblr-body-color, #2d3748) !important;
+        border: none !important;
+        padding: 0 !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        line-height: 1.4 !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice:not(:last-child)::after {
+        content: ", " !important;
+        margin-right: 4px !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        display: none !important;
+    }
+
+    @media print {
+        @page {
+            size: landscape;
+            margin: 8mm 8mm;
+        }
+        body {
+            background-color: #fff !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        /* Hide navbar, sidebar, header, filters, alerts, accordions, and action buttons */
+        .navbar, aside, #navbar, .footer, .preloader, .fab-menu, .alert,
+        .accordion-item, .card-header, .d-print-none, .page-header,
+        .dt-length, .dt-search, .dt-info, .dt-paging, .dataTables_wrapper .row:first-child, .dataTables_wrapper .row:last-child, .dt-layout-row {
+            display: none !important;
+        }
+        /* Expand full width and remove scrollbars */
+        .page-wrapper, .container-xl, .container-fluid, .card, .card-body {
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .table-responsive {
+            max-height: none !important;
+            overflow: visible !important;
+            height: auto !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        #puantajTable {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            table-layout: auto !important;
+        }
+        #puantajTable thead th {
+            position: static !important;
+            background-color: #f1f5f9 !important;
+            color: #1e293b !important;
+        }
+        #puantajTable thead input {
+            display: none !important;
+        }
+        #puantajTable th, #puantajTable td {
+            font-size: 10px !important;
+            padding: 4px 2px !important;
+        }
+        #puantajTable th.gunadi, #puantajTable th.head-date, #puantajTable td.gun {
+            width: 25px !important;
+            min-width: 25px !important;
+            max-width: 25px !important;
+            font-size: 9px !important;
+        }
+        /* Make sure default first column is not too wide */
+        #puantajTable th:nth-child(1), #puantajTable td:nth-child(1) {
+            min-width: 120px !important;
+            width: 120px !important;
+            white-space: nowrap !important;
+        }
+        /* Keep color styles for cells */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
  
 </style>
 
@@ -469,14 +680,15 @@ $projectNamesCache[0] = "Proje Yok";
 
 <?php include_once 'content/puantaj-turleri-modal.php' ?>
 <?php include_once 'content/puantaj-istatistik-modal.php' ?>
+<?php include_once 'content/puantaj-excel-modal.php' ?>
 
 
 <div class="container-fluid mt-3">
     <form action="" method="post" id="puantajInfoForm">
-        <div class="row g-2 align-items-center">
-            <div class="col-md-2">
+        <div class="row g-2 align-items-center d-print-none">
+            <div class="col-md-3">
                 <label for="projects" class="form-label">Proje:</label>
-                <?php echo $projectHelper->getProjectSelect('projects', $project_id); ?>
+                <?php echo $projectHelper->getProjectSelectMultiple('projects', $valid_project_ids); ?>
             </div>
             <div class="col-md-1">
                 <label for="months" class="form-label">Ay:</label>
@@ -514,28 +726,6 @@ $projectNamesCache[0] = "Proje Yok";
                         <span class="form-selectgroup-label">
                             <i class="ti ti-user-x icon me-1 text-danger"></i> Pasif
                         </span>
-                    </label>
-                </div>
-            </div>
-            <div class="col-md-1">
-                <label for="actions" class="form-label">İşlem</label>
-                <div class="d-flex gap-1">
-                    <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
-                        autocomplete="off">
-                    <label for="btn-radio-toolbar-1" data-tooltip="İndir" class="btn btn-icon" id="export_excel_puantaj">
-                        <i class="ti ti-file-type-xls icon"></i>
-                    </label>
-
-                    <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
-                        autocomplete="off">
-                    <label for="btn-radio-toolbar-1" data-tooltip="Yazdır" class="btn btn-icon">
-                        <i class="ti ti-printer icon"></i>
-                    </label>
-
-                    <input type="radio" class="btn-check" name="btn-radio-toolbar" id="btn-radio-toolbar-1"
-                        autocomplete="off">
-                    <label for="btn-radio-toolbar-1" data-tooltip="Personele Gönder" class="btn btn-icon">
-                        <i class="ti ti-send icon"></i>
                     </label>
                 </div>
             </div>
@@ -607,68 +797,96 @@ $projectNamesCache[0] = "Proje Yok";
                     </div>
 
                     <div class="col-auto ms-auto d-flex gap-2">
-                      
-                       
                         <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-default">
                             <i class="ti ti-plus icon me-2"></i> Puantaj Türleri
                         </a>
-                           <?php if ($Auths->hasPermission('puantaj_data_entry')) { ?>
-                    <button href="" type="button" class="btn btn-primary float-end" onclick="puantaj_olustur()">
-                        <i class="ti ti-device-floppy icon me-2"></i> Kaydet
-                    </button>
-                        <a class="btn btn-animate-icon btn-animate-icon-rotate" data-bs-toggle="modal" data-bs-target="#modal-statistics" title="İstatistikler">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-dots-2"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 3v18h18" /><path d="M7 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M11 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M16 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M21 3l-6 1.5" /><path d="M14.113 6.65l2.771 3.695" /><path d="M16 12.5l-5 2" /></svg>
-                        </a>
                         
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-icon dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Sütunları Göster/Gizle">
-                                <i class="ti ti-layout-columns icon"></i>
+                        <?php if ($Auths->hasPermission('puantaj_data_entry')) { ?>
+                            <button type="button" class="btn btn-primary float-end" onclick="puantaj_olustur()">
+                                <i class="ti ti-device-floppy icon me-2"></i> Kaydet
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-column-selector">
-                                <h6 class="dropdown-header">Sütun Görünümü</h6>
-                                <label class="dropdown-item cursor-pointer">
-                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-unvan">
-                                    Unvan
-                                </label>
-                                <label class="dropdown-item cursor-pointer">
-                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-grup">
-                                    İş Grubu
-                                </label>
-                                <label class="dropdown-item cursor-pointer">
-                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-ekip">
-                                    Ekip
-                                </label>
-                                <label class="dropdown-item cursor-pointer">
-                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-toplam-gun" checked>
-                                    Toplam Gün
-                                </label>
-                                <label class="dropdown-item cursor-pointer">
-                                    <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-toplam-fazla-mesai" checked>
-                                    Toplam Fazla Mesai
-                                </label>
-                            </div>
-                        </div>
+                        <?php } ?>
 
                         <div class="dropdown">
-                            <button type="button" class="btn btn-icon dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Ayarlar">
-                                <i class="ti ti-settings icon"></i>
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="İşlemler">
+                                <i class="ti ti-settings icon me-1"></i> İşlemler
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-settings">
-                                <h6 class="dropdown-header">Puantaj Ayarları</h6>
-                                <div class="dropdown-item">
-                                    <label class="form-check form-switch mb-0">
-                                        <input class="form-check-input" type="checkbox" id="setting-auto-open-modal">
-                                        <span class="form-check-label">Seçim Yapınca Puantaj Türleri Açılsın</span>
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-settings dropdown-menu-column-selector" style="min-width: 260px;">
+                                <h6 class="dropdown-header">Tablo İşlemleri</h6>
+                                <a class="dropdown-item cursor-pointer" id="export_excel_puantaj" href="#">
+                                    <i class="ti ti-file-type-xls text-success me-2 fs-3"></i> Excel Olarak İndir
+                                </a>
+                                <a class="dropdown-item cursor-pointer" id="print_puantaj" onclick="window.print()" href="#">
+                                    <i class="ti ti-printer text-primary me-2 fs-3"></i> Puantajı Yazdır
+                                </a>
+                                
+                                <?php if ($Auths->hasPermission('puantaj_data_entry')) { ?>
+                                    <a class="dropdown-item cursor-pointer" data-bs-toggle="modal" data-bs-target="#modal-statistics">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chart-dots-2 text-warning me-2" style="margin: 0; width: 18px; height: 18px; vertical-align: middle;"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 3v18h18" /><path d="M7 15a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M11 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M16 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M21 3l-6 1.5" /><path d="M14.113 6.65l2.771 3.695" /><path d="M16 12.5l-5 2" /></svg> İstatistikler
+                                    </a>
+                                    
+                                    <div class="dropdown-divider"></div>
+                                    <h6 class="dropdown-header">Sütun Görünümü</h6>
+                                    <label class="dropdown-item cursor-pointer">
+                                        <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-unvan">
+                                        Unvan
                                     </label>
-                                </div>
+                                    <label class="dropdown-item cursor-pointer">
+                                        <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-grup">
+                                        İş Grubu
+                                    </label>
+                                    <label class="dropdown-item cursor-pointer">
+                                        <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-ekip">
+                                        Ekip
+                                    </label>
+                                    <label class="dropdown-item cursor-pointer">
+                                        <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-toplam-gun" checked>
+                                        Toplam Gün
+                                    </label>
+                                    <label class="dropdown-item cursor-pointer">
+                                        <input type="checkbox" class="form-check-input me-2 column-toggle-check" data-column="extra-toplam-fazla-mesai" checked>
+                                        Toplam Fazla Mesai
+                                    </label>
+                                    
+                                    <div class="dropdown-divider"></div>
+                                    <h6 class="dropdown-header">Puantaj Ayarları</h6>
+                                    <div class="dropdown-item py-1">
+                                        <label class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="setting-auto-open-modal">
+                                            <span class="form-check-label" style="font-size: 13px;">Seçim Yapınca Türler Açılsın</span>
+                                        </label>
+                                    </div>
+                                    <div class="dropdown-item py-1 mt-1">
+                                        <label class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="setting-only-active-project">
+                                            <span class="form-check-label" style="font-size: 13px;">Sadece Aktif Proje Günleri Topla</span>
+                                        </label>
+                                    </div>
+                                <?php } ?>
                             </div>
                         </div>
-                <?php } ?>
-
                     </div>
                 </div>
-
-
+                <div class="d-none d-print-block mb-3">
+                    <h2 class="text-center">PUANTAJ CETVELİ</h2>
+                    <div class="text-center text-muted">
+                        <strong>Dönem:</strong> <?php echo Date::monthName($month) . ' ' . $year; ?>
+                        | <strong>Projeler:</strong> 
+                        <?php 
+                        if (!empty($valid_project_ids)) {
+                            $selected_names = [];
+                            foreach ($valid_project_ids as $p_id) {
+                                if (isset($projectNamesCache[$p_id])) {
+                                    $selected_names[] = $projectNamesCache[$p_id];
+                                }
+                            }
+                            echo htmlspecialchars(implode(', ', $selected_names));
+                        } else {
+                            echo "Tüm Projeler";
+                        }
+                        ?>
+                    </div>
+                </div>
 
                 <div class="table-responsive">
                     <table id="puantajTable" class="table card-table text-nowrap datatable">
@@ -749,13 +967,23 @@ $projectNamesCache[0] = "Proje Yok";
                                         $puantaj_id = $puantajRecord->puantaj_id ?? '';
 
                                         if ($puantaj_id >= 0 && $puantaj_id !== '') {
-                                            $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
-                                            if ($puantajTuru) {
-                                                if ($puantajTuru->Turu != 'Ücretsiz') {
-                                                    $totalDays++;
+                                            $puantaj_project = (int) ($puantajRecord->project_id ?? 0);
+                                            $should_count = true;
+                                            if ($only_active_project && !empty($valid_project_ids)) {
+                                                if (!in_array($puantaj_project, $valid_project_ids)) {
+                                                    $should_count = false;
                                                 }
-                                                if ($puantajTuru->Turu == 'Fazla Çalışma') {
-                                                    $totalOvertime += floatval($puantajTuru->EklenecekSaat);
+                                            }
+
+                                            if ($should_count) {
+                                                $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
+                                                if ($puantajTuru) {
+                                                    if ($puantajTuru->Turu != 'Ücretsiz') {
+                                                        $totalDays++;
+                                                    }
+                                                    if ($puantajTuru->Turu == 'Fazla Çalışma') {
+                                                        $totalOvertime += floatval($puantajTuru->EklenecekSaat);
+                                                    }
                                                 }
                                             }
                                         } else {
@@ -769,23 +997,54 @@ $projectNamesCache[0] = "Proje Yok";
                                     }
                                 }
 
+                                // Calculate default project ID for this person
+                                $default_project_id = 0;
+                                $person_projects = $personProjectsMap[$person->id] ?? [];
+                                if (!empty($valid_project_ids)) {
+                                    $intersect = array_intersect($person_projects, $valid_project_ids);
+                                    if (!empty($intersect)) {
+                                        $default_project_id = reset($intersect);
+                                    } else {
+                                        // Check existing puantaj this month
+                                        foreach ($personPuantaj as $dateKey => $puantajRecord) {
+                                            if (isset($puantajRecord->project_id) && $puantajRecord->project_id > 0 && in_array($puantajRecord->project_id, $valid_project_ids)) {
+                                                $default_project_id = (int)$puantajRecord->project_id;
+                                                break;
+                                            }
+                                        }
+                                        if ($default_project_id == 0) {
+                                            $default_project_id = $valid_project_ids[0];
+                                        }
+                                    }
+                                } else {
+                                    if (!empty($person_projects)) {
+                                        $default_project_id = $person_projects[0];
+                                    } else {
+                                        foreach ($personPuantaj as $dateKey => $puantajRecord) {
+                                            if (isset($puantajRecord->project_id) && $puantajRecord->project_id > 0) {
+                                                $default_project_id = (int)$puantajRecord->project_id;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
                                 ?>
-                                <tr>
+                                <tr data-default-project="<?php echo $default_project_id; ?>">
                                     <td class="text-nowrap" data-id="<?php echo $id ?>"><a class="btn-user-modal"
                                              type="button">
                                              <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
                                                  target="_blank"><?php echo $person->full_name ?></a></td>
 
                                     <td class="text-nowrap extra-column extra-unvan" style="display:none; width: 150px !important;">
-                                        <?php echo $person->job ?>
+                                         <?php echo $person->job ?>
                                     </td>
 
                                     <td class="text-nowrap extra-column extra-grup" style="display:none; width: 120px !important;">
-                                        <?php echo $person->job_group ?>
+                                         <?php echo $person->job_group ?>
                                     </td>
 
                                     <td class="text-nowrap extra-column extra-ekip" style="display:none; width: 120px !important;">
-                                        <?php echo $person->ekip ?>
+                                         <?php echo $person->ekip ?>
                                     </td>
                                     <?php
                                     foreach ($dates as $date):
@@ -811,7 +1070,7 @@ $projectNamesCache[0] = "Proje Yok";
                                                         $color = $puantajTuru->FontRengi;
                                                         $selected = "";
                                                     } else {
-                                                        if ($puantaj_project != $project_id) {
+                                                        if (!empty($valid_project_ids) && !in_array($puantaj_project, $valid_project_ids)) {
                                                             $backcolor = "#bbb";
                                                             $color = "#666";
                                                             $selected = "selected";
@@ -821,7 +1080,7 @@ $projectNamesCache[0] = "Proje Yok";
                                                             $selected = "";
                                                         }
                                                     }
-                                                    echo "<td class='gun noselect $selected' data-tooltip ='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ";color:" . $color . "; min-width: 40px !important;'>" . $puantajTuru->PuantajKod . "</td>";
+                                                    echo "<td class='gun noselect $selected' title='$tooltip' data-tooltip='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ";color:" . $color . "; min-width: 40px !important;'>" . $puantajTuru->PuantajKod . "</td>";
                                                 } else {
                                                     echo "<td class='gun noselect' data-change='false' data-project='0' style='min-width: 40px !important;'></td>";
                                                 }
@@ -858,6 +1117,7 @@ $projectNamesCache[0] = "Proje Yok";
 </div>
 <script>
     var allPuantajTurleri = <?php echo json_encode($allPuantajTurleri); ?>;
+    var workHour = <?php echo json_encode($Settings->getSettings("work_hour")->set_value ?? 8); ?>;
 
     $(document).ready(function() {
         // DataTable yüklendikten sonra sütun genişliklerini ayarla

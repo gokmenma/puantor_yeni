@@ -155,12 +155,36 @@ class Projects extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
-    public function getPersonIdByFromProjectCurrentMonth($project_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false, $person_status = 'active')
+    public function getPersonIdByFromProjectCurrentMonth($project_ids, $first_day, $last_day = null, $job_group = 0, $team_id = 0, $include_white_collar = false, $person_status = 'active')
     {
         $firm_id = (int) ($_SESSION['firm_id'] ?? 0);
-        $project_id = (int) $project_id;
+        if ($firm_id <= 0) {
+            return [];
+        }
 
-        if ($project_id <= 0 || $firm_id <= 0 || !$this->belongsToFirm($project_id, $firm_id)) {
+        if ($last_day === null) {
+            $last_day = $first_day;
+            if (strlen($last_day) === 8) {
+                $first_day = substr($last_day, 0, 6) . '01';
+            } else {
+                $first_day = date('Ymd', strtotime(substr($last_day, 0, 4) . '-' . substr($last_day, 4, 2) . '-01'));
+            }
+        }
+
+        // Convert $project_ids to an array of integers
+        if (is_array($project_ids)) {
+            $proj_ids = array_map('intval', $project_ids);
+        } elseif (is_string($project_ids)) {
+            $proj_ids = array_filter(array_map('intval', explode(',', $project_ids)));
+        } else {
+            $proj_ids = [(int)$project_ids];
+        }
+
+        $proj_ids = array_filter($proj_ids, function($id) use ($firm_id) {
+            return $id > 0 && $this->belongsToFirm($id, $firm_id);
+        });
+
+        if (empty($proj_ids)) {
             return [];
         }
 
@@ -168,8 +192,9 @@ class Projects extends Model
         $user = $_SESSION['user'] ?? null;
         $is_main_user = (isset($user->is_main_user) && $user->is_main_user == 1) || (isset($user->parent_id) && $user->parent_id == 0);
         if ($user && !$is_main_user && !empty($user->responsible_projects)) {
-            $allowed_projects = explode(',', $user->responsible_projects);
-            if (!in_array($project_id, $allowed_projects)) {
+            $allowed_projects = array_map('intval', explode(',', $user->responsible_projects));
+            $proj_ids = array_intersect($proj_ids, $allowed_projects);
+            if (empty($proj_ids)) {
                 return []; // Yetkisi yoksa boş dön
             }
         }
@@ -182,14 +207,23 @@ class Projects extends Model
                         AND p.deleted_at IS NULL";
         $params = [$firm_id];
 
+        $placeholders = implode(',', array_fill(0, count($proj_ids), '?'));
+
         if ($person_status === 'active') {
             $sql .= " AND (
-                            EXISTS (SELECT 1 FROM project_person WHERE project_id = ? and person_id = p.id) 
-                            OR EXISTS (SELECT 1 FROM puantaj WHERE project_id = ? AND person = p.id AND gun >= ? AND gun <= ?)
+                            EXISTS (SELECT 1 FROM project_person WHERE project_id IN ($placeholders) and person_id = p.id) 
+                            OR EXISTS (SELECT 1 FROM puantaj WHERE project_id IN ($placeholders) AND person = p.id AND gun >= ? AND gun <= ?)
                         )
                         AND (p.job_end_date IS NULL OR p.job_end_date = '')";
-            $params[] = $project_id;
-            $params[] = $project_id;
+            
+            // Add params for first project_id IN placeholders
+            foreach ($proj_ids as $id) {
+                $params[] = $id;
+            }
+            // Add params for second project_id IN placeholders
+            foreach ($proj_ids as $id) {
+                $params[] = $id;
+            }
             $params[] = $first_day;
             $params[] = $last_day;
         } elseif ($person_status === 'passive') {
@@ -197,11 +231,15 @@ class Projects extends Model
         } else {
             // all
             $sql .= " AND (
-                            EXISTS (SELECT 1 FROM project_person WHERE project_id = ? and person_id = p.id) 
-                            OR EXISTS (SELECT 1 FROM puantaj WHERE project_id = ? AND person = p.id AND gun >= ? AND gun <= ?)
+                            EXISTS (SELECT 1 FROM project_person WHERE project_id IN ($placeholders) and person_id = p.id) 
+                            OR EXISTS (SELECT 1 FROM puantaj WHERE project_id IN ($placeholders) AND person = p.id AND gun >= ? AND gun <= ?)
                         )";
-            $params[] = $project_id;
-            $params[] = $project_id;
+            foreach ($proj_ids as $id) {
+                $params[] = $id;
+            }
+            foreach ($proj_ids as $id) {
+                $params[] = $id;
+            }
             $params[] = $first_day;
             $params[] = $last_day;
         }
