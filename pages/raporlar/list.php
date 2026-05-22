@@ -105,7 +105,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
         border-radius: 50px;
     }
 
-    .datatable thead th, #puantajDataTable thead th {
+    .datatable thead th, #puantajDataTable thead th, #bankDataTable thead th {
         background: #f8fafc;
         font-weight: 700;
         text-transform: uppercase;
@@ -116,7 +116,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
         user-select: none;
     }
     
-    #puantajDataTable thead th:active {
+    #puantajDataTable thead th:active, #bankDataTable thead th:active {
         cursor: grabbing !important;
     }
 </style>
@@ -338,6 +338,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                 // Get all personnel for this month
                 $personsForBank = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDayStr, $lastDayStr);
                 $bankData = [];
+                $db = $personObj->connect();
                 foreach($personsForBank as $p_item) {
                     $p = $personObj->find($p_item->id);
                     // Use the same logic as payroll/list.php
@@ -345,11 +346,24 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     $netPay = ($res->gelir ?? 0) - ($res->odeme ?? 0);
                     
                     if($netPay > 0) {
+                        $projName = '-';
+                        if (!empty($p->project_id)) {
+                            $pstmt = $db->prepare("SELECT project_name FROM projects WHERE id = ?");
+                            $pstmt->execute([$p->project_id]);
+                            $prow = $pstmt->fetch(PDO::FETCH_OBJ);
+                            if ($prow) {
+                                $projName = $prow->project_name;
+                            }
+                        }
+                        
                         $bankData[] = (object)[
                             'id' => $p->id,
                             'full_name' => $p->full_name,
                             'kimlik_no' => Security::safeDecrypt($p->kimlik_no ?? ''),
                             'iban_number' => Security::safeDecrypt($p->iban_number ?? ''),
+                            'team_name' => $p->ekip ?? '-',
+                            'project_name' => $projName,
+                            'job' => $p->job ?? '-',
                             'amount' => $netPay
                         ];
                     }
@@ -362,14 +376,30 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                             <span class="badge bg-info-lt mt-1"><?= $displayMonth ?> <?= $year ?> Dönemi</span>
                         </div>
                         <div class="d-flex align-items-center">
-                            <div class="btn-group shadow-sm" role="group" style="border-radius: 8px; border: 1px solid #e2e8f0;">
-                                <a href="index.php?p=raporlar/list&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-white px-3" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;" title="Geri Dön">
+                            <!-- Unified Toolbar Group -->
+                            <div id="customBankReportActions" class="btn-group shadow-sm d-none" role="group" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <!-- Geri Butonu (Far Left) -->
+                                <a href="index.php?p=raporlar/list&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-white px-3" style="border-top-left-radius: 8px; border-bottom-left-radius: 8px;" title="Geri Dön" data-bs-toggle="tooltip">
                                     <i class="ti ti-arrow-left fs-2 text-secondary"></i>
                                 </a>
-                                <button type="button" class="btn btn-white px-3 text-success" title="Excel'e Aktar" onclick="exportBankList('excel')">
+
+                                <!-- Görünüm Dropdown -->
+                                <div class="dropdown" role="group">
+                                    <button class="btn btn-white px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false" title="Sütun Görünümü" data-bs-toggle="tooltip">
+                                        <i class="ti ti-layout-columns fs-2 text-muted me-1"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-2" id="customBankColvisMenu" style="min-width: 200px; border-radius: 10px; z-index: 1060;">
+                                        <!-- Populated by app.js -->
+                                    </div>
+                                </div>
+
+                                <!-- Excel Dışa Aktar -->
+                                <button type="button" id="customBankBtnExcel" class="btn btn-white px-3 text-success" title="Excel'e Aktar" data-bs-toggle="tooltip">
                                     <i class="ti ti-file-spreadsheet fs-2"></i>
                                 </button>
-                                <button type="button" class="btn btn-white px-3 text-danger" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" title="PDF Olarak İndir" onclick="exportBankList('pdf')">
+                                
+                                <!-- PDF Dışa Aktar -->
+                                <button type="button" id="customBankBtnPdf" class="btn btn-white px-3 text-danger" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" title="PDF Olarak İndir" data-bs-toggle="tooltip">
                                     <i class="ti ti-file-type-pdf fs-2"></i>
                                 </button>
                             </div>
@@ -382,13 +412,16 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                     <th>Personel Adı</th>
                                     <th>TC Kimlik No</th>
                                     <th>IBAN No</th>
+                                    <th>Ekip</th>
+                                    <th>Proje</th>
+                                    <th>Ünvan / Meslek</th>
                                     <th class="text-end">Ödenecek Tutar</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if(empty($bankData)): ?>
                                     <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">Bu dönem için ödeme verisi bulunamadı.</td>
+                                        <td colspan="7" class="text-center py-4 text-muted">Bu dönem için ödeme verisi bulunamadı.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach($bankData as $b): ?>
@@ -403,7 +436,10 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                         </td>
                                         <td><?= htmlspecialchars($b->kimlik_no ?? '-') ?></td>
                                         <td><?= htmlspecialchars($b->iban_number ?? '-') ?></td>
-                                        <td class="text-end fw-bold text-success"><?= Helper::formattedMoney($b->amount) ?></td>
+                                        <td><?= htmlspecialchars($b->team_name ?? '-') ?></td>
+                                        <td><?= htmlspecialchars($b->project_name ?? '-') ?></td>
+                                        <td class="small text-secondary"><?= htmlspecialchars($b->job ?? '-') ?></td>
+                                        <td class="text-end fw-bold text-success" data-order="<?= $b->amount ?>"><?= Helper::formattedMoney($b->amount) ?></td>
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -411,16 +447,6 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                         </table>
                     </div>
                 </div>
-
-                <script>
-                    function exportBankList(type) {
-                        if(type === 'excel') {
-                            window.location.href = 'pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>';
-                        } else {
-                            window.print();
-                        }
-                    }
-                </script>
 
             <?php elseif($report_type == 'bordro'): ?>
                 <!-- --- BORDRO SELECTION RENDERING --- -->

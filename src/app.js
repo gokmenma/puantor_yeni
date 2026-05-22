@@ -1,4 +1,4 @@
-if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
+if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankDataTable").length > 0) {
   var table = $(".datatable:not(#puantajTable)").DataTable({
     autoWidth: false,
     order: [],
@@ -571,6 +571,194 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0) {
       .on("change", ".col-visibility-trigger", function () {
         var colIdx = $(this).data("column");
         reportTable.column(colIdx).visible(this.checked);
+      });
+  }
+
+  // Bank List Report (#bankDataTable) advanced initialization
+  if ($("#bankDataTable").length > 0) {
+    console.log("Raporlar: #bankDataTable tespit edildi, başlatılıyor...");
+    
+    var isColReorderAvailable = ($.fn.dataTable && $.fn.dataTable.ColReorder);
+
+    var reportBadge = $(".badge.bg-info-lt").first().text().trim() || "Banka_Raporu";
+    var excelFileName = "Banka_Odeme_Listesi_" + reportBadge.replace(/\s+/g, "_");
+    var pdfTitle = "Banka Ödeme Listesi - " + reportBadge;
+
+    var commonExportOptions = {
+      columns: ":visible",
+      format: {
+        body: function (data, row, column, node) {
+          var $node = $(node);
+          var nameSpan = $node.find(".fw-semibold");
+          if (nameSpan.length > 0) return nameSpan.text().trim();
+          var text = $node.text().trim();
+          return text === "-" || text === "0" ? "" : text;
+        },
+        header: function (data, column, node) {
+          return $(node).text().trim();
+        }
+      }
+    };
+
+    var bankTable = $("#bankDataTable").DataTable({
+      language: { url: "src/tr.json" },
+      pageLength: 50,
+      responsive: false,
+      scrollX: true,
+      colReorder: isColReorderAvailable ? true : false,
+      stateSave: true,
+      layout: {
+        topStart: null,
+        topEnd: null,
+        bottomStart: "info",
+        bottomEnd: "paging"
+      },
+      buttons: [
+        {
+          extend: "excelHtml5",
+          className: "d-none",
+          title: excelFileName,
+          exportOptions: commonExportOptions
+        },
+        {
+          extend: "pdfHtml5",
+          className: "d-none",
+          orientation: "landscape",
+          pageSize: "A4",
+          title: pdfTitle,
+          exportOptions: commonExportOptions,
+          customize: function (doc) {
+            doc.defaultStyle.fontSize = 9;
+            doc.styles.tableHeader.fontSize = 10;
+            doc.styles.tableHeader.bold = true;
+            doc.styles.tableHeader.fillColor = "#1e293b";
+            doc.styles.tableHeader.color = "white";
+            doc.styles.tableHeader.alignment = "center";
+            doc.pageMargins = [20, 20, 20, 20];
+            doc.content[1].table.widths = Array(
+              doc.content[1].table.body[0].length + 1
+            )
+              .join("*")
+              .split("");
+
+            var rowCount = doc.content[1].table.body.length;
+            for (var i = 1; i < rowCount; i++) {
+              var rowData = doc.content[1].table.body[i];
+              for (var j = 0; j < rowData.length; j++) {
+                if (j === 0) {
+                  rowData[j].alignment = "left";
+                } else if (j === rowData.length - 1) {
+                  rowData[j].alignment = "right";
+                } else {
+                  rowData[j].alignment = "center";
+                }
+                if (i % 2 === 0) rowData[j].fillColor = "#f8fafc";
+              }
+            }
+
+            var objLayout = {
+              hLineWidth: function (i) {
+                return 0.5;
+              },
+              vLineWidth: function (i) {
+                return 0.5;
+              },
+              hLineColor: function (i) {
+                return "#e2e8f0";
+              },
+              vLineColor: function (i) {
+                return "#e2e8f0";
+              },
+              paddingTop: function (i) {
+                return 6;
+              },
+              paddingBottom: function (i) {
+                return 6;
+              }
+            };
+            doc.content[1].layout = objLayout;
+          }
+        }
+      ],
+      columnDefs: [{ targets: [1, 3, 4, 5], visible: false }],
+      initComplete: function () {
+        var api = this.api();
+        console.log("Raporlar: Banka tablosu hazır, menü ve arama inşa ediliyor...");
+
+        api.columns().every(function () {
+          var column = this;
+          var $header = $(column.header());
+          var title = $header.text().trim();
+          
+          if ($header.find(".column-search-input").length === 0) {
+            var headerText = $header.html();
+            $header.html('<div class="d-flex flex-column">' + 
+                         '<span class="mb-1">' + headerText + '</span>' + 
+                         '</div>');
+            
+            if (title) {
+              var input = $('<input type="text" class="form-control form-control-sm column-search-input" placeholder="Ara..." style="font-size: 9px; height: 20px; padding: 2px 5px; font-weight: normal; text-transform: none;" />');
+              
+              input.on("click", function(e) { e.stopPropagation(); });
+              
+              input.on("keyup change clear", function () {
+                if (column.search() !== this.value) {
+                  column.search(this.value).draw();
+                }
+              });
+              $header.find(".d-flex").append(input);
+            } else {
+              $header.find(".d-flex").append('<div style="height: 20px;"></div>');
+            }
+          }
+        });
+
+        $("#customBankColvisMenu").empty();
+        api.columns().every(function (idx) {
+          if (idx === 0) return;
+          
+          var column = this;
+          var title = $(column.header()).text().trim() || ("Sütun " + idx);
+          var isVisible = column.visible();
+          
+          var itemHtml = `
+              <label class="dropdown-item d-flex align-items-center cursor-pointer py-2 px-3 rounded-2" style="font-size: 0.85rem;">
+                  <div class="form-check mb-0">
+                      <input class="form-check-input bank-col-visibility-trigger" type="checkbox" id="bankColCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
+                      <span class="form-check-label fw-medium ms-1 text-secondary" style="user-select:none;">
+                          ${title}
+                      </span>
+                  </div>
+              </label>`;
+          
+          var menuEl = document.getElementById('customBankColvisMenu');
+          if(menuEl) {
+              var div = document.createElement('div');
+              div.innerHTML = itemHtml;
+              menuEl.appendChild(div.firstElementChild);
+          }
+        });
+
+        $("#customBankReportActions").removeClass("d-none").addClass("d-flex");
+      }
+    });
+
+    $("#customBankBtnExcel")
+      .off("click")
+      .on("click", function () {
+        bankTable.button(".buttons-excel").trigger();
+      });
+    $("#customBankBtnPdf")
+      .off("click")
+      .on("click", function () {
+        bankTable.button(".buttons-pdf").trigger();
+      });
+
+    $(document)
+      .off("change", ".bank-col-visibility-trigger")
+      .on("change", ".bank-col-visibility-trigger", function () {
+        var colIdx = $(this).data("column");
+        bankTable.column(colIdx).visible(this.checked);
       });
   }
 }

@@ -163,6 +163,18 @@ $userId = $user->id ?? 0;
   <!-- Destek ve Ayarlar -->
   <h4 class="mb-2 ms-2 text-muted text-xs text-uppercase tracking-wide text-semibold">Destek & Sistem</h4>
   <div class="list-group list-group-mobile mb-4">
+    <?php if ($Auths->hasPermission("aboneler_sayfasi") || $Auths->hasPermission("aboneler_paketleri") || $Auths->hasPermission("abonelik_satin_alimlari")): ?>
+    <a href="abonelik-islemleri" class="list-group-item">
+      <div class="d-flex align-items-center gap-3">
+        <div class="avatar avatar-sm rounded bg-green-lt">
+          <i class="ti ti-credit-card text-green"></i>
+        </div>
+        <span class="text-semibold text-sm">Abonelik İşlemleri</span>
+      </div>
+      <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
+    </a>
+    <?php endif; ?>
+
     <?php 
     $settings_auth = $Auths->getAuthIdByTitle("Ayarlar");
     if (!$settings_auth || $Auths->AuthorizeByAuthId($settings_auth->id)): ?>

@@ -133,3 +133,39 @@ if (isset($_POST["action"]) && $_POST["action"] == "addManualSale") {
         exit();
     }
 }
+
+if (isset($_POST["action"]) && $_POST["action"] == "deletePayment") {
+    $encryptedId = $_POST["id"] ?? "";
+    try {
+        $paymentId = Security::safeDecrypt($encryptedId);
+        if (!$paymentId) {
+            throw new Exception("Geçersiz işlem ID.");
+        }
+        
+        $payment = $odemelerModel->find($paymentId);
+        if ($payment) {
+            // Delete associated subscription if exists
+            if (!empty($payment->abonelik_id)) {
+                $sql = $odemelerModel->getDb()->prepare("DELETE FROM kullanici_abonelikleri WHERE id = ?");
+                $sql->execute([$payment->abonelik_id]);
+            }
+            // Delete payment
+            $odemelerModel->delete($encryptedId);
+            
+            $status = "success";
+            $message = "Satın alma işlemi ve ilişkili abonelik başarıyla silindi.";
+        } else {
+            $status = "error";
+            $message = "Kayıt bulunamadı.";
+        }
+    } catch (Exception $e) {
+        $status = "error";
+        $message = $e->getMessage();
+    }
+    
+    echo json_encode([
+        "status" => $status,
+        "message" => $message
+    ]);
+    exit();
+}

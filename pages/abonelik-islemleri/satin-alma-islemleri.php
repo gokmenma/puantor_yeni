@@ -106,6 +106,10 @@ $packages = $paketModel->getPackages();
                                                         <span class="status-dot bg-danger me-2"></span> Başarısız Yap
                                                     </a>
                                                 <?php endif; ?>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item delete-payment text-danger" href="#" data-id="<?php echo $id; ?>">
+                                                    <i class="ti ti-trash icon me-2"></i> Sil
+                                                </a>
                                             </div>
                                         </div>
                                     </td>
@@ -417,5 +421,15 @@ $(document).on("click", ".change-status-btn", function (e) {
             });
         }
     });
+});
+
+// Delete payment handler
+$(document).on("click", ".delete-payment", function (e) {
+    e.preventDefault();
+    let action = "deletePayment";
+    let confirmMessage = "Seçilen satın alma işlemi ve ilişkili abonelik silinecektir! Bu işlemi geri alamazsınız.";
+    let url = "/api/abonelik-islemleri/odemeler.php";
+    
+    deleteRecord(this, action, confirmMessage, url);
 });
 </script>

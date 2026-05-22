@@ -295,6 +295,15 @@ switch ($route) {
         $page_file = "modules/cari/movements.php";
         $active_page = "more";
         break;
+    case 'abonelik-islemleri':
+        if (!$Auths->hasPermission("aboneler_sayfasi") && !$Auths->hasPermission("aboneler_paketleri") && !$Auths->hasPermission("abonelik_satin_alimlari")) {
+            header("Location: dashboard");
+            exit();
+        }
+        $title = "Abonelik İşlemleri";
+        $page_file = "modules/abonelik-islemleri/index.php";
+        $active_page = "more";
+        break;
     case 'reports':
     case 'raporlar':
         $reports_auth = $Auths->getAuthIdByTitle("Raporlar");
