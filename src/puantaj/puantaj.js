@@ -1,34 +1,58 @@
-const listItems = $(".modal .nav-item"); // Açılan Modaldeki puantaj türü seçenekleri
+var activePuantajType = null;
+var isShortcutActive = true;
 
-//********************************************** */
-listItems.click(function () {
+function updateActiveTypeUI() {
+  if (activePuantajType) {
+    $("#selected-type-code")
+      .text(activePuantajType.PuantajKod)
+      .css({
+        "background-color": activePuantajType.ArkaPlanRengi,
+        "color": activePuantajType.FontRengi
+      })
+      .attr("title", activePuantajType.PuantajAdi + " (" + activePuantajType.Turu + ")");
+      
+    if (isShortcutActive) {
+      $("#selected-type-toggle").removeClass("inactive");
+      $("#selected-type-status-dot")
+        .css({
+          "background-color": "#2fb344",
+          "box-shadow": "0 0 0 2px rgba(47, 179, 68, 0.2)"
+        })
+        .attr("title", "Kısayol Aktif (Devredışı bırakmak için tıklayın)");
+    } else {
+      $("#selected-type-toggle").addClass("inactive");
+      $("#selected-type-status-dot")
+        .css({
+          "background-color": "#aeaeae",
+          "box-shadow": "none"
+        })
+        .attr("title", "Kısayol Devredışı (Etkinleştirmek için tıklayın)");
+    }
+    
+    $("#selected-type-container").removeClass("d-none").addClass("d-flex");
+  } else {
+    $("#selected-type-container").removeClass("d-flex").addClass("d-none");
+  }
+}
+
+function applyTypeToClickedCells(typeInfo) {
   const clickedCells = $("table td.clicked");
-  
-  // Get array of selected projects
+  if (clickedCells.length === 0) return;
+
   const current_projects = $("#projects").val() || [];
-
-  const avatar = $(this).find(".avatar");
-  const avatarText = avatar.text();
-  const avatarColor = avatar.css("color");
-  const avatarBgColor = avatar.css("background-color");
-  const avatarDataid = avatar.attr("data-id");
-
   const rowsToRecalculate = new Set();
+
   clickedCells.each(function () {
     let cell = $(this);
     let parentTr = cell.closest("tr");
     let rowDefaultProject = parentTr.attr("data-default-project") || "0";
 
-    // Determine target project ID
-    let cellProj = cell.attr("data-project");
-    if (!cellProj || cellProj === "0" || cellProj === "") {
-      cellProj = rowDefaultProject;
-    }
-
-    if (current_projects.length > 0) {
-      if (cellProj === "0" || !current_projects.includes(cellProj)) {
-        cellProj = current_projects[0];
-      }
+    // Determine target project ID based on selection count
+    let cellProj = "0";
+    if (current_projects.length === 1) {
+      cellProj = current_projects[0];
+    } else {
+      cellProj = "0";
     }
 
     // Resolve project name for tooltip
@@ -40,26 +64,47 @@ listItems.click(function () {
       }
     }
 
-    cell.text(avatarText);
-    cell.css("color", avatarColor);
-    cell.attr("data-id", avatarDataid);
+    cell.text(typeInfo.PuantajKod);
+    cell.css("color", typeInfo.FontRengi);
+    cell.attr("data-id", typeInfo.id);
     cell.attr("data-change", "true");
     cell.attr("data-tooltip", cellProjName);
     cell.attr("title", cellProjName);
     cell.attr("data-project", cellProj);
-    cell.css("background-color", avatarBgColor);
+    cell.css("background-color", typeInfo.ArkaPlanRengi);
 
     if (parentTr.length > 0) {
       rowsToRecalculate.add(parentTr[0]);
     }
   });
+
   clickedCells.removeClass("clicked");
-  $("#modal-default").modal("hide");
 
   rowsToRecalculate.forEach(function(tr) {
     calculateRowTotals($(tr));
   });
+}
+
+//********************************************** */
+$(document).on("click", "#modal-default .nav-item", function () {
+  const avatar = $(this).find(".avatar");
+  const avatarDataid = avatar.attr("data-id");
+
+  if (typeof allPuantajTurleri !== 'undefined' && allPuantajTurleri[avatarDataid]) {
+    const setAsShortcut = $("#modal-set-as-shortcut").is(":checked");
+    if (setAsShortcut) {
+      activePuantajType = allPuantajTurleri[avatarDataid];
+      isShortcutActive = true;
+      localStorage.setItem('activePuantajTypeId', avatarDataid);
+      localStorage.setItem('isShortcutActive', 'true');
+      updateActiveTypeUI();
+    }
+    applyTypeToClickedCells(allPuantajTurleri[avatarDataid]);
+  }
+  
+  $("#modal-default").modal("hide");
 });
+
 
 //********************************************** */
 // Sayfalama desteği için event delegation kullanıyoruz
@@ -87,15 +132,22 @@ $(".head-date, .gunadi").on("click", function () {
   var table = $("#puantajTable").DataTable();
   var rows = table.rows({ search: 'applied' }).nodes(); 
   
-  $(rows).each(function () {
-    //eğer td --- farklı ise
-    var td = $(this).find("td").eq(index);
-
-    //td'nin değeri --- ise seçme
-    if (td.text().trim() != "---") {
-      td.toggleClass("clicked");
-    }
-  });
+  if (activePuantajType && isShortcutActive) {
+    $(rows).each(function () {
+      var td = $(this).find("td").eq(index);
+      if (td.text().trim() != "---") {
+        td.addClass("clicked");
+      }
+    });
+    applyTypeToClickedCells(activePuantajType);
+  } else {
+    $(rows).each(function () {
+      var td = $(this).find("td").eq(index);
+      if (td.text().trim() != "---") {
+        td.toggleClass("clicked");
+      }
+    });
+  }
 });
 
 //********************************************** */
@@ -148,8 +200,12 @@ $(document).on("mouseup", ".gun:not(.selected)", function (event) {
   isMouseDown = false;
 
   const autoOpen = localStorage.getItem('autoOpenPuantajTypes') === 'true';
-  if ($(".gun.clicked").length > 0 && (event.ctrlKey || autoOpen)) {
-    $("#modal-default").modal("show");
+  if ($(".gun.clicked").length > 0) {
+    if (activePuantajType && isShortcutActive) {
+      applyTypeToClickedCells(activePuantajType);
+    } else if (event.ctrlKey || autoOpen) {
+      $("#modal-default").modal("show");
+    }
   }
 });
 
@@ -174,7 +230,7 @@ $(document).keydown(function (event) {
 
 function puantaj_olustur() {
   var project_ids = $("#projects").val() || [];
-  var project_id = project_ids.length > 0 ? project_ids[0] : "0";
+  var project_id = project_ids.length === 1 ? project_ids[0] : "0";
   var year = $("#year").val();
   var month = $("#months").val().padStart(2, "0");
   
@@ -291,6 +347,7 @@ function bindFilters() {
   // Bind projects filter to save cookie on change, but do NOT reload immediately
   $("#projects").on("change select2:select select2:unselect", function () {
     setCookie('p_projects', $(this).val(), 30);
+    checkProjectsWarning();
   });
 
   // Bind projects close event to trigger Route if values changed
@@ -325,6 +382,9 @@ $(document).ready(function () {
   // Filtreleri bağla
   bindFilters();
 
+  // Proje uyarı barını ilk yüklemede de kontrol et
+  checkProjectsWarning();
+
   // Ayarların yüklenmesi (only active project)
   const onlyActiveSetting = localStorage.getItem('onlyActiveProjectDays') === 'true';
   $('#setting-only-active-project').prop('checked', onlyActiveSetting);
@@ -334,6 +394,63 @@ $(document).ready(function () {
     localStorage.setItem('onlyActiveProjectDays', isChecked);
     setCookie('p_only_active_project', isChecked ? '1' : '0', 30);
     Route();
+  });
+
+  // Restore active type
+  const storedActiveTypeId = localStorage.getItem('activePuantajTypeId');
+  if (storedActiveTypeId && typeof allPuantajTurleri !== 'undefined' && allPuantajTurleri[storedActiveTypeId]) {
+    activePuantajType = allPuantajTurleri[storedActiveTypeId];
+  }
+
+  // Restore shortcut active state
+  const storedIsShortcutActive = localStorage.getItem('isShortcutActive');
+  if (storedIsShortcutActive !== null) {
+    isShortcutActive = (storedIsShortcutActive === 'true');
+  } else {
+    isShortcutActive = true;
+  }
+
+  // Restore checkbox state
+  const storedSetAsShortcut = localStorage.getItem('setAsShortcut');
+  if (storedSetAsShortcut !== null) {
+    $("#modal-set-as-shortcut").prop('checked', storedSetAsShortcut === 'true');
+  } else {
+    $("#modal-set-as-shortcut").prop('checked', true);
+  }
+
+  // Bind modal checkbox change event
+  $(document).on("change", "#modal-set-as-shortcut", function() {
+    localStorage.setItem('setAsShortcut', $(this).is(':checked') ? 'true' : 'false');
+  });
+
+  // Update UI if we have an active type
+  if (activePuantajType) {
+    updateActiveTypeUI();
+  }
+
+  // Bind selected type events
+  $(document).on("click", "#clear-selected-type", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    activePuantajType = null;
+    localStorage.removeItem('activePuantajTypeId');
+    updateActiveTypeUI();
+  });
+
+  $(document).on("click", "#selected-type-toggle", function(e) {
+    if ($(e.target).closest("#clear-selected-type").length > 0) {
+      return;
+    }
+    e.preventDefault();
+    if (activePuantajType) {
+      isShortcutActive = !isShortcutActive;
+      localStorage.setItem('isShortcutActive', isShortcutActive ? 'true' : 'false');
+      updateActiveTypeUI();
+
+      if (isShortcutActive && $("table td.clicked").length > 0) {
+        applyTypeToClickedCells(activePuantajType);
+      }
+    }
   });
 });
 
@@ -389,14 +506,21 @@ $(window).on('beforeunload', function() {
     }
 });
 
+// Sütun göster/gizle fonksiyonu
+function applyColumnVisibility() {
+    $(".column-toggle-check").each(function() {
+        var columnClass = $(this).data("column");
+        if ($(this).is(":checked")) {
+            $("." + columnClass).show();
+        } else {
+            $("." + columnClass).hide();
+        }
+    });
+}
+
 // Sütun göster/gizle (Bağımsız seçim)
 $(document).on("change", ".column-toggle-check", function() {
-    var columnClass = $(this).data("column");
-    if ($(this).is(":checked")) {
-        $("." + columnClass).show();
-    } else {
-        $("." + columnClass).hide();
-    }
+    applyColumnVisibility();
 
     // Seçilen sütunların durumunu localStorage'a kaydet
     var columnStates = {};
@@ -406,11 +530,18 @@ $(document).on("change", ".column-toggle-check", function() {
     localStorage.setItem("puantajColumnStates", JSON.stringify(columnStates));
 
     // DataTable yerleşimini yeniden hesapla
-    $("#puantajTable").DataTable().columns.adjust().draw();
+    if ($.fn.DataTable.isDataTable('#puantajTable')) {
+        $("#puantajTable").DataTable().columns.adjust().draw();
+    }
 });
 
 // Sayfa yüklendiğinde kaydedilmiş sütun görünürlük ayarlarını uygula
 $(document).ready(function() {
+    // Tablo her çizildiğinde (sayfalama, sıralama vb.) sütun görünürlük durumlarını uygula
+    $('#puantajTable').on('draw.dt', function() {
+        applyColumnVisibility();
+    });
+
     var storedStates = localStorage.getItem("puantajColumnStates");
     if (storedStates) {
         try {
@@ -420,13 +551,10 @@ $(document).ready(function() {
                 if (columnClass in columnStates) {
                     var isVisible = columnStates[columnClass];
                     $(this).prop("checked", isVisible);
-                    if (isVisible) {
-                        $("." + columnClass).show();
-                    } else {
-                        $("." + columnClass).hide();
-                    }
                 }
             });
+            applyColumnVisibility();
+            
             // DataTable yerleşimini yeniden hesapla
             setTimeout(function() {
                 if ($.fn.DataTable.isDataTable('#puantajTable')) {
@@ -617,4 +745,13 @@ $(document).ready(function() {
     table.button(".buttons-excel").trigger();
   });
 });
+
+function checkProjectsWarning() {
+  const current_projects = $("#projects").val() || [];
+  if (current_projects.length > 1) {
+    $("#project-warning-bar").removeClass("d-none");
+  } else {
+    $("#project-warning-bar").addClass("d-none");
+  }
+}
 

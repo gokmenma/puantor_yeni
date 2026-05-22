@@ -1,5 +1,3 @@
-
-
 <!-- <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script> -->
 
 
@@ -37,7 +35,8 @@ if (
     $page == 'defines/project-status/list' ||
     $page == 'todos/list' ||
     $page == "users/manage" || $page == "cari/list" || $page == "cari/movements" ||
-    $page == "raporlar/list" || $page == "avans-talepleri/list"
+    $page == "raporlar/list" || $page == "avans-talepleri/list" ||
+    $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }

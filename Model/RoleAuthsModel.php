@@ -13,9 +13,8 @@ class RoleAuthsModel extends Model
     //getAuthsByRoleId
     public function getAuthsByRoleId($role_id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE role_id = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE role_id = ? ");
         $sql->execute([$role_id]);
         return $sql->fetch(PDO::FETCH_OBJ) ?? 0;
     }
 }
-

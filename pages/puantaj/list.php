@@ -671,6 +671,77 @@ if (!empty($person_ids)) {
             print-color-adjust: exact !important;
         }
     }
+
+    /* Seçili Tür Kısayolu ve Hover Efekti */
+    .selected-type-badge-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--tblr-border-color);
+        border-radius: 4px;
+        background: var(--tblr-bg-surface);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        padding-right: 2px;
+        transition: opacity 0.2s, border-style 0.2s, background-color 0.2s, border-color 0.2s;
+    }
+    
+    .selected-type-badge-wrapper:hover {
+        background-color: var(--tblr-bg-surface-secondary);
+        border-color: var(--tblr-border-color-darker, #b0b0b0);
+    }
+    
+    .selected-type-badge-wrapper #clear-selected-type {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 16px;
+        height: 16px;
+        background-color: #000 !important;
+        color: #fff !important;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease, visibility 0.15s ease;
+        border: 1px solid #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        padding: 0;
+    }
+    
+    .selected-type-badge-wrapper:hover #clear-selected-type {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    #selected-type-code {
+        padding: 7px 14px 7px 8px !important;
+        font-size: 13px !important;
+        border-radius: 4px !important;
+        line-height: 1.2 !important;
+        display: inline-block;
+        min-width: 32px;
+        text-align: center;
+        border: none !important;
+        box-shadow: none !important;
+        transition: opacity 0.2s;
+    }
+
+    /* Inactive State styling */
+    .selected-type-badge-wrapper.inactive {
+        border-style: dashed !important;
+        background-color: var(--tblr-bg-surface-secondary) !important;
+        opacity: 0.6;
+    }
+    .selected-type-badge-wrapper.inactive #selected-type-code {
+        background-color: transparent !important;
+        color: var(--tblr-text-secondary) !important;
+    }
  
 </style>
 
@@ -689,6 +760,9 @@ if (!empty($person_ids)) {
             <div class="col-md-3">
                 <label for="projects" class="form-label">Proje:</label>
                 <?php echo $projectHelper->getProjectSelectMultiple('projects', $valid_project_ids); ?>
+                <div id="project-warning-bar" class="alert alert-warning py-1 px-2 mt-1 mb-0 d-none" style="font-size: 11px; line-height: 1.3; border-radius: 4px;">
+                    <i class="ti ti-alert-triangle me-1"></i> Birden fazla proje seçildiğinde, yeni atamalar boş (projesiz) olarak yapılacaktır.
+                </div>
             </div>
             <div class="col-md-1">
                 <label for="months" class="form-label">Ay:</label>
@@ -796,7 +870,18 @@ if (!empty($person_ids)) {
                         </div>
                     </div>
 
-                    <div class="col-auto ms-auto d-flex gap-2">
+                    <div class="col-auto ms-auto d-flex gap-2 align-items-center">
+                        <div id="selected-type-container" class="d-none align-items-center gap-2">
+                            <span class="text-secondary" style="font-size: 13px; font-weight: 500;">Seçili Tür:</span>
+                            <div class="selected-type-badge-wrapper cursor-pointer" id="selected-type-toggle">
+                                <span id="selected-type-status-dot" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; background-color: #2fb344; box-shadow: 0 0 0 2px rgba(47, 179, 68, 0.2); transition: background-color 0.2s, box-shadow 0.2s; margin-left: 6px;"></span>
+                                <span id="selected-type-code" class="fw-bold" title="Aktif/Pasif yapmak için tıklayın" style="margin-left: 2px;"></span>
+                                <span id="clear-selected-type" title="Temizle">
+                                    <i class="ti ti-x"></i>
+                                </span>
+                            </div>
+                        </div>
+
                         <a href="#" class="btn" data-bs-toggle="modal" data-bs-target="#modal-default">
                             <i class="ti ti-plus icon me-2"></i> Puantaj Türleri
                         </a>

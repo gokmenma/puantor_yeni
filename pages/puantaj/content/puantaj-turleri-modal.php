@@ -2,7 +2,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered " role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">New report</h5>
+                <h5 class="modal-title"><i class="ti ti-list-details me-2 text-primary"></i> Puantaj Türü Seçimi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -39,14 +39,20 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <a href="#" class="btn btn-link link-secondary" data-bs-dismiss="modal">
-                    Vazgeç
-                </a>
-                <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
-                    <i class="ti ti-checks icon me-2"></i>
-                    Seç
-                </a>
+            <div class="modal-footer d-flex align-items-center justify-content-between">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="modal-set-as-shortcut" checked>
+                    <label class="form-check-label cursor-pointer" for="modal-set-as-shortcut" style="font-size: 13px; font-weight: 500;">Seçili Tür'e Ata</label>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="#" class="btn btn-link link-secondary mb-0" data-bs-dismiss="modal">
+                        Vazgeç
+                    </a>
+                    <a href="#" class="btn btn-primary mb-0" data-bs-dismiss="modal">
+                        <i class="ti ti-checks icon me-2"></i>
+                        Seç
+                    </a>
+                </div>
             </div>
         </div>
     </div>

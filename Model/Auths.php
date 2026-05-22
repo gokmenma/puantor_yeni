@@ -17,7 +17,12 @@ class Auths extends Model
 
     public function auths()
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 ORDER BY title ASC");
+        $superadmin = isset($_SESSION['user']->superadmin) ? $_SESSION['user']->superadmin : 0;
+        if ($superadmin == 1) {
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 ORDER BY title ASC");
+        } else {
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 and (superadmin = 0 or superadmin IS NULL) ORDER BY title ASC");
+        }
         $sql->execute([0]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
@@ -25,9 +30,22 @@ class Auths extends Model
     //alt yetkiler getirilir
     public function subAuths($id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 ORDER BY title ASC");
+        $superadmin = isset($_SESSION['user']->superadmin) ? $_SESSION['user']->superadmin : 0;
+        if ($superadmin == 1) {
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 ORDER BY title ASC");
+        } else {
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE parent_id = ? and is_active = 1 and (superadmin = 0 or superadmin IS NULL) ORDER BY title ASC");
+        }
         $sql->execute([$id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    // Süperadmin yetkilerinin id'lerini getirir
+    public function getSuperadminAuthIds()
+    {
+        $sql = $this->db->prepare("SELECT id FROM $this->table WHERE superadmin = 1");
+        $sql->execute();
+        return $sql->fetchAll(PDO::FETCH_COLUMN);
     }
 
     //Yetki title'dan yetki id getirilir
@@ -50,6 +68,9 @@ class Auths extends Model
     // Bu yetki id'si role_auths tablosunda role_id ile sorgulanır
     public function Authorize($auth_name)
     {
+        if (isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1) {
+            return true;
+        }
         //Yetki adından yetki id getirilir
         $auth_id = $this->getAuthIdByName($auth_name)->id ?? 0;
         if (!$auth_id) {
@@ -73,6 +94,9 @@ class Auths extends Model
 
     public function AuthorizeByAuthId($auth_id)
     {
+        if (isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1) {
+            return true;
+        }
         //role_auts tablosunda role_id ile sorgulanır,auth_ids içinde var mı yok mu kontrol edilir varsa true döner değilse false döner
         $role_id = $_SESSION['user']->user_roles;
         $sql = $this->db->prepare("SELECT * FROM role_auths WHERE role_id = ? and FIND_IN_SET(?,auth_ids)");
