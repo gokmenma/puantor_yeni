@@ -123,12 +123,12 @@ if ($_SESSION["user"]->parent_id != 0) {
             $lastInsertRoleId = $rolesObj->saveWithAttr($roleData);
             $decryptedRoleId = Security::decrypt($lastInsertRoleId);
             
-            $authsList = $AuthsObj->all();
-            $authsIds = implode(',', array_column($authsList, 'id'));
+            $authsIds = $AuthsObj->getNonSuperadminAuthIds();
+            $authsIdsString = implode(',', $authsIds);
             
             $roleAuthData = [
                 "role_id" => $decryptedRoleId,
-                "auth_ids" => $authsIds
+                "auth_ids" => $authsIdsString
             ];
             $RoleAuthsObj->saveWithAttr($roleAuthData);
             
@@ -369,16 +369,26 @@ $theme = $_SESSION['theme'] ?? 'light';
         <div class="page-wrapper">
             <div class="container-xl">
                 <!-- Eğer kullanıcı demo kullanıcısı ise uyarı göster -->
-                <?php if ($user->user_type == 1) { ?>
-                    <div class="alert alert-warning alert-dismissible bg-white alert-trial mb-0 mt-3" role="alert">
-                        <div class="d-flex">
+                <?php 
+                if ($user->user_type == 1) { 
+                    $owner_id = $user->parent_id == 0 ? $user->id : $user->parent_id;
+                    $owner_user = $User->find($owner_id);
+                    $diff = 0;
+                    if ($owner_user) {
+                        require_once "App/Helper/date.php";
+                        $days = \App\Helper\Date::getDateDiff($owner_user->created_at);
+                        $diff = max(0, 15 - $days);
+                    }
+                ?>
+                    <div class="alert alert-warning alert-dismissible bg-white alert-trial mb-0 mt-3" role="alert" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06);">
+                        <div class="d-flex align-items-center">
                             <div>
-                                <i class="ti ti-alert-triangle icon me-3"></i>
+                                <i class="ti ti-alert-triangle icon text-warning me-3" style="font-size: 1.35rem;"></i>
                             </div>
                             <div>
-                                Deneme sürenizin bitmesine kalan süre <?php echo $diff; ?> gün, süreniz bitmeden önce
+                                Deneme sürenizin bitmesine kalan süre <strong class="text-warning"><?php echo $diff; ?></strong> gün, süreniz bitmeden önce
                                 paketinizi <a href="index.php?p=settings/manage&tab=edit-account"
-                                    class="text-warning"><u>güncelleyin.</u></a>
+                                    class="text-warning fw-bold"><u>güncelleyin.</u></a>
                             </div>
                         </div>
                         <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>

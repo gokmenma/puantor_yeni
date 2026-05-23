@@ -213,10 +213,10 @@ function alertdanger($message)
 
                             //Kaydedilen Yetki grubuna tüm yetkiler atanır
                 
-                            //yetki tablosundaki tüm id'ler alınır
-                            $auths = $Auths->all();
+                            //yetki tablosundaki süperadmin olmayan tüm id'ler alınır
+                            $authsIds = $Auths->getNonSuperadminAuthIds();
                             //id'leri aralarında virgül olacak şekilde birleştirilir
-                            $auths = implode(',', array_column($auths, 'id'));
+                            $auths = implode(',', $authsIds);
                             //oluşturulan yetki grubuna yetkiler atanır
                             $data = [
                                 "role_id" => Security::decrypt($lastInsertRoleId),
@@ -233,6 +233,40 @@ function alertdanger($message)
                             ];
                             //Kullanıcı GÜncellenir
                             $User->saveWithAttr($data);
+
+                            // 15 Günlük Deneme Paketi tanımla
+                            require_once 'Model/AbonelikPaketleriModel.php';
+                            require_once 'Model/KullaniciAbonelikleriModel.php';
+                            
+                            $AbonelikPaketleri = new AbonelikPaketleriModel();
+                            $KullaniciAbonelikleri = new KullaniciAbonelikleriModel();
+                            
+                            $allPkgs = $AbonelikPaketleri->getPackages();
+                            $trialPkg = null;
+                            foreach ($allPkgs as $p) {
+                                if ($p->sure == 15 && $p->fiyat <= 0) {
+                                    $trialPkg = $p;
+                                    break;
+                                }
+                            }
+                            
+                            $trialPkgId = $trialPkg ? $trialPkg->id : 7;
+                            $trialFirmaHakki = $trialPkg ? $trialPkg->firma_hakki : 1;
+                            $trialKullaniciHakki = $trialPkg ? $trialPkg->alt_kullanici_hakki : 10;
+                            
+                            $subData = [
+                                "kullanici_id" => Security::decrypt($lastInsertUserId),
+                                "paket_id" => $trialPkgId,
+                                "baslangic_tarihi" => date('Y-m-d'),
+                                "bitis_tarihi" => date('Y-m-d', strtotime('+15 days')),
+                                "durum" => "aktif",
+                                "firma_hakki" => $trialFirmaHakki,
+                                "alt_kullanici_hakki" => $trialKullaniciHakki,
+                                "aciklama" => "Sisteme Kayıt - 15 Günlük Deneme Paketi",
+                                "bildirim_goruldu" => 0,
+                                "user_bildirim_goruldu" => 0
+                            ];
+                            $KullaniciAbonelikleri->saveWithAttr($subData);
 
                             //Varsayılan Nakit Kasa eklenir
                             $cases = new Cases();

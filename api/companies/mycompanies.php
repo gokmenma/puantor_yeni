@@ -83,12 +83,12 @@ if ($_POST["action"] == "saveMyCompany") {
             ];
             $lastInsertRoleId = $Roles->saveWithAttr($roleData);
             
-            $authsList = $Auths->all();
-            $authsIds = implode(',', array_column($authsList, 'id'));
+            $authsIds = $Auths->getNonSuperadminAuthIds();
+            $authsIdsString = implode(',', $authsIds);
             
             $roleAuthData = [
                 "role_id" => Security::decrypt($lastInsertRoleId),
-                "auth_ids" => $authsIds
+                "auth_ids" => $authsIdsString
             ];
             $RoleAuths->saveWithAttr($roleAuthData);
         } else {

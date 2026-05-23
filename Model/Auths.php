@@ -48,6 +48,14 @@ class Auths extends Model
         return $sql->fetchAll(PDO::FETCH_COLUMN);
     }
 
+    // Süperadmin olmayan yetkilerin id'lerini getirir
+    public function getNonSuperadminAuthIds()
+    {
+        $sql = $this->db->prepare("SELECT id FROM $this->table WHERE superadmin = 0 OR superadmin IS NULL");
+        $sql->execute();
+        return $sql->fetchAll(PDO::FETCH_COLUMN);
+    }
+
     //Yetki title'dan yetki id getirilir
     public function getAuthIdByTitle($auth_title)
     {
