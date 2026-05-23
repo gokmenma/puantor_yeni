@@ -112,6 +112,94 @@ if (isset($_POST['action']) && $_POST['action'] == 'buyPackage') {
         
         $Odemeler->saveWithAttr($payData);
         
+        // Send email notifications to superadmins
+        try {
+            $stmt = $KullaniciAbonelikleri->getDb()->prepare("SELECT email, full_name FROM users WHERE superadmin = 1 AND deleted_at IS NULL");
+            $stmt->execute();
+            $superadmins = $stmt->fetchAll(PDO::FETCH_OBJ);
+            
+            if (!empty($superadmins)) {
+                require_once ROOT . "/mail-settings.php";
+                
+                // Fetch buyer name & email
+                $buyer_name = $_SESSION["user"]->full_name;
+                $buyer_email = $_SESSION["user"]->email;
+                $pkg_name = $pkg->ad;
+                $period = $duration_type === 'yearly' ? 'Yıllık' : 'Aylık';
+                $amount = number_format($total_amount, 2, ',', '.') . " TRY";
+                $date_str = date('d.m.Y H:i:s');
+                
+                // HTML body
+                $body = "
+                <!DOCTYPE html>
+                <html lang='tr'>
+                <head>
+                    <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                    <title>Yeni Paket Satın Alma Talebi</title>
+                </head>
+                <body style='font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f7f7f7; padding: 20px;'>
+                    <table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 6px; border: 1px solid #e0e0e0; box-shadow: 0px 0px 10px rgba(0,0,0,0.1);'>
+                        <tr>
+                            <td style='padding: 20px; background-color: #2c3e50; color: #ffffff; text-align: center; border-top-left-radius: 6px; border-top-right-radius: 6px;'>
+                                <h2 style='margin: 0; font-size: 20px;'>Yeni Paket Satın Alma Talebi Alındı</h2>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 20px;'>
+                                <p>Merhaba,</p>
+                                <p>Sistemde yeni bir paket satın alma talebi oluşturulmuştur. Ayrıntılar aşağıdadır:</p>
+                                <hr style='border: 1px solid #e0e0e0; margin: 20px 0;'>
+                                <h3 style='color: #2c3e50; margin: 0;'>Müşteri Bilgileri</h3>
+                                <p style='margin-top: 8px;'>
+                                    <strong>Ad Soyad:</strong> {$buyer_name}<br>
+                                    <strong>E-posta:</strong> {$buyer_email}<br>
+                                </p>
+                                <h3 style='color: #2c3e50; margin: 0;'>Paket Bilgileri</h3>
+                                <p style='margin-top: 8px;'>
+                                    <strong>Paket Adı:</strong> {$pkg_name}<br>
+                                    <strong>Süre:</strong> {$period}<br>
+                                    <strong>Toplam Tutar:</strong> {$amount}<br>
+                                    <strong>Tarih:</strong> {$date_str}<br>
+                                </p>
+                                <hr style='border: 1px solid #e0e0e0; margin: 20px 0;'>
+                                <p>Lütfen ödemeyi kontrol edip yönetici panelinden onaylayınız.</p>
+                                <p>Saygılarımızla,<br><strong>Puantör Ekibi</strong></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 10px; background-color: #f0f0f0; text-align: center; font-size: 12px; color: #888; border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;'>
+                                © Puantör. Tüm hakları saklıdır.
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>";
+                
+                foreach ($superadmins as $admin) {
+                    try {
+                        $mail->clearAddresses();
+                        $mail->clearReplyTos();
+                        $mail->clearAttachments();
+                        
+                        $mail->setFrom('sifre@puantor.com.tr', 'Puantör Abonelik Sistemi');
+                        $mail->addAddress($admin->email, $admin->full_name);
+                        $mail->isHTML(true);
+                        $mail->Subject = 'Yeni Paket Satın Alma Talebi: ' . $pkg_name;
+                        $mail->Body = $body;
+                        $mail->AltBody = strip_tags($body);
+                        $mail->CharSet = 'UTF-8';
+                        
+                        $mail->send();
+                    } catch (Exception $e) {
+                        error_log("E-posta gönderim hatası (Admin: " . $admin->email . "): " . $mail->ErrorInfo);
+                    }
+                }
+            }
+        } catch (Exception $mailEx) {
+            error_log("Superadmin e-posta listesi çekilirken veya e-posta gönderilirken hata oluştu: " . $mailEx->getMessage());
+        }
+        
         echo json_encode([
             'status' => 'success',
             'message' => 'Abonelik talebiniz başarıyla alındı. Ödemeniz onaylandıktan sonra aktif edilecektir.'

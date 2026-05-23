@@ -217,6 +217,7 @@ if (count($loginLogs) > 1) {
                         $features = !empty($pkg->ozellikler) ? explode(';', $pkg->ozellikler) : [];
                         $isUnlimited = (strtolower($pkg->ad) === 'sınırsız');
                         $isTrial = ($pkg->fiyat <= 0 && !$isUnlimited);
+                        if ($isTrial) continue;
                         ?>
                         <div class="col-md-6 col-lg-4">
                             <div class="card h-100 p-3 d-flex flex-column justify-content-between" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s;">
