@@ -23,7 +23,25 @@ $personObj = new Persons();
 $bordro = new Bordro();
 $companyHelper = new CompanyHelper();
 
-$persons = $personObj->getPersonsByFirm($firm_id);
+require_once 'Model/Projects.php';
+$projectsObj = new Projects();
+$allProjects = $projectsObj->getProjectsByFirm($firm_id);
+$projectMap = [];
+foreach ($allProjects as $proj) {
+    $projectMap[$proj->id] = $proj->project_name;
+}
+
+$allAssignments = $projectsObj->getDb()->query("
+    SELECT pp.person_id, pp.project_id 
+    FROM project_person pp 
+    JOIN projects p ON pp.project_id = p.id 
+    WHERE p.firm_id = " . intval($firm_id)
+)->fetchAll(PDO::FETCH_OBJ);
+
+$personProjectsMap = [];
+foreach ($allAssignments as $assign) {
+    $personProjectsMap[$assign->person_id][] = $assign->project_id;
+}
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
@@ -37,10 +55,11 @@ $headers = [
     'D1' => 'Ücret Türü',
     'E1' => 'İşe Giriş Tarihi',
     'F1' => 'Telefon',
-    'G1' => 'Adres',
-    'H1' => 'Günlük/Aylık Ücreti',
-    'I1' => 'Durumu',
-    'J1' => 'Güncel Bakiyesi'
+    'G1' => 'Ekip',
+    'H1' => 'Proje',
+    'I1' => 'Günlük/Aylık Ücreti',
+    'J1' => 'Durumu',
+    'K1' => 'Güncel Bakiyesi'
 ];
 
 foreach ($headers as $cell => $text) {
@@ -56,27 +75,38 @@ foreach ($persons as $person) {
     $compName = $companyHelper->getCompanyName($person->company_id);
     $company_name = ($compName !== 'bilinmiyor' && $compName !== '') ? $compName : $companyHelper->getFirmName($person->firm_id);
 
+    $assignedProjs = [];
+    if (isset($personProjectsMap[$person->id])) {
+        foreach ($personProjectsMap[$person->id] as $projId) {
+            if (isset($projectMap[$projId])) {
+                $assignedProjs[] = $projectMap[$projId];
+            }
+        }
+    }
+    $projectsStr = !empty($assignedProjs) ? implode(', ', $assignedProjs) : '-';
+
     $sheet->setCellValue('A' . $row, $i++);
     $sheet->setCellValue('B' . $row, $person->full_name);
     $sheet->setCellValue('C' . $row, $company_name);
     $sheet->setCellValue('D' . $row, $wage_type);
     $sheet->setCellValue('E' . $row, $person->job_start_date ?? '-');
     $sheet->setCellValue('F' . $row, $person->phone);
-    $sheet->setCellValue('G' . $row, $person->address);
-    $sheet->setCellValue('H' . $row, $person->daily_wages);
-    $sheet->setCellValue('I' . $row, $person->state);
-    $sheet->setCellValue('J' . $row, $balance);
+    $sheet->setCellValue('G' . $row, $person->ekip ?: '-');
+    $sheet->setCellValue('H' . $row, $projectsStr);
+    $sheet->setCellValue('I' . $row, $person->daily_wages);
+    $sheet->setCellValue('J' . $row, empty($person->job_end_date) ? 'Aktif' : 'Pasif');
+    $sheet->setCellValue('K' . $row, $balance);
     
     // Format money columns
-    $sheet->getStyle('H' . $row)->getNumberFormat()->setFormatCode('#,##0.00" ₺"');
-    $sheet->getStyle('J' . $row)->getNumberFormat()->setFormatCode('#,##0.00" ₺"');
+    $sheet->getStyle('I' . $row)->getNumberFormat()->setFormatCode('#,##0.00" ₺"');
+    $sheet->getStyle('K' . $row)->getNumberFormat()->setFormatCode('#,##0.00" ₺"');
     
     $row++;
 }
 
 // Auto filter and auto size columns
-$sheet->setAutoFilter('A1:J1');
-foreach (range('A', 'J') as $col) {
+$sheet->setAutoFilter('A1:K1');
+foreach (range('A', 'K') as $col) {
     $sheet->getColumnDimension($col)->setAutoSize(true);
 }
 
