@@ -180,23 +180,13 @@ if (count($loginLogs) > 1) {
         </div>
     </div>
 
-    <!-- Hesap Dondurma/Silme Seçenekleri (Küçük Kart İçinde) -->
+    <!-- Hesap Silme Seçeneği (Küçük Kart İçinde) -->
     <div class="col-12">
         <div class="card" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
             <div class="card-body p-3">
-                <div class="row g-3">
-                    <div class="col-md-6 border-end-md">
-                        <h4 class="fw-bold text-warning mb-1" style="font-size: 0.85rem;">Hesabımı Dondur!</h4>
-                        <p class="text-secondary mb-2" style="font-size: 0.75rem; line-height: 1.4;">Geri dönüş yapmak üzere bir süreliğine hesabınızı dondurmak isterseniz bu seçeneği kullanın.</p>
-                        <button class="btn btn-warning btn-sm px-3 py-1.5" style="border-radius: 6px; font-size: 0.75rem; font-weight: 600;">Hesabımı Dondur</button>
-                    </div>
-                    
-                    <div class="col-md-6 ps-md-3">
-                        <h4 class="fw-bold text-danger mb-1" style="font-size: 0.85rem;">Hesabımı Sil!</h4>
-                        <p class="text-secondary mb-2" style="font-size: 0.75rem; line-height: 1.4;">Hesabınızı sildiğinizde puantaj, personel, proje ve finans verileri dahil tüm kayıtlarınız <strong>kalıcı olarak silinecektir</strong>.</p>
-                        <button class="btn btn-danger btn-sm px-3 py-1.5" style="border-radius: 6px; font-size: 0.75rem; font-weight: 600;">Hesabımı Sil</button>
-                    </div>
-                </div>
+                <h4 class="fw-bold text-danger mb-1" style="font-size: 0.85rem;">Hesabımı Sil!</h4>
+                <p class="text-secondary mb-2" style="font-size: 0.75rem; line-height: 1.4;">Hesabınızı sildiğinizde puantaj, personel, proje ve finans verileri dahil tüm kayıtlarınız <strong>kalıcı olarak silinecektir</strong>.</p>
+                <button class="btn btn-danger btn-sm px-3 py-1.5" id="btn-delete-account" style="border-radius: 6px; font-size: 0.75rem; font-weight: 600;">Hesabımı Sil</button>
             </div>
         </div>
     </div>

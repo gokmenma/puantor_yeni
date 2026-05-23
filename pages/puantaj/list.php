@@ -873,9 +873,15 @@ table {
         </div>
         <div id='project-warning-bar' class='row d-none mt-2'>
             <div class='col-12'>
-                <div class='alert alert-warning py-2 px-3 mb-0'
+                <div class='alert alert-warning py-2 px-3 mb-0 d-flex align-items-center justify-content-between'
                     style='font-size: 12px; line-height: 1.4; border-radius: 4px;'>
-                    <i class='ti ti-alert-triangle me-1'></i> Birden fazla proje seçildiğinde, yeni atamalar boş (projesiz) olarak yapılacaktır.
+                    <div class='d-flex align-items-center'>
+                        <i class='ti ti-alert-triangle me-2'></i>
+                        <span>Birden fazla proje seçildiğinde, yeni atamalar boş (projesiz) olarak yapılacaktır.</span>
+                    </div>
+                    <button type='button' id='btn-clear-projects' class='btn btn-warning btn-sm py-1 px-2 border-0' style='font-size: 11px; font-weight: 600;'>
+                        <i class='ti ti-x me-1'></i> Projeleri Temizle
+                    </button>
                 </div>
             </div>
         </div>
@@ -1253,10 +1259,10 @@ table {
                                 }
                                 ?>
                             <tr data-default-project="<?php echo $default_project_id; ?>">
-                                <td class="text-nowrap" data-id="<?php echo $id ?>"><a class="btn-user-modal"
-                                        type="button">
-                                        <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
-                                            target="_blank"><?php echo $person->full_name ?></a></td>
+                                <td class="text-nowrap" data-id="<?php echo $id ?>">
+                                    <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                        target="_blank"><?php echo $person->full_name ?></a>
+                                </td>
 
                                 <td class="text-nowrap extra-column extra-unvan"
                                     style="display:none; width: 150px !important;">

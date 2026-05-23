@@ -139,7 +139,10 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
     ordering: true,
     order: [[0, "asc"]],
     orderCellsTop: true,
-    columnDefs: [{ orderable: false, targets: "_all" }],
+    columnDefs: [
+      { orderable: false, targets: "_all" },
+      { defaultContent: "", targets: "_all" }
+    ],
     layout: {
       bottomStart: "pageLength",
       bottom2Start: "info",

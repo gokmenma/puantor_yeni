@@ -1098,6 +1098,7 @@ CREATE TABLE `users` (
   `remember_token` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `responsible_persons` longtext DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`,`firm_id`) USING BTREE
 ) ENGINE=MyISAM AUTO_INCREMENT=250 DEFAULT CHARSET=latin5 COLLATE=latin5_turkish_ci;

@@ -9,6 +9,7 @@ require_once ROOT . "/App/Helper/helper.php";
 
 use App\Helper\Date;
 use App\Helper\Helper;
+use App\Helper\Security;
 
 
 $User = new UserModel();
@@ -169,4 +170,22 @@ if ($_POST["action"] == "financialSettings") {
         "message" => $message
     ];
     echo json_encode($res);
+}
+
+// Hesap Silme
+if ($_POST["action"] == "deleteAccount") {
+    $id = $_SESSION["user"]->id;
+    try {
+        $User->softDelete(Security::encrypt($id));
+        $status = "success";
+        $message = "Hesabınız başarıyla silindi.";
+    } catch (Exception $e) {
+        $status = "error";
+        $message = $e->getMessage();
+    }
+    echo json_encode([
+        "status" => $status,
+        "message" => $message
+    ]);
+    exit();
 }

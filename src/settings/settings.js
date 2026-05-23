@@ -188,3 +188,46 @@ $(document).on("click", "#financial_save", function () {
       });
     });
 });
+
+// Account deletion handler
+$(document).on("click", "#btn-delete-account", function () {
+  Swal.fire({
+    title: "Hesabınızı Silmek İstediğinize Emin misiniz?",
+    text: "Hesabınızı sildiğinizde tüm kayıtlarınız silinecektir. Bu işlem geri alınamaz!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Evet, Hesabımı Sil",
+    cancelButtonText: "İptal",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      let formData = new FormData();
+      formData.append("action", "deleteAccount");
+
+      fetch("api/settings/settings.php", {
+        method: "POST",
+        body: formData
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            Swal.fire({
+              title: "Başarılı!",
+              text: data.message,
+              icon: "success",
+              confirmButtonText: "Tamam"
+            }).then(() => {
+              window.location.href = "logout.php";
+            });
+          } else {
+            Swal.fire("Hata!", data.message, "error");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          Swal.fire("Hata!", "Hesap silinirken bir sorun oluştu.", "error");
+        });
+    }
+  });
+});

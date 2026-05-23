@@ -12,13 +12,13 @@ class UserModel extends Model
 
     public function allByFirms($firm_id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = :firm_id");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = :firm_id AND deleted_at IS NULL");
         $sql->execute(['firm_id' => $firm_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
     public function getUserByEmailandPassword($email, $password)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND password = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND password = ? AND deleted_at IS NULL");
         $sql->execute(array($email, $password));
         return $sql->fetch(PDO::FETCH_OBJ);
     }
@@ -26,7 +26,7 @@ class UserModel extends Model
     // is there a user with this email and firm_id
     public function getUserByEmailandFirm($email, $firm_id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND firm_id = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND firm_id = ? AND deleted_at IS NULL");
         $sql->execute(array($email, $firm_id));
         return $sql->fetch(PDO::FETCH_OBJ);
     }
@@ -34,16 +34,23 @@ class UserModel extends Model
 
     public function getUser($id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE id = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE id = ? AND deleted_at IS NULL");
         $sql->execute(array($id));
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 
     public function getUserByEmail($email)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? ");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND deleted_at IS NULL");
         $sql->execute(array($email));
         return $sql->fetch(PDO::FETCH_OBJ);
+    }
+
+    public function find($id)
+    {
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE id = ? AND deleted_at IS NULL");
+        $sql->execute(array($id));
+        return $sql->fetch(PDO::FETCH_OBJ) ?? null;
     }
 
     public function getUserByLoginField($identifier)
@@ -67,11 +74,12 @@ class UserModel extends Model
             }
 
             $sql = $this->db->prepare("SELECT * FROM $this->table WHERE 
-                email = :raw OR 
+                (email = :raw OR 
                 username = :raw OR
                 full_name = :raw OR
                 phone = :raw OR
-                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') LIKE :phoneMatch
+                REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', '') LIKE :phoneMatch)
+                AND deleted_at IS NULL
             ");
             
             $phoneMatch = '%' . $basePhone;
@@ -86,7 +94,7 @@ class UserModel extends Model
         }
 
         // 3. Fallback to searching by email, username, full_name, or phone directly
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = :raw OR username = :raw OR full_name = :raw OR phone = :raw");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE (email = :raw OR username = :raw OR full_name = :raw OR phone = :raw) AND deleted_at IS NULL");
         $sql->execute(['raw' => $identifier]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }
@@ -94,7 +102,7 @@ class UserModel extends Model
     function getUsersByFirm($firm_id)
     {
         $user_id = $_SESSION["user"]->id;
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE (firm_id = ? or id = ?)");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE (firm_id = ? or id = ?) AND deleted_at IS NULL");
         $sql->execute(array($firm_id, $user_id));
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
@@ -144,14 +152,14 @@ class UserModel extends Model
     //Email adresi ve Firma İd'si ile kullanıcıyı getirir
     public function getUserByEmailAndFirmId($email, $firm_id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND firm_id = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND firm_id = ? AND deleted_at IS NULL");
         $sql->execute([$email, $firm_id]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 
     public function isEmailExists($email)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND deleted_at IS NULL");
         $sql->execute([$email]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }
@@ -163,13 +171,13 @@ class UserModel extends Model
             return false;
         }
         if ($excludeId > 0) {
-            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE username = :username AND id != :excludeId");
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE username = :username AND id != :excludeId AND deleted_at IS NULL");
             $sql->execute([
                 'username' => $username,
                 'excludeId' => $excludeId
             ]);
         } else {
-            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE username = :username");
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE username = :username AND deleted_at IS NULL");
             $sql->execute(['username' => $username]);
         }
         return $sql->fetch(PDO::FETCH_OBJ) ? true : false;
@@ -211,7 +219,7 @@ class UserModel extends Model
     //Activate Token sorgulama
     public function checkToken($email)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE email = ? AND deleted_at IS NULL");
         $sql->execute([$email]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }

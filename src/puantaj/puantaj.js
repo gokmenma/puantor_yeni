@@ -165,7 +165,11 @@ $(document).keydown(function (event) {
       cell.css("background-color", "white");
       cell.removeAttr("data-tooltip");
       cell.removeAttr("title");
-      cell.attr("data-project", "0");
+      // Keep the original project ID so the backend knows which record to delete.
+      // If it doesn't have one, we default it to "0".
+      if (!cell.attr("data-project")) {
+        cell.attr("data-project", "0");
+      }
       cell.removeClass("clicked");
 
       let parentTr = cell.closest("tr");
@@ -435,6 +439,12 @@ $(document).ready(function () {
     activePuantajType = null;
     localStorage.removeItem('activePuantajTypeId');
     updateActiveTypeUI();
+  });
+
+  $(document).on("click", "#btn-clear-projects", function(e) {
+    e.preventDefault();
+    $("#projects").val([]).trigger("change");
+    Route();
   });
 
   $(document).on("click", "#selected-type-toggle", function(e) {

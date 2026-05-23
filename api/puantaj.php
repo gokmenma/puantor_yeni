@@ -67,6 +67,11 @@ if ($_POST['action'] == 'savePuantaj') {
                 $id = $puantajObj->getPuantajId($person_id, $puantaj_key, $current_p_id);
 
                 if ($puantaj_item['puantajId'] == 0) {
+                    if ($id == 0) {
+                        // Fallback: If not found with the specific project (e.g. project mismatch or cleared on client),
+                        // query with -1 to find and delete ANY puantaj entry on that day for that person.
+                        $id = $puantajObj->getPuantajId($person_id, $puantaj_key, -1);
+                    }
                     if ($id > 0) {
                         $puantajObj->deletePuantajGun($id);
                         $save_count++;
