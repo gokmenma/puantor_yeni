@@ -930,11 +930,6 @@ $(document).ready(function() {
         }
     }
 
-    // İlk yüklemede çalıştır
-    adjustFabVisibility();
-    applyAboneler();
-    sortAboneler();
-
     // Sekme değişimini dinle
     $('#subscriptionTabs button').on('shown.bs.tab', function (e) {
         adjustFabVisibility();
@@ -1566,6 +1561,11 @@ $(document).ready(function() {
         $('.dropdown-menu').removeClass('show');
         $('[data-bs-toggle="dropdown"]').removeClass('show').attr('aria-expanded', 'false');
     });
+
+    // --- İlk Yükleme Çalıştırmaları (Tüm Değişkenler ve Fonksiyonlar Tanımlandıktan Sonra) ---
+    adjustFabVisibility();
+    applyAboneler();
+    sortAboneler();
 
 });
 </script>
