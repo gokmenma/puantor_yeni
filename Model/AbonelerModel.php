@@ -32,7 +32,7 @@ class AbonelerModel extends Model
                 ) ka2 ON ka1.id = ka2.max_id
             ) ka ON ka.kullanici_id = u.id
             LEFT JOIN abonelik_paketleri ap ON ap.id = ka.paket_id
-            WHERE u.parent_id = 0
+            WHERE u.parent_id = 0 OR u.parent_id = u.id
             ORDER BY u.created_at DESC
         ");
         $sql->execute();

@@ -21,6 +21,16 @@ if($id == null && isset($_GET['id'])) {
     exit;
 }
 
+if ($id == 0) {
+    $owner_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
+    $subDetails = $userObj->getActiveSubscriptionDetails($owner_id);
+    $currentSubUsers = $userObj->getSubUserCount($owner_id);
+    if (($_SESSION["user"]->superadmin ?? 0) != 1 && $currentSubUsers >= $subDetails['alt_kullanici_hakki']) {
+        header("Location: index.php?p=users/list&limit_reached=1");
+        exit;
+    }
+}
+
 $user = $userObj->find($id);
 $projects = $projectsObj->getProjectsByFirm($_SESSION["firm_id"]);
 $persons = $personsObj->getPersonsByFirm($_SESSION["firm_id"]);

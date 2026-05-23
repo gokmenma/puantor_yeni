@@ -9,15 +9,31 @@ use App\Helper\Helper;
 $userObj = new UserModel();
 $users = $userObj->getUsersByFirm($firm_id);
 
+$owner_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
+$subDetails = $userObj->getActiveSubscriptionDetails($owner_id);
+$currentSubUsers = $userObj->getSubUserCount($owner_id);
+$isSuperadmin = ($_SESSION["user"]->superadmin ?? 0) == 1;
+
+$limitReached = !$isSuperadmin && ($currentSubUsers >= $subDetails['alt_kullanici_hakki']);
 ?>
 <div class="container-xl mt-3">
-    <div class="alert alert-info bg-white alert-dismissible" role="alert">
+    <?php if (isset($_GET['limit_reached']) && $_GET['limit_reached'] == 1): ?>
+        <div class="alert alert-warning alert-dismissible mb-3" role="alert" style="border-radius: 12px; font-weight: 500;">
+            <div class="d-flex align-items-center">
+                <i class="ti ti-alert-triangle icon me-3" style="font-size: 1.5rem;"></i>
+                <div>Paketinizin alt kullanıcı limiti dolduğu için yeni kullanıcı ekleme sayfasına erişiminiz engellenmiştir.</div>
+            </div>
+            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    <?php endif; ?>
+
+    <div class="alert alert-info bg-white alert-dismissible" role="alert" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06);">
         <div class="d-flex">
             <div>
                 <!-- Download SVG icon from http://tabler-icons.io/i/info-circle -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="icon alert-icon">
+                    class="icon alert-icon text-info">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                     <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
                     <path d="M12 9h.01"></path>
@@ -25,10 +41,15 @@ $users = $userObj->getUsersByFirm($firm_id);
                 </svg>
             </div>
             <div>
-                <h4 class="alert-title">Kullanıcı Listesi!</h4>
-                <div class="text-secondary">Seçili firma için dilediğiniz kadar kullanıcı ekleyebilir ve bu
-                    kullanıcılara istediğiniz yetkileri verebilirsiniz.
-                    <p class="text-muted">Hesap oluşturma aşamasında oluşturulan kullanıcı silinemez!</p>
+                <h4 class="alert-title fw-bold text-dark">Kullanıcı Listesi!</h4>
+                <div class="text-secondary" style="font-size: 0.9rem; line-height: 1.5;">
+                    <?php if ($isSuperadmin): ?>
+                        Sistem genelinde dilediğiniz kadar kullanıcı ekleyebilir ve bu kullanıcılara istediğiniz yetkileri verebilirsiniz.
+                    <?php else: ?>
+                        Paketiniz kapsamında en fazla <strong><?php echo $subDetails['alt_kullanici_hakki']; ?></strong> adet kullanıcı ekleyebilirsiniz. 
+                        Şu anda <strong><?php echo $currentSubUsers; ?></strong> adet kullanıcı eklenmiş durumda. (Kullanılan: <?php echo $currentSubUsers; ?> / <?php echo $subDetails['alt_kullanici_hakki']; ?>)
+                    <?php endif; ?>
+                    <p class="text-muted small mb-0 mt-1">Hesap oluşturma aşamasında oluşturulan ana kullanıcı silinemez!</p>
                 </div>
             </div>
         </div>
@@ -40,10 +61,15 @@ $users = $userObj->getUsersByFirm($firm_id);
                 <div class="card-header">
                     <h3 class="card-title">Kullanıcı Listesi</h3>
                     <div class="col-auto ms-auto">
-                        <a href="#" class="btn btn-primary add-user route-link" data-page="users/manage">
-                            <i class="ti ti-plus icon me-2"></i> Yeni
-                        </a>
-
+                        <?php if ($limitReached): ?>
+                            <button type="button" class="btn btn-primary btn-new-user-limit" data-limit="<?php echo $subDetails['alt_kullanici_hakki']; ?>">
+                                <i class="ti ti-plus icon me-2"></i> Yeni
+                            </button>
+                        <?php else: ?>
+                            <a href="#" class="btn btn-primary add-user route-link" data-page="users/manage">
+                                <i class="ti ti-plus icon me-2"></i> Yeni
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
 

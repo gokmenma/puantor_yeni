@@ -171,6 +171,126 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     height: 56px !important;
 }
+
+/* Arama / Filtre / Sıralama Araç Çubuğu */
+.sub-toolbar .sub-search-input {
+    padding-left: 36px;
+    padding-right: 36px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.85rem;
+    height: 42px;
+    background: #f8fafc;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+body[data-bs-theme="dark"] .sub-toolbar .sub-search-input {
+    border-color: #4a5568;
+    background: #1e293b;
+    color: #cbd5e1;
+}
+.sub-toolbar .sub-search-input:focus {
+    border-color: var(--tblr-primary);
+    box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.1);
+    background: #fff;
+}
+body[data-bs-theme="dark"] .sub-toolbar .sub-search-input:focus {
+    background: #0f172a;
+}
+.sub-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+    font-size: 1rem;
+    pointer-events: none;
+    z-index: 1;
+}
+.sub-action-btn {
+    border-radius: 12px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 0 12px !important;
+    background: #f8fafc !important;
+    color: #6e7687 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    transition: all 0.2s !important;
+}
+body[data-bs-theme="dark"] .sub-action-btn {
+    border-color: #4a5568 !important;
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+}
+.sub-action-btn.filter-active {
+    border-color: var(--tblr-primary) !important;
+    color: var(--tblr-primary) !important;
+    background: rgba(32, 107, 196, 0.08) !important;
+}
+.sub-dropdown {
+    border-radius: 14px !important;
+    border: none !important;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.13) !important;
+    padding: 6px !important;
+    min-width: 180px !important;
+}
+body[data-bs-theme="dark"] .sub-dropdown {
+    background: #1e293b !important;
+}
+.sub-dropdown .dropdown-item {
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    padding: 8px 12px !important;
+    color: inherit;
+}
+.sub-dropdown .dropdown-item.active {
+    background: rgba(32, 107, 196, 0.1) !important;
+    color: var(--tblr-primary) !important;
+    font-weight: 600;
+}
+.sub-dropdown .dropdown-header {
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a0aec0 !important;
+    padding: 6px 12px 4px !important;
+}
+.sub-no-results {
+    text-align: center;
+    padding: 2rem 0;
+}
+.sub-clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #a0aec0;
+    padding: 3px 5px;
+    border-radius: 6px;
+    line-height: 1;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+}
+.sub-clear-btn:hover {
+    color: #6e7687;
+    background: rgba(0,0,0,0.06);
+}
+body[data-bs-theme="dark"] .sub-clear-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: #cbd5e1;
+}
+.sub-dropdown .dropdown-item:focus {
+    outline: none;
+}
 </style>
 
 <div class="container px-0">
@@ -213,12 +333,52 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
         <?php if ($hasAboneler): ?>
         <!-- 1. ABONELER TABI -->
         <div class="tab-pane fade <?php echo $activeTab == 'aboneler' ? 'show active' : ''; ?>" id="tab-aboneler" role="tabpanel">
+            <?php if (!empty($subscribers)): ?>
+            <div class="sub-toolbar mb-3">
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="flex-grow-1 position-relative">
+                        <i class="ti ti-search sub-search-icon"></i>
+                        <input type="text" class="form-control sub-search-input" id="ab-search" placeholder="Ad veya e-posta ara...">
+                        <button type="button" class="sub-clear-btn d-none" id="ab-clear"><i class="ti ti-x"></i></button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn sub-action-btn filter-active" type="button" data-bs-toggle="dropdown" id="ab-filter-btn" title="Filtrele">
+                            <i class="ti ti-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end sub-dropdown" id="ab-filter-menu">
+                            <li><h6 class="dropdown-header">Durum Filtresi</h6></li>
+                            <li><button type="button" class="dropdown-item ab-filter-item" data-val="all">Tümü</button></li>
+                            <li><button type="button" class="dropdown-item ab-filter-item active" data-val="aktif">Aktif</button></li>
+                            <li><button type="button" class="dropdown-item ab-filter-item" data-val="sona_erdi">Sona Erdi</button></li>
+                            <li><button type="button" class="dropdown-item ab-filter-item" data-val="iptal">İptal</button></li>
+                            <li><button type="button" class="dropdown-item ab-filter-item" data-val="onay_bekliyor">Onay Bekliyor</button></li>
+                            <li><button type="button" class="dropdown-item ab-filter-item" data-val="beklemede">Beklemede</button></li>
+                            <li><button type="button" class="dropdown-item ab-filter-item" data-val="yok">Abonelik Yok</button></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn sub-action-btn" type="button" data-bs-toggle="dropdown" id="ab-sort-btn" title="Sırala">
+                            <i class="ti ti-arrows-sort"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end sub-dropdown" id="ab-sort-menu">
+                            <li><h6 class="dropdown-header">Sıralama</h6></li>
+                            <li><button type="button" class="dropdown-item ab-sort-item active" data-val="name-asc">Ad (A-Z)</button></li>
+                            <li><button type="button" class="dropdown-item ab-sort-item" data-val="name-desc">Ad (Z-A)</button></li>
+                            <li><button type="button" class="dropdown-item ab-sort-item" data-val="days-desc">Kalan Gün (Çok-Az)</button></li>
+                            <li><button type="button" class="dropdown-item ab-sort-item" data-val="days-asc">Kalan Gün (Az-Çok)</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (empty($subscribers)): ?>
                 <div class="text-center py-5">
                     <i class="ti ti-users-off text-muted mb-2" style="font-size: 2.5rem; opacity: 0.5;"></i>
                     <p class="text-muted text-sm mb-0">Kayıtlı abone bulunamadı.</p>
                 </div>
             <?php else: ?>
+                <div id="aboneler-list">
                 <?php foreach ($subscribers as $sub): 
                     // Initials for avatar
                     $words = explode(" ", trim($sub->full_name));
@@ -234,13 +394,15 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
                     $bitis = $sub->bitis_tarihi ? date('d.m.Y', strtotime($sub->bitis_tarihi)) : '-';
                     $kalan_gun_str = '-';
                     $kalan_gun_class = 'text-secondary';
-                    
+                    $raw_days = -9999;
+
                     if ($sub->abonelik_durumu == 'aktif' && $sub->bitis_tarihi) {
                         $today = new DateTime(date('Y-m-d'));
                         $end_date = new DateTime($sub->bitis_tarihi);
                         if ($today <= $end_date) {
                             $interval = $today->diff($end_date);
                             $days = (int)$interval->format('%r%a');
+                            $raw_days = $days;
                             if ($days == 0) {
                                 $kalan_gun_str = 'Bugün son gün';
                                 $kalan_gun_class = 'badge bg-warning text-warning-fg';
@@ -276,7 +438,11 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
                             $status_badge = '<span class="badge bg-light text-secondary">Abonelik Yok</span>';
                     }
                     ?>
-                    <div class="mobile-card p-3">
+                    <div class="mobile-card p-3"
+                         data-ab-name="<?php echo mb_strtolower(htmlspecialchars($sub->full_name), 'UTF-8'); ?>"
+                         data-ab-email="<?php echo mb_strtolower(htmlspecialchars($sub->email), 'UTF-8'); ?>"
+                         data-ab-status="<?php echo htmlspecialchars($sub->abonelik_durumu ?? 'yok'); ?>"
+                         data-ab-days="<?php echo $raw_days; ?>">
                         <div class="d-flex align-items-center gap-3 mb-3">
                             <div class="avatar-sub"><?php echo htmlspecialchars($initials); ?></div>
                             <div class="flex-grow-1" style="min-width: 0;">
@@ -306,6 +472,11 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
                         </div>
                     </div>
                 <?php endforeach; ?>
+                </div><!-- /#aboneler-list -->
+                <div class="sub-no-results d-none" id="aboneler-no-results">
+                    <i class="ti ti-search-off text-muted mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="text-muted text-sm mb-0">Aramanızla eşleşen abone bulunamadı.</p>
+                </div>
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -313,12 +484,48 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
         <?php if ($hasPaketler): ?>
         <!-- 2. PAKETLER TABI -->
         <div class="tab-pane fade <?php echo $activeTab == 'paketler' ? 'show active' : ''; ?>" id="tab-paketler" role="tabpanel">
+            <?php if (!empty($packages)): ?>
+            <div class="sub-toolbar mb-3">
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="flex-grow-1 position-relative">
+                        <i class="ti ti-search sub-search-icon"></i>
+                        <input type="text" class="form-control sub-search-input" id="pkg-search" placeholder="Paket adı ara...">
+                        <button type="button" class="sub-clear-btn d-none" id="pkg-clear"><i class="ti ti-x"></i></button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn sub-action-btn" type="button" data-bs-toggle="dropdown" id="pkg-filter-btn" title="Filtrele">
+                            <i class="ti ti-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end sub-dropdown" id="pkg-filter-menu">
+                            <li><h6 class="dropdown-header">Durum Filtresi</h6></li>
+                            <li><button type="button" class="dropdown-item pkg-filter-item active" data-val="all">Tümü</button></li>
+                            <li><button type="button" class="dropdown-item pkg-filter-item" data-val="1">Aktif</button></li>
+                            <li><button type="button" class="dropdown-item pkg-filter-item" data-val="0">Pasif</button></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn sub-action-btn" type="button" data-bs-toggle="dropdown" id="pkg-sort-btn" title="Sırala">
+                            <i class="ti ti-arrows-sort"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end sub-dropdown" id="pkg-sort-menu">
+                            <li><h6 class="dropdown-header">Sıralama</h6></li>
+                            <li><button type="button" class="dropdown-item pkg-sort-item active" data-val="name-asc">Ad (A-Z)</button></li>
+                            <li><button type="button" class="dropdown-item pkg-sort-item" data-val="name-desc">Ad (Z-A)</button></li>
+                            <li><button type="button" class="dropdown-item pkg-sort-item" data-val="price-asc">Fiyat (Artan)</button></li>
+                            <li><button type="button" class="dropdown-item pkg-sort-item" data-val="price-desc">Fiyat (Azalan)</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (empty($packages)): ?>
                 <div class="text-center py-5">
                     <i class="ti ti-package-off text-muted mb-2" style="font-size: 2.5rem; opacity: 0.5;"></i>
                     <p class="text-muted text-sm mb-0">Sistemde tanımlı paket bulunamadı.</p>
                 </div>
             <?php else: ?>
+                <div id="paketler-list">
                 <?php foreach ($packages as $pkg): 
                     $encryptedPkgId = Security::encrypt($pkg->id);
                     $fiyat_format = number_format($pkg->fiyat, 2, ',', '.') . ' ₺';
@@ -326,7 +533,10 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
                         ? '<span class="badge bg-success text-success-fg">Aktif</span>' 
                         : '<span class="badge bg-secondary text-secondary-fg">Pasif</span>';
                     ?>
-                    <div class="mobile-card p-3">
+                    <div class="mobile-card p-3"
+                         data-pkg-name="<?php echo mb_strtolower(htmlspecialchars($pkg->ad), 'UTF-8'); ?>"
+                         data-pkg-active="<?php echo (int)$pkg->aktif_mi; ?>"
+                         data-pkg-price="<?php echo (float)$pkg->fiyat; ?>">
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <h4 class="mb-0 text-bold text-primary" style="font-size: 1rem;"><?php echo htmlspecialchars($pkg->ad); ?></h4>
                             <div>
@@ -373,6 +583,11 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
                         </div>
                     </div>
                 <?php endforeach; ?>
+                </div><!-- /#paketler-list -->
+                <div class="sub-no-results d-none" id="paketler-no-results">
+                    <i class="ti ti-search-off text-muted mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="text-muted text-sm mb-0">Aramanızla eşleşen paket bulunamadı.</p>
+                </div>
             <?php endif; ?>
 
             <!-- Floating Action Button for adding Package -->
@@ -385,12 +600,49 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
         <?php if ($hasSatinAlma): ?>
         <!-- 3. SATIN ALMA TABI -->
         <div class="tab-pane fade <?php echo $activeTab == 'satinalma' ? 'show active' : ''; ?>" id="tab-satinalma" role="tabpanel">
+            <?php if (!empty($payments)): ?>
+            <div class="sub-toolbar mb-3">
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="flex-grow-1 position-relative">
+                        <i class="ti ti-search sub-search-icon"></i>
+                        <input type="text" class="form-control sub-search-input" id="pay-search" placeholder="Abone adı veya e-posta ara...">
+                        <button type="button" class="sub-clear-btn d-none" id="pay-clear"><i class="ti ti-x"></i></button>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn sub-action-btn" type="button" data-bs-toggle="dropdown" id="pay-filter-btn" title="Filtrele">
+                            <i class="ti ti-filter"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end sub-dropdown" id="pay-filter-menu">
+                            <li><h6 class="dropdown-header">Durum Filtresi</h6></li>
+                            <li><button type="button" class="dropdown-item pay-filter-item active" data-val="all">Tümü</button></li>
+                            <li><button type="button" class="dropdown-item pay-filter-item" data-val="basarili">Başarılı</button></li>
+                            <li><button type="button" class="dropdown-item pay-filter-item" data-val="beklemede">Beklemede</button></li>
+                            <li><button type="button" class="dropdown-item pay-filter-item" data-val="basarisiz">Başarısız</button></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn sub-action-btn" type="button" data-bs-toggle="dropdown" id="pay-sort-btn" title="Sırala">
+                            <i class="ti ti-arrows-sort"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end sub-dropdown" id="pay-sort-menu">
+                            <li><h6 class="dropdown-header">Sıralama</h6></li>
+                            <li><button type="button" class="dropdown-item pay-sort-item active" data-val="date-desc">En Yeni</button></li>
+                            <li><button type="button" class="dropdown-item pay-sort-item" data-val="date-asc">En Eski</button></li>
+                            <li><button type="button" class="dropdown-item pay-sort-item" data-val="amount-desc">Tutar (Azalan)</button></li>
+                            <li><button type="button" class="dropdown-item pay-sort-item" data-val="amount-asc">Tutar (Artan)</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (empty($payments)): ?>
                 <div class="text-center py-5">
                     <i class="ti ti-credit-card-off text-muted mb-2" style="font-size: 2.5rem; opacity: 0.5;"></i>
                     <p class="text-muted text-sm mb-0">Kayıtlı satış işlemi bulunamadı.</p>
                 </div>
             <?php else: ?>
+                <div id="satislar-list">
                 <?php foreach ($payments as $pay): 
                     $encryptedPayId = Security::encrypt($pay->id);
                     $tutar_format = number_format($pay->tutar, 2, ',', '.') . ' ₺';
@@ -406,7 +658,12 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
                         $status_badge = '<span class="badge bg-warning text-warning-fg">Beklemede</span>';
                     }
                     ?>
-                    <div class="mobile-card p-3">
+                    <div class="mobile-card p-3"
+                         data-pay-name="<?php echo mb_strtolower(htmlspecialchars($pay->subscriber_name ?? ''), 'UTF-8'); ?>"
+                         data-pay-email="<?php echo mb_strtolower(htmlspecialchars($pay->subscriber_email ?? ''), 'UTF-8'); ?>"
+                         data-pay-status="<?php echo htmlspecialchars($pay->durum ?? ''); ?>"
+                         data-pay-date="<?php echo $pay->odeme_tarihi ? strtotime($pay->odeme_tarihi) : 0; ?>"
+                         data-pay-amount="<?php echo (float)$pay->tutar; ?>">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h4 class="mb-0 text-bold text-dark" style="font-size: 0.9rem;"><?php echo htmlspecialchars($pay->subscriber_name ?? '-'); ?></h4>
                             <div>
@@ -471,6 +728,11 @@ body[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
                         </div>
                     </div>
                 <?php endforeach; ?>
+                </div><!-- /#satislar-list -->
+                <div class="sub-no-results d-none" id="satislar-no-results">
+                    <i class="ti ti-search-off text-muted mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="text-muted text-sm mb-0">Aramanızla eşleşen satış kaydı bulunamadı.</p>
+                </div>
             <?php endif; ?>
 
             <!-- Floating Action Button for adding Transaction -->
@@ -670,6 +932,8 @@ $(document).ready(function() {
 
     // İlk yüklemede çalıştır
     adjustFabVisibility();
+    applyAboneler();
+    sortAboneler();
 
     // Sekme değişimini dinle
     $('#subscriptionTabs button').on('shown.bs.tab', function (e) {
@@ -1074,5 +1338,235 @@ $(document).ready(function() {
         });
     });
 
+    // ======== ARAMA / FİLTRE / SIRALAMA ========
+
+    // --- Yardımcı: temizle butonu göster/gizle ---
+    function toggleClearBtn(inputId, clearId) {
+        var val = $('#' + inputId).val();
+        $('#' + clearId).toggleClass('d-none', val.length === 0);
+    }
+
+    // --- Aboneler ---
+    var abState = { search: '', filter: 'aktif', sort: 'name-asc' };
+
+    function applyAboneler() {
+        var s = abState.search;
+        var f = abState.filter;
+        var visible = 0;
+        $('#aboneler-list').children('.mobile-card').each(function() {
+            var name   = String($(this).attr('data-ab-name')   || '');
+            var email  = String($(this).attr('data-ab-email')  || '');
+            var status = String($(this).attr('data-ab-status') || '');
+            var matchSearch = !s || name.indexOf(s) !== -1 || email.indexOf(s) !== -1;
+            var matchFilter = f === 'all' || status === f;
+            if (matchSearch && matchFilter) { $(this).show(); visible++; }
+            else { $(this).hide(); }
+        });
+        $('#aboneler-no-results').toggleClass('d-none', visible > 0);
+    }
+
+    function sortAboneler() {
+        var sv = abState.sort;
+        var container = $('#aboneler-list');
+        var cards = container.children('.mobile-card').toArray();
+        cards.sort(function(a, b) {
+            var an = String($(a).attr('data-ab-name') || '');
+            var bn = String($(b).attr('data-ab-name') || '');
+            var ad = parseInt($(a).attr('data-ab-days')) || -9999;
+            var bd = parseInt($(b).attr('data-ab-days')) || -9999;
+            if (sv === 'name-asc')  return an.localeCompare(bn, 'tr');
+            if (sv === 'name-desc') return bn.localeCompare(an, 'tr');
+            if (sv === 'days-desc') return bd - ad;
+            if (sv === 'days-asc')  return ad - bd;
+            return 0;
+        });
+        container.append(cards);
+    }
+
+    $('#ab-search').on('input', function() {
+        abState.search = $(this).val().toLowerCase();
+        toggleClearBtn('ab-search', 'ab-clear');
+        applyAboneler();
+    });
+    $('#ab-clear').on('click', function() {
+        $('#ab-search').val('').trigger('input');
+    });
+
+    $('#ab-filter-menu').on('click', '.ab-filter-item', function() {
+        abState.filter = String($(this).attr('data-val'));
+        $('#ab-filter-menu .ab-filter-item').removeClass('active');
+        $(this).addClass('active');
+        $('#ab-filter-btn').toggleClass('filter-active', abState.filter !== 'all');
+        applyAboneler();
+    });
+
+    $('#ab-sort-menu').on('click', '.ab-sort-item', function() {
+        abState.sort = String($(this).attr('data-val'));
+        $('#ab-sort-menu .ab-sort-item').removeClass('active');
+        $(this).addClass('active');
+        $('#ab-sort-btn').addClass('filter-active');
+        sortAboneler();
+        applyAboneler();
+    });
+
+    // --- Paketler ---
+    var pkgState = { search: '', filter: 'all', sort: 'name-asc' };
+
+    function applyPaketler() {
+        var s = pkgState.search;
+        var f = pkgState.filter;
+        var visible = 0;
+        $('#paketler-list').children('.mobile-card').each(function() {
+            var name   = String($(this).attr('data-pkg-name')   || '');
+            var active = String($(this).attr('data-pkg-active') || '');
+            var matchSearch = !s || name.indexOf(s) !== -1;
+            var matchFilter = f === 'all' || active === f;
+            if (matchSearch && matchFilter) { $(this).show(); visible++; }
+            else { $(this).hide(); }
+        });
+        $('#paketler-no-results').toggleClass('d-none', visible > 0);
+    }
+
+    function sortPaketler() {
+        var sv = pkgState.sort;
+        var container = $('#paketler-list');
+        var cards = container.children('.mobile-card').toArray();
+        cards.sort(function(a, b) {
+            var an = String($(a).attr('data-pkg-name') || '');
+            var bn = String($(b).attr('data-pkg-name') || '');
+            var ap = parseFloat($(a).attr('data-pkg-price')) || 0;
+            var bp = parseFloat($(b).attr('data-pkg-price')) || 0;
+            if (sv === 'name-asc')   return an.localeCompare(bn, 'tr');
+            if (sv === 'name-desc')  return bn.localeCompare(an, 'tr');
+            if (sv === 'price-asc')  return ap - bp;
+            if (sv === 'price-desc') return bp - ap;
+            return 0;
+        });
+        container.append(cards);
+    }
+
+    $('#pkg-search').on('input', function() {
+        pkgState.search = $(this).val().toLowerCase();
+        toggleClearBtn('pkg-search', 'pkg-clear');
+        applyPaketler();
+    });
+    $('#pkg-clear').on('click', function() {
+        $('#pkg-search').val('').trigger('input');
+    });
+
+    $('#pkg-filter-menu').on('click', '.pkg-filter-item', function() {
+        pkgState.filter = String($(this).attr('data-val'));
+        $('#pkg-filter-menu .pkg-filter-item').removeClass('active');
+        $(this).addClass('active');
+        $('#pkg-filter-btn').toggleClass('filter-active', pkgState.filter !== 'all');
+        applyPaketler();
+    });
+
+    $('#pkg-sort-menu').on('click', '.pkg-sort-item', function() {
+        pkgState.sort = String($(this).attr('data-val'));
+        $('#pkg-sort-menu .pkg-sort-item').removeClass('active');
+        $(this).addClass('active');
+        $('#pkg-sort-btn').addClass('filter-active');
+        sortPaketler();
+        applyPaketler();
+    });
+
+    // --- Satışlar ---
+    var payState = { search: '', filter: 'all', sort: 'date-desc' };
+
+    function applySatislar() {
+        var s = payState.search;
+        var f = payState.filter;
+        var visible = 0;
+        $('#satislar-list').children('.mobile-card').each(function() {
+            var name   = String($(this).attr('data-pay-name')   || '');
+            var email  = String($(this).attr('data-pay-email')  || '');
+            var status = String($(this).attr('data-pay-status') || '');
+            var matchSearch = !s || name.indexOf(s) !== -1 || email.indexOf(s) !== -1;
+            var matchFilter = f === 'all' || status === f;
+            if (matchSearch && matchFilter) { $(this).show(); visible++; }
+            else { $(this).hide(); }
+        });
+        $('#satislar-no-results').toggleClass('d-none', visible > 0);
+    }
+
+    function sortSatislar() {
+        var sv = payState.sort;
+        var container = $('#satislar-list');
+        var cards = container.children('.mobile-card').toArray();
+        cards.sort(function(a, b) {
+            var ad = parseInt($(a).attr('data-pay-date'))    || 0;
+            var bd = parseInt($(b).attr('data-pay-date'))    || 0;
+            var aa = parseFloat($(a).attr('data-pay-amount')) || 0;
+            var ba = parseFloat($(b).attr('data-pay-amount')) || 0;
+            if (sv === 'date-desc')   return bd - ad;
+            if (sv === 'date-asc')    return ad - bd;
+            if (sv === 'amount-desc') return ba - aa;
+            if (sv === 'amount-asc')  return aa - ba;
+            return 0;
+        });
+        container.append(cards);
+    }
+
+    $('#pay-search').on('input', function() {
+        payState.search = $(this).val().toLowerCase();
+        toggleClearBtn('pay-search', 'pay-clear');
+        applySatislar();
+    });
+    $('#pay-clear').on('click', function() {
+        $('#pay-search').val('').trigger('input');
+    });
+
+    $('#pay-filter-menu').on('click', '.pay-filter-item', function() {
+        payState.filter = String($(this).attr('data-val'));
+        $('#pay-filter-menu .pay-filter-item').removeClass('active');
+        $(this).addClass('active');
+        $('#pay-filter-btn').toggleClass('filter-active', payState.filter !== 'all');
+        applySatislar();
+    });
+
+    $('#pay-sort-menu').on('click', '.pay-sort-item', function() {
+        payState.sort = String($(this).attr('data-val'));
+        $('#pay-sort-menu .pay-sort-item').removeClass('active');
+        $(this).addClass('active');
+        $('#pay-sort-btn').addClass('filter-active');
+        sortSatislar();
+        applySatislar();
+    });
+
+    // --- Mobil Uyumlu Manuel Dropdown Tetikleyici (Bootstrap & Tabler Çakışmalarını Önler) ---
+    $(document).on('click', '[data-bs-toggle="dropdown"]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let $toggle = $(this);
+        let $menu = $toggle.siblings('.dropdown-menu');
+        let isOpen = $menu.hasClass('show');
+        
+        // Diğer tüm açık dropdown'ları kapat
+        $('.dropdown-menu').removeClass('show');
+        $('[data-bs-toggle="dropdown"]').removeClass('show').attr('aria-expanded', 'false');
+        
+        if (!isOpen) {
+            $menu.addClass('show');
+            $toggle.addClass('show').attr('aria-expanded', 'true');
+        }
+    });
+    
+    // Dropdown dışına tıklanınca kapat
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.dropdown').length) {
+            $('.dropdown-menu').removeClass('show');
+            $('[data-bs-toggle="dropdown"]').removeClass('show').attr('aria-expanded', 'false');
+        }
+    });
+
+    // Bir seçeneğe tıklandığında dropdown'ı otomatik kapat
+    $(document).on('click', '.dropdown-menu .dropdown-item, .dropdown-menu a', function() {
+        $('.dropdown-menu').removeClass('show');
+        $('[data-bs-toggle="dropdown"]').removeClass('show').attr('aria-expanded', 'false');
+    });
+
 });
 </script>
+

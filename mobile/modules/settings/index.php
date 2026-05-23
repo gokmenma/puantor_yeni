@@ -1,8 +1,7 @@
 <?php
 require_once ROOT . "/Model/SettingsModel.php";
 require_once ROOT . "/Model/UserModel.php";
-require_once ROOT . "/Model/PackageModel.php";
-require_once ROOT . "/Model/UsersPackagesModel.php";
+require_once ROOT . "/Model/KullaniciAbonelikleriModel.php";
 require_once ROOT . "/Model/Auths.php";
 require_once ROOT . "/App/Helper/date.php";
 
@@ -11,8 +10,7 @@ use App\Helper\Security;
 
 $Settings = new SettingsModel();
 $User = new UserModel();
-$Packages = new PackageModel();
-$UsersPackages = new UsersPackageModel();
+$KullaniciAbonelikleri = new KullaniciAbonelikleriModel();
 $Auths = new Auths();
 
 $user = $_SESSION['user'];
@@ -25,8 +23,8 @@ $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set
 $personnel_advance_request_visible = $Settings->getSettings("personnel_advance_request_visible")->set_value ?? 1;
 
 // Get package info
-$user_package = $UsersPackages->getSelectUserPackage($userId);
-$current_package = $Packages->getPackage($user_package->package_id ?? 0) ?? null;
+$subHistory = $KullaniciAbonelikleri->getSubscriptionHistory($userId);
+$latestSub = !empty($subHistory) ? $subHistory[0] : null;
 
 // Yetki kontrolü (Sistem ayarları için)
 $settings_auth = $Auths->getAuthIdByTitle("Ayarlar");
@@ -179,22 +177,22 @@ if ($view_mode == 'system' && !$can_view_settings) {
                     
                     <div class="bg-primary-lt p-3 rounded-3 mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <h4 class="mb-0 text-primary fw-bold"><?php echo $current_package->name ?? 'Paket Yok'; ?></h4>
-                            <span class="badge bg-primary-lt border border-primary text-primary">Aktif</span>
+                            <h4 class="mb-0 text-primary fw-bold"><?php echo $latestSub->paket_adi ?? 'Paket Yok'; ?></h4>
+                            <span class="badge bg-primary-lt border border-primary text-primary"><?php echo ($latestSub && $latestSub->durum == 'aktif') ? 'Aktif' : 'Pasif'; ?></span>
                         </div>
                         <div class="text-xs text-muted">
-                            Bitiş: <?php echo Date::dmY($user_package->end_date ?? ''); ?>
+                            Bitiş: <?php echo $latestSub ? Date::dmY($latestSub->bitis_tarihi) : '-'; ?>
                         </div>
                     </div>
 
                     <div class="list-group list-group-flush mb-3">
                         <div class="list-group-item px-0 bg-transparent border-0 d-flex justify-content-between text-sm">
                             <span class="text-muted">Personel Limiti:</span>
-                            <span class="fw-bold"><?php echo ($current_package->person ?? 0) > 100 ? 'Sınırsız' : ($current_package->person ?? 0); ?></span>
+                            <span class="fw-bold"><?php echo $latestSub ? (($latestSub->alt_kullanici_hakki >= 9999) ? 'Sınırsız' : (int)$latestSub->alt_kullanici_hakki) : 0; ?></span>
                         </div>
                         <div class="list-group-item px-0 bg-transparent border-0 d-flex justify-content-between text-sm">
-                            <span class="text-muted">Proje Limiti:</span>
-                            <span class="fw-bold"><?php echo ($current_package->project ?? 0) > 100 ? 'Sınırsız' : ($current_package->project ?? 0); ?></span>
+                            <span class="text-muted">Firma Limiti:</span>
+                            <span class="fw-bold"><?php echo $latestSub ? (($latestSub->firma_hakki >= 9999) ? 'Sınırsız' : (int)$latestSub->firma_hakki) : 0; ?></span>
                         </div>
                     </div>
 

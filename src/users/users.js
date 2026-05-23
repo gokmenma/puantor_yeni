@@ -140,3 +140,14 @@ $(document).on("click", ".delete_user", function () {
 
   deleteRecord(this, action, confirmMessage, url);
 });
+
+$(document).on("click", ".btn-new-user-limit", function (e) {
+  e.preventDefault();
+  let limit = $(this).data("limit");
+  swal.fire({
+    title: "Limit Aşımı!",
+    text: "Paketinizin alt kullanıcı limiti (" + limit + ") dolmuştur. Yeni kullanıcı eklemek için lütfen paketinizi yükseltin.",
+    icon: "warning",
+    confirmButtonText: "Tamam"
+  });
+});

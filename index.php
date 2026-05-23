@@ -142,20 +142,44 @@ if ($_SESSION["user"]->parent_id != 0) {
 //     exit();
 // }
 
-//Eğer kullanıcı demo kullanıcısı ise
-if ($user->user_type == 1) {
-    //Kullanıcının kayıt olduğu tarihten itibaren geçen süreyi 15'ten çıkar , tam sayı halinde, mutlak değer olarak döndürür
-    $diff = 15 - date_diff(date_create($user->created_at), date_create(date("Y-m-d")))->format("%a");
-    //süre bittiyse kullanıcıya bildirim göster ve çıkış yap
-    if ($diff <= 0) {
-        header("Location: sign-in.php");
-        exit();
-    }
-}
-
-
 $active_page = isset($_GET["p"]) ? $_GET["p"] : "";
 $menu_name = $menus->getMenusByLink($active_page);
+
+// Abonelik ve Deneme Süresi Kontrolü (Superadmin için kontrol atlanır)
+if (($user->superadmin ?? 0) != 1) {
+    require_once "App/Helper/date.php";
+    $owner_id = $user->id;
+    if (!empty($user->parent_id) && $user->parent_id != $user->id) {
+        $owner_id = $user->parent_id;
+    }
+
+    // 1. Aktif ücretli abonelik kontrolü
+    $dbCheck = $User->getDb();
+    $stmtCheck = $dbCheck->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ? AND durum = 'aktif' AND bitis_tarihi >= ?");
+    $stmtCheck->execute([$owner_id, date('Y-m-d')]);
+    $has_active_sub = $stmtCheck->fetchColumn() > 0;
+
+    $is_subscription_expired = !$has_active_sub;
+
+    // 2. Aktif deneme süresi kontrolü (Eğer aktif ücretli paket yoksa ve demo kullanıcısıysa)
+    if ($is_subscription_expired) {
+        $owner_user = $User->find($owner_id);
+        if ($owner_user && $owner_user->user_type == 1) {
+            $days = \App\Helper\Date::getDateDiff($owner_user->created_at);
+            if ($days < 15) {
+                $is_subscription_expired = false;
+            }
+        }
+    }
+
+    if ($is_subscription_expired) {
+        // Sadece ayarlar sayfasına ve çıkışa gitmeye izin ver, diğer sayfalarda ise yönlendir
+        if ($active_page !== 'settings/manage' && $active_page !== 'logout') {
+            header("Location: index.php?p=settings/manage&tab=edit-account&expired=1");
+            exit();
+        }
+    }
+}
 
 if (isset($_GET['theme'])) {
     $_SESSION['theme'] = $_GET['theme'] == 'dark' ? 'dark' : 'light';

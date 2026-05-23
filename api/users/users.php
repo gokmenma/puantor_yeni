@@ -17,6 +17,20 @@ if ($_POST["action"] == "userSave") {
     $id = Security::safeDecrypt($_POST["id"]);
     //Eğer kayıt yapan kullanıcı ana kullanıcı ise kend id'si, değilse parent_id'si alınır.
     $parent_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
+    // If it's a new user registration, check the alt-user limit
+    if ($id == 0) {
+        $subDetails = $User->getActiveSubscriptionDetails($parent_id);
+        $currentSubUsers = $User->getSubUserCount($parent_id);
+        if (($_SESSION["user"]->superadmin ?? 0) != 1 && $currentSubUsers >= $subDetails['alt_kullanici_hakki']) {
+            $res = [
+                "status" => "error",
+                "message" => "Paketinizin alt kullanıcı limiti (" . $subDetails['alt_kullanici_hakki'] . ") dolmuştur. Yeni kullanıcı ekleyemezsiniz."
+            ];
+            echo json_encode($res);
+            exit;
+        }
+    }
+
     $lastInsertId = 0;
 
     try {

@@ -26,6 +26,23 @@ if (isset($_POST["action"]) && $_POST["action"] == "updatePaymentStatus") {
 
     try {
         if ($odemelerModel->updateStatus($encryptedId, $status)) {
+            // Ödeme kaydını bularak ilişkili aboneliği güncelle
+            $paymentId = Security::safeDecrypt($encryptedId);
+            $payment = $odemelerModel->find($paymentId);
+            if ($payment && !empty($payment->abonelik_id)) {
+                $subStatus = 'onay_bekliyor';
+                if ($status == 'basarili') {
+                    $subStatus = 'aktif';
+                } elseif ($status == 'basarisiz') {
+                    $subStatus = 'iptal';
+                } elseif ($status == 'beklemede') {
+                    $subStatus = 'onay_bekliyor';
+                }
+                
+                $sqlSub = $odemelerModel->getDb()->prepare("UPDATE kullanici_abonelikleri SET durum = ? WHERE id = ?");
+                $sqlSub->execute([$subStatus, $payment->abonelik_id]);
+            }
+
             $statusStr = '';
             switch ($status) {
                 case 'basarili': $statusStr = 'Başarılı'; break;

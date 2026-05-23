@@ -241,4 +241,66 @@ class UserModel extends Model
         $sql->execute([$user_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
+
+    /**
+     * Get the active subscription details and limits for the main user.
+     */
+    public function getActiveSubscriptionDetails($owner_id) {
+        require_once ROOT . "/App/Helper/date.php";
+
+        $db = $this->getDb();
+        
+        // 1. Check for active subscription in kullanici_abonelikleri
+        $stmt = $db->prepare("
+            SELECT ka.*, ap.ad as paket_adi
+            FROM kullanici_abonelikleri ka
+            LEFT JOIN abonelik_paketleri ap ON ap.id = ka.paket_id
+            WHERE ka.kullanici_id = ? AND ka.durum = 'aktif' AND ka.bitis_tarihi >= ?
+            ORDER BY ka.id DESC LIMIT 1
+        ");
+        $stmt->execute([$owner_id, date('Y-m-d')]);
+        $sub = $stmt->fetch(PDO::FETCH_OBJ);
+        
+        if ($sub) {
+            return [
+                'has_sub' => true,
+                'paket_adi' => $sub->paket_adi,
+                'alt_kullanici_hakki' => (int)$sub->alt_kullanici_hakki,
+                'firma_hakki' => (int)$sub->firma_hakki
+            ];
+        }
+        
+        // 2. If no active sub row, check if they are in the 15-day registration trial
+        $stmtUser = $db->prepare("SELECT created_at, user_type FROM users WHERE id = ?");
+        $stmtUser->execute([$owner_id]);
+        $owner = $stmtUser->fetch(PDO::FETCH_OBJ);
+        if ($owner && $owner->user_type == 1) {
+            $days = \App\Helper\Date::getDateDiff($owner->created_at);
+            if ($days < 15) {
+                // Return default trial limits: 10 Alt Kullanıcı, 1 Firma
+                return [
+                    'has_sub' => true,
+                    'paket_adi' => '15 Günlük Deneme Süresi',
+                    'alt_kullanici_hakki' => 10,
+                    'firma_hakki' => 1
+                ];
+            }
+        }
+        
+        return [
+            'has_sub' => false,
+            'paket_adi' => 'Paket Yok',
+            'alt_kullanici_hakki' => 0,
+            'firma_hakki' => 0
+        ];
+    }
+
+    /**
+     * Count sub-users of a given main owner ID.
+     */
+    public function getSubUserCount($owner_id) {
+        $sql = $this->db->prepare("SELECT COUNT(*) FROM $this->table WHERE parent_id = ?");
+        $sql->execute([$owner_id]);
+        return (int)$sql->fetchColumn();
+    }
 }

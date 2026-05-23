@@ -9,14 +9,13 @@
                 <div class="col-12">
                     <form action="">
                         <input type="hidden" class="form-control mb-2" name="package_id" id="package_id">
-                        <div class="btn-group w-100" role="group">
+                        <div class="btn-group w-100 mb-3" role="group" id="duration_selector_container">
                             <input type="radio" class="btn-check" name="btn-radio-basic" id="monthly_price"
                                 autocomplete="off" checked="" data-price="" data-gun="30">
                             <label for="monthly_price" type="button" class="btn">Ay</label>
                             <input type="radio" class="btn-check" name="btn-radio-basic" id="yearly_price"
                                 autocomplete="off" data-price="">
                             <label for="yearly_price" type="button" class="btn">Yıl</label>
-
                         </div>
 
                         <div class="card-body">

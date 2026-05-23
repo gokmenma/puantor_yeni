@@ -19,29 +19,62 @@ if ($_POST["action"] == "userSave") {
     $lastInsertId = 0;
 
     try {
-        //Email adresi ile kayıtlı ana kullanıcı varsa kayıt yapılmaz
+        $currentUser = $User->find($id);
+        if (!$currentUser) {
+            throw new Exception("Kullanıcı bulunamadı.");
+        }
+
         $data = [
-            "id" => $id,
-            "full_name" => $_POST["full_name"],
-            "password" => password_hash($_POST['password'], PASSWORD_DEFAULT),
-            "phone" => $_POST["phone"],
-            "user_roles" => $_POST["user_roles"],
-            "job" => $_POST["job"],
-
-
+            "id" => $id
         ];
 
-        $lastInsertId = $User->saveWithAttr($data) ?? $id;
-        $status = "success";
-        if ($id == 0) {
-            $message = "Profil Bilgileriniz başarıyla kaydedildi.";
-        } else {
-            $message = "Profil Bilgileriniz başarıyla güncellendi.";
+        if (isset($_POST["full_name"])) {
+            $data["full_name"] = trim($_POST["full_name"]);
         }
-    } catch (PDOException $e) {
+
+        if (isset($_POST["username"])) {
+            $username = trim($_POST["username"]);
+            if (!empty($username)) {
+                if ($User->isUsernameExists($username, $id)) {
+                    echo json_encode([
+                        "status" => "error",
+                        "message" => "Bu kullanıcı adı zaten kullanılmaktadır. Lütfen başka bir kullanıcı adı seçin."
+                    ]);
+                    exit();
+                }
+                $data["username"] = $username;
+            } else {
+                $data["username"] = null;
+            }
+        }
+
+        if (isset($_POST["phone"])) {
+            $data["phone"] = trim($_POST["phone"]);
+        }
+
+        if (isset($_POST["job"])) {
+            $data["job"] = trim($_POST["job"]);
+        }
+
+        if (isset($_POST["user_roles"])) {
+            $data["user_roles"] = $_POST["user_roles"];
+        }
+
+        if (isset($_POST["password"]) && !empty($_POST["password"])) {
+            $data["password"] = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        }
+
+        $lastInsertId = $User->saveWithAttr($data) ?? $id;
+        
+        // Güncellenmiş kullanıcı bilgisini oturuma kaydet
+        $_SESSION["user"] = $User->find($id);
+        
+        $status = "success";
+        $message = "Profil Bilgileriniz başarıyla güncellendi.";
+    } catch (Exception $e) {
         $status = "error";
-        if ($e->errorInfo[1] == 1062) {
-            $message = 'Bu e-posta adresi zaten kayıtlı.';
+        if ($e instanceof PDOException && $e->errorInfo[1] == 1062) {
+            $message = 'Bu e-posta veya kullanıcı adı zaten kayıtlı.';
         } else {
             $message = $e->getMessage();
         }
@@ -52,6 +85,7 @@ if ($_POST["action"] == "userSave") {
         "lastid" => $lastInsertId
     ];
     echo json_encode($res);
+    exit();
 }
 
 //Kullanıcı girişinde mail göndermek için

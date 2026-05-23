@@ -1,7 +1,22 @@
 if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankDataTable").length > 0) {
+
+  // DataTables 2.x: arama satırını init ÖNCE ekle ki header yönetimi bozulmasın
+  $(".datatable:not(#puantajTable)").each(function () {
+    var $thead = $(this).find("thead");
+    if ($thead.find(".search-input-row").length === 0) {
+      var colCount = $thead.find("tr:first th, tr:first td").length;
+      var $row = $('<tr class="search-input-row"></tr>');
+      for (var c = 0; c < colCount; c++) {
+        $row.append('<th class="search p-1"></th>');
+      }
+      $thead.append($row);
+    }
+  });
+
   var table = $(".datatable:not(#puantajTable)").DataTable({
     autoWidth: false,
     order: [],
+    orderCellsTop: true,
     language: {
       url: "src/tr.json"
     },
@@ -42,41 +57,32 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
     initComplete: function (settings, json) {
       var api = this.api();
       var tableId = settings.sTableId;
-      $("#" + tableId + " thead").append('<tr class="search-input-row"></tr>');
 
       api.columns().every(function () {
         let column = this;
-        let title = column.header().textContent;
-
-        //0. ve 1. kolonun index numarasına göre arama kutusu ekle
-        //kolon başlığında checkbox varsa arama kutusu ekleme
+        let colIdx = column.index();
+        // orderCellsTop:true ile column.header() ilk satırı döndürür
+        let title = $(column.header()).text().trim();
 
         if (
-          title != "İşlem" &&
-          title != "Seç" &&
+          title !== "İşlem" &&
+          title !== "Seç" &&
           $(column.header()).find('input[type="checkbox"]').length === 0
         ) {
-          // Create input element
           let input = document.createElement("input");
           input.placeholder = title;
           input.classList.add("form-control");
           input.classList.add("form-control-sm");
           input.setAttribute("autocomplete", "off");
 
-          // Append input element to the new row
-          $("#" + tableId + " .search-input-row").append(
-            $('<th class="search">').append(input)
-          );
+          // Mevcut arama satırındaki doğru hücreye yerleştir
+          $("#" + tableId + " .search-input-row th:eq(" + colIdx + ")").html(input);
 
-          // Event listener for user input
           $(input).on("keyup change", function () {
             if (column.search() !== this.value) {
               column.search(this.value).draw();
             }
           });
-        } else {
-          // Eğer "İşlem" sütunuysa, boş bir th ekleyin
-          $("#" + tableId + " .search-input-row").append("<th></th>");
         }
       });
     }

@@ -1,108 +1,151 @@
-let urlParams = new URLSearchParams(window.location.search);
-let myParam = urlParams.get("tab");
+$(document).ready(function () {
+  var urlParams = new URLSearchParams(window.location.search);
+  var myParam = urlParams.get("tab");
 
-function activateTab(tabName) {
-  $("#tabs-home").removeClass("active");
-  $("#tabs-home-7").removeClass("active show");
-  $(`#tabs-${tabName}`).addClass("active");
-  $(`#tabs-${tabName}-7`).addClass("active show");
-}
+  // Activate tab programmatically if specified in URL
+  if (myParam == "edit-profile") {
+    $('#settings-tabs a[href="#tabs-profile"]').tab('show');
+  } else if (myParam == "edit-account") {
+    $('#settings-tabs a[href="#tabs-account"]').tab('show');
+  }
 
-if (myParam == "edit-profile") {
-  activateTab("profile");
-}
+  // Profile Form submit validation and handler
+  $(document).on("submit", "#profileForm", function (e) {
+    e.preventDefault();
+    var form = $(this);
 
-if (myParam == "edit-account") {
-  activateTab("account");
-}
-$(document).on("click", "#userSave", function () {
-  var form = $("#userForm");
-
-  form.validate({
-    rules: {
-      name: {
-        required: true
+    form.validate({
+      rules: {
+        full_name: {
+          required: true
+        }
       },
-      password: {
-        required: true
+      messages: {
+        full_name: {
+          required: "Lütfen adınızı soyadınızı giriniz"
+        }
       },
-      user_roles: { required: true }
-    },
-    messages: {
-      name: {
-        required: "Lütfen adınızı giriniz"
-      },
-      password: {
-        required: "Lütfen şifrenizi giriniz"
-      },
-      user_roles: {
-        required: "Lütfen kullanıcı rolünü seçiniz"
-      }
-    },
-    errorElement: "em",
-    errorPlacement: function (error, element) {
-      if (element.hasClass("select2")) {
-        error.insertAfter(element.next("span"));
-      } else {
+      errorElement: "em",
+      errorPlacement: function (error, element) {
         error.insertAfter(element);
       }
+    });
+
+    if (!form.valid()) {
+      return;
     }
-    // highlight: function (element, errorClass, validClass) {
-    //   $(element).addClass("is-invalid").removeClass("is-valid");
-    // },
+
+    var formData = new FormData(form[0]);
+    formData.append("action", "userSave");
+
+    fetch("/api/settings/settings.php", {
+      method: "POST",
+      body: formData
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        var title = data.status == "success" ? "Başarılı!" : "Hata!";
+        Swal.fire({
+          title: title,
+          text: data.message,
+          icon: data.status,
+          confirmButtonText: "Tamam"
+        }).then(() => {
+          if (data.status == "success") {
+            window.location.reload();
+          }
+        });
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        Swal.fire("Hata!", "Profil bilgileri güncellenirken bir sorun oluştu.", "error");
+      });
   });
 
-  if (!form.valid()) {
-    return;
-  }
+  // Password Form submit validation and handler
+  $(document).on("submit", "#passwordForm", function (e) {
+    e.preventDefault();
+    var form = $(this);
 
-  var formData = new FormData(form[0]);
-  formData.append("action", "userSave");
-
-  for (var pair of formData.entries()) {
-    console.log(pair[0] + ", " + pair[1]);
-  }
-  fetch("/api/settings/settings.php", {
-    method: "POST",
-    body: formData
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      title = data.status == "success" ? "Başarılı!" : "Hata!";
-      Swal.fire({
-        title: title,
-        text: data.message,
-        icon: data.status,
-        confirmButtonText: "Ok"
-      });
-    })
-    .catch((error) => {
-      console.error("Error:", error);
+    form.validate({
+      rules: {
+        password: {
+          required: true,
+          minlength: 6
+        },
+        password_confirm: {
+          required: true,
+          equalTo: "#new_password"
+        }
+      },
+      messages: {
+        password: {
+          required: "Lütfen yeni şifrenizi giriniz",
+          minlength: "Şifreniz en az 6 karakter olmalıdır"
+        },
+        password_confirm: {
+          required: "Lütfen şifrenizi tekrar giriniz",
+          equalTo: "Şifreler birbiriyle eşleşmiyor"
+        }
+      },
+      errorElement: "em",
+      errorPlacement: function (error, element) {
+        error.insertAfter(element);
+      }
     });
+
+    if (!form.valid()) {
+      return;
+    }
+
+    var formData = new FormData(form[0]);
+    formData.append("action", "userSave");
+
+    fetch("/api/settings/settings.php", {
+      method: "POST",
+      body: formData
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        var title = data.status == "success" ? "Başarılı!" : "Hata!";
+        Swal.fire({
+          title: title,
+          text: data.message,
+          icon: data.status,
+          confirmButtonText: "Tamam"
+        }).then(() => {
+          if (data.status == "success") {
+            form[0].reset();
+          }
+        });
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        Swal.fire("Hata!", "Şifre güncellenirken bir sorun oluştu.", "error");
+      });
+  });
 });
 
+// Original Notification checkboxes (retained for backward compatibility)
 $(document).on("change", "#send_email_on_login", function () {
   var form = $("#notificationsForm");
   var formData = new FormData(form[0]);
   formData.append("action", "send_email_on_login");
 
-  for (var pair of formData.entries()) {
-    console.log(pair[0] + ", " + pair[1]);
-  }
   fetch("/api/settings/settings.php", {
     method: "POST",
     body: formData
   })
     .then((response) => response.json())
     .then((data) => {
-      title = data.status == "success" ? "Başarılı!" : "Hata!";
+      // Swallowed status change
     })
     .catch((error) => {
       console.error("Error:", error);
     });
 });
 
+// Original Home page settings save (retained for backward compatibility)
 $(document).on("click", "#home_save", function () {
   var form = $("#settingsHomeForm");
   let formData = new FormData(form[0]);
@@ -114,8 +157,6 @@ $(document).on("click", "#home_save", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      //console.log(data);
-
       title = data.status == "success" ? "Başarılı!" : "Hata!";
       Swal.fire({
         title: title,
@@ -126,6 +167,7 @@ $(document).on("click", "#home_save", function () {
     });
 });
 
+// Original Financial settings save (retained for backward compatibility)
 $(document).on("click", "#financial_save", function () {
   var form = $("#settingsFinancialForm");
   let formData = new FormData(form[0]);
@@ -137,8 +179,6 @@ $(document).on("click", "#financial_save", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      //console.log(data);
-
       title = data.status == "success" ? "Başarılı!" : "Hata!";
       Swal.fire({
         title: title,

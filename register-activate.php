@@ -134,7 +134,7 @@ function alertdanger($message, $type = "danger", $title = "Hata!")
 
                         if (empty($user)) {
                             echo alertdanger("Kullanıcı Bulunamadı");
-                        } elseif ($token < time() || $user->activate_token != urlencode($_GET['token'])) {
+                        } elseif ($token < time() || $user->activate_token != $_GET['token']) {
                             echo alertdanger("Geçersiz Token!");
                             $token_renegate = true;
                             //Token boş ise mesaj ver

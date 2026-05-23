@@ -161,8 +161,8 @@ if ($page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage') 
 }
 
 if ($page == 'settings/manage') {
-    echo '<script src="./src/settings/settings.js"></script>';
-    echo '<script src="./src/settings/packages.js"></script>';
+    echo '<script src="./src/settings/settings.js?v=' . time() . '"></script>';
+    echo '<script src="./src/settings/packages.js?v=' . time() . '"></script>';
 }
 
 if ($page == 'feedback/list') {
