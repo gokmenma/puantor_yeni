@@ -124,8 +124,7 @@ $(document).on("click", ".gun", function (e) {
   }
 });
 
-//Tablonun 1. satırdaki gunadi classına sahip td elemanına basınca tüm kolona click classını ekler
-$(".head-date, .gunadi").on("click", function () {
+$(document).on("click", ".head-date, .gunadi", function () {
   var index = $(this).index();
   
   // DataTable nesnesini alıp sadece FILTRELENMIS satırları geziyoruz
@@ -484,7 +483,7 @@ function Route() {
       if (result.isConfirmed) {
         // Kullanıcı devam etmek istedi. Bayrakları temizleyerek native uyarının çıkmasını engelle.
         $(rows).find("td[data-change='true']").attr("data-change", "false");
-        $("#puantajInfoForm").submit();
+        loadPuantajTable();
       } else {
         // Kullanıcı vazgeçti. Dropdown'u eski haline çekmeliyiz ki kafa karışıklığı olmasın
         unbindFilters();
@@ -503,8 +502,116 @@ function Route() {
       }
     });
   } else {
-    $("#puantajInfoForm").submit();
+    loadPuantajTable();
   }
+}
+
+function loadPuantajTable() {
+  // Ensure loading bar element exists
+  if ($("#puantaj-top-loading-bar").length === 0) {
+    $("body").append('<div id="puantaj-top-loading-bar"></div>');
+  }
+
+  // Show and reset progress bar
+  var $loadingBar = $("#puantaj-top-loading-bar");
+  $loadingBar.css({ "width": "0%", "opacity": "1" });
+  
+  var width = 10;
+  $loadingBar.css("width", width + "%");
+
+  // Animate progress bar progressively
+  var progressInterval = setInterval(function() {
+    if (width < 85) {
+      width += Math.floor(Math.random() * 6) + 3;
+      $loadingBar.css("width", width + "%");
+    }
+  }, 180);
+
+  // Serialize filter values
+  var formData = $("#puantajInfoForm").serialize();
+
+  // Send AJAX request
+  $.ajax({
+    url: window.location.href,
+    type: 'POST',
+    data: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    success: function (response) {
+      // Update URL query parameters in the address bar without page reload
+      var queryParams = new URLSearchParams(formData);
+      queryParams.set('p', 'puantaj/list');
+      window.history.pushState({}, '', 'index.php?' + queryParams.toString());
+
+      // 1. Destroy existing DataTable
+      if ($.fn.DataTable.isDataTable('#puantajTable')) {
+        $('#puantajTable').DataTable().destroy();
+      }
+
+      // 2. Parse response and swap elements
+      var $response = $(response);
+      
+      // Swap the main card body contents (table and stats)
+      var newCard = $response.find("#puantajTable").closest('.card').html();
+      if (newCard) {
+        $("#puantajTable").closest('.card').html(newCard);
+      }
+
+      // Swap statistics modal
+      var newStatsModal = $response.find("#modal-statistics").html();
+      if (newStatsModal) {
+        $("#modal-statistics").html(newStatsModal);
+      }
+
+      // Re-initialize DataTable on the new table
+      if (typeof window.initializePuantajDataTable === 'function') {
+        window.initializePuantajDataTable();
+      }
+
+      // Apply column visibility states
+      if (typeof window.applyColumnVisibility === 'function') {
+        window.applyColumnVisibility();
+      }
+
+      // Re-bind shortcut badge UI
+      updateActiveTypeUI();
+
+      // Check projects warning bar
+      checkProjectsWarning();
+
+      // Save the last values for unsaved changes detection
+      storeLastValues();
+
+      // Complete progress bar
+      clearInterval(progressInterval);
+      $loadingBar.css("width", "100%");
+      setTimeout(function() {
+        $loadingBar.css("opacity", "0");
+        setTimeout(function() {
+          $loadingBar.css("width", "0%");
+        }, 300);
+      }, 300);
+    },
+    error: function (xhr, status, error) {
+      console.error("Puantaj yüklenirken hata oluştu:", error);
+      Swal.fire({
+        title: 'Hata!',
+        text: 'Veriler yüklenirken bir hata oluştu.',
+        icon: 'error'
+      });
+      
+      // Fail progress bar
+      clearInterval(progressInterval);
+      $loadingBar.css("width", "100%");
+      setTimeout(function() {
+        $loadingBar.css("opacity", "0");
+        setTimeout(function() {
+          $loadingBar.css("width", "0%");
+        }, 300);
+      }, 300);
+    }
+  });
 }
 
 // Sekmeyi kapatma vb. durumlarda native uyarı hala geçerli koruma sağlar
@@ -517,7 +624,7 @@ $(window).on('beforeunload', function() {
 });
 
 // Sütun göster/gizle fonksiyonu
-function applyColumnVisibility() {
+window.applyColumnVisibility = function() {
     $(".column-toggle-check").each(function() {
         var columnClass = $(this).data("column");
         if ($(this).is(":checked")) {
@@ -526,7 +633,7 @@ function applyColumnVisibility() {
             $("." + columnClass).hide();
         }
     });
-}
+};
 
 // Sütun göster/gizle (Bağımsız seçim)
 $(document).on("change", ".column-toggle-check", function() {

@@ -113,6 +113,21 @@ $allPuantajTurleri = $puantajObj->getAllPuantajTurleri();
     }
     // ===  == OPTİMİZASYON SONU ===  == ?>
 <style>
+/* Dynamic AJAX Top Progress Bar */
+#puantaj-top-loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #206bc4 0%, #4f96eb 50%, #206bc4 100%);
+    z-index: 99999;
+    transition: width 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 0 10px rgba(32, 107, 196, 0.6);
+    opacity: 0;
+    pointer-events: none;
+}
+
 .gun {
     width: 35px;
     min-width: 35px;

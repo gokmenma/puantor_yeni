@@ -186,9 +186,17 @@ if (isset($_GET['theme'])) {
 }
 $theme = $_SESSION['theme'] ?? 'light';
 
+if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    $page = isset($_GET["p"]) ? $_GET["p"] : "home";
+    if (file_exists("pages/{$page}.php")) {
+        include "pages/{$page}.php";
+    } else {
+        include "pages/404.php";
+    }
+    exit();
+}
+
 ?>
-
-
 
 <?php include_once "inc/head.php" ?>
 <style>
