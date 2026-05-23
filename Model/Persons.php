@@ -81,20 +81,30 @@ class Persons extends Model
     }
     public function getPersonIdByFirmBlueCollarCurrentMonth($firm_id, $first_day, $last_day, $job_group = 0, $team_id = 0, $include_white_collar = false, $person_status = 'active')
     {
+        $first_day_formatted = substr($first_day, 0, 4) . '-' . substr($first_day, 4, 2) . '-' . substr($first_day, 6, 2);
+        $last_day_formatted = substr($last_day, 0, 4) . '-' . substr($last_day, 4, 2) . '-' . substr($last_day, 6, 2);
+
         $wage_type_sql = $include_white_collar ? 'p.wage_type IN (1, 2)' : 'p.wage_type = 2';
-        $sql = "SELECT * FROM persons p 
-                WHERE firm_id = ? AND $wage_type_sql 
-                AND deleted_at IS NULL";
-        $params = [$firm_id];
+        $sql = "SELECT p.* FROM persons p 
+                WHERE p.firm_id = ? AND $wage_type_sql 
+                AND p.deleted_at IS NULL
+                AND (p.job_start_date IS NULL OR p.job_start_date = '' OR STR_TO_DATE(p.job_start_date, '%d.%m.%Y') <= ?)";
+        $params = [$firm_id, $last_day_formatted];
 
         if ($person_status === 'active') {
-            $sql .= " AND (p.job_end_date IS NULL OR p.job_end_date = '')";
+            $sql .= " AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
+            $params[] = $first_day_formatted;
         } elseif ($person_status === 'passive') {
-            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '')";
+            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '' AND STR_TO_DATE(p.job_end_date, '%d.%m.%Y') < ?)";
+            $params[] = $first_day_formatted;
+        } else {
+            // For 'all' status: align with request and only show active
+            $sql .= " AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
+            $params[] = $first_day_formatted;
         }
 
         if ($job_group > 0) {
-            $sql .= ' AND job_group = ?';
+            $sql .= ' AND p.job_group = ?';
             $params[] = $job_group;
         }
 

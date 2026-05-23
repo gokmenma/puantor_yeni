@@ -71,6 +71,7 @@ $menus = new Menus();
 $User = new UserModel();
 
 $perm = new Auths();//Sayfalarda yetki kontrolü yapmak için kullanılır
+$Auths = $perm;
 
 $user = $User->find($_SESSION['user']->id) ?? null;
 
@@ -387,21 +388,26 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         $days = \App\Helper\Date::getDateDiff($owner_user->created_at);
                         $diff = max(0, 15 - $days);
                     }
+                    
+                    if ($diff <= 7) {
                 ?>
-                    <div class="alert alert-warning alert-dismissible bg-white alert-trial mb-0 mt-3" role="alert" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06);">
-                        <div class="d-flex align-items-center">
-                            <div>
-                                <i class="ti ti-alert-triangle icon text-warning me-3" style="font-size: 1.35rem;"></i>
+                        <div class="alert alert-warning alert-dismissible bg-white alert-trial mb-0 mt-3" role="alert" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06);">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <i class="ti ti-alert-triangle icon text-warning me-3" style="font-size: 1.35rem;"></i>
+                                </div>
+                                <div>
+                                    Deneme sürenizin bitmesine kalan süre <strong class="text-warning"><?php echo $diff; ?></strong> gün, süreniz bitmeden önce
+                                    paketinizi <a href="index.php?p=settings/manage&tab=edit-account"
+                                        class="text-warning fw-bold"><u>güncelleyin.</u></a>
+                                </div>
                             </div>
-                            <div>
-                                Deneme sürenizin bitmesine kalan süre <strong class="text-warning"><?php echo $diff; ?></strong> gün, süreniz bitmeden önce
-                                paketinizi <a href="index.php?p=settings/manage&tab=edit-account"
-                                    class="text-warning fw-bold"><u>güncelleyin.</u></a>
-                            </div>
+                            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
                         </div>
-                        <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
-                    </div>
-                <?php } ?>
+                <?php 
+                    }
+                } 
+                ?>
             </div>
             <?php
             $page = isset($_GET["p"]) ? $_GET["p"] : "home";

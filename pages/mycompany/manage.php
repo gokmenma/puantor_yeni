@@ -1,14 +1,12 @@
 <?php
 require_once "Model/Company.php";
 require_once "App/Helper/security.php";
+require_once "Model/UserModel.php";
 
 use App\Helper\Security;
 
 $companyObj = new Company();
-
-
-
-
+$UserModel = new UserModel();
 
 //Sayfa başlarında eklenecek alanlar
 $perm->checkAuthorize("company_add_update");
@@ -21,6 +19,17 @@ if($id == null && isset($_GET['id'])) {
     exit;
 }
 
+if ($id == 0) {
+    $owner_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
+    $subDetails = $UserModel->getActiveSubscriptionDetails($owner_id);
+    $current_firm_count = $companyObj->countMyFirms($owner_id);
+    $isSuperadmin = ($_SESSION["user"]->superadmin ?? 0) == 1;
+
+    if (!$isSuperadmin && $current_firm_count >= $subDetails['firma_hakki']) {
+        header("Location: /index.php?p=mycompany/list&limit_reached=1");
+        exit;
+    }
+}
 
 $pageTitle = $id > 0 ? "Firma Güncelle" : "Yeni Firma";
 $myfirm = $companyObj->findMyFirm($id);

@@ -1231,6 +1231,9 @@ $(document).ready(function() {
     $(document).on('change select2:select', '#year, #months, select[name="year"], select[name="months"]', function() {
         var form = $(this).closest('form');
         if(form.length > 0) {
+            if (form.attr('id') === 'puantajInfoForm') {
+                return; // Let puantaj.js handle this dynamically via AJAX
+            }
             form.submit();
         }
     });

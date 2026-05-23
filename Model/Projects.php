@@ -171,6 +171,9 @@ class Projects extends Model
             }
         }
 
+        $first_day_formatted = substr($first_day, 0, 4) . '-' . substr($first_day, 4, 2) . '-' . substr($first_day, 6, 2);
+        $last_day_formatted = substr($last_day, 0, 4) . '-' . substr($last_day, 4, 2) . '-' . substr($last_day, 6, 2);
+
         // Convert $project_ids to an array of integers
         if (is_array($project_ids)) {
             $proj_ids = array_map('intval', $project_ids);
@@ -204,8 +207,9 @@ class Projects extends Model
                         FROM persons p
                         WHERE $wage_type_sql
                         AND p.firm_id = ?
-                        AND p.deleted_at IS NULL";
-        $params = [$firm_id];
+                        AND p.deleted_at IS NULL
+                        AND (p.job_start_date IS NULL OR p.job_start_date = '' OR STR_TO_DATE(p.job_start_date, '%d.%m.%Y') <= ?)";
+        $params = [$firm_id, $last_day_formatted];
 
         $placeholders = implode(',', array_fill(0, count($proj_ids), '?'));
 
@@ -214,7 +218,7 @@ class Projects extends Model
                             EXISTS (SELECT 1 FROM project_person WHERE project_id IN ($placeholders) and person_id = p.id) 
                             OR EXISTS (SELECT 1 FROM puantaj WHERE project_id IN ($placeholders) AND person = p.id AND gun >= ? AND gun <= ?)
                         )
-                        AND (p.job_end_date IS NULL OR p.job_end_date = '')";
+                        AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
             
             // Add params for first project_id IN placeholders
             foreach ($proj_ids as $id) {
@@ -226,14 +230,17 @@ class Projects extends Model
             }
             $params[] = $first_day;
             $params[] = $last_day;
+            $params[] = $first_day_formatted;
         } elseif ($person_status === 'passive') {
-            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '')";
+            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '' AND STR_TO_DATE(p.job_end_date, '%d.%m.%Y') < ?)";
+            $params[] = $first_day_formatted;
         } else {
-            // all
+            // all: align with request and only show active
             $sql .= " AND (
                             EXISTS (SELECT 1 FROM project_person WHERE project_id IN ($placeholders) and person_id = p.id) 
                             OR EXISTS (SELECT 1 FROM puantaj WHERE project_id IN ($placeholders) AND person = p.id AND gun >= ? AND gun <= ?)
-                        )";
+                        )
+                        AND (p.job_end_date IS NULL OR p.job_end_date = '' OR STR_TO_DATE(p.job_end_date, '%d.%m.%Y') >= ?)";
             foreach ($proj_ids as $id) {
                 $params[] = $id;
             }
@@ -242,6 +249,7 @@ class Projects extends Model
             }
             $params[] = $first_day;
             $params[] = $last_day;
+            $params[] = $first_day_formatted;
         }
 
         if ($job_group > 0) {

@@ -339,7 +339,7 @@ function setCookie(name, value, days) {
 
 function bindFilters() {
   // Bind standard filters (excluding projects)
-  $("#year, #months, #job_groups, #team_id").on("change select2:select select2:unselect", function () {
+  $("#year, #months, #job_groups, #team_id").on("change", function () {
     setCookie('p_year', $("#year").val(), 30);
     setCookie('p_months', $("#months").val(), 30);
     setCookie('p_job_groups', $("#job_groups").val(), 30);
@@ -348,7 +348,7 @@ function bindFilters() {
   });
 
   // Bind projects filter to save cookie on change, but do NOT reload immediately
-  $("#projects").on("change select2:select select2:unselect", function () {
+  $("#projects").on("change", function () {
     setCookie('p_projects', $(this).val(), 30);
     checkProjectsWarning();
   });
@@ -374,7 +374,7 @@ function bindFilters() {
 }
 
 function unbindFilters() {
-  $("#projects, #year, #months, #job_groups, #team_id").off("change select2:select select2:unselect select2:close");
+  $("#projects, #year, #months, #job_groups, #team_id").off("change select2:close");
   $("input[name='person_status']").off("change");
 }
 

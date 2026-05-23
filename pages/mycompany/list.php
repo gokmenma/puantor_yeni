@@ -2,24 +2,44 @@
 $user_id = $_SESSION['user']->id;
 require_once "Model/MyFirmModel.php";
 require_once "App/Helper/security.php";
+require_once "Model/Company.php";
 
 use App\Helper\Security;
-
 
 $perm->checkAuthorize("my_companies_page");
 $Auths->checkFirmReturn();
 
-
 $MyFirmModel = new MyFirmModel();
 $myfirms = $MyFirmModel->getMyFirmByUserId();
 
+$companyObj = new Company();
+$owner_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
+$subDetails = $User->getActiveSubscriptionDetails($owner_id);
+$current_firm_count = $companyObj->countMyFirms($owner_id);
+$isSuperadmin = ($_SESSION["user"]->superadmin ?? 0) == 1;
+
+$limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hakki']);
 ?>
-<div class="container-xl">
-       <!-- Alert component'i dahil et -->
-       <?php
-        $title = "Firmalarım Listesi!";
-        $text = "Sahip olduğunuz firmaları buradan yönetebilirsiniz.";
-        require_once 'pages/components/alert.php'
+<div class="container-xl mt-3">
+    <?php if (isset($_GET['limit_reached']) && $_GET['limit_reached'] == 1): ?>
+        <div class="alert alert-warning alert-dismissible mb-3" role="alert" style="border-radius: 12px; font-weight: 500;">
+            <div class="d-flex align-items-center">
+                <i class="ti ti-alert-triangle icon me-3" style="font-size: 1.5rem;"></i>
+                <div>Paketinizin firma limiti dolduğu için yeni firma ekleme sayfasına erişiminiz engellenmiştir.</div>
+            </div>
+            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    <?php endif; ?>
+
+    <!-- Alert component'i dahil et -->
+    <?php
+    $title = "Firmalarım Listesi!";
+    if ($isSuperadmin) {
+        $text = "Sahip olduğunuz firmaları buradan yönetebilirsiniz. Sınırsız firma oluşturma hakkınız bulunmaktadır.";
+    } else {
+        $text = "Sahip olduğunuz firmaları buradan yönetebilirsiniz. Paketiniz kapsamında en fazla <strong>" . $subDetails['firma_hakki'] . "</strong> adet firma ekleyebilirsiniz. Şu anda <strong>" . $current_firm_count . "</strong> adet firma eklenmiş durumda. (Kullanılan: " . $current_firm_count . " / " . $subDetails['firma_hakki'] . ")";
+    }
+    require_once 'pages/components/alert.php'
     ?>
     <!-- Alert  -->
     <div class="row row-deck row-cards">
@@ -31,9 +51,15 @@ $myfirms = $MyFirmModel->getMyFirmByUserId();
                         <a href="#" class="btn btn-icon me-2" data-tooltip="Excele Aktar">
                             <i class="ti ti-file-excel icon"></i>
                         </a>
-                        <a href="#" class="btn btn-primary route-link" data-page="mycompany/manage">
-                            <i class="ti ti-plus icon me-2"></i> Yeni
-                        </a>
+                        <?php if ($limitReached): ?>
+                            <button type="button" class="btn btn-primary btn-new-firm-limit" data-limit="<?php echo $subDetails['firma_hakki']; ?>">
+                                <i class="ti ti-plus icon me-2"></i> Yeni
+                            </button>
+                        <?php else: ?>
+                            <a href="#" class="btn btn-primary route-link" data-page="mycompany/manage">
+                                <i class="ti ti-plus icon me-2"></i> Yeni
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
 

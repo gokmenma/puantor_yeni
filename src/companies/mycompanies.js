@@ -35,3 +35,14 @@ $(document).on("click", ".delete-mycompany", function () {
 
   deleteRecord(this, action, confirmMessage, url);
 });
+
+$(document).on("click", ".btn-new-firm-limit", function (e) {
+  e.preventDefault();
+  let limit = $(this).data("limit");
+  Swal.fire({
+    title: "Limit Aşımı!",
+    text: "Paketinizin firma limiti (" + limit + ") dolmuştur. Yeni firma eklemek için lütfen paketinizi yükseltin.",
+    icon: "warning",
+    confirmButtonText: "Tamam"
+  });
+});

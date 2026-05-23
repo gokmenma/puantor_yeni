@@ -16,9 +16,22 @@ $company = new Company();
 if ($_POST["action"] == "saveMyCompany") {
     $id = Security::decrypt($_POST["id"]);
 
-
-
     $parent_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
+
+    if ($id == 0) {
+        $subDetails = $User->getActiveSubscriptionDetails($parent_id);
+        $current_firm_count = $company->countMyFirms($parent_id);
+        $isSuperadmin = ($_SESSION["user"]->superadmin ?? 0) == 1;
+
+        if (!$isSuperadmin && $current_firm_count >= $subDetails['firma_hakki']) {
+            echo json_encode([
+                "status" => "error",
+                "message" => "Paketinizin firma limiti dolduğu için yeni firma eklenemez!"
+            ]);
+            exit;
+        }
+    }
+
     $data = [
         "id" => $id,
         "user_id" => $parent_id,
