@@ -52,7 +52,7 @@ foreach ( $project_ids as $p_id ) {
 }
 
 $job_group = ( int ) ( isset( $_REQUEST[ 'job_groups' ] ) ? $_REQUEST[ 'job_groups' ] : ( $_COOKIE[ 'p_job_groups' ] ?? 0 ) );
-$team_id = ( int ) ( isset( $_REQUEST[ 'team_id' ] ) ? $_REQUEST[ 'team_id' ] : ( $_COOKIE[ 'p_team_id' ] ?? 0 ) );
+$team_id = isset( $_REQUEST[ 'team_id' ] ) ? $_REQUEST[ 'team_id' ] : ( $_COOKIE[ 'p_team_id' ] ?? '' );
 $person_status = isset( $_REQUEST[ 'person_status' ] ) ? $_REQUEST[ 'person_status' ] : ( $_COOKIE[ 'p_person_status' ] ?? 'active' );
 $only_active_project = ( int ) ( $_COOKIE[ 'p_only_active_project' ] ?? 0 );
 

@@ -232,8 +232,7 @@ class Projects extends Model
             $params[] = $last_day;
             $params[] = $first_day_formatted;
         } elseif ($person_status === 'passive') {
-            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '' AND STR_TO_DATE(p.job_end_date, '%d.%m.%Y') < ?)";
-            $params[] = $first_day_formatted;
+            $sql .= " AND (p.job_end_date IS NOT NULL AND p.job_end_date != '')";
         } else {
             // all: align with request and only show active
             $sql .= " AND (
