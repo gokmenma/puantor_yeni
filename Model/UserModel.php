@@ -295,6 +295,22 @@ class UserModel extends Model
             }
         }
         
+        // 3. Eğer kullanıcı demo kullanıcısı değilse ve hiç abonelik kaydı yoksa (eski sistemden kalan kullanıcılar),
+        // sınırsız haklara sahip standart paket tanımlanmış kabul edilir.
+        if ($owner && $owner->user_type != 1) {
+            $stmtCount = $db->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ?");
+            $stmtCount->execute([$owner_id]);
+            $total_subs = $stmtCount->fetchColumn();
+            if ($total_subs == 0) {
+                return [
+                    'has_sub' => true,
+                    'paket_adi' => 'Standart Paket (Sınırsız)',
+                    'alt_kullanici_hakki' => 9999,
+                    'firma_hakki' => 9999
+                ];
+            }
+        }
+        
         return [
             'has_sub' => false,
             'paket_adi' => 'Paket Yok',

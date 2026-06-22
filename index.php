@@ -162,12 +162,25 @@ if (($user->superadmin ?? 0) != 1) {
 
     $is_subscription_expired = !$has_active_sub;
 
-    // 2. Aktif deneme süresi kontrolü (Eğer aktif ücretli paket yoksa ve demo kullanıcısıysa)
     if ($is_subscription_expired) {
         $owner_user = $User->find($owner_id);
+        
+        // 2. Aktif deneme süresi kontrolü (Eğer aktif ücretli paket yoksa ve demo kullanıcısıysa)
         if ($owner_user && $owner_user->user_type == 1) {
             $days = \App\Helper\Date::getDateDiff($owner_user->created_at);
             if ($days < 15) {
+                $is_subscription_expired = false;
+            }
+        }
+        
+        // 3. Eğer kullanıcı demo kullanıcısı değilse (yani standart/ücretli kullanıcıysa) 
+        // ve veritabanında hiç abonelik kaydı yoksa (eski sistemden kalan kullanıcılar), 
+        // geçici/süresiz aktif kabul edilir.
+        if ($is_subscription_expired && $owner_user && $owner_user->user_type != 1) {
+            $stmtCount = $dbCheck->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ?");
+            $stmtCount->execute([$owner_id]);
+            $total_subs = $stmtCount->fetchColumn();
+            if ($total_subs == 0) {
                 $is_subscription_expired = false;
             }
         }
