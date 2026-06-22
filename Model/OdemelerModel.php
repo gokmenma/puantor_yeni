@@ -20,6 +20,9 @@ class OdemelerModel extends Model
                    u.full_name AS subscriber_name, 
                    u.email AS subscriber_email,
                    ap.ad AS paket_adi,
+                   ka.paket_id,
+                   ka.firma_hakki,
+                   ka.alt_kullanici_hakki,
                    ka.baslangic_tarihi,
                    ka.bitis_tarihi
             FROM $this->table o

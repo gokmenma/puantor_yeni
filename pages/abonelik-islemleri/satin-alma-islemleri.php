@@ -48,6 +48,8 @@ $packages = $paketModel->getPackages();
                                 <th>Email</th>
                                 <th>Satın Alınan Paket</th>
                                 <th>Tutar</th>
+                                <th>Başlangıç Tarihi</th>
+                                <th>Bitiş Tarihi</th>
                                 <th>Ödeme Tarihi</th>
                                 <th>Ödeme Yöntemi</th>
                                 <th>Ödeme Durumu</th>
@@ -60,6 +62,8 @@ $packages = $paketModel->getPackages();
                             foreach ($payments as $pay):
                                 $id = Security::encrypt($pay->id);
                                 $tutar_format = number_format($pay->tutar, 2, ',', '.') . ' ₺';
+                                $baslangic_tarihi = $pay->baslangic_tarihi ? date('d.m.Y', strtotime($pay->baslangic_tarihi)) : '-';
+                                $bitis_tarihi = $pay->bitis_tarihi ? date('d.m.Y', strtotime($pay->bitis_tarihi)) : '-';
                                 $odeme_tarihi = $pay->odeme_tarihi ? date('d.m.Y H:i', strtotime($pay->odeme_tarihi)) : '-';
                                 
                                 // Status badge
@@ -82,6 +86,8 @@ $packages = $paketModel->getPackages();
                                         <span class="badge bg-blue-lt"><?php echo htmlspecialchars($pay->paket_adi ?? 'Bilinmeyen Paket'); ?></span>
                                     </td>
                                     <td><strong><?php echo $tutar_format; ?></strong></td>
+                                    <td><?php echo $baslangic_tarihi; ?></td>
+                                    <td><?php echo $bitis_tarihi; ?></td>
                                     <td><?php echo $odeme_tarihi; ?></td>
                                     <td>
                                         <span class="text-secondary"><?php echo htmlspecialchars($pay->odeme_yontemi ?? '-'); ?></span>
@@ -106,6 +112,18 @@ $packages = $paketModel->getPackages();
                                                         <span class="status-dot bg-danger me-2"></span> Başarısız Yap
                                                     </a>
                                                 <?php endif; ?>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item edit-payment-btn" href="#"
+                                                   data-id="<?php echo $id; ?>"
+                                                   data-kullanici-id="<?php echo $pay->kullanici_id; ?>"
+                                                   data-paket-id="<?php echo $pay->paket_id; ?>"
+                                                   data-firma-hakki="<?php echo (int)$pay->firma_hakki; ?>"
+                                                   data-alt-kullanici-hakki="<?php echo (int)$pay->alt_kullanici_hakki; ?>"
+                                                   data-tutar="<?php echo htmlspecialchars($pay->tutar); ?>"
+                                                   data-baslangic-tarihi="<?php echo $pay->baslangic_tarihi ? date('d.m.Y', strtotime($pay->baslangic_tarihi)) : ''; ?>"
+                                                   data-bitis-tarihi="<?php echo $pay->bitis_tarihi ? date('d.m.Y', strtotime($pay->bitis_tarihi)) : ''; ?>">
+                                                    <i class="ti ti-edit icon me-2"></i> Düzenle
+                                                </a>
                                                 <div class="dropdown-divider"></div>
                                                 <a class="dropdown-item delete-payment text-danger" href="#" data-id="<?php echo $id; ?>">
                                                     <i class="ti ti-trash icon me-2"></i> Sil
@@ -134,14 +152,15 @@ $packages = $paketModel->getPackages();
             <div class="modal-header" style="border-bottom: 1px solid rgba(0,0,0,0.06); padding: 1.5rem 1.5rem 1rem;">
                 <h5 class="modal-title font-weight-bold" style="font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem; color: #1d1d20;">
                     <i class="ti ti-shopping-cart icon text-dark" style="font-size: 1.5rem;"></i>
-                    <span>Yeni İşlem Ekle</span>
+                    <span id="modalTitleText">Yeni İşlem Ekle</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="" id="transactionForm">
                 <div class="modal-body" style="padding: 1.5rem;">
                     <!-- Gizli alanlar -->
-                    <input type="hidden" name="action" value="addManualSale">
+                    <input type="hidden" name="action" id="tx_action" value="addManualSale">
+                    <input type="hidden" name="payment_id" id="tx_payment_id" value="">
 
                     <!-- Kullanıcı Seçin -->
                     <div class="mb-3">
@@ -149,7 +168,8 @@ $packages = $paketModel->getPackages();
                         <select name="kullanici_id" id="tx_kullanici_id" class="form-select select2-modal" style="border-radius: 10px;" required>
                             <option value="">Kullanıcı seçiniz...</option>
                             <?php foreach ($subscribers as $sub): ?>
-                                <option value="<?php echo Security::encrypt($sub->id); ?>">
+                                <option value="<?php echo Security::encrypt($sub->id); ?>"
+                                        data-id="<?php echo $sub->id; ?>">
                                     <?php echo htmlspecialchars($sub->full_name . ' (' . $sub->email . ')'); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -165,6 +185,7 @@ $packages = $paketModel->getPackages();
                                 if ($pkg->aktif_mi != 1) continue;
                                 ?>
                                 <option value="<?php echo Security::encrypt($pkg->id); ?>"
+                                        data-id="<?php echo $pkg->id; ?>"
                                         data-sure="<?php echo (int)$pkg->sure; ?>"
                                         data-firma_hakki="<?php echo (int)$pkg->firma_hakki; ?>"
                                         data-alt_kullanici_hakki="<?php echo (int)$pkg->alt_kullanici_hakki; ?>"
@@ -173,6 +194,12 @@ $packages = $paketModel->getPackages();
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+
+                    <!-- Fiyat -->
+                    <div class="mb-3">
+                        <label class="form-label required font-weight-semibold" style="color: #1d1d20; font-size: 0.95rem; margin-bottom: 0.5rem;">Fiyat (₺)</label>
+                        <input type="number" step="0.01" min="0" name="tutar" id="tx_tutar" class="form-control" style="border-radius: 10px; padding: 0.65rem 0.8rem; border: 1px solid #dcdcdc; color: #4e4e4e;" placeholder="0.00" required>
                     </div>
 
                     <!-- Firma Hakkı & Kullanıcı Hakkı -->
@@ -241,10 +268,15 @@ $(document).ready(function() {
         });
     }
 
-    // Modal show event
+    // Modal show event (Add)
     $(document).on('click', '.btn-add-transaction', function(e) {
         e.preventDefault();
         $('#transactionForm')[0].reset();
+        
+        // Reset hidden action and payment_id
+        $('#tx_action').val('addManualSale');
+        $('#tx_payment_id').val('');
+        $('#modalTitleText').text('Yeni İşlem Ekle');
         
         // Clear select2 values
         $('#tx_kullanici_id').val('').trigger('change');
@@ -254,6 +286,51 @@ $(document).ready(function() {
         let today = new Date();
         if (fpStart) fpStart.setDate(today);
         if (fpEnd) fpEnd.setDate('');
+
+        $('#transactionModal').modal('show');
+    });
+
+    // Modal show event (Edit)
+    $(document).on('click', '.edit-payment-btn', function(e) {
+        e.preventDefault();
+        $('#transactionForm')[0].reset();
+        
+        let payment_id = $(this).data('id');
+        let kullanici_id = $(this).data('kullanici-id');
+        let paket_id = $(this).data('paket-id');
+        let firma_hakki = $(this).data('firma-hakki');
+        let alt_kullanici_hakki = $(this).data('alt-kullanici-hakki');
+        let tutar = $(this).data('tutar');
+        let baslangic_tarihi = $(this).data('baslangic-tarihi');
+        let bitis_tarihi = $(this).data('bitis-tarihi');
+        
+        // Set action, payment ID and title
+        $('#tx_action').val('editManualSale');
+        $('#tx_payment_id').val(payment_id);
+        $('#modalTitleText').text('İşlemi Düzenle');
+        
+        // Populate fields by finding the option with matching data-id
+        let kullaniciOpt = $('#tx_kullanici_id option').filter(function() {
+            return $(this).data('id') == kullanici_id;
+        });
+        if (kullaniciOpt.length) {
+            $('#tx_kullanici_id').val(kullaniciOpt.val()).trigger('change');
+        }
+        
+        let paketOpt = $('#tx_paket_id option').filter(function() {
+            return $(this).data('id') == paket_id;
+        });
+        if (paketOpt.length) {
+            $('#tx_paket_id').val(paketOpt.val()).trigger('change');
+        }
+        
+        // Overwrite defaults with saved data after change trigger
+        $('#tx_firma_hakki').val(firma_hakki);
+        $('#tx_alt_kullanici_hakki').val(alt_kullanici_hakki);
+        $('#tx_tutar').val(tutar);
+        
+        if (fpStart) fpStart.setDate(baslangic_tarihi);
+        if (fpEnd) fpEnd.setDate(bitis_tarihi);
 
         $('#transactionModal').modal('show');
     });
@@ -274,14 +351,17 @@ $(document).ready(function() {
         if (selectedOpt.val()) {
             let firma_hakki = selectedOpt.data('firma_hakki');
             let alt_kullanici_hakki = selectedOpt.data('alt_kullanici_hakki');
+            let fiyat = selectedOpt.data('fiyat');
             
             $('#tx_firma_hakki').val(firma_hakki);
             $('#tx_alt_kullanici_hakki').val(alt_kullanici_hakki);
+            $('#tx_tutar').val(fiyat);
             
             recalculateEndDate();
         } else {
             $('#tx_firma_hakki').val('');
             $('#tx_alt_kullanici_hakki').val('');
+            $('#tx_tutar').val('');
             if (fpEnd) fpEnd.setDate('');
         }
     });
@@ -326,6 +406,7 @@ $(document).ready(function() {
                 paket_id: { required: true },
                 firma_hakki: { required: true, digits: true },
                 alt_kullanici_hakki: { required: true, digits: true },
+                tutar: { required: true, number: true, min: 0 },
                 baslangic_tarihi: { required: true },
                 bitis_tarihi: { required: true }
             },
@@ -334,6 +415,7 @@ $(document).ready(function() {
                 paket_id: { required: "Paket seçimi zorunludur." },
                 firma_hakki: { required: "Firma hakkı zorunludur.", digits: "Tam sayı olmalıdır." },
                 alt_kullanici_hakki: { required: "Kullanıcı hakkı zorunludur.", digits: "Tam sayı olmalıdır." },
+                tutar: { required: "Fiyat bilgisi zorunludur.", number: "Geçerli bir sayı olmalıdır.", min: "Fiyat 0'dan küçük olamaz." },
                 baslangic_tarihi: { required: "Başlangıç tarihi zorunludur." },
                 bitis_tarihi: { required: "Bitiş tarihi zorunludur." }
             }

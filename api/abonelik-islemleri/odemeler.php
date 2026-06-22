@@ -75,8 +75,9 @@ if (isset($_POST["action"]) && $_POST["action"] == "addManualSale") {
         $alt_kullanici_hakki = $_POST["alt_kullanici_hakki"] ?? 0;
         $baslangic_tarihi = $_POST["baslangic_tarihi"] ?? "";
         $bitis_tarihi = $_POST["bitis_tarihi"] ?? "";
+        $tutar = $_POST["tutar"] ?? "";
 
-        if (!$encryptedKullaniciId || !$encryptedPaketId || !$baslangic_tarihi || !$bitis_tarihi) {
+        if (!$encryptedKullaniciId || !$encryptedPaketId || !$baslangic_tarihi || !$bitis_tarihi || $tutar === "") {
             throw new Exception("Lütfen gerekli tüm alanları doldurun.");
         }
 
@@ -91,6 +92,12 @@ if (isset($_POST["action"]) && $_POST["action"] == "addManualSale") {
         $pkg = $paketModel->find($paket_id);
         if (!$pkg) {
             throw new Exception("Seçilen paket sistemde bulunamadı.");
+        }
+
+        // Clean and validate tutar
+        $tutarCleaned = str_replace(',', '.', $tutar);
+        if (!is_numeric($tutarCleaned) || floatval($tutarCleaned) < 0) {
+            throw new Exception("Lütfen geçerli bir fiyat girin.");
         }
 
         // Parse and format dates
@@ -128,7 +135,7 @@ if (isset($_POST["action"]) && $_POST["action"] == "addManualSale") {
         $payData = [
             "kullanici_id" => $kullanici_id,
             "abonelik_id" => $subId,
-            "tutar" => $pkg->fiyat,
+            "tutar" => floatval($tutarCleaned),
             "odeme_tarihi" => date('Y-m-d H:i:s'),
             "odeme_yontemi" => "Manuel Satış",
             "durum" => "basarili"
@@ -141,6 +148,98 @@ if (isset($_POST["action"]) && $_POST["action"] == "addManualSale") {
             "message" => "Paket satışı başarıyla gerçekleştirildi ve ödeme geçmişine eklendi."
         ]);
         exit();
+
+    } catch (Exception $ex) {
+        echo json_encode([
+            "status" => "error",
+            "message" => $ex->getMessage()
+        ]);
+        exit();
+    }
+}
+
+if (isset($_POST["action"]) && $_POST["action"] == "editManualSale") {
+    try {
+        $encryptedPaymentId = $_POST["payment_id"] ?? "";
+        $encryptedKullaniciId = $_POST["kullanici_id"] ?? "";
+        $encryptedPaketId = $_POST["paket_id"] ?? "";
+        $firma_hakki = $_POST["firma_hakki"] ?? 0;
+        $alt_kullanici_hakki = $_POST["alt_kullanici_hakki"] ?? 0;
+        $baslangic_tarihi = $_POST["baslangic_tarihi"] ?? "";
+        $bitis_tarihi = $_POST["bitis_tarihi"] ?? "";
+        $tutar = $_POST["tutar"] ?? "";
+
+        if (!$encryptedPaymentId || !$encryptedKullaniciId || !$encryptedPaketId || !$baslangic_tarihi || !$bitis_tarihi || $tutar === "") {
+            throw new Exception("Lütfen gerekli tüm alanları doldurun.");
+        }
+
+        $paymentId = Security::safeDecrypt($encryptedPaymentId);
+        $kullanici_id = Security::safeDecrypt($encryptedKullaniciId);
+        $paket_id = Security::safeDecrypt($encryptedPaketId);
+
+        if (!$paymentId || !$kullanici_id || !$paket_id) {
+            throw new Exception("Geçersiz veri gönderildi.");
+        }
+
+        $payment = $odemelerModel->find($paymentId);
+        if (!$payment) {
+            throw new Exception("Düzenlenmek istenen ödeme kaydı bulunamadı.");
+        }
+
+        // Clean and validate tutar
+        $tutarCleaned = str_replace(',', '.', $tutar);
+        if (!is_numeric($tutarCleaned) || floatval($tutarCleaned) < 0) {
+            throw new Exception("Lütfen geçerli bir fiyat girin.");
+        }
+
+        // Parse and format dates
+        $startDateObj = DateTime::createFromFormat('d.m.Y', $baslangic_tarihi);
+        $endDateObj = DateTime::createFromFormat('d.m.Y', $bitis_tarihi);
+        if (!$startDateObj || !$endDateObj) {
+            throw new Exception("Geçersiz tarih formatı.");
+        }
+
+        $startDateFormatted = $startDateObj->format('Y-m-d');
+        $endDateFormatted = $endDateObj->format('Y-m-d');
+
+        // Start transaction
+        $odemelerModel->beginTransaction();
+
+        try {
+            // Update user subscription
+            if (!empty($payment->abonelik_id)) {
+                $subData = [
+                    "id" => $payment->abonelik_id,
+                    "kullanici_id" => $kullanici_id,
+                    "paket_id" => $paket_id,
+                    "baslangic_tarihi" => $startDateFormatted,
+                    "bitis_tarihi" => $endDateFormatted,
+                    "firma_hakki" => $firma_hakki,
+                    "alt_kullanici_hakki" => $alt_kullanici_hakki
+                ];
+                $abonelikModel->saveWithAttr($subData);
+            }
+
+            // Update payment record
+            $payData = [
+                "id" => $paymentId,
+                "kullanici_id" => $kullanici_id,
+                "tutar" => floatval($tutarCleaned)
+            ];
+            $odemelerModel->saveWithAttr($payData);
+
+            $odemelerModel->commit();
+
+            echo json_encode([
+                "status" => "success",
+                "message" => "Paket satışı başarıyla güncellendi."
+            ]);
+            exit();
+
+        } catch (Exception $exSub) {
+            $odemelerModel->rollBack();
+            throw $exSub;
+        }
 
     } catch (Exception $ex) {
         echo json_encode([
