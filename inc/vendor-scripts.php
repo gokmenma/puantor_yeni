@@ -36,6 +36,7 @@ if (
     $page == 'todos/list' ||
     $page == "users/manage" || $page == "cari/list" || $page == "cari/movements" ||
     $page == "raporlar/list" || $page == "avans-talepleri/list" ||
+    $page == 'activities/index' ||
     $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
@@ -204,6 +205,10 @@ if ($page == 'home') {
     echo '<script src="./dist/libs/jsvectormap/dist/maps/world-merc.js" defer></script>';
     echo '<script src="./src/charts.js" defer></script>';
     echo '<script src="./src/home/missions.js"></script>';
+}
+
+if ($page == 'activities/index') {
+    echo '<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>';
 }
 ?>
 
