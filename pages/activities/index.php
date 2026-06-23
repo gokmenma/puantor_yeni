@@ -72,8 +72,12 @@ if (isset($_SESSION['user']->user_roles)) {
 // Yetki kontrolü yapalım
 $authsObj->checkAuthorize("system_activities_view");
 
+// Yönetici (Superadmin) Kontrolü
+$is_superadmin = (isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1);
+
 // Filtre Değişkenleri
 $firm_id = $_SESSION['firm_id'];
+$company_id_filter = isset($_GET['company_id']) ? $_GET['company_id'] : '';
 $user_id_filter = isset($_GET['user_id']) ? $_GET['user_id'] : '';
 $activity_type_filter = isset($_GET['activity_type']) ? $_GET['activity_type'] : '';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('d.m.Y', strtotime('-30 days'));
@@ -92,48 +96,92 @@ function parseDate($dateStr, $default) {
 $start_date_db = parseDate($start_date, date('Y-m-d', strtotime('-30 days')));
 $end_date_db = parseDate($end_date, date('Y-m-d'));
 
+// Firma Listesi (Sadece Superadmin için)
+$all_companies = [];
+if ($is_superadmin) {
+    $sqlCompanies = $db->prepare("SELECT id, company_name FROM companies ORDER BY company_name ASC");
+    $sqlCompanies->execute();
+    $all_companies = $sqlCompanies->fetchAll(PDO::FETCH_OBJ);
+}
+
 // Kullanıcı Listesi (Filtre için)
 $userModel = new UserModel();
-$users = $userModel->getUsersByFirm($firm_id);
+if ($is_superadmin) {
+    if (!empty($company_id_filter)) {
+        $users = $userModel->getUsersByFirm($company_id_filter);
+    } else {
+        $sqlAllUsers = $db->prepare("SELECT id, full_name FROM users ORDER BY full_name ASC");
+        $sqlAllUsers->execute();
+        $users = $sqlAllUsers->fetchAll(PDO::FETCH_OBJ);
+    }
+} else {
+    $users = $userModel->getUsersByFirm($firm_id);
+}
 
-// --- VERİ TABANI SORGULARI ---
+// --- FİLTRE VE KOŞULLARIN DİNAMİK YAPILANDIRILMASI ---
 
-// 1. Toplam Giriş Sayısı
-$sqlLoginsCount = $db->prepare("SELECT COUNT(l.id) FROM login_logs l JOIN users u ON l.user_id = u.id WHERE u.firm_id = :firm_id AND DATE(l.login_time) BETWEEN :start_date AND :end_date");
-$sqlLoginsCount->execute([
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-]);
-$total_logins = $sqlLoginsCount->fetchColumn();
-
-// 2. Aktif Kullanıcı Sayısı (Benzersiz giriş yapanlar)
-$sqlActiveUsersCount = $db->prepare("SELECT COUNT(DISTINCT l.user_id) FROM login_logs l JOIN users u ON l.user_id = u.id WHERE u.firm_id = :firm_id AND DATE(l.login_time) BETWEEN :start_date AND :end_date");
-$sqlActiveUsersCount->execute([
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-]);
-$active_users_count = $sqlActiveUsersCount->fetchColumn();
-
-// 3. Toplam Aktivite Sayısı
-$sqlActWhere = "a.firm_id = :firm_id AND DATE(a.created_at) BETWEEN :start_date AND :end_date";
+// 1. Aktivite Koşulları
+$actWhere = "DATE(a.created_at) BETWEEN :start_date AND :end_date";
 $actParams = [
-    'firm_id' => $firm_id,
     'start_date' => $start_date_db,
     'end_date' => $end_date_db
 ];
 
+if ($is_superadmin) {
+    if (!empty($company_id_filter)) {
+        $actWhere .= " AND a.firm_id = :firm_id";
+        $actParams['firm_id'] = $company_id_filter;
+    }
+} else {
+    $actWhere .= " AND a.firm_id = :firm_id";
+    $actParams['firm_id'] = $firm_id;
+}
+
 if (!empty($user_id_filter)) {
-    $sqlActWhere .= " AND a.user_id = :user_id";
+    $actWhere .= " AND a.user_id = :user_id";
     $actParams['user_id'] = $user_id_filter;
 }
 if (!empty($activity_type_filter)) {
-    $sqlActWhere .= " AND a.activity_type = :activity_type";
+    $actWhere .= " AND a.activity_type = :activity_type";
     $actParams['activity_type'] = $activity_type_filter;
 }
 
-$sqlActivitiesCount = $db->prepare("SELECT COUNT(a.id) FROM activity_logs a WHERE $sqlActWhere");
+// 2. Giriş Koşulları
+$loginWhere = "DATE(l.login_time) BETWEEN :start_date AND :end_date";
+$loginParams = [
+    'start_date' => $start_date_db,
+    'end_date' => $end_date_db
+];
+
+if ($is_superadmin) {
+    if (!empty($company_id_filter)) {
+        $loginWhere .= " AND u.firm_id = :firm_id";
+        $loginParams['firm_id'] = $company_id_filter;
+    }
+} else {
+    $loginWhere .= " AND u.firm_id = :firm_id";
+    $loginParams['firm_id'] = $firm_id;
+}
+
+if (!empty($user_id_filter)) {
+    $loginWhere .= " AND l.user_id = :user_id";
+    $loginParams['user_id'] = $user_id_filter;
+}
+
+// --- VERİ TABANI SORGULARI ---
+
+// 1. Toplam Giriş Sayısı
+$sqlLoginsCount = $db->prepare("SELECT COUNT(l.id) FROM login_logs l JOIN users u ON l.user_id = u.id WHERE $loginWhere");
+$sqlLoginsCount->execute($loginParams);
+$total_logins = $sqlLoginsCount->fetchColumn();
+
+// 2. Aktif Kullanıcı Sayısı (Benzersiz giriş yapanlar)
+$sqlActiveUsersCount = $db->prepare("SELECT COUNT(DISTINCT l.user_id) FROM login_logs l JOIN users u ON l.user_id = u.id WHERE $loginWhere");
+$sqlActiveUsersCount->execute($loginParams);
+$active_users_count = $sqlActiveUsersCount->fetchColumn();
+
+// 3. Toplam Aktivite Sayısı
+$sqlActivitiesCount = $db->prepare("SELECT COUNT(a.id) FROM activity_logs a WHERE $actWhere");
 $sqlActivitiesCount->execute($actParams);
 $total_activities = $sqlActivitiesCount->fetchColumn();
 
@@ -141,15 +189,11 @@ $total_activities = $sqlActivitiesCount->fetchColumn();
 $sqlMostActiveUser = $db->prepare("SELECT u.full_name, COUNT(a.id) as act_count 
                                    FROM activity_logs a 
                                    JOIN users u ON a.user_id = u.id 
-                                   WHERE a.firm_id = :firm_id AND DATE(a.created_at) BETWEEN :start_date AND :end_date
+                                   WHERE $actWhere
                                    GROUP BY a.user_id 
                                    ORDER BY act_count DESC 
                                    LIMIT 1");
-$sqlMostActiveUser->execute([
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-]);
+$sqlMostActiveUser->execute($actParams);
 $most_active_user_row = $sqlMostActiveUser->fetch(PDO::FETCH_OBJ);
 $most_active_user = $most_active_user_row ? $most_active_user_row->full_name . ' (' . $most_active_user_row->act_count . ')' : '-';
 
@@ -158,14 +202,10 @@ $most_active_user = $most_active_user_row ? $most_active_user_row->full_name . '
 // 1. Günlük Aktivite Eğilimi
 $sqlDailyTrend = $db->prepare("SELECT DATE(a.created_at) as act_date, COUNT(a.id) as act_count 
                                FROM activity_logs a 
-                               WHERE a.firm_id = :firm_id AND DATE(a.created_at) BETWEEN :start_date AND :end_date
+                               WHERE $actWhere
                                GROUP BY DATE(a.created_at) 
                                ORDER BY act_date ASC");
-$sqlDailyTrend->execute([
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-]);
+$sqlDailyTrend->execute($actParams);
 $daily_trend_data = $sqlDailyTrend->fetchAll(PDO::FETCH_OBJ);
 
 $trend_labels = [];
@@ -187,13 +227,9 @@ foreach ($date_map as $d => $count) {
 // 2. Aktivite Türleri Dağılımı
 $sqlTypeDist = $db->prepare("SELECT a.activity_type, COUNT(a.id) as act_count 
                              FROM activity_logs a 
-                             WHERE a.firm_id = :firm_id AND DATE(a.created_at) BETWEEN :start_date AND :end_date
+                             WHERE $actWhere
                              GROUP BY a.activity_type");
-$sqlTypeDist->execute([
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-]);
+$sqlTypeDist->execute($actParams);
 $type_dist_data = $sqlTypeDist->fetchAll(PDO::FETCH_OBJ);
 
 $type_labels = [];
@@ -217,14 +253,10 @@ foreach ($type_dist_data as $row) {
 $sqlHourlyLogins = $db->prepare("SELECT HOUR(l.login_time) as login_hour, COUNT(l.id) as login_count 
                                  FROM login_logs l 
                                  JOIN users u ON l.user_id = u.id 
-                                 WHERE u.firm_id = :firm_id AND DATE(l.login_time) BETWEEN :start_date AND :end_date
+                                 WHERE $loginWhere
                                  GROUP BY HOUR(l.login_time) 
                                  ORDER BY login_hour ASC");
-$sqlHourlyLogins->execute([
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-]);
+$sqlHourlyLogins->execute($loginParams);
 $hourly_logins_data = $sqlHourlyLogins->fetchAll(PDO::FETCH_OBJ);
 
 $hourly_labels = [];
@@ -241,55 +273,59 @@ for ($h = 0; $h < 24; $h++) {
 // --- TABLO VERİLERİ ---
 
 // 1. Aktivite Günlükleri Listesi
-$sqlActList = "SELECT a.*, u.full_name as user_name 
+$sqlActList = "SELECT a.*, u.full_name as user_name, c.company_name 
                FROM activity_logs a 
                LEFT JOIN users u ON a.user_id = u.id 
-               WHERE $sqlActWhere 
+               LEFT JOIN companies c ON a.firm_id = c.id
+               WHERE $actWhere 
                ORDER BY a.created_at DESC";
 $stmtActList = $db->prepare($sqlActList);
 $stmtActList->execute($actParams);
 $activities = $stmtActList->fetchAll(PDO::FETCH_OBJ);
 
 // 2. Giriş Kayıtları Listesi
-$sqlLoginsWhere = "u.firm_id = :firm_id AND DATE(l.login_time) BETWEEN :start_date AND :end_date";
-$loginParams = [
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-];
-if (!empty($user_id_filter)) {
-    $sqlLoginsWhere .= " AND l.user_id = :user_id";
-    $loginParams['user_id'] = $user_id_filter;
-}
-
-$sqlLoginsList = "SELECT l.*, u.full_name as user_name 
+$sqlLoginsList = "SELECT l.*, u.full_name as user_name, c.company_name 
                   FROM login_logs l 
                   JOIN users u ON l.user_id = u.id 
-                  WHERE $sqlLoginsWhere 
+                  LEFT JOIN companies c ON u.firm_id = c.id
+                  WHERE $loginWhere 
                   ORDER BY l.login_time DESC";
 $stmtLoginsList = $db->prepare($sqlLoginsList);
 $stmtLoginsList->execute($loginParams);
 $logins = $stmtLoginsList->fetchAll(PDO::FETCH_OBJ);
 
 // 3. Kullanıcı Aktiflik Raporu
+$userSummaryWhere = "";
+$userSummaryParams = [
+    'start_date' => $start_date_db,
+    'end_date' => $end_date_db
+];
+if ($is_superadmin) {
+    if (!empty($company_id_filter)) {
+        $userSummaryWhere .= "WHERE u.firm_id = :firm_id";
+        $userSummaryParams['firm_id'] = $company_id_filter;
+    }
+} else {
+    $userSummaryWhere .= "WHERE u.firm_id = :firm_id";
+    $userSummaryParams['firm_id'] = $firm_id;
+}
+
 $sqlUserSummary = $db->prepare("
     SELECT 
         u.id, 
         u.full_name, 
         u.email,
         u.status,
+        c.company_name,
         (SELECT COUNT(a.id) FROM activity_logs a WHERE a.user_id = u.id AND DATE(a.created_at) BETWEEN :start_date AND :end_date) as total_activities,
         (SELECT COUNT(l.id) FROM login_logs l WHERE l.user_id = u.id AND DATE(l.login_time) BETWEEN :start_date AND :end_date) as total_logins,
         (SELECT MAX(a.created_at) FROM activity_logs a WHERE a.user_id = u.id) as last_activity_time
     FROM users u 
-    WHERE u.firm_id = :firm_id
+    LEFT JOIN companies c ON u.firm_id = c.id
+    $userSummaryWhere
     ORDER BY total_activities DESC
 ");
-$sqlUserSummary->execute([
-    'firm_id' => $firm_id,
-    'start_date' => $start_date_db,
-    'end_date' => $end_date_db
-]);
+$sqlUserSummary->execute($userSummaryParams);
 $user_summaries = $sqlUserSummary->fetchAll(PDO::FETCH_OBJ);
 
 // Oturum Süresi Hesaplama
@@ -327,7 +363,7 @@ function getSessionDuration($loginTime, $logoutTime) {
         <div class="row align-items-center">
             <div class="col">
                 <div class="page-pretitle">Analiz & Raporlama</div>
-                <h2 class="page-title text-primary fw-bold">Sistem Aktiviteleri</h2>
+                <h2 class="page-title text-primary fw-bold">Sistem Aktiviteleri <?php echo $is_superadmin ? '(Tüm Sistem Raporu)' : ''; ?></h2>
             </div>
         </div>
     </div>
@@ -338,8 +374,24 @@ function getSessionDuration($loginTime, $logoutTime) {
             <form method="GET" action="index.php" id="filterForm">
                 <input type="hidden" name="p" value="activities/index">
                 <div class="row g-2 align-items-end">
+                    
+                    <!-- Superadmin Firma Filtresi -->
+                    <?php if ($is_superadmin): ?>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-secondary">Firma (Şirket)</label>
+                            <select name="company_id" class="form-select select2" style="width: 100%" onchange="this.form.submit()">
+                                <option value="">Tüm Firmalar</option>
+                                <?php foreach ($all_companies as $c): ?>
+                                    <option value="<?php echo $c->id; ?>" <?php echo $company_id_filter == $c->id ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($c->company_name); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Kullanıcı Filtresi -->
-                    <div class="col-md-3">
+                    <div class="<?php echo $is_superadmin ? 'col-md-2' : 'col-md-3'; ?>">
                         <label class="form-label small fw-bold text-secondary">Kullanıcı</label>
                         <select name="user_id" class="form-select select2" style="width: 100%">
                             <option value="">Tüm Kullanıcılar</option>
@@ -352,7 +404,7 @@ function getSessionDuration($loginTime, $logoutTime) {
                     </div>
 
                     <!-- Aktivite Türü Filtresi -->
-                    <div class="col-md-3">
+                    <div class="<?php echo $is_superadmin ? 'col-md-2' : 'col-md-3'; ?>">
                         <label class="form-label small fw-bold text-secondary">Aktivite Türü</label>
                         <select name="activity_type" class="form-select select2" style="width: 100%">
                             <option value="">Tüm Türler</option>
@@ -547,6 +599,9 @@ function getSessionDuration($loginTime, $logoutTime) {
                         <thead>
                             <tr>
                                 <th style="width: 5%">Sıra</th>
+                                <?php if ($is_superadmin): ?>
+                                    <th>Firma</th>
+                                <?php endif; ?>
                                 <th style="width: 15%">Kullanıcı</th>
                                 <th style="width: 15%">Aktivite Türü</th>
                                 <th style="width: 15%">İşlem / Eylem</th>
@@ -570,6 +625,9 @@ function getSessionDuration($loginTime, $logoutTime) {
                                 ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
+                                    <?php if ($is_superadmin): ?>
+                                        <td><span class="text-secondary small fw-bold"><?php echo htmlspecialchars($act->company_name ?? 'Sistem'); ?></span></td>
+                                    <?php endif; ?>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="avatar avatar-xs rounded-circle bg-teal-lt">
@@ -607,6 +665,9 @@ function getSessionDuration($loginTime, $logoutTime) {
                         <thead>
                             <tr>
                                 <th style="width: 5%">Sıra</th>
+                                <?php if ($is_superadmin): ?>
+                                    <th>Firma</th>
+                                <?php endif; ?>
                                 <th style="width: 20%">Kullanıcı</th>
                                 <th style="width: 15%">Giriş Zamanı</th>
                                 <th style="width: 15%">Çıkış Zamanı</th>
@@ -619,6 +680,9 @@ function getSessionDuration($loginTime, $logoutTime) {
                             <?php $i = 1; foreach ($logins as $log): ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
+                                    <?php if ($is_superadmin): ?>
+                                        <td><span class="text-secondary small fw-bold"><?php echo htmlspecialchars($log->company_name ?? 'Sistem'); ?></span></td>
+                                    <?php endif; ?>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="avatar avatar-xs rounded-circle bg-azure-lt">
@@ -681,6 +745,9 @@ function getSessionDuration($loginTime, $logoutTime) {
                         <thead>
                             <tr>
                                 <th style="width: 5%">Sıra</th>
+                                <?php if ($is_superadmin): ?>
+                                    <th>Firma</th>
+                                <?php endif; ?>
                                 <th>Kullanıcı</th>
                                 <th>E-Mail</th>
                                 <th style="width: 15%">Toplam Giriş Sayısı</th>
@@ -712,6 +779,9 @@ function getSessionDuration($loginTime, $logoutTime) {
                                 ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
+                                    <?php if ($is_superadmin): ?>
+                                        <td><span class="text-secondary small fw-bold"><?php echo htmlspecialchars($sum->company_name ?? 'Sistem'); ?></span></td>
+                                    <?php endif; ?>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="avatar avatar-sm rounded bg-primary-lt">
