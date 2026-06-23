@@ -208,22 +208,22 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
             </div>
             
             <script>
-            document.addEventListener("DOMContentLoaded", function () {
+            $(document).ready(function () {
                 // Tab switch event listeners to manage header save button & reminder box
                 function toggleSaveElements() {
-                    var activeTab = document.querySelector("#settings-tabs a.active");
-                    if (!activeTab) return;
+                    var activeTab = $("#settings-tabs a.active");
+                    if (!activeTab.length) return;
                     
-                    var targetId = activeTab.getAttribute("href");
-                    var saveBtnContainer = document.getElementById("btn-save-changes-container");
-                    var reminderCard = document.getElementById("settings-reminder");
+                    var targetId = activeTab.attr("href");
+                    var saveBtnContainer = $("#btn-save-changes-container");
+                    var reminderCard = $("#settings-reminder");
                     
                     if (targetId === "#tabs-profile" || targetId === "#tabs-password") {
-                        if (saveBtnContainer) saveBtnContainer.style.display = "block";
-                        if (reminderCard) reminderCard.style.display = "block";
+                        saveBtnContainer.show();
+                        reminderCard.show();
                     } else {
-                        if (saveBtnContainer) saveBtnContainer.style.display = "none";
-                        if (reminderCard) reminderCard.style.display = "none";
+                        saveBtnContainer.hide();
+                        reminderCard.hide();
                     }
                 }
                 
@@ -231,44 +231,22 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                 toggleSaveElements();
                 
                 // Trigger state changes on tab change
-                var tabLinks = document.querySelectorAll("#settings-tabs a[data-bs-toggle='tab']");
-                tabLinks.forEach(function(tab) {
-                    tab.addEventListener("shown.bs.tab", function() {
-                        toggleSaveElements();
-                    });
+                $("#settings-tabs a[data-bs-toggle='tab']").on("shown.bs.tab", function() {
+                    toggleSaveElements();
                 });
                 
                 // Global "Değişiklikleri Kaydet" header button trigger
-                var headerSaveBtn = document.getElementById("btn-save-changes");
-                if (headerSaveBtn) {
-                    headerSaveBtn.addEventListener("click", function() {
-                        var activeTab = document.querySelector("#settings-tabs a.active");
-                        if (!activeTab) return;
-                        
-                        var targetId = activeTab.getAttribute("href");
-                        if (targetId === "#tabs-profile") {
-                            // Trigger profile form submit
-                            var profileFormSubmitBtn = document.getElementById("profileFormSubmit");
-                            if (profileFormSubmitBtn) {
-                                profileFormSubmitBtn.click();
-                            } else {
-                                // Fallback: trigger custom save event/form submit
-                                var profileForm = document.getElementById("profileForm");
-                                if (profileForm) {
-                                    var event = new Event("submit", { cancelable: true });
-                                    profileForm.dispatchEvent(event);
-                                }
-                            }
-                        } else if (targetId === "#tabs-password") {
-                            // Trigger password form submit
-                            var passwordForm = document.getElementById("passwordForm");
-                            if (passwordForm) {
-                                var event = new Event("submit", { cancelable: true });
-                                passwordForm.dispatchEvent(event);
-                            }
-                        }
-                    });
-                }
+                $("#btn-save-changes").on("click", function() {
+                    var activeTab = $("#settings-tabs a.active");
+                    if (!activeTab.length) return;
+                    
+                    var targetId = activeTab.attr("href");
+                    if (targetId === "#tabs-profile") {
+                        $("#profileForm").submit();
+                    } else if (targetId === "#tabs-password") {
+                        $("#passwordForm").submit();
+                    }
+                });
             });
             </script>
             <?php endif; ?>
