@@ -94,15 +94,7 @@ foreach ($projectDaysData as $pData) {
     $personProjectDays[$pData->person][$pData->project_id] = (float)$pData->n_calisma;
 }
 
-// Projesiz çalışma var mı kontrol et
-$hasProjesiz = false;
-foreach ($raporData as $r) {
-    $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0);
-    if ($noProjDays > 0) {
-        $hasProjesiz = true;
-        break;
-    }
-}
+
 
 $spreadsheet = new Spreadsheet();
 $activeWorksheet = $spreadsheet->getActiveSheet();
@@ -129,9 +121,7 @@ $header = [
 foreach ($projects as $proj) {
     $header[] = $proj->project_name . ' (Gün)';
 }
-if ($hasProjesiz) {
-    $header[] = 'Projesiz (Gün)';
-}
+$header[] = 'Proje Yok (Gün)';
 
 $activeWorksheet->fromArray($header, NULL, 'A1');
 
@@ -161,18 +151,15 @@ foreach ($raporData as $r) {
         $activeWorksheet->setCellValue($colLetter . $row, (float)$days);
         $colIdx++;
     }
-    if ($hasProjesiz) {
-        $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0);
-        $colLetter = Coordinate::stringFromColumnIndex($colIdx);
-        $activeWorksheet->setCellValue($colLetter . $row, (float)$noProjDays);
-        $colIdx++;
-    }
+    $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0);
+    $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+    $activeWorksheet->setCellValue($colLetter . $row, (float)$noProjDays);
+    $colIdx++;
     
     $row++;
 }
 
-// Tüm sütun genişliklerini otomatik ayarla
-$totalCols = 15 + count($projects) + ($hasProjesiz ? 1 : 0);
+$totalCols = 15 + count($projects) + 1;
 for ($i = 1; $i <= $totalCols; $i++) {
     $colLetter = Coordinate::stringFromColumnIndex($i);
     $activeWorksheet->getColumnDimension($colLetter)->setAutoSize(true);

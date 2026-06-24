@@ -1175,6 +1175,8 @@ table {
                                 <th class='ld extra-column extra-project-totals text-center'
                                     style='width: 90px !important;'><?php echo htmlspecialchars($proj->project_name); ?></th>
                                 <?php endforeach; ?>
+                                <th class='ld extra-column extra-project-totals text-center'
+                                    style='width: 90px !important;'>Proje Yok</th>
                             </tr>
 
                             <tr>
@@ -1203,6 +1205,7 @@ table {
                                 <?php foreach ( $allProjects as $proj ): ?>
                                 <th class='ld extra-column extra-project-totals' style='width: 90px !important;'></th>
                                 <?php endforeach; ?>
+                                <th class='ld extra-column extra-project-totals' style='width: 90px !important;'></th>
                             </tr>
 
                         </thead>
@@ -1397,6 +1400,10 @@ table {
                                     <?php echo $personProjDays[$proj->id] ?? 0; ?>
                                 </td>
                                 <?php endforeach; ?>
+                                <td class='text-center extra-column extra-project-totals fw-semibold text-warning'
+                                    style='width: 90px !important;'>
+                                    <?php echo ($personProjDays[0] ?? 0) + ($personProjDays[''] ?? 0); ?>
+                                </td>
                             </tr>
                             <?php endforeach;
             ?>

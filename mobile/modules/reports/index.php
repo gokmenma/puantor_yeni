@@ -264,7 +264,7 @@ if ($view == 'puantaj') {
                   </div>
                   <div>
                     <h3 class="mb-0 text-bold text-dark" style="font-size: 0.9rem;"><?php echo htmlspecialchars($r->full_name); ?></h3>
-                    <p class="text-muted text-xxs mb-0"><?php echo htmlspecialchars($r->project_name ?? 'Projesiz'); ?> • <?php echo htmlspecialchars($r->job ?? 'Ünvansız'); ?></p>
+                    <p class="text-muted text-xxs mb-0"><?php echo htmlspecialchars($r->project_name ?? 'Proje Yok'); ?> • <?php echo htmlspecialchars($r->job ?? 'Ünvansız'); ?></p>
                   </div>
                 </div>
                 <span class="badge bg-purple-lt" style="font-size: 0.65rem; padding: 3px 8px;">

@@ -268,17 +268,9 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                 foreach ($projectDaysData as $pData) {
                     $personProjectDays[$pData->person][$pData->project_id] = (float)$pData->n_calisma;
                 }
-
-                // Projesiz çalışma var mı kontrol et
-                $hasProjesiz = false;
-                foreach ($raporData as $r) {
-                    $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0);
-                    if ($noProjDays > 0) {
-                        $hasProjesiz = true;
-                        break;
-                    }
-                }
                 ?>
+
+
 
                 <div class="card border-0 shadow-sm" style="border-radius: 12px;">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-light">
@@ -339,9 +331,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                     <?php foreach ($projects as $proj): ?>
                                         <th class="text-center"><?= htmlspecialchars($proj->project_name) ?> (Gün)</th>
                                     <?php endforeach; ?>
-                                    <?php if ($hasProjesiz): ?>
-                                        <th class="text-center">Projesiz (Gün)</th>
-                                    <?php endif; ?>
+                                    <th class="text-center">Proje Yok (Gün)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -373,10 +363,8 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                         <?php $days = $personProjectDays[$r->id][$proj->id] ?? 0; ?>
                                         <td class="text-center fw-medium"><?= (float)$days ?: '-' ?></td>
                                     <?php endforeach; ?>
-                                    <?php if ($hasProjesiz): ?>
-                                        <?php $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0); ?>
-                                        <td class="text-center fw-medium text-warning"><?= (float)$noProjDays ?: '-' ?></td>
-                                    <?php endif; ?>
+                                    <?php $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0); ?>
+                                    <td class="text-center fw-medium text-warning"><?= (float)$noProjDays ?: '-' ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
