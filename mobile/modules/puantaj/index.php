@@ -741,6 +741,9 @@ if (typeof $ === 'undefined' && typeof jQuery !== 'undefined') {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Move modals to body to prevent backdrop stacking context issues on iOS/mobile
+    $('#puantajModal, #filterModal').appendTo('body');
+
     // Search Filtering
     const searchInput = document.getElementById('puantajSearchInput');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
