@@ -6,6 +6,7 @@ if (!defined('ROOT')) {
 
 require ROOT . '/vendor/autoload.php';
 require_once ROOT . '/Model/Persons.php';
+require_once ROOT . '/Model/Projects.php';
 require_once ROOT . '/App/Helper/date.php';
 require_once ROOT . '/App/Helper/helper.php';
 require_once ROOT . '/App/Helper/security.php';
@@ -16,8 +17,10 @@ use App\Helper\Security;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 $personObj = new Persons();
+$projectObj = new Projects();
 
 $firm_id = $_SESSION['firm_id'];
 $month = $_GET['month'] ?? date('m');
@@ -66,6 +69,41 @@ $stmt = $db->prepare($queryStr);
 $stmt->execute([$start_dash, $end_dash, $start_nodash, $end_nodash, $firm_id]);
 $raporData = $stmt->fetchAll(PDO::FETCH_OBJ);
 
+// Projeleri ve proje bazlı normal çalışma günlerini çek
+$projects = $projectObj->getProjectsByFirm($firm_id);
+
+$projectDaysQuery = "
+SELECT 
+    pua.person, 
+    pua.project_id, 
+    SUM(CASE WHEN pt.Turu = 'Normal Çalışma' THEN 1 ELSE 0 END) as n_calisma
+FROM puantaj pua
+LEFT JOIN puantajturu pt ON pua.puantaj_id = pt.id
+INNER JOIN persons p ON p.id = pua.person
+WHERE p.firm_id = ? 
+  AND p.deleted_at IS NULL
+  AND ((pua.gun >= ? AND pua.gun <= ?) OR (pua.gun >= ? AND pua.gun <= ?))
+GROUP BY pua.person, pua.project_id
+";
+$stmtProjectDays = $db->prepare($projectDaysQuery);
+$stmtProjectDays->execute([$firm_id, $start_dash, $end_dash, $start_nodash, $end_nodash]);
+$projectDaysData = $stmtProjectDays->fetchAll(PDO::FETCH_OBJ);
+
+$personProjectDays = [];
+foreach ($projectDaysData as $pData) {
+    $personProjectDays[$pData->person][$pData->project_id] = (float)$pData->n_calisma;
+}
+
+// Projesiz çalışma var mı kontrol et
+$hasProjesiz = false;
+foreach ($raporData as $r) {
+    $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0);
+    if ($noProjDays > 0) {
+        $hasProjesiz = true;
+        break;
+    }
+}
+
 $spreadsheet = new Spreadsheet();
 $activeWorksheet = $spreadsheet->getActiveSheet();
 
@@ -86,6 +124,15 @@ $header = [
     'Rapor', 
     'Devamsız'
 ];
+
+// Proje sütunlarını header'a ekle
+foreach ($projects as $proj) {
+    $header[] = $proj->project_name . ' (Gün)';
+}
+if ($hasProjesiz) {
+    $header[] = 'Projesiz (Gün)';
+}
+
 $activeWorksheet->fromArray($header, NULL, 'A1');
 
 $row = 2;
@@ -105,11 +152,30 @@ foreach ($raporData as $r) {
     $activeWorksheet->setCellValue('M' . $row, (float)$r->ucr_izin);
     $activeWorksheet->setCellValue('N' . $row, (float)$r->rapor);
     $activeWorksheet->setCellValue('O' . $row, (float)$r->dvz);
+    
+    // Proje bazlı günleri yazdır
+    $colIdx = 16; // P kolonu (16. kolon)
+    foreach ($projects as $proj) {
+        $days = $personProjectDays[$r->id][$proj->id] ?? 0;
+        $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+        $activeWorksheet->setCellValue($colLetter . $row, (float)$days);
+        $colIdx++;
+    }
+    if ($hasProjesiz) {
+        $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0);
+        $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+        $activeWorksheet->setCellValue($colLetter . $row, (float)$noProjDays);
+        $colIdx++;
+    }
+    
     $row++;
 }
 
-foreach (range('A', 'O') as $columnID) {
-    $activeWorksheet->getColumnDimension($columnID)->setAutoSize(true);
+// Tüm sütun genişliklerini otomatik ayarla
+$totalCols = 15 + count($projects) + ($hasProjesiz ? 1 : 0);
+for ($i = 1; $i <= $totalCols; $i++) {
+    $colLetter = Coordinate::stringFromColumnIndex($i);
+    $activeWorksheet->getColumnDimension($colLetter)->setAutoSize(true);
 }
 
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

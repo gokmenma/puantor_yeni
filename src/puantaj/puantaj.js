@@ -48,19 +48,22 @@ function applyTypeToClickedCells(typeInfo) {
     let rowDefaultProject = parentTr.attr("data-default-project") || "0";
 
     // Determine target project ID based on selection count
-    let cellProj = "0";
+    let cellProj;
     if (current_projects.length === 1) {
       cellProj = current_projects[0];
     } else {
-      cellProj = "0";
+      // 0 or 2+ projects selected: use each person's default project from the row
+      cellProj = rowDefaultProject || "0";
     }
 
     // Resolve project name for tooltip
     let cellProjName = "Proje Yok";
     if (cellProj && cellProj !== "0" && cellProj !== "") {
-      let opt = $("#projects option[value='" + cellProj + "']");
+      let opt = $("select#projects option[value='" + cellProj + "']");
       if (opt.length > 0) {
         cellProjName = opt.text().trim();
+      } else {
+        cellProjName = "Proje #" + cellProj;
       }
     }
 
@@ -530,9 +533,9 @@ function loadPuantajTable() {
   // Serialize filter values
   var formData = $("#puantajInfoForm").serialize();
 
-  // Send AJAX request
+  // Send AJAX request - use clean URL to avoid stale GET params (e.g. old project IDs)
   $.ajax({
-    url: window.location.href,
+    url: 'index.php?p=puantaj%2Flist',
     type: 'POST',
     data: formData,
     headers: {

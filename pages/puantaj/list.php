@@ -420,7 +420,7 @@ table {
 }
 
 #puantajTable {
-    border-collapse: collapse !important;
+    border-collapse: separate !important;
 }
 
 #puantajTable thead th {
@@ -743,6 +743,7 @@ table {
     /* Make sure default first column is not too wide */
     #puantajTable th:nth-child(1),
     #puantajTable td:nth-child(1) {
+        position: static !important;
         min-width: 120px !important;
         width: 120px !important;
         white-space: nowrap !important;
@@ -813,6 +814,22 @@ table {
     border: none !important;
     box-shadow: none !important;
     transition: opacity 0.2s;
+}
+
+/* Adı Soyadı sütununu yatay kaydırmada sabit tut */
+#puantajTable th:nth-child(1),
+#puantajTable td:nth-child(1) {
+    position: sticky !important;
+    left: 0 !important;
+    background-color: var(--tblr-bg-surface) !important;
+    z-index: 3 !important;
+}
+
+#puantajTable thead tr:nth-child(1) th:nth-child(1) {
+    z-index: 1020 !important;
+}
+#puantajTable thead tr:nth-child(2) th:nth-child(1) {
+    z-index: 1019 !important;
 }
 
 /* Inactive State styling */
@@ -892,7 +909,7 @@ table {
                     style='font-size: 12px; line-height: 1.4; border-radius: 4px;'>
                     <div class='d-flex align-items-center'>
                         <i class='ti ti-alert-triangle me-2'></i>
-                        <span>Birden fazla proje seçildiğinde, yeni atamalar boş (projesiz) olarak yapılacaktır.</span>
+                        <span>Birden fazla proje seçildiğinde, yeni atamalar her personelin varsayılan projesine göre yapılacaktır.</span>
                     </div>
                     <button type='button' id='btn-clear-projects' class='btn btn-warning btn-sm py-1 px-2 border-0' style='font-size: 11px; font-weight: 600;'>
                         <i class='ti ti-x me-1'></i> Projeleri Temizle
@@ -1317,7 +1334,7 @@ table {
                             $color = $puantajTuru->FontRengi;
                             $selected = '';
                         } else {
-                            if ( !empty( $valid_project_ids ) && !in_array( $puantaj_project, $valid_project_ids ) ) {
+                            if ( count( $valid_project_ids ) === 1 && !in_array( $puantaj_project, $valid_project_ids ) ) {
                                 $backcolor = '#bbb';
                                 $color = '#666';
                                 $selected = 'selected';

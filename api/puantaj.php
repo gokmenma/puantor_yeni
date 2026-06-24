@@ -104,7 +104,8 @@ if ($_POST['action'] == 'savePuantaj') {
                         'gun' => $puantaj_key,
                         'saat' => $saat,
                         'tutar' => $tutar,
-                        'description' => "Puantaj Çalışma"
+                        'description' => "Puantaj Çalışma",
+                        'updated_at' => date('Y-m-d H:i:s')
                     ];
 
                     try {

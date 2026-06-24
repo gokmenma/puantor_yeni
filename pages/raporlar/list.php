@@ -2,6 +2,7 @@
 require_once 'App/Helper/helper.php';
 require_once 'App/Helper/date.php';
 require_once 'Model/Persons.php';
+require_once 'Model/Projects.php';
 require_once 'App/Helper/security.php';
 
 require_once 'Model/Bordro.php';
@@ -235,11 +236,47 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                 $stmt = $db->prepare($queryStr);
                 $stmt->execute([$start_dash, $end_dash, $start_nodash, $end_nodash, $firm_id]);
                 $raporData = $stmt->fetchAll(PDO::FETCH_OBJ);
-                
+                 
                 // Verileri işleme (Şifreli alanları çözme)
                 foreach($raporData as $row) {
                     $row->iban_number = Security::safeDecrypt($row->iban_number ?? '');
                     $row->kimlik_no = Security::safeDecrypt($row->kimlik_no ?? '');
+                }
+
+                // Projeleri ve proje bazlı normal çalışma günlerini çek
+                $projectObj = new Projects();
+                $projects = $projectObj->getProjectsByFirm($firm_id);
+
+                $projectDaysQuery = "
+                SELECT 
+                    pua.person, 
+                    pua.project_id, 
+                    SUM(CASE WHEN pt.Turu = 'Normal Çalışma' THEN 1 ELSE 0 END) as n_calisma
+                FROM puantaj pua
+                LEFT JOIN puantajturu pt ON pua.puantaj_id = pt.id
+                INNER JOIN persons p ON p.id = pua.person
+                WHERE p.firm_id = ? 
+                  AND p.deleted_at IS NULL
+                  AND ((pua.gun >= ? AND pua.gun <= ?) OR (pua.gun >= ? AND pua.gun <= ?))
+                GROUP BY pua.person, pua.project_id
+                ";
+                $stmtProjectDays = $db->prepare($projectDaysQuery);
+                $stmtProjectDays->execute([$firm_id, $start_dash, $end_dash, $start_nodash, $end_nodash]);
+                $projectDaysData = $stmtProjectDays->fetchAll(PDO::FETCH_OBJ);
+
+                $personProjectDays = [];
+                foreach ($projectDaysData as $pData) {
+                    $personProjectDays[$pData->person][$pData->project_id] = (float)$pData->n_calisma;
+                }
+
+                // Projesiz çalışma var mı kontrol et
+                $hasProjesiz = false;
+                foreach ($raporData as $r) {
+                    $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0);
+                    if ($noProjDays > 0) {
+                        $hasProjesiz = true;
+                        break;
+                    }
                 }
                 ?>
 
@@ -299,6 +336,12 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                     <th class="text-center">Ücretsiz İzin</th>
                                     <th class="text-center">Rapor</th>
                                     <th class="text-center">Devamsız</th>
+                                    <?php foreach ($projects as $proj): ?>
+                                        <th class="text-center"><?= htmlspecialchars($proj->project_name) ?> (Gün)</th>
+                                    <?php endforeach; ?>
+                                    <?php if ($hasProjesiz): ?>
+                                        <th class="text-center">Projesiz (Gün)</th>
+                                    <?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
@@ -326,6 +369,14 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                     <td class="text-center text-warning"><?= (float)$r->ucr_izin ?: '-' ?></td>
                                     <td class="text-center text-purple"><?= (float)$r->rapor ?: '-' ?></td>
                                     <td class="text-center text-red"><?= (float)$r->dvz ?: '-' ?></td>
+                                    <?php foreach ($projects as $proj): ?>
+                                        <?php $days = $personProjectDays[$r->id][$proj->id] ?? 0; ?>
+                                        <td class="text-center fw-medium"><?= (float)$days ?: '-' ?></td>
+                                    <?php endforeach; ?>
+                                    <?php if ($hasProjesiz): ?>
+                                        <?php $noProjDays = ($personProjectDays[$r->id][0] ?? 0) + ($personProjectDays[$r->id][''] ?? 0); ?>
+                                        <td class="text-center fw-medium text-warning"><?= (float)$noProjDays ?: '-' ?></td>
+                                    <?php endif; ?>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -670,7 +721,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     <div class="card-body p-3">
                         <div class="row g-2">
                             <div class="col-md-3 col-6">
-                                <a href="#" class="btn btn-outline-teal w-100 text-nowrap disabled opacity-50"><i class="ti ti-file-spreadsheet me-1"></i> İcmal (Excel)</a>
+                                <a href="pages/raporlar/puantaj-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-teal w-100 text-nowrap"><i class="ti ti-file-spreadsheet me-1"></i> İcmal (Excel)</a>
                             </div>
                             <div class="col-md-3 col-6">
                                 <a href="pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-info w-100 text-nowrap"><i class="ti ti-building-bank me-1"></i> Banka (Excel)</a>
