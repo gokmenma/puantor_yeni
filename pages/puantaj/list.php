@@ -1090,6 +1090,11 @@ table {
                                         data-column='extra-toplam-fazla-mesai' checked>
                                     Toplam Fazla Mesai
                                 </label>
+                                <label class='dropdown-item cursor-pointer'>
+                                    <input type='checkbox' class='form-check-input me-2 column-toggle-check'
+                                        data-column='extra-project-totals' checked>
+                                    Proje Toplam Günleri
+                                </label>
 
                                 <div class='dropdown-divider'></div>
                                 <h6 class='dropdown-header'>Puantaj Ayarları</h6>
@@ -1166,6 +1171,10 @@ table {
                                     style='width: 80px !important;'>Toplam Gün</th>
                                 <th class='ld extra-column extra-toplam-fazla-mesai text-center'
                                     style='width: 80px !important;'>Toplam FM</th>
+                                <?php foreach ( $allProjects as $proj ): ?>
+                                <th class='ld extra-column extra-project-totals text-center'
+                                    style='width: 90px !important;'><?php echo htmlspecialchars($proj->project_name); ?></th>
+                                <?php endforeach; ?>
                             </tr>
 
                             <tr>
@@ -1191,6 +1200,9 @@ table {
                                 <th class='ld extra-column extra-toplam-gun' style='width: 80px !important;'></th>
                                 <th class='ld extra-column extra-toplam-fazla-mesai' style='width: 80px !important;'>
                                 </th>
+                                <?php foreach ( $allProjects as $proj ): ?>
+                                <th class='ld extra-column extra-project-totals' style='width: 90px !important;'></th>
+                                <?php endforeach; ?>
                             </tr>
 
                         </thead>
@@ -1222,9 +1234,11 @@ table {
                                 // Calculate totals for this person
                                 $totalDays = 0;
                                 $totalOvertime = 0;
+                                $personProjDays = [];
                                 foreach ($dates as $date) {
                                     if ($jobStartDate <= $date && $jobEndDate >= $date) {
-                                        $puantajRecord = $personPuantaj[$date] ?? null;
+                                        $dateKey = str_replace('-', '', $date);
+                                        $puantajRecord = $personPuantaj[$dateKey] ?? $personPuantaj[$date] ?? null;
                                         $puantaj_id = $puantajRecord->puantaj_id ?? '';
 
                                         if ($puantaj_id >= 0 && $puantaj_id !== '') {
@@ -1241,6 +1255,7 @@ table {
                                                 if ($puantajTuru) {
                                                     if ($puantajTuru->Turu != 'Ücretsiz') {
                                                         $totalDays++;
+                                                        $personProjDays[$puantaj_project] = ($personProjDays[$puantaj_project] ?? 0) + 1;
                                                     }
                                                     if ($puantajTuru->Turu == 'Fazla Çalışma') {
                                                         $totalOvertime += floatval($puantajTuru->EklenecekSaat);
@@ -1376,6 +1391,12 @@ table {
                                     <?php echo $totalOvertime > 0 ? str_replace( '.0', '', ( string )$totalOvertime ) : '0';
             ?>
                                 </td>
+                                <?php foreach ( $allProjects as $proj ): ?>
+                                <td class='text-center extra-column extra-project-totals fw-semibold'
+                                    style='width: 90px !important;'>
+                                    <?php echo $personProjDays[$proj->id] ?? 0; ?>
+                                </td>
+                                <?php endforeach; ?>
                             </tr>
                             <?php endforeach;
             ?>
