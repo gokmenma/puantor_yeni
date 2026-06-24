@@ -795,29 +795,30 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
 }
 
 if ($(".select2").length > 0) {
-  $(".select2").select2();
-
-  // $("#products").select2({
-  //   dropdownParent: $(".modal")
-  // });
-  // $(".modal .select2").select2({
-  //   dropdownParent: $(".modal")
-  // });
-  // $("#amount_money").select2({
-  //   dropdownParent: $(".modal")
-  // });
-  // // $("#firm_cases").select2({
-  // //   dropdownParent: $(".modal")
-  // // });
-  // $(
-  //   "#wage_cut_month, #wage_cut_year,#income_month, #income_year, #payment_month, #payment_year"
-  // ).select2({
-  //   dropdownParent: $(".modal")
-  // });
-
-  //Modal'daki select2'lerin dropdown parent'ını modal yap
-  $(".modal .select2").each(function () {
-    $(this).select2({ dropdownParent: $(this).parent() });
+  $(".select2").each(function () {
+    var $el = $(this);
+    if ($el.hasClass('select2-hidden-accessible')) {
+      return;
+    }
+    
+    var placeholder = $el.attr('data-placeholder') || "";
+    var allowClear = $el.attr('data-allow-clear') === 'true';
+    
+    var options = {
+      placeholder: placeholder,
+      allowClear: allowClear
+    };
+    
+    var $modal = $el.closest('.modal');
+    if ($modal.length > 0) {
+      options.dropdownParent = $el.parent();
+    }
+    
+    if ($el.hasClass('islem')) {
+      options.tags = true;
+    }
+    
+    $el.select2(options);
   });
 }
 $(document).ready(function () {
@@ -860,11 +861,7 @@ $(document).on("click", ".route-link", function () {
 
   window.location = link;
 });
-if ($(".select2").length > 0) {
-  $(".select2.islem").select2({
-    tags: true
-  });
-}
+
 
 function dtSearchInput(tableId, column, value) {}
 

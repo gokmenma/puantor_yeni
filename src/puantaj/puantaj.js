@@ -868,9 +868,14 @@ $(document).ready(function() {
 
 function checkProjectsWarning() {
   const current_projects = $("#projects").val() || [];
-  if (current_projects.length > 1) {
+  if (current_projects.length === 0) {
+    $("#project-empty-warning-bar").removeClass("d-none");
+    $("#project-warning-bar").addClass("d-none");
+  } else if (current_projects.length > 1) {
+    $("#project-empty-warning-bar").addClass("d-none");
     $("#project-warning-bar").removeClass("d-none");
   } else {
+    $("#project-empty-warning-bar").addClass("d-none");
     $("#project-warning-bar").addClass("d-none");
   }
 }

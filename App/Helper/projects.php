@@ -49,7 +49,7 @@ class ProjectHelper extends Db
         
         $results = $this->Projects->getProjectsByFirm($_SESSION["firm_id"]);
 
-        $select = '<select name="' . $name . '[]" class="form-select select2" id="' . $name . '" style="width:100%" multiple data-placeholder="Projeleri Seçiniz">';
+        $select = '<select name="' . $name . '[]" class="form-select select2" id="' . $name . '" style="width:100%" multiple data-placeholder="Projeleri Seçiniz" data-allow-clear="true">';
         $select .= '<option value="0" disabled>Projeleri Seçiniz</option>';
         foreach ($results as $row) { // $results üzerinde döngü
             $selected = in_array($row->id, $project_ids) ? ' selected' : ''; // Eğer id varsa seçili yap

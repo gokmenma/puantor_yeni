@@ -917,6 +917,15 @@ table {
                 </div>
             </div>
         </div>
+        <div id='project-empty-warning-bar' class='row d-none mt-2'>
+            <div class='col-12'>
+                <div class='alert alert-warning py-2 px-3 mb-0 d-flex align-items-center'
+                    style='font-size: 12px; line-height: 1.4; border-radius: 4px; background-color: #fff3cd; border-color: #ffecb5; color: #664d03;'>
+                    <i class='ti ti-alert-triangle me-2 fs-2' style='color: #664d03;'></i>
+                    <span><strong>Proje Seçilmedi!</strong> Lütfen işlem yapmak ve puantaj verilerini görüntülemek için en az bir proje seçiniz.</span>
+                </div>
+            </div>
+        </div>
     </form>
 </div>
 
