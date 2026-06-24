@@ -487,13 +487,15 @@ foreach ($all_projects as $proj) {
                 </div>
                 <div class="person-item-content">
                     <div class="list-group-item list-group-item-action py-2.5 person-row cursor-pointer d-flex align-items-center justify-content-between" 
+                         role="button"
+                         tabindex="0"
                          data-person-id="<?php echo $person->id; ?>" 
                          data-person-key="<?php echo Security::encrypt($person->id); ?>"
                          data-person-name="<?php echo htmlspecialchars($person->full_name); ?>"
                          data-current-type-id="<?php echo $current_status_id; ?>"
                          data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>"
                          data-is-disabled="<?php echo $is_disabled ? 'true' : 'false'; ?>"
-                         onclick="<?php echo $is_disabled ? "Swal.fire({icon: 'info', title: 'Puantaj Kilitli', text: 'Bu personelin bu tarihteki puantajı başka bir projede (" . htmlspecialchars($disabled_project_name) . ") girilmiştir. Değiştirilemez.', confirmButtonText: 'Tamam'})" : "handleRowClick(this)"; ?>"
+                         data-disabled-project-name="<?php echo htmlspecialchars($disabled_project_name); ?>"
                          style="gap: 12px; border-radius: 0; border: none; <?php echo $is_disabled ? 'opacity: 0.7; background-color: rgba(241, 245, 249, 0.4); pointer-events: auto;' : ''; ?>">
                         <div class="d-flex align-items-center gap-2">
                             <div class="selection-indicator d-none">
@@ -617,12 +619,13 @@ foreach ($all_projects as $proj) {
                                     <div class="d-flex flex-column gap-2">
                                         <?php foreach ($items as $type): ?>
                                             <div class="d-flex align-items-center justify-content-between p-2.5 border rounded-3 position-relative cursor-pointer type-option-row" 
+                                                 role="button"
+                                                 tabindex="0"
                                                  data-type-id="<?php echo $type->id; ?>"
                                                  data-type-code="<?php echo htmlspecialchars($type->PuantajKod); ?>"
                                                  data-type-label="<?php echo htmlspecialchars($type->PuantajAdi); ?>"
                                                  data-type-color="<?php echo htmlspecialchars($type->ArkaPlanRengi); ?>"
                                                  data-type-text-color="<?php echo htmlspecialchars($type->FontRengi); ?>"
-                                                 onclick="selectTypeOption(this)"
                                                  style="border-radius: 14px; transition: all 0.2s ease;">
                                                 <div class="d-flex align-items-center gap-3">
                                                     <span class="avatar avatar-sm font-weight-bold" 
@@ -786,6 +789,45 @@ document.addEventListener('DOMContentLoaded', function() {
         clearTimeout(longPressTimer);
     });
 
+    // Explicit row click handler for iOS and all devices
+    $(document).on('click', '.person-row', function(e) {
+        if ($(this).attr('data-is-disabled') === 'true') {
+            const disabledProjectName = $(this).attr('data-disabled-project-name') || 'Bilinmeyen Proje';
+            Swal.fire({
+                icon: 'info',
+                title: 'Puantaj Kilitli',
+                text: `Bu personelin bu tarihteki puantajı başka bir projede (${disabledProjectName}) girilmiştir. Değiştirilemez.`,
+                confirmButtonText: 'Tamam'
+            });
+        } else {
+            handleRowClick(this);
+        }
+    });
+
+    // Explicit type option selection click handler
+    $(document).on('click', '.type-option-row', function(e) {
+        selectTypeOption(this);
+    });
+
+    // Explicit category pill tab selection with manual fallback for iOS Safari compatibility
+    $(document).on('click', '[data-bs-toggle="pill"]', function(e) {
+        e.preventDefault();
+        try {
+            const tab = bootstrap.Tab.getOrCreateInstance(this);
+            tab.show();
+        } catch (err) {
+            // Manual fallback if bootstrap class fails or fails to initialize
+            const target = $(this).attr('data-bs-target') || $(this).attr('href');
+            if (target) {
+                $('#v-pills-tab .nav-link').removeClass('active').attr('aria-selected', 'false');
+                $('#v-pills-tabContent .tab-pane').removeClass('show active');
+                
+                $(this).addClass('active').attr('aria-selected', 'true');
+                $(target).addClass('show active');
+            }
+        }
+    });
+
     // Flatpickr initialization
     flatpickr("#datePicker", {
         dateFormat: "d.m.Y",
@@ -802,47 +844,64 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Swipe logic
+    // Swipe logic (Defer CSS/style changes until threshold is exceeded)
     let touchStartX = 0;
     let touchMoveX = 0;
+    let touchStartY = 0;
+    let touchMoveY = 0;
     let currentSwipeItem = null;
+    let isSwipeMoving = false;
     const swipeThreshold = 60;
 
     $(document).on('touchstart', '.person-item-content', function(e) {
         touchStartX = e.originalEvent.touches[0].clientX;
+        touchStartY = e.originalEvent.touches[0].clientY;
         touchMoveX = touchStartX;
+        touchMoveY = touchStartY;
         currentSwipeItem = $(this);
-        
-        // Diğer açık olanları kapat
-        $('.person-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
-        $('.person-item-actions').css('visibility', 'hidden');
-        
-        // Bu elemanın aksiyonlarını görünür yap
-        currentSwipeItem.siblings('.person-item-actions').css('visibility', 'visible');
+        isSwipeMoving = false;
     });
 
     $(document).on('touchmove', '.person-item-content', function(e) {
         touchMoveX = e.originalEvent.touches[0].clientX;
-        let diff = touchStartX - touchMoveX;
-        if (diff > 0) {
-            if (diff > swipeThreshold + 20) diff = swipeThreshold + 20;
-            $(this).css('transition', 'none');
-            $(this).css('transform', 'translateX(-' + diff + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
+        touchMoveY = e.originalEvent.touches[0].clientY;
+        let diffX = touchStartX - touchMoveX;
+        let diffY = Math.abs(touchStartY - touchMoveY);
+
+        // Defer style changes until horizontal drag threshold is exceeded
+        if (!isSwipeMoving && Math.abs(diffX) > 8 && diffY < 10) {
+            isSwipeMoving = true;
+            // Close other open swipe actions
+            $('.person-item-content').not(currentSwipeItem).css('transform', 'translateX(0)');
+            $('.person-item-actions').not(currentSwipeItem.siblings('.person-item-actions')).css('visibility', 'hidden');
+            
+            // Make current actions visible
+            currentSwipeItem.siblings('.person-item-actions').css('visibility', 'visible');
+        }
+
+        if (isSwipeMoving) {
+            if (diffX > 0) {
+                if (diffX > swipeThreshold + 20) diffX = swipeThreshold + 20;
+                $(this).css('transition', 'none');
+                $(this).css('transform', 'translateX(-' + diffX + 'px)');
+            } else {
+                $(this).css('transform', 'translateX(0)');
+            }
         }
     });
 
     $(document).on('touchend', '.person-item-content', function(e) {
-        let diff = touchStartX - touchMoveX;
-        $(this).css('transition', 'transform 0.2s ease-out');
-        if (diff > swipeThreshold / 2) {
-            $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
-        } else {
-            $(this).css('transform', 'translateX(0)');
-            setTimeout(() => {
-                $(this).siblings('.person-item-actions').css('visibility', 'hidden');
-            }, 200);
+        if (isSwipeMoving) {
+            let diffX = touchStartX - touchMoveX;
+            $(this).css('transition', 'transform 0.2s ease-out');
+            if (diffX > swipeThreshold / 2) {
+                $(this).css('transform', 'translateX(-' + swipeThreshold + 'px)');
+            } else {
+                $(this).css('transform', 'translateX(0)');
+                setTimeout(() => {
+                    $(this).siblings('.person-item-actions').css('visibility', 'hidden');
+                }, 200);
+            }
         }
     });
 
@@ -1009,7 +1068,7 @@ function openBulkPuantajModal(fromSelection = false) {
         bootstrap.Tab.getOrCreateInstance(tabButtons[0]).show();
     }
     
-    const modal = new bootstrap.Modal(document.getElementById('puantajModal'));
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('puantajModal'));
     modal.show();
 }
 
@@ -1056,7 +1115,7 @@ function openPuantajModal(element) {
         }
     }
     
-    const modal = new bootstrap.Modal(document.getElementById('puantajModal'));
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('puantajModal'));
     modal.show();
 }
 
