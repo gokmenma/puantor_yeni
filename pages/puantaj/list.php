@@ -843,6 +843,50 @@ table {
     background-color: transparent !important;
     color: var(--tblr-text-secondary) !important;
 }
+
+/* Select2 multi select tags custom styling to ensure clear buttons are always visible and beautiful */
+.select2-container .select2-selection--multiple .select2-selection__choice {
+    background-color: var(--bs-primary, #1b84ff) !important;
+    border: 1px solid var(--bs-primary, #1b84ff) !important;
+    color: #fff !important;
+    padding: 4px 8px 4px 24px !important; /* Extra left padding for clear button */
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 4px !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+    height: auto !important;
+    line-height: 1.2 !important;
+}
+.select2-container .select2-selection--multiple .select2-selection__choice__remove {
+    position: absolute !important;
+    left: 4px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    height: auto !important;
+    width: auto !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.select2-container .select2-selection--multiple .select2-selection__choice__remove span {
+    display: inline !important;
+    line-height: 1 !important;
+}
+.select2-container .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: #ff4d4d !important;
+    background-color: transparent !important;
+}
 </style>
 
 <?php include_once 'content/puantaj-turleri-modal.php' ?>
