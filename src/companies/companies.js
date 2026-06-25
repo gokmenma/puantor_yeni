@@ -71,7 +71,12 @@ $(document).on("click", ".company-edit-btn", function(e) {
     });
 });
 
-$(document).on("click", "#saveCompany", function () {
+$(document).on("submit", "#companyForm", function (e) {
+  e.preventDefault();
+});
+
+$(document).on("click", "#saveCompany", function (e) {
+  e.preventDefault();
   var form = $("#companyForm");
   
   form.validate({

@@ -120,6 +120,21 @@ if ($_POST["action"] == "saveMyCompany") {
     echo json_encode($res);
 }
 
+if (isset($_POST["action"]) && $_POST["action"] == "getMyFirmDetails") {
+    $id = isset($_POST["id"]) ? Security::decrypt($_POST["id"]) : 0;
+    $myfirm = $company->findMyFirm($id);
+    if ($myfirm) {
+        $res = [
+            "status" => "success",
+            "myfirm" => $myfirm
+        ];
+    } else {
+        $res = ["status" => "error", "message" => "Firma bulunamadı."];
+    }
+    echo json_encode($res);
+    exit;
+}
+
 if ($_POST["action"] == "deleteMyCompany") {
     $user_id = $_SESSION["user"]->id;
     $id = $_POST["id"];

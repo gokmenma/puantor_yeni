@@ -231,3 +231,111 @@ $(document).on("click", "#btn-delete-account", function () {
     }
   });
 });
+
+// System General Settings Save
+$(document).on("submit", "#systemGeneralForm", function (e) {
+  e.preventDefault();
+  var form = $(this);
+
+  var formData = new FormData(form[0]);
+  formData.append("action", "systemGeneralSave");
+
+  fetch("/api/settings/settings.php", {
+    method: "POST",
+    body: formData
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      var title = data.status == "success" ? "Başarılı!" : "Hata!";
+      Swal.fire({
+        title: title,
+        text: data.message,
+        icon: data.status,
+        confirmButtonText: "Tamam"
+      }).then(() => {
+        if (data.status == "success") {
+          window.location.reload();
+        }
+      });
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      Swal.fire("Hata!", "Genel ayarlar güncellenirken bir sorun oluştu.", "error");
+    });
+});
+
+// System SMTP Settings Save
+$(document).on("submit", "#systemSmtpForm", function (e) {
+  e.preventDefault();
+  var form = $(this);
+
+  var formData = new FormData(form[0]);
+  formData.append("action", "systemSmtpSave");
+
+  fetch("/api/settings/settings.php", {
+    method: "POST",
+    body: formData
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      var title = data.status == "success" ? "Başarılı!" : "Hata!";
+      Swal.fire({
+        title: title,
+        text: data.message,
+        icon: data.status,
+        confirmButtonText: "Tamam"
+      }).then(() => {
+        if (data.status == "success") {
+          window.location.reload();
+        }
+      });
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      Swal.fire("Hata!", "SMTP ayarları güncellenirken bir sorun oluştu.", "error");
+    });
+});
+
+// System SMTP Connection Test
+$(document).on("click", "#btn-test-smtp", function () {
+  var emailInput = $("#smtp_test_email");
+  var testEmail = emailInput.val().trim();
+  
+  if (testEmail === "") {
+    Swal.fire("Hata!", "Lütfen test e-postasının gönderileceği bir adres giriniz.", "warning");
+    return;
+  }
+
+  // Gather SMTP form data
+  var smtpForm = $("#systemSmtpForm")[0];
+  var formData = new FormData(smtpForm);
+  formData.append("action", "systemSmtpTest");
+  formData.append("test_email", testEmail);
+  formData.append("test_account", $("#smtp_test_account").val());
+
+  // Disable button and show loading state
+  var btn = $(this);
+  var originalHtml = btn.html();
+  btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Test ediliyor...');
+
+  fetch("/api/settings/settings.php", {
+    method: "POST",
+    body: formData
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      btn.prop("disabled", false).html(originalHtml);
+      var title = data.status == "success" ? "Başarılı!" : "Hata!";
+      Swal.fire({
+        title: title,
+        text: data.message,
+        icon: data.status,
+        confirmButtonText: "Tamam"
+      });
+    })
+    .catch((error) => {
+      btn.prop("disabled", false).html(originalHtml);
+      console.error("Error:", error);
+      Swal.fire("Hata!", "E-posta gönderim testi başarısız oldu.", "error");
+    });
+});

@@ -290,7 +290,7 @@ $companies = $companyObj->allWithUserId();
                 </div>
                 <div class="modal-footer bg-light-lt border-0 rounded-bottom-4">
                     <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-primary px-4 shadow-sm" id="saveCompany">
+                    <button type="button" class="btn btn-primary px-4 shadow-sm" id="saveCompany">
                         <i class="ti ti-device-floppy icon me-2"></i>
                         Değişiklikleri Kaydet
                     </button>

@@ -8,31 +8,22 @@ use App\Helper\Security;
 $companyObj = new Company();
 $UserModel = new UserModel();
 
-//Sayfa başlarında eklenecek alanlar
-$perm->checkAuthorize("company_add_update");
+$perm->checkAuthorize("my_companies_page");
 $id = isset($_GET["id"]) ? Security::decrypt($_GET['id']) : 0;
 $new_id = isset($_GET["id"]) ? $_GET['id'] : 0;
 
-//Eğer url'den id yazılmışsa veya id boş ise projeler sayfasına gider
 if($id == null && isset($_GET['id'])) {
     header("Location: /index.php?p=mycompany/list");
     exit;
 }
 
-if ($id == 0) {
-    $owner_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
-    $subDetails = $UserModel->getActiveSubscriptionDetails($owner_id);
-    $current_firm_count = $companyObj->countMyFirms($owner_id);
-    $isSuperadmin = ($_SESSION["user"]->superadmin ?? 0) == 1;
-
-    if (!$isSuperadmin && $current_firm_count >= $subDetails['firma_hakki']) {
-        header("Location: /index.php?p=mycompany/list&limit_reached=1");
-        exit;
-    }
+$myfirm = $companyObj->findMyFirm($id);
+if (!$myfirm) {
+    header("Location: /index.php?p=mycompany/list");
+    exit;
 }
 
-$pageTitle = $id > 0 ? "Firma Güncelle" : "Yeni Firma";
-$myfirm = $companyObj->findMyFirm($id);
+$pageTitle = "FİRMA DETAYLARI";
 ?>
 <div class="page-wrapper">
     <!-- Page header -->
@@ -40,22 +31,16 @@ $myfirm = $companyObj->findMyFirm($id);
         <div class="container-xl">
             <div class="row g-2 align-items-center">
                 <div class="col">
-                    <h2 class="page-title">
-                        <?php echo $pageTitle ; ?>
+                    <div class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.5px; font-size: 0.75rem;">FİRMA DETAYLARI</div>
+                    <h2 class="page-title fw-bold text-dark mt-1">
+                        <?php echo htmlspecialchars($myfirm->firm_name ?? 'Firma Detay'); ?>
                     </h2>
                 </div>
-
                 <!-- Page title actions -->
                 <div class="col-auto ms-auto d-print-none">
                     <button type="button" class="btn btn-outline-secondary route-link" data-page="mycompany/list">
                         <i class="ti ti-list icon me-2"></i>
                         Listeye Dön
-                    </button>
-                </div>
-                <div class="col-auto ms-auto d-print-none">
-                    <button type="button" class="btn btn-primary" id="saveMyFirm">
-                        <i class="ti ti-device-floppy icon me-2"></i>
-                        Kaydet
                     </button>
                 </div>
             </div>
@@ -69,36 +54,28 @@ $myfirm = $companyObj->findMyFirm($id);
                     <div class="card-header">
                         <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <a href="#tabs-home-3" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab"><!-- Download SVG icon from http://tabler-icons.io/i/home -->
-                                    <i class="ti ti-home icon me-1"></i>
-                                    Genel Bilgiler</a>
+                                <a href="#tabs-home-3" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab">
+                                    <i class="ti ti-chart-dots icon me-1"></i>
+                                    Firma Özet Bilgileri
+                                </a>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <a href="#tabs-profile-3" class="nav-link" data-bs-toggle="tab" aria-selected="false" tabindex="-1" role="tab"><!-- Download SVG icon from http://tabler-icons.io/i/user -->
+                                <a href="#tabs-profile-3" class="nav-link" data-bs-toggle="tab" aria-selected="false" tabindex="-1" role="tab">
                                     <i class="ti ti-receipt-tax icon me-1"></i>
-                                    Vergi Bilgileri</a>
+                                    Kasa & İşlem Bilgileri
+                                </a>
                             </li>
                         </ul>
                     </div>
                     <div class="card-body">
-                        <form action="" id="myFirmForm">
-                            <div class="tab-content">
-                                <div class="row d-none">
-                                    <div class="col-md-4">
-                                        <input type="text" name="id" class="form-control" value="<?php echo $new_id ?>">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="text" name="action" class="form-control" value="saveMyCompany">
-                                    </div>
-                                </div>
-                                <div class="tab-pane active show" id="tabs-home-3" role="tabpanel">
-                                    <?php include_once "content/0-home.php"; ?>
-                                </div>
-                                <div class="tab-pane" id="tabs-profile-3" role="tabpanel">
-                                    <?php include_once "content/1-tax-info.php"; ?>
-                                </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active show" id="tabs-home-3" role="tabpanel">
+                                <?php include_once "content/0-home.php"; ?>
                             </div>
-                        </form>
+                            <div class="tab-pane" id="tabs-profile-3" role="tabpanel">
+                                <?php include_once "content/1-tax-info.php"; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

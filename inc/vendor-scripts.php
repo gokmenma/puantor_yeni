@@ -49,8 +49,10 @@ if (
 if (
     $page == "missions/manage" || $page == "feedback/list"
     || $page == "supports/tickets" || $page == "supports/ticket-view"
+    || $page == "abonelik-islemleri/list"
 ) {
     echo '<script src="./dist/libs/summernote/summernote-lite.min.js?1692870487"></script>';
+    echo '<script src="./dist/libs/summernote/lang/summernote-tr-TR.min.js"></script>';
 }
 
 
@@ -92,7 +94,7 @@ if ($page == 'persons/manage') {
 
 // Servis Konusu ekleme ve düzenleme sayfası
 if ($page == 'mycompany/list' || $page == 'mycompany/manage') {
-    echo '<script src="./src/companies/mycompanies.js"></script>';
+    echo '<script src="./src/companies/mycompanies.js?v=' . time() . '"></script>';
 }
 
 if ($page == 'companies/list' || $page == 'companies/manage') {

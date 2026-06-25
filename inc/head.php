@@ -8,7 +8,8 @@
   <?php
 
   //Aktif sayfadan menü linki veritabanında aranır ve sayfa ismi alınır
-  $title = $menu_name->page_name ?? "Puantor | Puantaj Takip Uygulaması";
+  $system_title = $Settings->getSystemSetting("system_title") ?? "Puantor";
+  $title = $menu_name->page_name ?? ($system_title . " | Puantaj Takip Uygulaması");
 
   ?>
   <title><?php echo $title; ?></title>
@@ -58,6 +59,7 @@
   if (
     $page == "missions/manage" || $page == "feedback/list"
     || $page == "supports/tickets" || $page == "supports/ticket-view"
+    || $page == "abonelik-islemleri/list"
   ) {
 
     echo '<link href="./dist/libs/summernote/summernote-lite.min.css" rel="stylesheet">';

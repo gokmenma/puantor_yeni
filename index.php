@@ -62,6 +62,7 @@ require_once "Database/db.php";
 require_once "Model/Menus.php";
 require_once "Model/UserModel.php";
 require_once 'Model/Auths.php';
+require_once 'Model/SettingsModel.php';
 require_once 'App/Helper/security.php';
 
 use App\Helper\Security;
@@ -69,6 +70,7 @@ use App\Helper\Security;
 
 $menus = new Menus();
 $User = new UserModel();
+$Settings = new SettingsModel();
 
 $perm = new Auths();//Sayfalarda yetki kontrolü yapmak için kullanılır
 $Auths = $perm;
@@ -144,6 +146,14 @@ if ($_SESSION["user"]->parent_id != 0) {
 // }
 
 $active_page = isset($_GET["p"]) ? $_GET["p"] : "";
+
+// Bakım Modu (Maintenance Mode) Kontrolü
+$maintenance_mode = $Settings->getSystemSetting("maintenance_mode") ?? "0";
+if ($maintenance_mode == "1" && ($user->superadmin ?? 0) != 1 && $active_page !== 'logout') {
+    $active_page = 'under-maintance';
+    $_GET["p"] = 'under-maintance';
+}
+
 $menu_name = $menus->getMenusByLink($active_page);
 
 // Abonelik ve Deneme Süresi Kontrolü (Superadmin için kontrol atlanır)

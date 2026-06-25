@@ -61,4 +61,26 @@ class SettingsModel extends Model
             return $sql->execute([$firm_id, $set_name, $set_value]);
         }
     }
+
+    public function getSystemSetting($set_name)
+    {
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = 0 AND user_id = 0 AND set_name = ?");
+        $sql->execute([$set_name]);
+        $res = $sql->fetch(PDO::FETCH_OBJ);
+        return $res ? $res->set_value : null;
+    }
+
+    public function upsertSystemSetting($set_name, $set_value)
+    {
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = 0 AND user_id = 0 AND set_name = ?");
+        $sql->execute([$set_name]);
+        $existing = $sql->fetch(PDO::FETCH_OBJ);
+        if ($existing) {
+            $sql = $this->db->prepare("UPDATE $this->table SET set_value = ? WHERE firm_id = 0 AND user_id = 0 AND set_name = ?");
+            return $sql->execute([$set_value, $set_name]);
+        } else {
+            $sql = $this->db->prepare("INSERT INTO $this->table (firm_id, user_id, set_name, set_value) VALUES (0, 0, ?, ?)");
+            return $sql->execute([$set_name, $set_value]);
+        }
+    }
 }

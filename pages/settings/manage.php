@@ -10,23 +10,42 @@ $UserModel = new UserModel();
 
 $caseObj = new Cases();
 $id = $_GET['id'] ?? 0;
-$view = $_GET['view'] ?? 'system';
 
-// Yetki kontrolü (Sistem ayarları için)
-$has_settings_auth = false;
-$settings_auth = $Auths->getAuthIdByTitle("Ayarlar");
-if ($settings_auth && $Auths->AuthorizeByAuthId($settings_auth->id)) {
-    $has_settings_auth = true;
-}
+$is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+$view = $_GET['view'] ?? ($is_superadmin ? 'system' : 'profile');
 
-// Eğer sistem görünümündeyse ve yetki yoksa, profile yönlendir
-if ($view == 'system' && !$has_settings_auth) {
+// Eğer sistem görünümündeyse ve superadmin değilse, profile yönlendir
+if ($view == 'system' && !$is_superadmin) {
     $view = 'profile';
 }
 
 $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
 ?>
-<div class="page-wrapper">
+    <style>
+        .settings-sidebar-link.active {
+            background-color: #1d1d20 !important;
+            color: #fff !important;
+            border-color: #1d1d20 !important;
+        }
+        .settings-sidebar-link.active i {
+            color: #fff !important;
+        }
+        .settings-sidebar-link {
+            color: #495057 !important;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .settings-sidebar-link:hover:not(.active) {
+            background-color: #f8f9fa !important;
+        }
+        @media (min-width: 768px) {
+            .border-end-md {
+                border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+            }
+        }
+    </style>
+
     <!-- Page header -->
     <div class="page-header d-print-none mb-3">
         <div class="container-xl">
@@ -37,17 +56,17 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                     </h2>
                     <?php if ($view == 'profile'): ?>
                         <p class="text-secondary mb-0 mt-1" style="font-size: 0.95rem;">Kişisel bilgilerinizi, güvenlik tercihlerinizi ve hesap detaylarınızı buradan yönetin.</p>
+                    <?php else: ?>
+                        <p class="text-secondary mb-0 mt-1" style="font-size: 0.95rem;">İşçi Maaş Rapor Takip Platformunun genel, SMTP, güvenlik ve sistem yedekleme tercihlerini yönetin.</p>
                     <?php endif; ?>
                 </div>
                 
-                <?php if ($view == 'profile'): ?>
                 <div class="col-auto ms-auto" id="btn-save-changes-container" style="display: none;">
                     <button type="button" class="btn btn-dark px-4 py-2" id="btn-save-changes" style="border-radius: 8px; background-color: #1d1d20; border-color: #1d1d20; font-weight: 600;">
                         <i class="ti ti-device-floppy icon me-2" style="font-size: 1.1rem;"></i>
                         Değişiklikleri Kaydet
                     </button>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -57,39 +76,124 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
         <div class="container-xl">
             
             <?php if ($view == 'system'): ?>
-            <!-- System Settings (Original Layout) -->
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <ul class="nav nav-tabs card-header-tabs nav-fill" data-bs-toggle="tabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <a href="#tabs-home-7" id="tabs-home" class="nav-link active"
-                                    data-bs-toggle="tab" aria-selected="true"
-                                    role="tab">
-                                    <i class="ti ti-home icon me-2"></i>
-                                    Genel Bilgiler</a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a href="#tabs-financial-7" id="tabs-financial" class="nav-link"
-                                    data-bs-toggle="tab" aria-selected="false"
-                                    role="tab">
-                                    <i class="ti ti-receipt icon me-2"></i>
-                                    Finansal İşlemler</a>
-                            </li>
-                        </ul>
+            <!-- System Settings (New Sidebar Split Layout) -->
+            <div class="row g-4">
+                <!-- Sol Kenar Çubuğu (Sidebar) -->
+                <div class="col-md-3">
+                    <div class="card mb-3" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); overflow: hidden;">
+                        <div class="list-group list-group-flush" id="system-settings-tabs" role="tablist">
+                            <a href="#tabs-system-general" class="list-group-item list-group-item-action settings-sidebar-link active py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
+                                <i class="ti ti-world icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
+                                <span>Genel Ayarlar</span>
+                            </a>
+                            <a href="#tabs-system-smtp" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
+                                <i class="ti ti-mail icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
+                                <span>SMTP E-Posta</span>
+                            </a>
+                            <a href="#tabs-system-security" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
+                                <i class="ti ti-shield icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
+                                <span>Güvenlik & API</span>
+                            </a>
+                            <a href="#tabs-system-backup" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
+                                <i class="ti ti-database icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
+                                <span>Yedekleme & Bakım</span>
+                            </a>
+                            <a href="#tabs-system-ai" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
+                                <i class="ti ti-cpu icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
+                                <span>Yapay Zeka</span>
+                            </a>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="tab-content">
-                            <div class="tab-pane active show" id="tabs-home-7" role="tabpanel">
-                                <?php include_once "content/0-general.php" ?>
-                            </div>
-                            <div class="tab-pane" id="tabs-financial-7" role="tabpanel">
-                                <?php include_once "content/1-financial.php" ?>
+                    
+                    <!-- Hatırlatma Kutusu -->
+                    <div class="card bg-white" id="system-settings-reminder" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: none;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-start">
+                                <div class="text-blue me-2 mt-0.5">
+                                    <i class="ti ti-info-circle" style="font-size: 1.35rem;"></i>
+                                </div>
+                                <div>
+                                    <h4 class="card-title mb-1 fw-bold text-dark" style="font-size: 0.9rem;">Hatırlatma</h4>
+                                    <p class="text-secondary small mb-0" style="font-size: 0.8rem; line-height: 1.4;">Yapılan değişikliklerin yürürlüğe girmesi için sağ üst köşedeki "Değişiklikleri Kaydet" butonuna tıklamalısınız.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Sağ İçerik Paneli (Tab Content) -->
+                <div class="col-md-9">
+                    <div class="tab-content">
+                        <!-- Genel Ayarlar Sekmesi -->
+                        <div class="tab-pane active show" id="tabs-system-general" role="tabpanel">
+                            <?php include_once "content/system-general.php" ?>
+                        </div>
+                        
+                        <!-- SMTP Sekmesi -->
+                        <div class="tab-pane" id="tabs-system-smtp" role="tabpanel">
+                            <?php include_once "content/system-smtp.php" ?>
+                        </div>
+                        
+                        <!-- Güvenlik Sekmesi -->
+                        <div class="tab-pane" id="tabs-system-security" role="tabpanel">
+                            <?php include_once "content/system-security.php" ?>
+                        </div>
+                        
+                        <!-- Yedekleme Sekmesi -->
+                        <div class="tab-pane" id="tabs-system-backup" role="tabpanel">
+                            <?php include_once "content/system-backup.php" ?>
+                        </div>
+                        
+                        <!-- Yapay Zeka Sekmesi -->
+                        <div class="tab-pane" id="tabs-system-ai" role="tabpanel">
+                            <?php include_once "content/system-ai.php" ?>
+                        </div>
+                    </div>
+                </div>
             </div>
+            
+            <script>
+            $(document).ready(function () {
+                // Tab switch event listeners to manage header save button & reminder box for System Settings
+                function toggleSystemSaveElements() {
+                    var activeTab = $("#system-settings-tabs a.active");
+                    if (!activeTab.length) return;
+                    
+                    var targetId = activeTab.attr("href");
+                    var saveBtnContainer = $("#btn-save-changes-container");
+                    var reminderCard = $("#system-settings-reminder");
+                    
+                    if (targetId === "#tabs-system-general" || targetId === "#tabs-system-smtp") {
+                        saveBtnContainer.show();
+                        reminderCard.show();
+                    } else {
+                        saveBtnContainer.hide();
+                        reminderCard.hide();
+                    }
+                }
+                
+                // Initialize elements state
+                toggleSystemSaveElements();
+                
+                // Trigger state changes on tab change
+                $("#system-settings-tabs a[data-bs-toggle='tab']").on("shown.bs.tab", function() {
+                    toggleSystemSaveElements();
+                });
+                
+                // Global "Değişiklikleri Kaydet" header button trigger for System Settings
+                $("#btn-save-changes").on("click", function() {
+                    var activeTab = $("#system-settings-tabs a.active");
+                    if (!activeTab.length) return;
+                    
+                    var targetId = activeTab.attr("href");
+                    if (targetId === "#tabs-system-general") {
+                        $("#systemGeneralForm").submit();
+                    } else if (targetId === "#tabs-system-smtp") {
+                        $("#systemSmtpForm").submit();
+                    }
+                });
+            });
+            </script>
             
             <?php else: ?>
             <!-- Profile Settings (New Sidebar Split Layout) -->

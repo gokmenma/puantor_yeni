@@ -56,7 +56,7 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
                                 <i class="ti ti-plus icon me-2"></i> Yeni
                             </button>
                         <?php else: ?>
-                            <a href="#" class="btn btn-primary route-link" data-page="mycompany/manage">
+                            <a href="#" class="btn btn-primary" id="btn-new-mycompany">
                                 <i class="ti ti-plus icon me-2"></i> Yeni
                             </a>
                         <?php endif; ?>
@@ -87,7 +87,7 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
                                 ?>
                                 <tr>
                                     <td class="text-center"><?php echo $i; ?></td>
-                                    <td><a class="btn route-link" data-page="mycompany/manage&id=<?php echo $id ?>"
+                                    <td><a class="btn route-link text-primary fw-bold" data-page="mycompany/manage&id=<?php echo $id ?>"
                                             href="#">
                                             <?php echo $myfirm->firm_name; ?>
                                         </a></td>
@@ -98,10 +98,14 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
                                     <td class="text-end">
                                         <div class="dropdown">
                                             <button class="btn dropdown-toggle align-text-top"
-                                                data-bs-toggle="dropdown">İşlem</button>
+                                                data-bs-toggle="dropdown" data-bs-boundary="viewport">İşlem</button>
                                             <div class="dropdown-menu dropdown-menu-end">
                                                 <a class="dropdown-item route-link"
                                                     data-page="mycompany/manage&id=<?php echo $id ?>" href="#">
+                                                    <i class="ti ti-eye icon me-3"></i> Firma Detayları
+                                                </a>
+                                                <a class="dropdown-item mycompany-edit-btn"
+                                                    data-id="<?php echo $id ?>" href="#">
                                                     <i class="ti ti-edit icon me-3"></i> Güncelle
                                                 </a>
                                                 <a class="dropdown-item delete-mycompany"
@@ -124,3 +128,191 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
         </div>
     </div>
 </div>
+
+<!-- Yeni & Düzenleme Firma Modalı -->
+<div class="modal modal-blur fade" id="mycompany-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fs-3 fw-bold text-primary" id="mycompany-modal-title">Yeni Firma Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="myFirmForm" enctype="multipart/form-data">
+                <input type="hidden" name="id" id="myfirm_id" value="0">
+                <input type="hidden" name="action" value="saveMyCompany">
+                
+                <div class="modal-body pt-2">
+                    <!-- Bölüm 1: Temel Firma Bilgileri -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="ti ti-info-circle text-primary fs-2"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Temel Firma Bilgileri</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label required">Firma Adı</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-building"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="firm_name" id="firm_name" placeholder="Firma adını giriniz" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label required">Yetkili Adı</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-user"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="yetkili_adi" id="yetkili_adi" placeholder="Yetkili ad soyad" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bölüm 2: İletişim Bilgileri -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="ti ti-phone text-success fs-2"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">İletişim Bilgileri</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Telefon</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-phone"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="phone" id="phone" placeholder="Telefon numarası">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">E-posta</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-mail"></i>
+                                    </span>
+                                    <input type="email" class="form-control" name="email" id="email" placeholder="E-posta adresi">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bölüm 3: Vergi ve Finansal Bilgiler -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="ti ti-wallet text-warning fs-2"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Vergi ve Finansal Bilgiler</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Vergi Dairesi</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-building-bank"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="vergi_dairesi" id="vergi_dairesi" placeholder="Vergi dairesi">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Vergi Numarası</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-file-text"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="vergi_no" id="vergi_no" placeholder="Vergi no">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Başlangıç Bütçesi</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-currency-lira"></i>
+                                    </span>
+                                    <input type="text" class="form-control money" name="start_budget" id="start_budget" placeholder="0,00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bölüm 4: Logo ve Açıklama -->
+                    <div>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-info-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="ti ti-photo text-info fs-2"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Logo ve Açıklama</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Açıklama</label>
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-notes"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="description" id="description" placeholder="Firma açıklaması">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Firma Logosu</label>
+                                <input type="file" class="form-control" name="brand_logo" id="brand_logo" onchange="previewImage(event)">
+                            </div>
+                            <div class="col-md-2 text-center d-flex align-items-end justify-content-center">
+                                <div class="brand-img border rounded p-1" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: #f8fafc;">
+                                    <img src="" id="logo-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" alt="">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light-lt border-0 rounded-bottom-4">
+                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary px-4 shadow-sm" id="saveMyFirm">
+                        <i class="ti ti-device-floppy icon me-2"></i>
+                        Değişiklikleri Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal responsive and styling improvements */
+#mycompany-modal .modal-content {
+    border-radius: 1.25rem;
+    overflow: hidden;
+}
+#mycompany-modal .form-label.required:after {
+    content: " *";
+    color: #d63f3f;
+}
+#mycompany-modal .input-icon-addon {
+    color: #94a3b8;
+}
+#mycompany-modal .form-control:focus {
+    border-color: #206bc4;
+    box-shadow: 0 0 0 0.25rem rgba(32, 107, 196, 0.15);
+}
+#mycompany-modal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+#mycompany-modal .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+#mycompany-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+#mycompany-modal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+</style>

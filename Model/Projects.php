@@ -340,4 +340,17 @@ class Projects extends Model
         $sql->execute([$person_id, $project_id]);
     }
 
+    // Projeye ait personellerin detaylarını getirir (İş grubu adı dahil)
+    public function getPersonnelDetailsByProject($project_id, $firm_id)
+    {
+        $sql = "SELECT p.id, p.full_name, p.kimlik_no, p.ekip, jg.group_name as job_group_name
+                FROM project_person pp
+                JOIN persons p ON p.id = pp.person_id
+                LEFT JOIN job_groups jg ON jg.id = p.job_group
+                WHERE pp.project_id = ? AND p.firm_id = ? AND p.deleted_at IS NULL";
+        $query = $this->db->prepare($sql);
+        $query->execute([$project_id, $firm_id]);
+        return $query->fetchAll(PDO::FETCH_OBJ);
+    }
+
 }

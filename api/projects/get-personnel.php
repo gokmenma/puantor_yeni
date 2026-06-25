@@ -35,15 +35,8 @@ if (!$project_id) {
 }
 
 try {
-    $sql = "SELECT p.id, p.full_name, p.kimlik_no, p.ekip, jg.name as job_group_name
-            FROM project_person pp
-            JOIN persons p ON p.id = pp.person_id
-            LEFT JOIN job_groups jg ON jg.id = p.job_group
-            WHERE pp.project_id = ? AND p.firm_id = ? AND p.deleted_at IS NULL";
-    
-    $query = $db->prepare($sql);
-    $query->execute([$project_id, $firm_id]);
-    $personnel = $query->fetchAll(PDO::FETCH_OBJ);
+    $projectsModel = new Projects();
+    $personnel = $projectsModel->getPersonnelDetailsByProject($project_id, $firm_id);
     
     $data = [];
     foreach ($personnel as $person) {
