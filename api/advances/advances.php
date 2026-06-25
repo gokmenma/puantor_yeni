@@ -106,6 +106,40 @@ try {
         echo json_encode(['status' => 'success', 'message' => 'Talep güncellendi.'], JSON_UNESCAPED_UNICODE);
         exit;
 
+    } elseif ($action == 'add') {
+        $person_id = intval($_POST['person_id'] ?? 0);
+        $tutar     = floatval(str_replace(',', '.', $_POST['tutar'] ?? 0));
+        $hedef_ay  = intval($_POST['hedef_ay'] ?? date('m'));
+        $hedef_yil = intval($_POST['hedef_yil'] ?? date('Y'));
+        $aciklama  = trim($_POST['aciklama'] ?? '');
+
+        if (!$person_id) throw new Exception("Personel seçimi zorunludur.");
+        if ($tutar <= 0)  throw new Exception("Geçerli bir tutar giriniz.");
+
+        $personCheck = $db->prepare("SELECT id FROM persons WHERE id = ? AND firm_id = ? AND deleted_at IS NULL");
+        $personCheck->execute([$person_id, $firm_id]);
+        if (!$personCheck->fetch()) throw new Exception("Personel bulunamadı veya bu firmaya ait değil.");
+
+        $db->beginTransaction();
+
+        $db->prepare("INSERT INTO personel_avans_talepleri (firm_id, person_id, tutar, hedef_ay, hedef_yil, aciklama, durum) VALUES (?, ?, ?, ?, ?, ?, 1)")
+           ->execute([$firm_id, $person_id, $tutar, $hedef_ay, $hedef_yil, $aciklama]);
+
+        $new_id = $db->lastInsertId();
+        $identifier = "Talep ID: #" . $new_id;
+
+        $Cases = new Cases();
+        $default_case_id = $Cases->getDefaultCaseIdByFirm();
+        $target_gun_db = sprintf("%04d%02d15", $hedef_yil, $hedef_ay);
+
+        $db->prepare("INSERT INTO maas_gelir_kesinti (user_id, person_id, case_id, gun, ay, yil, tutar, kategori, turu, aciklama) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+           ->execute([$firm_id, $person_id, $default_case_id, $target_gun_db, $hedef_ay, $hedef_yil, $tutar, 7, 'Avans', $identifier . " | Yönetici Tarafından Eklendi: " . $aciklama]);
+
+        $db->commit();
+        if (ob_get_length()) ob_clean();
+        echo json_encode(['status' => 'success', 'message' => 'Avans başarıyla eklendi.'], JSON_UNESCAPED_UNICODE);
+        exit;
+
     } elseif ($action == 'delete') {
         $id = $_POST['id'] ?? '';
         // Eğer şifrelenmiş gelirse çöz (Bazı yerlerde decrypt kullanılıyor olabilir)

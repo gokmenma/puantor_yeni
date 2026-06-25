@@ -11,6 +11,7 @@ require_once "Model/Cases.php";
 require_once 'Model/Puantaj.php';
 require_once 'Model/Wages.php';
 require_once 'Model/SettingsModel.php';
+require_once 'App/Helper/teams.php';
 
 use App\Helper\Security;
 use App\Helper\Date;
@@ -33,7 +34,9 @@ $month = isset($_POST['months']) ? $_POST['months'] : date('m');
 $firstDay = Date::firstDay($month, $year);
 $last_day = Date::Ymd(Date::lastDay($month, $year));
 $project_id = isset($_POST['projects']) ? $_POST['projects'] : 0;
+$team_id = isset($_POST['team_id']) ? $_POST['team_id'] : '';
 $action = $_POST['action'] ?? '';
+$Teams = new Teams();
 
 // Personelleri Güncelle işlemi için auto-assignment mantığı
 if ($action == 'update_personnel' && $project_id > 0) {
@@ -58,10 +61,10 @@ if ($project_id == 0 || $project_id == '') {
     // Proje id boş ise Firma id'sine göre personelleri getirir
     // Personelleri Güncelle veya Hesapla butonu tıklandıysa tüm personelleri getirir (yeni eklenenleri yakalamak veya hesaplamak için)
     $show_all = ($action == 'update_personnel' || $action == 'payroll_calculate');
-    $persons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $last_day, $show_all);
+    $persons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $last_day, $show_all, $team_id);
 } else {
     // Proje id dolu ise projeye ait personelleri getirir
-    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $firstDay, $last_day, 0, 0, true);
+    $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $firstDay, $last_day, 0, $team_id, true);
 }
 
 // Set the default timezone to your local timezone
@@ -70,6 +73,24 @@ if ($project_id == 0 || $project_id == '') {
 $lastDay = Date::lastDay($month, $year);
 
 $case_id = $Cases->getDefaultCaseIdByFirm();
+
+// Proje haritası (id => project_name) - sütun gösterimi için
+$allProjects = $projects->getProjectsByFirm($firm_id);
+$projectMap = [];
+foreach ($allProjects as $proj) {
+    $projectMap[$proj->id] = $proj->project_name;
+}
+
+// Kişi → proje ilişkisi haritası
+$ppQuery = $personObj->getDb()->prepare(
+    "SELECT pp.person_id, pp.project_id FROM project_person pp
+     JOIN projects pr ON pr.id = pp.project_id AND pr.firm_id = ?"
+);
+$ppQuery->execute([$firm_id]);
+$personProjectMap = [];
+foreach ($ppQuery->fetchAll(PDO::FETCH_OBJ) as $row) {
+    $personProjectMap[$row->person_id][] = $row->project_id;
+}
 
 $total_gelir = 0;
 $total_odeme = 0;
@@ -140,26 +161,47 @@ foreach ($persons as $item) {
     $total_persons++;
 }
 $total_kalan = $total_gelir - $total_odeme;
-
 ?>
+
+<div class="page-header d-print-none mb-3">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <h2 class="page-title">Bordro</h2>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="container-xl mt-3">
     <form action="" method="post" id="bordroInfoForm">
         <div class="row">
             <div class="col-3">
                 <label for="projects" class="form-label">Proje:</label>
-                <?php echo $projectHelper->getProjectSelect('projects', $project_id); ?>
+                <?php echo $projectHelper->getProjectSelect('projects', $project_id, 'Tüm Projeler'); ?>
             </div>
-            <div class="col-3">
+            <div class="col-2">
+                <label for="team_id" class="form-label">Ekip:</label>
+                <?php echo $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler'); ?>
+            </div>
+            <div class="col-2">
                 <label for="months" class="form-label">Ay:</label>
                 <?php echo Date::getMonthsSelect('months', $month); ?>
             </div>
-            <div class="col-3">
+            <div class="col-2">
                 <label for="year" class="form-label">Yıl:</label>
                 <?php echo Date::getYearsSelect('year', $year); ?>
             </div>
 
             <div class="col-auto ms-auto mt-auto d-flex">
+                <div class="dropdown me-2">
+                    <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" title="Sütunları Seç" id="colvisDropdownBtn">
+                        <i class="ti ti-columns icon"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-2" id="bordroColvisMenu"
+                        style="min-width: 200px; max-height: 300px; overflow-y: auto;">
+                    </div>
+                </div>
                 <?php
                 if ($Auths->hasPermission('payroll_export_excel')) { ?>
                     <label for=""></label>
@@ -323,14 +365,7 @@ $total_kalan = $total_gelir - $total_odeme;
     <div class="row row-deck row-cards">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Bordro</h3>
-                    <div class="col-auto ms-auto">
-                        <!-- <a href="#" class="btn btn-primary route-link" data-page="defines/service-head/manage">
-                            <i class="ti ti-plus icon me-2"></i> Yeni
-                        </a> -->
-                    </div>
-                </div>
+
 
 
 
@@ -342,12 +377,13 @@ $total_kalan = $total_gelir - $total_odeme;
                                 <th>Personel Adı</th>
                                 <th>Ücret Türü</th>
                                 <th>Görevi</th>
+                                <th>Ekip</th>
+                                <th>Proje</th>
+                                <th>IBAN</th>
                                 <th>İşe Başlama Tarihi</th>
                                 <th style="width:10%" class="text-center">Brüt Ücret</th>
                                 <th style="width:10%" class="text-center">Ödenen/Kesinti</th>
-                                <!-- <th style="width:10%" class="text-center">Devreden</th> -->
                                 <th style="width:10%" class="text-center">Ödenecek</th>
-
                                 <th style="width:1%" class="text-center no-export">İşlem</th>
                             </tr>
                         </thead>
@@ -385,6 +421,13 @@ $total_kalan = $total_gelir - $total_odeme;
                                             class="nav-item route-link"><?php echo $person->full_name; ?></a></td>
                                     <td><?php echo $person->wage_type == 1 ? 'Beyaz Yaka' : 'Mavi Yaka'; ?></td>
                                     <td><?php echo $person->job; ?></td>
+                                    <td><?php echo $person->ekip ?: '-'; ?></td>
+                                    <td><?php
+                                        $pIds = $personProjectMap[$person->id] ?? [];
+                                        $pNames = array_filter(array_map(fn($pid) => $projectMap[$pid] ?? '', $pIds));
+                                        echo $pNames ? implode(', ', $pNames) : '-';
+                                    ?></td>
+                                    <td><?php echo Security::safeDecrypt($person->iban_number ?? '') ?: '-'; ?></td>
                                     <td><?php echo $person->job_start_date; ?></td>
 
                                     <!-- Gelir -->

@@ -432,90 +432,77 @@ function alertdanger($message)
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Üyelik sözleşmesi ve KVK'ya ilişkin aydınlatma metni</h5>
+                    <h5 class="modal-title">Hizmet Sözleşmesi ve KVKK Aydınlatma Metni</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <h2>ÜYELİK SÖZLEŞMESİ</h2>
+                <div class=”modal-body”>
+                    <h2>HİZMET SÖZLEŞMESİ</h2>
+                    <p style=”color:#888;font-size:.85rem;”>Yürürlük: <?php echo date(‘d.m.Y’); ?> &nbsp;|&nbsp; Tam metin için: <a href=”./kullanici-sozlesmesi.php” target=”_blank”>kullanici-sozlesmesi.php</a></p>
 
                     <h3>1. Taraflar</h3>
-                    <p>İşbu Sözleşme, www.puantor.com.tr internet sitesinin faaliyetlerini yürüten [puantor.com.tr]
-                        (Bundan
-                        böyle “PUANTOR” olarak anılacaktır) ve www.puantor.com.tr internet sitesine üye olan internet
-                        kullanıcısı ("Üye") arasında akdedilmiştir.</p>
+                    <p>İşbu Sözleşme, <strong>PUANTOR</strong> (www.puantor.com.tr — puantaj, maaş ve personel yönetimi yazılımı hizmet sağlayıcısı) ile platforma kayıt olan <strong>Kullanıcı</strong> arasında akdedilmiştir. Platforma kayıt olmak bu sözleşmenin tüm koşullarını kabul etmek anlamına gelir.</p>
 
-                    <h3>2. Sözleşmenin Konusu</h3>
-                    <p>İşbu Sözleşme’nin konusu, Üyenin www.puantor.com.tr internet sitesinden faydalanma şartlarının
-                        belirlenmesidir.</p>
+                    <h3>2. Hizmetin Kapsamı</h3>
+                    <p>PUANTOR; çalışan puantaj takibi, maaş bordrosu hesaplama, personel yönetimi, proje/görev takibi, avans talepleri ve raporlama modüllerini bulut tabanlı SaaS (yazılım hizmeti) olarak sunar. İlk kayıtta <strong>15 günlük ücretsiz deneme</strong> hakkı tanınır; sonrasında ücretli abonelik planlarından biri seçilmelidir.</p>
 
-                    <h3>3. Tarafların Hak ve Yükümlülükleri</h3>
-                    <ol>
-                        <li>Üyelik statüsünün kazanılması için, Üye olmak isteyen kullanıcının, web sitesinde bulunan
-                            işbu Üyelik Sözleşmesi'ni onaylayarak, burada talep edilen bilgileri doğru ve güncel
-                            bilgilerle doldurması gerekmektedir. Üye olmak isteyen kullanıcının 18 (on sekiz) yaşını
-                            doldurmuş olması aranacaktır.</li>
-                        <li>Üye, verdiği kişisel bilgilerin doğru olduğunu, PUANTOR’un bu bilgilerin gerçeğe aykırılığı
-                            nedeniyle uğrayacağı zararları tazmin edeceğini beyan eder.</li>
-                        <li>Üye, kendisine verilen şifreyi başka kişilerle paylaşmamayı taahhüt eder. Şifre
-                            kullanımından kaynaklanan sorumluluk tamamen üyeye aittir.</li>
-                        <li>Üye, siteyi yasal mevzuata uygun olarak kullanmayı ve başkalarını rahatsız edici
-                            davranışlardan kaçınmayı kabul eder.</li>
-                        <li>PUANTOR, üye verilerinin güvenliği için gerekli önlemleri alır, ancak üyenin bu verilerin
-                            korunması konusunda da dikkatli olmasını bekler.</li>
-                        <li>Üye, diğer kullanıcıların verilerine izinsiz ulaşmamayı ve bu verileri kullanmamayı kabul
-                            eder.</li>
-                        <li>Üyelik sözleşmesinin ihlali durumunda PUANTOR, üyenin üyeliğini iptal etme hakkına sahiptir.
-                        </li>
-                        <li>PUANTOR, her zaman tek taraflı olarak üyelikleri sonlandırma hakkını saklı tutar.</li>
-                        <li>www.puantor.com.tr internet sitesi yazılım ve tasarımı PUANTOR’a aittir. Bu içeriklerin
-                            izinsiz kullanımı yasaktır.</li>
-                        <li>Üye, web sitesi üzerinde herhangi bir otomatik program veya sistem kullanmamayı taahhüt
-                            eder.</li>
-                    </ol>
-
-                    <h3>4. Sözleşmenin Feshi</h3>
-                    <p>Üye, üyeliğini iptal edebilir. PUANTOR, üyenin sözleşme hükümlerini ihlal etmesi durumunda
-                        üyeliği iptal edebilir. Üyelik iptal edildikten sonra, üyenin bilgileri 15 takvim günü
-                        içerisinde silinecektir.</p>
-
-                    <h3>5. İhtilafların Halli</h3>
-                    <p>İhtilaf durumunda TC Mahkemeleri ve İcra Daireleri yetkilidir.</p>
-
-                    <h3>6. Yürürlük</h3>
-                    <p>Üyenin, üyelik kaydı yapması, sözleşme şartlarını kabul ettiği anlamına gelir. İşbu Sözleşme,
-                        üyenin üye olması anında yürürlüğe girmiştir.</p>
-
-                    <h2>KİŞİSEL VERİLERİN İŞLENMESİNE İLİŞKİN AYDINLATMA VE RIZA METNİ</h2>
-
-                    <h3>1. Aydınlatma Metninin Amacı ve PUANTOR’un Veri Sorumlusu Konumu:</h3>
-                    <p>PUANTOR, kişisel verilerin korunmasına ilişkin yükümlülüklerini yerine getirmek amacıyla
-                        aşağıdaki açıklamaları sunar. Bu metin, güncellemeler doğrultusunda değiştirilebilir.</p>
-
-                    <h3>2. Kişisel Verilerin İşlenme Amacı:</h3>
-                    <p>Kişisel verileriniz, aşağıdaki amaçlarla işlenmektedir:</p>
+                    <h3>3. Kullanıcı Yükümlülükleri</h3>
                     <ul>
-                        <li>Kimlik bilgilerinizi teyit etmek,</li>
-                        <li>İletişim bilgilerini kaydetmek,</li>
-                        <li>Üyelerle iletişime geçmek ve gerekli bilgilendirmeleri yapmak,</li>
-                        <li>Yasal yükümlülükleri yerine getirmek.</li>
+                        <li>Kayıt bilgileri doğru, güncel ve eksiksiz olmalıdır; Kullanıcı 18 yaşını doldurmuş olmalıdır.</li>
+                        <li>Kullanıcı adı ve şifre gizli tutulmalı, üçüncü kişilerle paylaşılmamalıdır.</li>
+                        <li>Platform yürürlükteki Türk mevzuatına uygun biçimde kullanılmalıdır.</li>
+                        <li>Çalışan kişisel verilerinin (maaş, TC kimlik no vb.) işlenmesinde KVKK’ya uyum münhasıran Kullanıcı’nın sorumluluğundadır.</li>
+                        <li>Platforma zarar verebilecek kötü amaçlı yazılım, bot veya yetkisiz erişim araçları kullanılamaz.</li>
+                        <li>Platform yazılımı kopyalanamaz, tersine mühendislikle çözülemez, başkasına devredilemez.</li>
                     </ul>
 
-                    <h3>3. Kişisel Verilerin Toplanma Yöntemi:</h3>
-                    <p>Kişisel verileriniz, web sitemiz üzerinden rızanız ile toplanmakta ve yukarıda belirtilen
-                        amaçlarla işlenmektedir.</p>
-
-                    <h3>4. Kişisel Veri Sahibi Olarak Haklarınız:</h3>
-                    <p>KVKK’nın 11. maddesi uyarınca, kişisel veri sahipleri:</p>
+                    <h3>4. Abonelik ve Ödeme</h3>
                     <ul>
-                        <li>Kişisel verilerin işlenip işlenmediğini öğrenme,</li>
-                        <li>İşlenen veriler hakkında bilgi talep etme,</li>
-                        <li>Yanlış veya eksik verilerin düzeltilmesini isteme,</li>
-                        <li>Verilerin silinmesini isteme,</li>
-                        <li>Yasal yollara başvurma hakkına sahiptir.</li>
+                        <li>Abonelikler seçilen paket süresiyle sınırlıdır; otomatik yenilenmez.</li>
+                        <li>Fiyatlar www.puantor.com.tr adresinde TL cinsinden ilan edilir.</li>
+                        <li>İptal halinde mevcut abonelik dönemi sonunda erişim sona erer; kalan süre iade edilmez.</li>
                     </ul>
 
-                    <p>Taleplerinizi <a href="mailto:info@puantor.com.tr">info@puantor.com.tr</a> adresine
-                        iletebilirsiniz. PUANTOR, taleplerinizi 30 gün içinde değerlendirecektir.</p>
+                    <h3>5. PUANTOR’un Sorumlulukları</h3>
+                    <ul>
+                        <li>Platform kesintisiz çalışması için makul teknik önlemler alınır.</li>
+                        <li>Kullanıcı verileri düzenli yedeklenir; ancak Kullanıcı da kritik verilerin yedeğini almalıdır.</li>
+                        <li>PUANTOR; bordro hesaplamalarının yasal uygunluğu konusunda sorumluluk taşımaz — platform bir araçtır, nihai doğrulama yükümlülüğü Kullanıcı’ya aittir.</li>
+                        <li>Sözleşme ihlali veya ödeme yapılmaması halinde PUANTOR hesabı askıya alabilir.</li>
+                    </ul>
+
+                    <h3>6. Fikri Mülkiyet</h3>
+                    <p>Platform yazılımı, tasarımı ve markaları PUANTOR’a aittir. Kullanıcı, yüklediği verilerin sahibidir; PUANTOR bu verileri yalnızca hizmet sunumu amacıyla kullanır.</p>
+
+                    <h3>7. Fesih ve Veri Silme</h3>
+                    <p>Kullanıcı hesabını istediği zaman kapatabilir. Hesap kapanmasından itibaren <strong>30 gün</strong> içinde veriler kalıcı olarak silinir; bu süre içinde veri ihracı talep edilebilir. PUANTOR, sözleşme ihlali durumunda hesabı önceden bildirimde bulunmaksızın kapatabilir.</p>
+
+                    <h3>8. Uygulanacak Hukuk</h3>
+                    <p>Bu Sözleşme Türkiye Cumhuriyeti hukukuna tabidir. Uyuşmazlıklarda <strong>İstanbul Mahkemeleri ve İcra Daireleri</strong> yetkilidir.</p>
+
+                    <hr>
+                    <h2>KİŞİSEL VERİLERİN KORUNMASI — KVKK AYDINLATMA METNİ</h2>
+
+                    <h3>Veri Sorumlusu</h3>
+                    <p>PUANTOR, 6698 sayılı KVKK uyarınca veri sorumlusudur. İletişim: <a href=”mailto:info@puantor.com.tr”>info@puantor.com.tr</a></p>
+
+                    <h3>İşlenen Veriler ve Amaçları</h3>
+                    <ul>
+                        <li><strong>Ad, soyad, e-posta, telefon:</strong> Üyelik ve kimlik doğrulama — sözleşmenin ifası.</li>
+                        <li><strong>Firma bilgileri:</strong> Hesap yönetimi ve faturalama — sözleşmenin ifası.</li>
+                        <li><strong>Ödeme/fatura bilgileri:</strong> Yasal yükümlülüklerin yerine getirilmesi.</li>
+                        <li><strong>IP adresi ve giriş logları:</strong> Güvenlik ve yetkisiz erişim tespiti — meşru menfaat.</li>
+                        <li><strong>Kullanım verileri:</strong> Hizmet kalitesinin iyileştirilmesi — meşru menfaat.</li>
+                    </ul>
+
+                    <h3>Verileriniz Üzerindeki Haklarınız (KVKK md. 11)</h3>
+                    <ul>
+                        <li>Verilerinizin işlenip işlenmediğini öğrenme,</li>
+                        <li>İşlenen veriler hakkında bilgi ve açıklama talep etme,</li>
+                        <li>Yanlış/eksik verilerin düzeltilmesini ve silinmesini isteme,</li>
+                        <li>Otomatik sistemler aracılığıyla aleyhinize sonuç doğuran işlemlere itiraz etme,</li>
+                        <li>Kanuna aykırı işleme nedeniyle tazminat talep etme.</li>
+                    </ul>
+                    <p>Taleplerinizi <a href=”mailto:info@puantor.com.tr”>info@puantor.com.tr</a> adresine gönderin; PUANTOR en geç <strong>30 gün</strong> içinde yanıt verir.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn me-auto" data-bs-dismiss="modal">Kapat</button>

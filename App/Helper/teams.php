@@ -9,7 +9,7 @@ use Database\Db;
 
 class Teams extends Db
 {
-    public function teamsSelect($name = "team_id", $id = null)
+    public function teamsSelect($name = "team_id", $id = null, $defaultText = "Ekip Seçiniz")
     {
         try {
             $firm_id = $_SESSION['firm_id'];
@@ -22,8 +22,10 @@ class Teams extends Db
             $query->execute([$firm_id]);
             $results = $query->fetchAll(PDO::FETCH_OBJ);
 
+            $selectedDefault = ($id === null || $id === '' || $id == '0') ? ' selected' : '';
+
             $select = '<select name="' . $name . '" class="form-select select2" id="' . $name . '" style="width:100%">';
-            $select .= '<option value="">Ekip Seçiniz</option>';
+            $select .= '<option value="0"' . $selectedDefault . '>' . $defaultText . '</option>';
             foreach ($results as $row) {
                 $selected = $id == $row->team_name ? ' selected' : '';
                 $select .= '<option value="' . $row->team_name . '"'  . $selected . '>' . $row->team_name . '</option>';
@@ -32,7 +34,7 @@ class Teams extends Db
             return $select;
         } catch (PDOException $e) {
             // Eğer hata olursa en azından dropdown boş gelmesin ve sistem çalışmaya devam etsin
-            return '<select name="' . $name . '" class="form-select" id="' . $name . '"><option value="">Ekip Seçiniz</option></select>';
+            return '<select name="' . $name . '" class="form-select" id="' . $name . '"><option value="0">' . $defaultText . '</option></select>';
         }
     }
 

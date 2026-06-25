@@ -1,10 +1,13 @@
 <?php
 require_once "Model/AdvanceRequest.php";
+require_once "Model/Persons.php";
 require_once "App/Helper/helper.php";
 require_once "App/Helper/security.php";
+require_once "App/Helper/date.php";
 
 use App\Helper\Helper;
 use App\Helper\Security;
+use App\Helper\Date;
 
 // Kullanıcının firmasını kontrol eder
 $Auths->checkFirmReturn();
@@ -15,6 +18,9 @@ $perm->checkAuthorize("avans_talepleri");
 $advanceModel = new AdvanceRequest();
 $requests = $advanceModel->getRequestsByFirm($_SESSION["firm_id"]);
 $stats = $advanceModel->getStats($_SESSION["firm_id"]);
+
+$personsModel = new Persons();
+$persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
 
 ?>
 <style>
@@ -69,6 +75,88 @@ $stats = $advanceModel->getStats($_SESSION["firm_id"]);
     .icon-success-vibrant { color: #2fb344 !important; }
     .icon-danger-vibrant { color: #d63939 !important; }
 </style>
+
+<div class="page-header d-print-none mb-0">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <h2 class="page-title">Avans Talepleri</h2>
+            </div>
+            <div class="col-auto ms-auto">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAvansModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Avans Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Avans Ekle Modal -->
+<div class="modal modal-blur fade" id="addAvansModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Personele Avans Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAvansForm">
+                    <div class="mb-3">
+                        <label class="form-label required">Personel</label>
+                        <select class="form-select" name="person_id" id="avans_person_id" required>
+                            <option value=""></option>
+                            <?php foreach ($persons as $person): ?>
+                                <option value="<?php echo $person->id; ?>"><?php echo htmlspecialchars($person->full_name); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">Tutar (₺)</label>
+                        <input type="number" step="0.01" min="0.01" class="form-control" name="tutar" id="avans_tutar" placeholder="0.00" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label required">Hedef Ay</label>
+                                <select class="form-select" name="hedef_ay" id="avans_hedef_ay" required>
+                                    <?php for ($m = 1; $m <= 12; $m++): ?>
+                                        <option value="<?php echo $m; ?>" <?php echo $m == date('n') ? 'selected' : ''; ?>>
+                                            <?php echo str_pad($m, 2, '0', STR_PAD_LEFT); ?>
+                                        </option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label required">Hedef Yıl</label>
+                                <select class="form-select" name="hedef_yil" id="avans_hedef_yil" required>
+                                    <?php for ($y = date('Y') - 1; $y <= date('Y') + 1; $y++): ?>
+                                        <option value="<?php echo $y; ?>" <?php echo $y == date('Y') ? 'selected' : ''; ?>>
+                                            <?php echo $y; ?>
+                                        </option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Açıklama</label>
+                        <textarea class="form-control" name="aciklama" id="avans_aciklama" rows="2" placeholder="Açıklama giriniz..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-primary" id="saveAvansBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="container-xl mt-3">
     <!-- Summary Cards -->
@@ -179,7 +267,7 @@ $stats = $advanceModel->getStats($_SESSION["firm_id"]);
                                     <td><?php echo $req->id; ?></td>
                                     <td><?php echo $req->full_name; ?></td>
                                     <td class="font-weight-bold"><?php echo Helper::formattedMoney($req->tutar); ?></td>
-                                    <td><?php echo $req->hedef_ay . '/' . $req->hedef_yil; ?></td>
+                                    <td><?php echo Date::monthName($req->hedef_ay) . ' ' . $req->hedef_yil; ?></td>
                                     <td>
                                         <span class="text-truncate d-inline-block" style="max-width: 200px;" title="<?php echo $req->aciklama; ?>">
                                             <?php echo $req->aciklama; ?>
@@ -202,6 +290,16 @@ $stats = $advanceModel->getStats($_SESSION["firm_id"]);
                                                         <path d="M6 6l12 12"></path>
                                                     </svg>
                                                     Reddet
+                                                </button>
+                                                <button class="btn-action btn-animate-shake delete-request" data-id="<?php echo Security::encrypt($req->id); ?>">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1 icon-danger-vibrant">
+                                                        <path d="M4 7l16 0"></path>
+                                                        <path d="M10 11l0 6"></path>
+                                                        <path d="M14 11l0 6"></path>
+                                                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                                                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                                                    </svg>
+                                                    Sil
                                                 </button>
                                             <?php elseif ($req->durum == 1 && $perm->hasPermission("onayli_avanslarda_islem_yap")): ?>
                                                 <button class="btn-action btn-animate-shake delete-request" data-id="<?php echo Security::encrypt($req->id); ?>">
@@ -231,6 +329,81 @@ $stats = $advanceModel->getStats($_SESSION["firm_id"]);
 
 <script>
 $(document).ready(function() {
+
+    $('#saveAvansBtn').on('click', function() {
+        var $btn = $(this);
+        var form = document.getElementById('addAvansForm');
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        $btn.prop('disabled', true).text('Kaydediliyor...');
+
+        $.ajax({
+            url: 'api/advances/advances.php',
+            type: 'POST',
+            data: {
+                action: 'add',
+                person_id: $('#avans_person_id').val(),
+                tutar: $('#avans_tutar').val(),
+                hedef_ay: $('#avans_hedef_ay').val(),
+                hedef_yil: $('#avans_hedef_yil').val(),
+                aciklama: $('#avans_aciklama').val()
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#addAvansModal').modal('hide');
+                    Swal.fire('Başarılı', response.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Hata', response.message, 'error');
+                }
+            },
+            error: function() {
+                Swal.fire('Hata', 'İşlem sırasında bir hata oluştu.', 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Kaydet');
+            }
+        });
+    });
+
+    $('#addAvansModal').on('shown.bs.modal', function() {
+        if (!$('#avans_person_id').hasClass('select2-hidden-accessible')) {
+            $('#avans_person_id').select2({
+                dropdownParent: $('#addAvansModal'),
+                placeholder: 'Personel seçiniz...',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+        if (!$('#avans_hedef_ay').hasClass('select2-hidden-accessible')) {
+            $('#avans_hedef_ay').select2({
+                dropdownParent: $('#addAvansModal'),
+                minimumResultsForSearch: Infinity,
+                width: '100%'
+            });
+        }
+        if (!$('#avans_hedef_yil').hasClass('select2-hidden-accessible')) {
+            $('#avans_hedef_yil').select2({
+                dropdownParent: $('#addAvansModal'),
+                minimumResultsForSearch: Infinity,
+                width: '100%'
+            });
+        }
+    });
+
+    $('#addAvansModal').on('hidden.bs.modal', function() {
+        document.getElementById('addAvansForm').reset();
+        $('#avans_person_id').val(null).trigger('change');
+        $('#avans_hedef_ay').val(<?php echo date('n'); ?>).trigger('change');
+        $('#avans_hedef_yil').val(<?php echo date('Y'); ?>).trigger('change');
+    });
+
     $(document).on('click', '.update-status', function() {
         var id = $(this).data('id');
         var status = $(this).data('status');

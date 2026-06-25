@@ -62,15 +62,21 @@ class Persons extends Model
     }
     
     
-    public function getPersonIdByFirmCurrentMonth($firm_id, $first_day, $last_day, $show_all = false)
+    public function getPersonIdByFirmCurrentMonth($firm_id, $first_day, $last_day, $show_all = false, $team_id = '')
     {
-        $sql = 'SELECT id FROM persons p 
-                WHERE firm_id = ? 
+        $sql = 'SELECT id FROM persons p
+                WHERE firm_id = ?
                 AND deleted_at IS NULL';
-        
+        $params = [$firm_id];
+
+        if (!empty($team_id)) {
+            $sql .= ' AND p.ekip = ?';
+            $params[] = $team_id;
+        }
+
         $query = $this->db->prepare($sql);
-        $query->execute([$firm_id]);
-        
+        $query->execute($params);
+
         return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
     public function getPersonIdByFirmBlueCollar($firm_id)

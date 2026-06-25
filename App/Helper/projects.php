@@ -18,13 +18,13 @@ class ProjectHelper extends Db
 
 
     }
-    public function getProjectSelect($name = "projects", $project_id = null )
+    public function getProjectSelect($name = "projects", $project_id = null, $defaultText = "Proje Seçiniz" )
     {
        
         $results = $this->Projects->getProjectsByFirm($_SESSION["firm_id"]);
 
         $select = '<select name="' . $name . '" class="form-select select2" id="' . $name . '" style="width:100%">';
-        $select .= '<option value="0">Proje Seçiniz</option>';
+        $select .= '<option value="0">' . $defaultText . '</option>';
         foreach ($results as $row) { // $results üzerinde döngü
             $selected = $project_id == $row->id ? ' selected' : ''; // Eğer id varsa seçili yap
             $select .= '<option value="' . ($row->id) . '"'  . $selected . '>' . $row->project_name . '</option>'; // $row->title yerine $row->name kullanıldı
