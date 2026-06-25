@@ -96,7 +96,7 @@ if ($page == 'mycompany/list' || $page == 'mycompany/manage') {
 }
 
 if ($page == 'companies/list' || $page == 'companies/manage') {
-    echo '<script src="./src/companies/companies.js"></script>';
+    echo '<script src="./src/companies/companies.js?v=' . time() . '"></script>';
 }
 
 // Kasa (kasa ekleme ve düzenleme sayfası)

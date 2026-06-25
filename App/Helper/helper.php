@@ -83,6 +83,9 @@ class Helper
     //109.852,25 şeklinde gelen değeri 109852.25 olarak döndürür
     public static function formattedMoneyToNumber($value)
     {
+        if (empty($value)) {
+            return 0.00;
+        }
         return str_replace(['.', ','], ['', '.'], $value);
     }
 

@@ -102,26 +102,34 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                 // Projenin bakiyesini hesapla
                                 $balance = $incexpObj->getBalance($project->id);
 
-                                $proje_gunu = Date::getDateDiff($project->start_date, $project->end_date ?? $project->start_date) ?? 0;
-                                $kalan_gun = Date::getRemainingDays($project->end_date);
-                                $date_range = is_numeric($kalan_gun) && is_numeric($proje_gunu) ? 100 - (($proje_gunu - $kalan_gun)) : 0;
-                                $date_range = $project->end_date == null ? 100 : $date_range;
+                                 $has_end_date = !empty($project->end_date);
+                                 $proje_gunu = Date::getDateDiff($project->start_date, $project->end_date ?? $project->start_date) ?? 0;
+                                 $kalan_gun = $has_end_date ? Date::getRemainingDays($project->end_date) : '';
+                                 
+                                 if ($has_end_date) {
+                                     $elapsed = $proje_gunu - $kalan_gun;
+                                     if ($elapsed < 0) $elapsed = 0;
+                                     $date_range = ($proje_gunu > 0) ? round(($elapsed / $proje_gunu) * 100) : 0;
+                                     if ($date_range > 100) $date_range = 100;
+                                 } else {
+                                     $date_range = 100;
+                                 }
 
-                                //proje gunu 0'dan büyük ve kalan gün 0 ise proje tamamlandı
-                                if ($proje_gunu > 0 && $kalan_gun <= 0) {
-                                    $date_range = 100;
-                                    $progress_color = "bg-success";
-                                    $sub_text = "Proje Tamamlandı";
-                                } else {
-                                    if($kalan_gun < 10 ){
-                                        $progress_color = "bg-danger";
-                                    }else if($kalan_gun < 30){
-                                        $progress_color = "bg-warning";
-                                    }else{
-                                    $progress_color = "bg-primary";
-                                    }
-                                    $sub_text = "Proje Devam Ediyor";
-                                }
+                                 //proje gunu 0'dan büyük ve kalan gün 0 ise proje tamamlandı
+                                 if ($has_end_date && $proje_gunu > 0 && is_numeric($kalan_gun) && $kalan_gun <= 0) {
+                                     $date_range = 100;
+                                     $progress_color = "bg-success";
+                                     $sub_text = "Proje Tamamlandı";
+                                 } else {
+                                     if (is_numeric($kalan_gun) && $kalan_gun < 10) {
+                                         $progress_color = "bg-danger";
+                                     } else if (is_numeric($kalan_gun) && $kalan_gun < 30) {
+                                         $progress_color = "bg-warning";
+                                     } else {
+                                         $progress_color = "bg-primary";
+                                     }
+                                     $sub_text = "Proje Devam Ediyor";
+                                 }
                                 ?>
                                 <tr>
                                     <td class="text-center"><?php echo $i ?></td>
@@ -137,18 +145,36 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                     <td><?php echo $cities->getTownName($project->town) ?></td>
                                     <td class="text-center"><?php echo $project->start_date ?></td>
                                     <td class="text-center"><?php echo $project->end_date ?></td>
-                                    <td class="text-center">
-                                        <div class="progress progress-xs">
-                                            <div class="progress-bar <?php echo $progress_color ?>"
-                                                style="width:  <?php echo $date_range ?>%"></div>
-                                        </div>
-                                        <?php if ($kalan_gun > 0) {
-                                            echo $kalan_gun . ' Gün';
-                                        } else {
-                                            echo '<span class="text-muted">' . $sub_text . '</span>';
-                                        }
-                                        ?>
-                                    </td>
+                                     <td>
+                                         <div class="progress progress-sm mb-1" style="height: 8px;">
+                                             <div class="progress-bar <?php echo $progress_color ?>"
+                                                 style="width: <?php echo $date_range ?>%" 
+                                                 role="progressbar" 
+                                                 aria-valuenow="<?php echo $date_range ?>" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100"
+                                                 data-bs-toggle="tooltip" 
+                                                 title="%<?php echo $date_range ?> tamamlandı"></div>
+                                         </div>
+                                         <div class="d-flex justify-content-between align-items-center small text-muted px-1">
+                                             <span>
+                                                 <?php 
+                                                 if ($has_end_date && is_numeric($kalan_gun)) {
+                                                     if ($kalan_gun > 0) {
+                                                         echo $kalan_gun . ' Gün';
+                                                     } else {
+                                                         echo $sub_text;
+                                                     }
+                                                 } else {
+                                                     echo $sub_text;
+                                                 }
+                                                 ?>
+                                             </span>
+                                             <?php if ($has_end_date): ?>
+                                                 <span class="fw-bold text-dark">%<?php echo $date_range ?></span>
+                                             <?php endif; ?>
+                                         </div>
+                                     </td>
                                     <td class="text-center">
                                         <a href="#" class="btn btn-ghost-primary btn-sm show-project-personnel" data-id="<?php echo $project->id ?>" data-name="<?php echo $project->project_name ?>">
                                             <i class="ti ti-users icon me-1"></i>
@@ -159,7 +185,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                     <td class="text-end">
                                         <div class="dropdown">
                                             <button class="btn dropdown-toggle align-text-top"
-                                                data-bs-toggle="dropdown">İşlem</button>
+                                                data-bs-toggle="dropdown" data-bs-boundary="viewport">İşlem</button>
 
                                             <div class="dropdown-menu dropdown-menu-end">
                                                 <a class="dropdown-item route-link"

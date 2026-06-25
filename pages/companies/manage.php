@@ -14,7 +14,7 @@ $id = isset($_GET['id']) ? Security::decrypt($_GET["id"]) : 0;
 $new_id = $id == 0 ? 0 : $_GET['id'];
 $company = $companyObj->find($id);
 
-$pageTitle = $id > 0 ? "Firma Güncelle" : "Yeni Firma";
+$pageTitle = "FİRMA DETAYLARI";
 
 ?>
 <div class="page-wrapper">
@@ -23,8 +23,9 @@ $pageTitle = $id > 0 ? "Firma Güncelle" : "Yeni Firma";
         <div class="container-xl">
             <div class="row g-2 align-items-center">
                 <div class="col">
-                    <h2 class="page-title">
-                        <?php echo $pageTitle; ?>
+                    <div class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.5px; font-size: 0.75rem;">FİRMA DETAYLARI</div>
+                    <h2 class="page-title fw-bold text-dark mt-1">
+                        <?php echo htmlspecialchars($company->company_name ?? 'Firma Detay'); ?>
                     </h2>
                 </div>
                 <!-- Page title actions -->
@@ -56,7 +57,7 @@ $pageTitle = $id > 0 ? "Firma Güncelle" : "Yeni Firma";
                                         <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"></path>
                                         <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"></path>
                                     </svg>
-                                    Genel Bilgiler</a>
+                                    Firma Özet Bilgileri</a>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <a href="#tabs-profile-3" class="nav-link" data-bs-toggle="tab" aria-selected="false"

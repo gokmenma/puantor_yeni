@@ -275,7 +275,7 @@ use App\Helper\Helper;
                                     <i class="ti ti-building-plus mb-1" style="font-size: 20px;"></i>
                                     <span>Proje Ekle</span>
                                 </a>
-                                <a href="index.php?p=companies/manage" class="btn btn-outline-primary p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
+                                <a href="index.php?p=companies/list#new" class="btn btn-outline-primary p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
                                     <i class="ti ti-building-store mb-1" style="font-size: 20px;"></i>
                                     <span>Firma Ekle</span>
                                 </a>

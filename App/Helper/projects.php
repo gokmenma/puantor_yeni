@@ -93,19 +93,32 @@ class ProjectHelper extends Db
     //Projenin durumu ile ilgili select 
     public function projectStatusSelect($name = 'status', $selected = null)
     {
-        $options = [
-            'Devam Ediyor',
-            'Bekliyor',
-            'Duraklatıldı',
-            'Tamamlandı',
-            'İptal Edildi'
-        ];
+        $firm_id = $_SESSION['firm_id'] ?? 0;
+        
+        $query = $this->db->prepare("SELECT * FROM defines WHERE firm_id = ? AND type_id = 5");
+        $query->execute([$firm_id]);
+        $results = $query->fetchAll(PDO::FETCH_OBJ);
 
         $select = '<select id="' . $name . '" name="' . $name . '" class="select2 form-control" style="width:100%">';
         $select .= '<option value="">Durum Seçiniz</option>';
-        foreach ($options as $option) {
-            $selectedAttr = $selected == $option ? 'selected' : '';
-            $select .= "<option value='$option' $selectedAttr>$option</option>";
+        
+        if (!empty($results)) {
+            foreach ($results as $row) {
+                $selectedAttr = ((string)$selected === (string)$row->id || $selected === $row->name) ? 'selected' : '';
+                $select .= '<option value="' . $row->id . '"' . $selectedAttr . '>' . $row->name . '</option>';
+            }
+        } else {
+            $options = [
+                'Devam Ediyor',
+                'Bekliyor',
+                'Duraklatıldı',
+                'Tamamlandı',
+                'İptal Edildi'
+            ];
+            foreach ($options as $option) {
+                $selectedAttr = $selected == $option ? 'selected' : '';
+                $select .= "<option value='$option' $selectedAttr>$option</option>";
+            }
         }
         $select .= '</select>';
         return $select;
