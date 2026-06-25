@@ -122,7 +122,7 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
                                 <select class="form-select" name="hedef_ay" id="avans_hedef_ay" required>
                                     <?php for ($m = 1; $m <= 12; $m++): ?>
                                         <option value="<?php echo $m; ?>" <?php echo $m == date('n') ? 'selected' : ''; ?>>
-                                            <?php echo str_pad($m, 2, '0', STR_PAD_LEFT); ?>
+                                            <?php echo Date::monthName($m); ?>
                                         </option>
                                     <?php endfor; ?>
                                 </select>
