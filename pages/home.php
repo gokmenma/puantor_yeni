@@ -300,6 +300,7 @@ use App\Helper\Helper;
             <!-- Widgets Row -->
             <div class="row row-cards mt-3" id="widgets-sortable">
                 <?php include_once "home/gorevler.php" ?>
+                <?php include_once "home/avans_talepleri.php" ?>
                 <?php include_once "home/activity_logs.php" ?>
                 <?php include_once "home/login_logs.php" ?>
             </div>

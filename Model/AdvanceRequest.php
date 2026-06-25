@@ -20,6 +20,17 @@ class AdvanceRequest extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function getPendingRequestsByFirm($firm_id)
+    {
+        $sql = $this->db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as formatted_date 
+                                   FROM personel_avans_talepleri a 
+                                   JOIN persons p ON a.person_id = p.id 
+                                   WHERE p.firm_id = ? AND a.durum = 0
+                                   ORDER BY a.id DESC");
+        $sql->execute([$firm_id]);
+        return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
     public function getStats($firm_id)
     {
         $sql = $this->db->prepare("SELECT 
