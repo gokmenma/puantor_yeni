@@ -8,7 +8,9 @@ $firm_id = $_SESSION['firm_id'];
 
 require ROOT . '/vendor/autoload.php';
 require_once ROOT . '/Model/Persons.php';
+require_once ROOT . '/App/Helper/security.php';
 
+use App\Helper\Security;
 $personObj = new Persons();
 
 $persons = $personObj->getPersonsByFirm($firm_id);
@@ -27,23 +29,28 @@ $spreadsheet = new Spreadsheet();
 $activeWorksheet = $spreadsheet->getActiveSheet();
 
 // Write Headers
-$activeWorksheet->setCellValue('A1', 'id');
-$activeWorksheet->setCellValue('B1', 'Ad Soyad');
-$activeWorksheet->setCellValue('C1', 'Ödeme Günü');
-$activeWorksheet->setCellValue('D1', 'Tutar');
+$activeWorksheet->setCellValue('A1', 'Sıra');
+$activeWorksheet->setCellValue('B1', 'TC Kimlik');
+$activeWorksheet->setCellValue('C1', 'Ad Soyad');
+$activeWorksheet->setCellValue('D1', 'Ödeme Günü');
+$activeWorksheet->setCellValue('E1', 'Tutar');
 
 
 $rowNum = 2;
+$idx = 1;
 foreach ($persons as $person) {
-    $activeWorksheet->setCellValue('A' . $rowNum, $person->id);
-    $activeWorksheet->setCellValue('B' . $rowNum, $person->full_name);
-    $activeWorksheet->setCellValue('C' . $rowNum, date('d.m.Y'));
-    $activeWorksheet->setCellValue('D' . $rowNum, 0);
+    $decryptedKimlik = Security::safeDecrypt($person->kimlik_no);
+    $activeWorksheet->setCellValue('A' . $rowNum, $idx);
+    $activeWorksheet->setCellValueExplicit('B' . $rowNum, $decryptedKimlik, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+    $activeWorksheet->setCellValue('C' . $rowNum, $person->full_name);
+    $activeWorksheet->setCellValue('D' . $rowNum, date('d.m.Y'));
+    $activeWorksheet->setCellValue('E' . $rowNum, 0);
     $rowNum++;
+    $idx++;
 }
 
 //kolonları otomatik genişlet
-foreach (range('A', 'D') as $columnID) {
+foreach (range('A', 'E') as $columnID) {
     $spreadsheet->getActiveSheet()->getColumnDimension($columnID)->setAutoSize(true);
 }
 

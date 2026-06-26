@@ -220,15 +220,14 @@ $total_kalan = $total_gelir - $total_odeme;
                         İşlemler</button>
                     <div class="dropdown-menu dropdown-menu-end">
                         <?php if ($Auths->hasPermission('upload_payment_permission')) { ?>
-                            <a class="dropdown-item add-income route-link" href="#"
-                                data-tooltip="Personellere yapılan ödemeleri excelden yükleyin" data-tooltip-location="left"
-                                data-page="payroll/xls/payment-load-from-xls">
-                                <i class="ti ti-table-import icon me-3"></i> Ödeme Yükle
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#load-payment-modal"
+                                data-tooltip="Personellere yapılan ödemeleri excelden yükleyin" data-tooltip-location="left">
+                                <i class="ti ti-table-import icon me-3 text-info"></i> Ödeme Yükle
                             </a>
                         <?php } ?>
                         <?php if ($Auths->hasPermission('update_fees_permission')) { ?>
-                            <a class="dropdown-item add-income" data-tooltip="Günlük Ücretleri güncelleyin"
-                                data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
+                            <a class="dropdown-item" data-tooltip="Günlük Ücretleri güncelleyin"
+                                data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wages-modal">
                                 <i class="ti ti-user-dollar icon me-3"></i> Ücretleri Güncelle
                             </a>
                         <?php } ?>
@@ -534,3 +533,4 @@ $total_kalan = $total_gelir - $total_odeme;
 <?php include_once 'content/payroll-detail-modal.php'; ?>
 <?php include_once 'content/bulk-income-modal.php'; ?>
 <?php include_once 'content/bulk-wage-cut-modal.php'; ?>
+<?php include_once 'content/bulk-wages-modal.php'; ?>

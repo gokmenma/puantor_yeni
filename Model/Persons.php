@@ -284,4 +284,29 @@ class Persons extends Model
 
         return $results;
     }
+
+    public function getPersonByKimlikNoAndFirm($kimlik_no, $firm_id)
+    {
+        $kimlik_no = trim($kimlik_no);
+        if (empty($kimlik_no)) {
+            return null;
+        }
+
+        $sql = "SELECT * FROM persons WHERE firm_id = ? AND deleted_at IS NULL";
+        $query = $this->db->prepare($sql);
+        $query->execute([$firm_id]);
+        $persons = $query->fetchAll(PDO::FETCH_OBJ);
+
+        $cleanValue = preg_replace('/[^0-9]/', '', $kimlik_no);
+
+        foreach ($persons as $person) {
+            $decryptedKimlik = Security::safeDecrypt($person->kimlik_no);
+            $cleanKimlik = preg_replace('/[^0-9]/', '', $decryptedKimlik);
+
+            if ($cleanKimlik && $cleanKimlik === $cleanValue) {
+                return $person;
+            }
+        }
+        return null;
+    }
 }

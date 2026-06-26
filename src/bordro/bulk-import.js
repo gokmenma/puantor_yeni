@@ -20,6 +20,7 @@ $(document).ready(function () {
   // --- DROPZONE INTERACTION ENGINE ---
   setupDragAndDrop("income");
   setupDragAndDrop("wage-cut");
+  setupDragAndDrop("payment-load");
 
   function setupDragAndDrop(type) {
     const zone = $(`#dropzone-${type}`);
@@ -195,5 +196,77 @@ $(document).ready(function () {
     const btn = $(`#btn-upload-${type}`);
     const label = type === "income" ? "Yükle" : "Yükle";
     btn.prop("disabled", false).html(label);
+  }
+
+  // --- PAYMENT LOAD UPLOAD ---
+  $(document).on("click", "#btn-upload-payment-load", function () {
+    const input = $("#bulk-payment-load-file")[0];
+    const file = input.files[0];
+    if (!file) {
+      Swal.fire({ icon: "warning", title: "Hata!", text: "Lütfen bir dosya seçin." });
+      return;
+    }
+
+    const incExpType = $("#payment_inc_exp_type").val();
+    if (!incExpType) {
+      Swal.fire({ icon: "warning", title: "Hata!", text: "Lütfen bir kategori/tür seçiniz." });
+      return;
+    }
+
+    const btn = $("#btn-upload-payment-load");
+    btn.prop("disabled", true).html(`<span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...`);
+
+    const month = $("#months").val();
+    const year = $("#year").val();
+    const projectId = $("#projects").val() || 0;
+
+    const formData = new FormData();
+    formData.append("action", "payment-load-from-xls");
+    formData.append("months", month);
+    formData.append("year", year);
+    formData.append("projects", projectId);
+    formData.append("inc_exp_type", incExpType);
+    formData.append("payment-load-file", file);
+
+    fetch("api/bordro/payment-load.php", {
+      method: "POST",
+      body: formData
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          Swal.fire({
+            icon: "success",
+            title: "Başarılı!",
+            text: data.message,
+            confirmButtonText: "Tamam"
+          }).then(() => {
+            $("#load-payment-modal").modal("hide");
+            location.reload();
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Hata!",
+            text: data.message,
+            confirmButtonText: "Tamam"
+          });
+          resetPaymentUploadButton();
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        Swal.fire({
+          icon: "error",
+          title: "Hata!",
+          text: "Dosya yüklenirken teknik bir sorun oluştu.",
+          confirmButtonText: "Tamam"
+        });
+        resetPaymentUploadButton();
+      });
+  });
+
+  function resetPaymentUploadButton() {
+    $("#btn-upload-payment-load").prop("disabled", false).html("Yükle");
   }
 });

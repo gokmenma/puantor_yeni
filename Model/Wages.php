@@ -68,8 +68,8 @@ class Wages extends Model
 
     public function getWageByPersonIdAndDate($person_id, $date)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table 
-                WHERE person_id = :person_id 
+        $sql = $this->db->prepare("SELECT * FROM $this->table
+                WHERE person_id = :person_id
                 AND start_date <= :date AND end_date >= :date
                 ORDER BY amount DESC LIMIT 1");
         $sql->execute([
@@ -77,6 +77,29 @@ class Wages extends Model
             'date' => $date
         ]);
         return $sql->fetch(PDO::FETCH_OBJ);
+    }
+
+    public function getCurrentWage($person_id)
+    {
+        $today = date('Ymd');
+        $sql = $this->db->prepare("SELECT * FROM $this->table
+                WHERE person_id = :person_id
+                AND start_date <= :today AND end_date >= :today
+                ORDER BY id DESC LIMIT 1");
+        $sql->execute(['person_id' => $person_id, 'today' => $today]);
+        return $sql->fetch(PDO::FETCH_OBJ);
+    }
+
+    public function bulkInsertWages(array $records)
+    {
+        $sql = "INSERT INTO $this->table (person_id, wage_name, start_date, end_date, amount, description) VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        $count = 0;
+        foreach ($records as $r) {
+            $stmt->execute([$r['person_id'], $r['wage_name'], $r['start_date'], $r['end_date'], $r['amount'], $r['description']]);
+            $count++;
+        }
+        return $count;
     }
 
 }

@@ -124,6 +124,7 @@ if ($page == 'payroll/list') {
     echo '<script src="./src/bordro/wage_cut.js"></script>';
     echo '<script src="./src/bordro/income.js"></script>';
     echo '<script src="./src/bordro/bulk-import.js"></script>';
+    echo '<script src="./src/bordro/bulk-wages.js"></script>';
 
 }
 // Gelir Gider Türü Tanımlama
