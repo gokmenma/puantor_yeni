@@ -94,7 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $job_group = $db->lastInsertId();
         }
 
-        $team_val = !empty($_POST['team_id']) ? $_POST['team_id'] : 0;
+        $team_val = !empty($_POST['team_id']) ? $_POST['team_id'] : null;
+        $team_id_val = is_numeric($team_val) ? (int)$team_val : null;
 
         $data = [
             'firm_id' => $firm_id,
@@ -114,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'state' => 1,
             'email' => trim($_POST['email'] ?? ''),
             'job_group' => $job_group,
-            'team_id' => $team_val,
+            'team_id' => $team_id_val,
             'ekip' => $team_val,
             'description' => trim($_POST['description'] ?? '')
         ];

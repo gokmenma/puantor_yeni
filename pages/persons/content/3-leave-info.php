@@ -1,13 +1,33 @@
 <?php
 use App\Helper\Date;
 
-$personId = $_GET['id'] ?? 0;
+$personId = $person->id ?? 0;
 // Modeller global namespace içinde
 $puantajObj = new Puantaj();
 $projectsObj = new Projects();
 
+// Yıllık İzin Hakediş Modelini ekle
+require_once 'Model/IzinHakedis.php';
+$hakedisObj = new IzinHakedis();
+
+if ($personId > 0) {
+    $firma_id = $person->firm_id ?? $_SESSION['firm_id'] ?? 0;
+    if (!empty($person->job_start_date)) {
+        $hakedisObj->hesaplaVeKaydet($personId, $firma_id, $person->job_start_date, $person->birth_date ?? null);
+    }
+}
+$hakedisList = $personId > 0 ? $hakedisObj->getByPersonel($personId) : [];
+
+$total_hakedis = 0;
+$total_kullanilan = 0;
+foreach ($hakedisList as $h) {
+    $total_hakedis += $h->gun_sayisi;
+    $total_kullanilan += $h->kullanilan_gun;
+}
+$total_kalan = $total_hakedis - $total_kullanilan;
+
 // Puantaj verilerini çek
-$puantaj = $puantajObj->getPuantajInfoByPerson($personId);
+$puantaj = $personId > 0 ? $puantajObj->getPuantajInfoByPerson($personId) : [];
 
 // İzin verilerini filtrele ve istatistikleri hesapla
 $leave_records = [];
@@ -272,6 +292,9 @@ foreach ($puantaj as $item) {
                                 <i class="ti ti-table icon"></i> Liste
                             </button>
                         </div>
+                        <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modal_leave_hakedis">
+                            <i class="ti ti-checklist icon me-1"></i> Hakediş Bilgileri
+                        </button>
                         <button class="btn btn-icon btn-sm excel text-success border-0" onclick="exportLeaveToExcel()" title="Excel'e Aktar">
                             <i class="ti ti-file-spreadsheet icon"></i>
                         </button>
@@ -405,6 +428,79 @@ foreach ($puantaj as $item) {
                         </div>
                     </div>
                 </div>
+            </div> <!-- card end -->
+        </div> <!-- col-12 end -->
+    </div> <!-- row end -->
+</div> <!-- container end -->
+
+<!-- Modal: Yıllık İzin Hakedişleri -->
+<div class="modal modal-blur fade" id="modal_leave_hakedis" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="ti ti-checklist me-2 text-success"></i> Yıllık İzin Hakedişleri - <?= htmlspecialchars($person->full_name ?? '') ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Hakediş Özet Bilgileri -->
+                <div class="row g-2 mb-4">
+                    <div class="col-4">
+                        <div class="p-3 text-center rounded bg-primary-lt">
+                            <div class="text-muted small">Hak Edilen</div>
+                            <div class="h2 mb-0 font-weight-bold text-primary"><?= $total_hakedis ?> Gün</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 text-center rounded bg-danger-lt">
+                            <div class="text-muted small">Kullanılan</div>
+                            <div class="h2 mb-0 font-weight-bold text-danger"><?= $total_kullanilan ?> Gün</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 text-center rounded bg-success-lt">
+                            <div class="text-muted small">Kalan</div>
+                            <div class="h2 mb-0 font-weight-bold text-success"><?= $total_kalan ?> Gün</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-vcenter card-table table-hover table-striped" id="hakedis_list_table">
+                        <thead>
+                            <tr>
+                                <th>Yıl</th>
+                                <th>Tarih</th>
+                                <th class="text-center">Hakedilen</th>
+                                <th class="text-center">Kullanılan</th>
+                                <th class="text-center">Kalan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($hakedisList)): ?>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted small py-3">Hakediş kaydı bulunmuyor.</td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($hakedisList as $h): 
+                                    $kalan = $h->gun_sayisi - $h->kullanilan_gun;
+                                    ?>
+                                    <tr>
+                                        <td class="font-weight-bold text-muted"><?= $h->yil ?>. Yıl</td>
+                                        <td class="small"><?= Date::dmY($h->hakedis_tarihi) ?></td>
+                                        <td class="text-center font-weight-medium"><?= $h->gun_sayisi ?></td>
+                                        <td class="text-center text-danger"><?= $h->kullanilan_gun ?></td>
+                                        <td class="text-center font-weight-bold text-success"><?= $kalan ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
             </div>
         </div>
     </div>
@@ -416,20 +512,30 @@ foreach ($puantaj as $item) {
     let leaveCalendar = null;
 
     // Görünüm Değiştirme Mantığı
+    function switchLeaveView(viewName) {
+        const views = {
+            'year': document.getElementById('leave_year_view'),
+            'calendar': document.getElementById('leave_calendar_view'),
+            'table': document.getElementById('leave_table_view')
+        };
+        for (const key in views) {
+            if (views[key]) {
+                views[key].style.display = 'none';
+            }
+        }
+        if (views[viewName]) {
+            views[viewName].style.display = 'block';
+        }
+    }
+
     document.getElementById('view_leave_year_btn').addEventListener('click', function() {
-        document.getElementById('leave_table_view').style.display = 'none';
-        document.getElementById('leave_calendar_view').style.display = 'none';
-        document.getElementById('leave_year_view').style.display = 'block';
-        
+        switchLeaveView('year');
         setActiveViewBtn(this);
         renderLeaveYearlyGrid(document.getElementById('leave_year_select').value);
     });
 
     document.getElementById('view_leave_calendar_btn').addEventListener('click', function() {
-        document.getElementById('leave_table_view').style.display = 'none';
-        document.getElementById('leave_year_view').style.display = 'none';
-        document.getElementById('leave_calendar_view').style.display = 'block';
-        
+        switchLeaveView('calendar');
         setActiveViewBtn(this);
         if (!leaveCalendar) {
             initLeaveCalendar();
@@ -442,46 +548,20 @@ foreach ($puantaj as $item) {
     });
 
     document.getElementById('view_leave_table_btn').addEventListener('click', function() {
-        document.getElementById('leave_calendar_view').style.display = 'none';
-        document.getElementById('leave_year_view').style.display = 'none';
-        document.getElementById('leave_table_view').style.display = 'block';
-        
+        switchLeaveView('table');
         setActiveViewBtn(this);
         initLeaveDataTable();
     });
 
     function initLeaveDataTable() {
         if (!$.fn.DataTable.isDataTable('#leave_history_fixed')) {
-            $('#leave_history_fixed').DataTable({
+            window.createDataTable('#leave_history_fixed', {
                 autoWidth: false,
                 responsive: true,
                 order: [[1, "desc"]],
                 columnDefs: [
                     { targets: "_all", defaultContent: "-" }
-                ],
-                language: {
-                    url: "src/tr.json"
-                },
-                initComplete: function (settings, json) {
-                    var api = this.api();
-                    var tableId = settings.sTableId;
-                    if ($("#" + tableId + " thead .search-input-row").length === 0) {
-                        $("#" + tableId + " thead").append('<tr class="search-input-row"></tr>');
-                        api.columns().every(function () {
-                            var column = this;
-                            var title = $(column.header()).text();
-                            $('<th class="px-1 py-1"><input type="text" class="form-control form-control-sm w-100" placeholder="' + title + '" /></th>')
-                                .appendTo($("#" + tableId + " thead .search-input-row"))
-                                .find("input")
-                                .on("keyup change clear", function () {
-                                    if (column.search() !== this.value) {
-                                        column.search(this.value).draw();
-                                    }
-                                });
-                        });
-                    }
-                    api.columns.adjust().draw();
-                }
+                ]
             });
         } else {
             $('#leave_history_fixed').DataTable().columns.adjust().draw();
@@ -654,8 +734,6 @@ foreach ($puantaj as $item) {
     document.addEventListener('DOMContentLoaded', function() {
         const currentYear = document.getElementById('leave_year_select').value;
         renderLeaveYearlyGrid(currentYear);
-        // Liste görünümü açıldığında başlatılacak, ancak data-filter için ön hazırlık yapalım
-        initLeaveDataTable();
         // filterLeaveTableByYear(currentYear);
     });
 

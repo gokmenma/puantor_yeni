@@ -13,6 +13,10 @@
         <span>Avans</span>
     </a>
     <?php endif; ?>
+    <a href="?route=leave" class="nav-item <?php echo $route == 'leave' ? 'active' : ''; ?>" data-tab="leave-tab">
+        <i class="ti ti-beach"></i>
+        <span>İzin</span>
+    </a>
     <a href="?route=profile" class="nav-item <?php echo $route == 'profile' ? 'active' : ''; ?>" data-tab="profile-tab">
         <i class="ti ti-user"></i>
         <span>Profil</span>

@@ -60,7 +60,7 @@ try {
                WHERE pt.person = :person_id 
                AND CAST(REPLACE(pt.gun, '-', '') AS UNSIGNED) >= :start_date 
                AND CAST(REPLACE(pt.gun, '-', '') AS UNSIGNED) <= :end_date 
-               ORDER BY pt.gun ASC";
+               ORDER BY CAST(REPLACE(pt.gun, '-', '') AS UNSIGNED) ASC";
     $stmt_pt = $db->prepare($sql_pt);
     $stmt_pt->execute([
         ':person_id' => $personel_id,

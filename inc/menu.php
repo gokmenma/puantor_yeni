@@ -26,7 +26,15 @@ $Auths = new Auths();
         </h1>
 
         <div class="collapse navbar-collapse" id="sidebar-menu">
-            <ul class="navbar-nav pt-lg-3">
+            <div id="menu-search-container">
+                <div class="input-icon">
+                    <span class="input-icon-addon">
+                        <i class="ti ti-search text-secondary"></i>
+                    </span>
+                    <input type="search" id="menu-search-input" class="form-control text-white" placeholder="Menüde ara..." aria-label="Menü ara">
+                </div>
+            </div>
+            <ul class="navbar-nav 1">
 
                 <?php
 
@@ -155,3 +163,97 @@ $Auths = new Auths();
         </div>
     </div>
 </aside>
+
+<script>
+$(document).ready(function() {
+    var $searchInput = $('#menu-search-input');
+    var $menuItems = $('#sidebar-menu .navbar-nav > li.nav-item');
+
+    // Store original dropdown menu show states
+    $menuItems.each(function() {
+        var $dropdownMenu = $(this).find('.dropdown-menu');
+        if ($dropdownMenu.length) {
+            $dropdownMenu.attr('data-original-show', $dropdownMenu.hasClass('show') ? 'true' : 'false');
+        }
+    });
+
+    // Turkish character aware lowercase function
+    function toTurkishLowercase(str) {
+        if (!str) return '';
+        return str.replace(/I/g, 'ı')
+                  .replace(/İ/g, 'i')
+                  .replace(/Ğ/g, 'ğ')
+                  .replace(/Ü/g, 'ü')
+                  .replace(/Ş/g, 'ş')
+                  .replace(/Ö/g, 'ö')
+                  .replace(/Ç/g, 'ç')
+                  .toLowerCase();
+    }
+
+    $searchInput.on('input search', function() {
+        var query = toTurkishLowercase($(this).val().trim());
+
+        if (query === '') {
+            // Restore default menu visibility and dropdown expand states
+            $menuItems.show();
+            $menuItems.find('.dropdown-item').show();
+            $menuItems.each(function() {
+                var $dropdownMenu = $(this).find('.dropdown-menu');
+                if ($dropdownMenu.length) {
+                    var originalShow = $dropdownMenu.attr('data-original-show') === 'true';
+                    if (originalShow) {
+                        $dropdownMenu.addClass('show');
+                    } else {
+                        $dropdownMenu.removeClass('show');
+                    }
+                }
+            });
+            return;
+        }
+
+        $menuItems.each(function() {
+            var $item = $(this);
+            var parentTitle = toTurkishLowercase($item.find('.nav-link-title').text());
+            var parentMatched = parentTitle.indexOf(query) !== -1;
+            
+            var $submenus = $item.find('.dropdown-item');
+            var anySubMatched = false;
+
+            if ($submenus.length > 0) {
+                $submenus.each(function() {
+                    var $sub = $(this);
+                    var subText = toTurkishLowercase($sub.text());
+                    var subMatched = subText.indexOf(query) !== -1;
+                    
+                    if (subMatched) {
+                        anySubMatched = true;
+                        $sub.show();
+                    } else {
+                        $sub.hide();
+                    }
+                });
+
+                if (parentMatched || anySubMatched) {
+                    $item.show();
+                    var $dropdownMenu = $item.find('.dropdown-menu');
+                    if (anySubMatched) {
+                        $dropdownMenu.addClass('show');
+                    } else {
+                        // If parent matched but no submenu items matched, show all submenus
+                        $submenus.show();
+                        $dropdownMenu.addClass('show');
+                    }
+                } else {
+                    $item.hide();
+                }
+            } else {
+                if (parentMatched) {
+                    $item.show();
+                } else {
+                    $item.hide();
+                }
+            }
+        });
+    });
+});
+</script>

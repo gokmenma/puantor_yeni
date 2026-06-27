@@ -37,7 +37,9 @@ if (
     $page == "raporlar/list" || $page == "avans-talepleri/list" ||
     $page == 'activities/index' ||
     $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri' ||
-    $page == 'duyurular/list'
+    $page == 'duyurular/list' ||
+    $page == 'izin/list' ||
+    $page == 'izin/hakedis'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }

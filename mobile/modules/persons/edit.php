@@ -161,6 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_person'])) {
     }
 
     $team_val = !empty($_POST['team_id']) ? $_POST['team_id'] : ($person->ekip ?? ($person->team_id ?? null));
+    $team_id_val = is_numeric($team_val) ? (int)$team_val : null;
 
     $data = [
         'id' => $id,
@@ -175,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_person'])) {
         'job_end_date' => !empty($_POST['job_end_date']) ? $_POST['job_end_date'] : null,
         'job' => $_POST['job'] ?? '',
         'job_group' => $job_group,
-        'team_id' => $team_val,
+        'team_id' => $team_id_val,
         'ekip' => $team_val,
         'iban_number' => Security::encrypt($_POST['iban_number'] ?? ''),
         'description' => $_POST['description'] ?? '',

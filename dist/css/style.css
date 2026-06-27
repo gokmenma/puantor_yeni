@@ -1239,6 +1239,200 @@ min-height: 100px !important;} */
     border-color: #2d394b;
 }
 
+.main-fab:hover {
+  background-color: #0056b3;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+}
+
+/* İkonlar */
+.icon-hamburger,
+.icon-close {
+  font-size: 24px;
+  transition: opacity 0.3s ease;
+}
+
+.icon-close {
+  position: absolute;
+  opacity: 0; /* Başlangıçta kapalı */
+}
+
+/* FAB Menü Seçenekleri */
+.fab-options {
+  position: relative;
+  display: none; /* Başlangıçta gizli */
+}
+
+/* FAB Menü Elemanları */
+.fab-item {
+  position: absolute;
+  right: 0;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+  font-size: 20px;
+  justify-content: center;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0; /* Başlangıçta kapalı */
+  transform: translateY(20px); /* Başlangıçta aşağıda */
+}
+
+.fab-options .fab-item:nth-child(1),
+.fab-options .fab-item:nth-child(1) span {
+  background-color: #3b5998; /* İlk fab-item'ın arka plan rengiyle aynı */
+}
+
+.fab-options .fab-item:nth-child(2),
+.fab-options .fab-item:nth-child(2) span {
+  background-color: #25d366; /* İkinci fab-item'ın arka plan rengiyle aynı */
+}
+.fab-options .fab-item:nth-child(3),
+.fab-options .fab-item:nth-child(3) span {
+  background-color: #1da1f2; /* Üçüncü fab-item'ın arka plan rengiyle aynı */
+}
+
+/* Metin ve Simge için Stil */
+.fab-item span {
+  display: none; /* Başlangıçta gizli */
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-right: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  position: absolute;
+  right: 50px;
+  white-space: nowrap;
+}
+
+.fab-item:hover span {
+  display: inline-block;
+}
+
+/* FAB Menü Elemanları Açıldığında */
+.fab-options.show .fab-item {
+  opacity: 1;
+  transform: translateY(0); /* Yavaşça yukarı çıkar */
+}
+
+.has-error {
+  border-color: #dc3545 !important;
+}
+
+* {
+  /* scrollbar-color: #bbb transparent; */
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 20px !important;
+  border: 2px solid transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 1rem;
+  border: 5px solid transparent;
+  box-shadow: inset 0 0 0 1rem
+    rgba(var(--tblr-scrollbar-color, var(--tblr-body-color-rgb)), 0.16);
+}
+
+/* textarea {
+min-height: 100px !important;} */
+
+/* Dark Mode Overrides for Table Headers and Select2 */
+[data-bs-theme="dark"] .table.dataTable thead th,
+[data-bs-theme="dark"] .table thead th {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-bottom-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .select2-container--default .select2-selection--single,
+[data-bs-theme="dark"] .form-floating .select2-container .select2-selection--single {
+  background-color: #151f2c !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .select2-container--default .select2-selection--single .select2-selection__rendered,
+[data-bs-theme="dark"] .form-floating .select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .select2-dropdown {
+  background-color: #151f2c !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .select2-search__field {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .select2-results__option[aria-selected="true"] {
+  background-color: #334155 !important;
+}
+
+/* Dark Mode Alert Fixes */
+[data-bs-theme="dark"] .alert.bg-white {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .alert.bg-white .text-warning {
+    color: #ff9900 !important;
+}
+
+[data-bs-theme="dark"] .alert.bg-white .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Trial Bar Specific Improvements */
+.alert-trial {
+    border-left: 4px solid #ff9900 !important;
+}
+
+/* Modal and Card Header Dark Mode Refinements */
+[data-bs-theme="dark"] .modal-content {
+    background-color: #151f2c;
+    border: 1px solid #2d394b;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-bs-theme="dark"] .card-header.bg-light,
+[data-bs-theme="dark"] .bg-light {
+    background-color: #1d2735 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .card-header.bg-primary-lt,
+[data-bs-theme="dark"] .bg-primary-lt {
+    background-color: rgba(32, 107, 196, 0.1) !important;
+    color: #4299e1 !important;
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer {
+    border-color: #2d394b;
+}
+
 [data-bs-theme="dark"] .table.sticky-top,
 [data-bs-theme="dark"] thead.sticky-top tr th {
     background-color: #1d2735 !important;
@@ -1246,4 +1440,45 @@ min-height: 100px !important;} */
 
 [data-bs-theme="dark"] .modal-blur.fade.show {
     backdrop-filter: blur(4px) brightness(0.8);
+}
+
+/* Custom Button Animations */
+.btn-animate-icon .icon {
+    transition: transform .25s ease-in-out;
+}
+.btn-animate-icon:hover .icon.icon-end,
+.btn-animate-icon:hover .icon:last-child {
+    transform: translate3d(4px, 0, 0);
+}
+.btn-animate-icon-move-start:hover .icon {
+    transform: translate3d(-4px, 0, 0) !important;
+}
+.btn-animate-icon-rotate:hover .icon {
+    transform: rotate(360deg) !important;
+}
+.btn-animate-icon-shake:hover .icon {
+    animation: btn-animate-shake 0.3s ease-in-out infinite !important;
+}
+.btn-animate-icon-pulse:hover .icon {
+    animation: btn-animate-pulse 0.8s ease-in-out infinite !important;
+}
+.btn-animate-icon-tada:hover .icon {
+    animation: btn-animate-tada 1s ease-in-out infinite !important;
+}
+
+@keyframes btn-animate-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+}
+@keyframes btn-animate-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+@keyframes btn-animate-tada {
+    0% { transform: scale3d(1, 1, 1); }
+    10%, 20% { transform: scale3d(.9, .9, .9) rotate3d(0, 0, 1, -3deg); }
+    30%, 50%, 70%, 90% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg); }
+    40%, 60%, 80% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg); }
+    100% { transform: scale3d(1, 1, 1); }
 }

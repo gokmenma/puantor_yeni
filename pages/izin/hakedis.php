@@ -1,0 +1,747 @@
+<?php
+require_once ROOT . '/Model/IzinHakedis.php';
+require_once ROOT . '/Model/Persons.php';
+require_once ROOT . '/App/Helper/security.php';
+
+use App\Helper\Security;
+
+$Auths->checkFirmReturn();
+
+$firma_id    = (int) ($_SESSION['firm_id'] ?? 0);
+$personeller = (new Persons())->getPersonsByFirm($firma_id);
+?>
+
+<div class="page-header d-print-none mb-0">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <h2 class="page-title">Yıllık İzin Hakedişleri</h2>
+            </div>
+            <div class="col-auto ms-auto d-flex gap-2">
+                <button class="btn btn-primary" id="btn-hesapla-hepsi">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                        <path d="M9 10h6" />
+                        <path d="M9 14h6" />
+                    </svg>
+                    Hakedişleri Hesapla
+                </button>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalExcel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                        <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4"></path>
+                        <path d="M2 17l4 4.25"></path>
+                        <path d="M6 17l-4 4.25"></path>
+                        <path d="M22 18h-12"></path>
+                        <path d="M14 14l-4 4l4 4"></path>
+                    </svg>
+                    Excel'den Aktar
+                </button>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalManuel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M12 5l0 14"></path>
+                        <path d="M5 12l14 0"></path>
+                    </svg>
+                    Yeni Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="container-xl">
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label mb-1 small">Personel Filtrele</label>
+                        <select id="filter-personel" class="form-select select2-filter">
+                            <option value="">Tüm Personel</option>
+                            <?php foreach ($personeller as $p): ?>
+                                <option value="<?= Security::encrypt($p->id) ?>"><?= htmlspecialchars($p->full_name) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-primary" id="btn-filtrele">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                                <path d="M21 21l-6 -6" />
+                            </svg>
+                            Filtrele
+                        </button>
+                        <button class="btn btn-outline-secondary ms-1" id="btn-temizle">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                            </svg>
+                            Temizle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-vcenter table-hover card-table" id="hakedis-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;"></th>
+                                <th>Personel</th>
+                                <th class="text-center">Hakediş Süresi</th>
+                                <th class="text-center">Toplam Hakedilen</th>
+                                <th class="text-center">Toplam Kullanılan</th>
+                                <th class="text-center">Toplam Kalan</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal: Manuel Hakediş -->
+<div class="modal modal-blur fade" id="modalManuel" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manuel Hakediş Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Personel</label>
+                    <select id="manuel-personel" class="form-select select2-modal">
+                        <option value="">Seçiniz</option>
+                        <?php foreach ($personeller as $p): ?>
+                            <option value="<?= Security::encrypt($p->id) ?>"><?= htmlspecialchars($p->full_name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hakediş Yılı</label>
+                    <input type="number" id="manuel-yil" class="form-control" min="1" placeholder="Örn: 3">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Gün Sayısı</label>
+                    <input type="number" id="manuel-gun" class="form-control" min="1" placeholder="Örn: 14">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Açıklama</label>
+                    <input type="text" id="manuel-aciklama" class="form-control" placeholder="Opsiyonel">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M18 6l-12 12"></path>
+                        <path d="M6 6l12 12"></path>
+                    </svg>
+                    İptal
+                </button>
+                <button type="button" class="btn btn-success" id="btn-manuel-kaydet">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M5 12l5 5l10 -10"></path>
+                    </svg>
+                    Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Excel İmport -->
+<div class="modal modal-blur fade" id="modalExcel" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;overflow:hidden;">
+            <div class="modal-header text-white py-3" style="background:linear-gradient(135deg,#2fb344,#1a7a2e);">
+                <h5 class="modal-title d-flex align-items-center text-white fw-bold">
+                    <i class="ti ti-file-import me-2" style="font-size:1.4rem;"></i>
+                    Hakediş Yükle (Excel)
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4 text-center">
+                    <p class="text-secondary small mb-3">Aşağıdaki butona tıklayarak personel listesini içeren Excel şablonunu indirin, hakediş bilgilerini doldurun ve dosyayı buraya yükleyin.</p>
+                    <button type="button" id="btn-sablon-indir-modal" class="btn btn-outline-success btn-pill w-100 py-2 d-flex align-items-center justify-content-center" style="gap:8px;border-width:2px;">
+                        <i class="ti ti-file-download" style="font-size:1.2rem;"></i>
+                        <strong>Hakediş Şablonu İndir (.xlsx)</strong>
+                    </button>
+                </div>
+
+                <div class="dropzone-area" id="hakedis-dropzone">
+                    <div class="dropzone-icon">
+                        <i class="ti ti-cloud-upload text-success" style="font-size:3rem;transition:transform .2s;"></i>
+                    </div>
+                    <div class="dropzone-text">
+                        <span class="dropzone-title">Excel dosyasını buraya sürükleyin veya tıklayın</span>
+                        <span class="dropzone-sub">Sadece .xls ve .xlsx dosyaları desteklenir (Max 5MB)</span>
+                    </div>
+                </div>
+                <input type="file" id="excel-dosya" accept=".xlsx,.xls" style="display:none;">
+
+                <div class="dropzone-preview" id="hakedis-dropzone-preview">
+                    <div class="preview-icon">
+                        <i class="ti ti-file-spreadsheet" style="color:#2fb344;"></i>
+                    </div>
+                    <div class="preview-details">
+                        <span class="preview-name" id="hakedis-preview-name">dosya.xlsx</span>
+                        <span class="preview-size" id="hakedis-preview-size">0 KB</span>
+                    </div>
+                    <div class="preview-remove" id="hakedis-preview-remove" title="Dosyayı Kaldır">
+                        <i class="ti ti-trash"></i>
+                    </div>
+                </div>
+
+                <div id="excel-onizleme" style="display:none;" class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold small text-secondary" id="excel-satir-sayisi"></span>
+                    </div>
+                    <div class="table-responsive" style="max-height:240px;overflow-y:auto;">
+                        <table class="table table-sm table-bordered table-vcenter mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>Personel Adı</th>
+                                    <th>TC Kimlik</th>
+                                    <th class="text-center">Yıl</th>
+                                    <th class="text-center">Gün</th>
+                                    <th>Açıklama</th>
+                                </tr>
+                            </thead>
+                            <tbody id="excel-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0 p-3">
+                <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M18 6l-12 12"></path>
+                        <path d="M6 6l12 12"></path>
+                    </svg>
+                    Kapat
+                </button>
+                <button type="button" class="btn btn-success px-4" id="btn-excel-aktar" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M5 12l5 5l10 -10"></path>
+                    </svg>
+                    Aktar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Hakediş Düzenle -->
+<div class="modal modal-blur fade" id="modalDuzenle" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manuel Hakediş Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="duzenle-id">
+                <div class="mb-3">
+                    <label class="form-label">Personel</label>
+                    <input type="text" id="duzenle-personel" class="form-control" readonly disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Hakediş Yılı</label>
+                    <input type="text" id="duzenle-yil" class="form-control" readonly disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Gün Sayısı</label>
+                    <input type="number" id="duzenle-gun" class="form-control" min="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Açıklama</label>
+                    <input type="text" id="duzenle-aciklama" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M18 6l-12 12"></path>
+                        <path d="M6 6l12 12"></path>
+                    </svg>
+                    İptal
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-duzenle-kaydet">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path d="M5 12l5 5l10 -10"></path>
+                    </svg>
+                    Güncelle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+#hakedis-table tbody tr { cursor: pointer; }
+#hakedis-table tbody tr.shown { background-color: rgba(var(--tblr-primary-rgb), 0.02); }
+#hakedis-table td.dt-control i { transition: transform 0.2s ease; }
+.dropzone-area { border:2px dashed #86efac; border-radius:12px; padding:2.5rem 1.5rem; text-align:center; background:#f0fdf4; cursor:pointer; transition:all .2s ease-in-out; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; }
+.dropzone-area:hover, .dropzone-area.dragover { border-color:#2fb344; background:#dcfce7; }
+.dropzone-area:hover .dropzone-icon i, .dropzone-area.dragover .dropzone-icon i { transform:translateY(-5px); }
+.dropzone-title { display:block; font-size:1rem; font-weight:600; color:#1e293b; }
+.dropzone-sub { display:block; font-size:.8rem; color:#64748b; margin-top:.25rem; }
+.dropzone-preview { margin-top:1.25rem; display:none; align-items:center; gap:.75rem; padding:.75rem 1rem; background:#fff; border:1px solid #e2e8f0; border-radius:8px; }
+.dropzone-preview .preview-icon { font-size:1.8rem; display:flex; align-items:center; }
+.dropzone-preview .preview-details { flex-grow:1; text-align:left; }
+.dropzone-preview .preview-name { font-weight:600; font-size:.9rem; color:#1e293b; display:block; word-break:break-all; }
+.dropzone-preview .preview-size { font-size:.75rem; color:#64748b; }
+.dropzone-preview .preview-remove { cursor:pointer; color:#ef4444; font-size:1.25rem; transition:color .2s; display:flex; align-items:center; }
+.dropzone-preview .preview-remove:hover { color:#b91c1c; }
+</style>
+
+<script>
+$(document).ready(function() {
+    const HAKEDIS_API = 'api/izin/hakedis.php';
+
+    function swalSuccess(msg) {
+        Swal.fire({ icon: 'success', title: 'Başarılı!', text: msg, timer: 2000, showConfirmButton: false, toast: true, position: 'top-end' });
+    }
+    function swalError(msg) {
+        Swal.fire({ icon: 'error', title: 'Hata!', text: msg });
+    }
+    function swalWarning(msg) {
+        Swal.fire({ icon: 'warning', title: 'Uyarı', text: msg });
+    }
+
+    $('.select2-filter').select2({ width: '100%', allowClear: true, placeholder: 'Seçiniz' });
+    $('.select2-modal').select2({ width: '100%', allowClear: true, placeholder: 'Seçiniz', dropdownParent: $('#modalManuel') });
+
+    function fmtDate(d) {
+        if (!d) return '—';
+        const p = (d + '').split(/[-T ]/);
+        return p.length >= 3 ? `${p[2]}.${p[1]}.${p[0]}` : d;
+    }
+
+    function formatChildRow(d) {
+        let rowsHtml = '';
+        d.details.forEach(h => {
+            const kalan = (parseInt(h.gun_sayisi) || 0) - (parseInt(h.kullanilan_gun) || 0);
+            const badge = `<span class="badge ${h.tip === 'manuel' ? 'bg-orange-lt' : 'bg-blue-lt'}">${h.tip}</span>`;
+            
+            let actions = '—';
+            if (h.tip === 'manuel') {
+                const rowEscaped = encodeURIComponent(JSON.stringify(h));
+                actions = `
+                    <button class="btn btn-icon btn-sm btn-ghost-secondary me-1" onclick="event.stopPropagation(); duzenleHakedis('${rowEscaped}')" title="Düzenle" style="width: 24px; height: 24px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0;">
+                            <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path>
+                            <path d="M13.5 6.5l4 4"></path>
+                        </svg>
+                    </button>
+                    <button class="btn btn-icon btn-sm btn-ghost-danger" onclick="event.stopPropagation(); silHakedis(${h.id})" title="Sil" style="width: 24px; height: 24px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0;">
+                            <path d="M4 7l16 0"></path>
+                            <path d="M10 11l0 6"></path>
+                            <path d="M14 11l0 6"></path>
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                        </svg>
+                    </button>
+                `;
+            }
+
+            rowsHtml += `
+                <tr>
+                    <td class="ps-3 font-weight-bold text-muted">${h.yil}${h.yil < 100 ? '. Yıl' : ''}</td>
+                    <td>${fmtDate(h.hakedis_tarihi)}</td>
+                    <td class="text-center font-weight-medium">${h.gun_sayisi} Gün</td>
+                    <td class="text-center text-danger">${h.kullanilan_gun} Gün</td>
+                    <td class="text-center font-weight-bold text-success">${kalan} Gün</td>
+                    <td class="text-center">${badge}</td>
+                    <td><small class="text-muted">${h.aciklama || '—'}</small></td>
+                    <td class="text-center">${actions}</td>
+                </tr>
+            `;
+        });
+
+        return `
+            <div class="p-3 bg-light rounded-3 border border-dashed border-2">
+                <h4 class="mb-2 font-weight-bold text-secondary">Hakediş Detayları</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-vcenter bg-white mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Yıl</th>
+                                <th>Hakediş Tarihi</th>
+                                <th class="text-center">Hak Edilen</th>
+                                <th class="text-center">Kullanılan</th>
+                                <th class="text-center">Kalan</th>
+                                <th class="text-center">Tür</th>
+                                <th>Açıklama</th>
+                                <th class="text-center">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    const dt = window.createDataTable('#hakedis-table', {
+        data: [],
+        columns: [
+            {
+                className: 'dt-control text-center',
+                orderable: false,
+                data: null,
+                defaultContent: '<i class="ti ti-chevron-right text-muted cursor-pointer" style="font-size: 1.2rem;"></i>'
+            },
+            { data: 'personel_adi', className: 'fw-bold' },
+            { 
+                data: 'yil_sayisi', 
+                className: 'text-center', 
+                render: (d, t, row) => {
+                    const minYear = Math.min(...row.details.map(x => x.yil));
+                    const maxYear = Math.max(...row.details.map(x => x.yil));
+                    if (minYear === maxYear) {
+                        return `<strong>${minYear}${minYear < 100 ? '. Yıl' : ''}</strong>`;
+                    }
+                    return `<strong>${minYear} - ${maxYear}${maxYear < 100 ? '. Yıl' : ''} (${d} Adet)</strong>`;
+                }
+            },
+            { data: 'total_hakedis', className: 'text-center fw-medium', render: d => `${d} Gün` },
+            { data: 'total_kullanilan', className: 'text-center text-danger', render: d => `${d} Gün` },
+            {
+                data: null, className: 'text-center fw-bold',
+                render: (d, t, row) => {
+                    const k = row.total_hakedis - row.total_kullanilan;
+                    return `<span class="${k > 0 ? 'text-success' : 'text-muted'}">${k} Gün</span>`;
+                }
+            }
+        ],
+        order: [[1, 'asc']],
+        pageLength: 50,
+        skipSearch: []
+    });
+
+    // Add event listener for opening and closing details
+    $('#hakedis-table tbody').on('click', 'td.dt-control, tr', function (e) {
+        if ($(e.target).closest('button, a, input, select').length) {
+            return;
+        }
+
+        const tr = $(this).closest('tr');
+        const row = dt.row(tr);
+ 
+        if (row.child.isShown()) {
+            row.child.hide();
+            tr.removeClass('shown');
+            tr.find('td.dt-control i').removeClass('ti-chevron-down').addClass('ti-chevron-right');
+        } else {
+            row.child(formatChildRow(row.data())).show();
+            tr.addClass('shown');
+            tr.find('td.dt-control i').removeClass('ti-chevron-right').addClass('ti-chevron-down');
+        }
+    });
+
+    function loadList() {
+        const enc = $('#filter-personel').val();
+        const params = new URLSearchParams({ action: 'list' });
+        if (enc) params.append('personel_id', enc);
+        $.get(HAKEDIS_API + '?' + params.toString(), function(res) {
+            if (res.status !== 'success') { swalError(res.message); return; }
+            
+            // Group by employee
+            const grouped = {};
+            res.list.forEach(item => {
+                const pid = item.personel_id;
+                if (!grouped[pid]) {
+                    grouped[pid] = {
+                        personel_id: pid,
+                        personel_adi: item.personel_adi,
+                        total_hakedis: 0,
+                        total_kullanilan: 0,
+                        yil_sayisi: 0,
+                        details: []
+                    };
+                }
+                grouped[pid].total_hakedis += parseInt(item.gun_sayisi) || 0;
+                grouped[pid].total_kullanilan += parseInt(item.kullanilan_gun) || 0;
+                grouped[pid].yil_sayisi++;
+                grouped[pid].details.push(item);
+            });
+            
+            // Sort details by yil
+            const groupedList = Object.values(grouped);
+            groupedList.forEach(g => {
+                g.details.sort((a, b) => (parseInt(a.yil) || 0) - (parseInt(b.yil) || 0));
+            });
+            
+            dt.clear().rows.add(groupedList).draw();
+        });
+    }
+
+    window.duzenleHakedis = function(rowJsonStr) {
+        const row = JSON.parse(decodeURIComponent(rowJsonStr));
+        $('#duzenle-id').val(row.id);
+        $('#duzenle-personel').val(row.personel_adi);
+        $('#duzenle-yil').val(row.yil + (row.yil < 100 ? '. Yıl' : ''));
+        $('#duzenle-gun').val(row.gun_sayisi);
+        $('#duzenle-aciklama').val(row.aciklama || '');
+        new bootstrap.Modal('#modalDuzenle').show();
+    };
+
+    $('#btn-duzenle-kaydet').on('click', function() {
+        const id = $('#duzenle-id').val();
+        const gun = $('#duzenle-gun').val();
+        const aciklama = $('#duzenle-aciklama').val();
+
+        if (!gun || gun <= 0) {
+            swalWarning('Lütfen geçerli bir gün sayısı girin.');
+            return;
+        }
+
+        $.post(HAKEDIS_API, {
+            action: 'update',
+            id: id,
+            gun_sayisi: gun,
+            aciklama: aciklama
+        }, function(res) {
+            if (res.status === 'success') {
+                swalSuccess(res.message);
+                bootstrap.Modal.getInstance('#modalDuzenle').hide();
+                loadList();
+            } else {
+                swalError(res.message);
+            }
+        });
+    });
+
+    window.silHakedis = function(id) {
+        Swal.fire({
+            title: 'Emin misiniz?', text: 'Bu hakediş silinecektir.',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonText: 'Evet, Sil', cancelButtonText: 'Vazgeç',
+            confirmButtonColor: '#d33'
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            $.post(HAKEDIS_API, { action: 'delete', id: id }, function(res) {
+                if (res.status === 'success') { swalSuccess(res.message); loadList(); }
+                else swalError(res.message);
+            });
+        });
+    };
+
+    $('#btn-filtrele').on('click', loadList);
+    $('#btn-temizle').on('click', function() {
+        $('#filter-personel').val(null).trigger('change');
+        loadList();
+    });
+
+    $('#btn-hesapla-hepsi').on('click', function() {
+        Swal.fire({
+            title: 'Hakediş Hesapla',
+            text: 'Tüm personellerin eksik yıllık izin hakedişleri otomatik hesaplanıp kaydedilecektir. Devam etmek istiyor musunuz?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Hesapla',
+            cancelButtonText: 'Vazgeç',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.post(HAKEDIS_API, { action: 'calculate_all' })
+                    .then(res => {
+                        if (res.status !== 'success') {
+                            throw new Error(res.message);
+                        }
+                        return res;
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`Hata: ${error.message || error}`);
+                    });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                swalSuccess(result.value.message);
+                loadList();
+            }
+        });
+    });
+
+    $('#btn-manuel-kaydet').on('click', function() {
+        const data = {
+            action:      'add',
+            personel_id: $('#manuel-personel').val(),
+            yil:         $('#manuel-yil').val(),
+            gun_sayisi:  $('#manuel-gun').val(),
+            aciklama:    $('#manuel-aciklama').val(),
+        };
+        if (!data.personel_id || !data.yil || !data.gun_sayisi) {
+            swalWarning('Personel, yıl ve gün sayısı zorunludur.');
+            return;
+        }
+        $.post(HAKEDIS_API, data, function(res) {
+            if (res.status === 'success') {
+                swalSuccess(res.message);
+                bootstrap.Modal.getInstance('#modalManuel').hide();
+                loadList();
+            } else {
+                swalError(res.message);
+            }
+        });
+    });
+
+    // Şablon indir (modal içi)
+    const personelListesi = <?= json_encode(array_map(fn($p) => [
+        'ad' => $p->full_name,
+        'tc' => \App\Helper\Security::safeDecrypt($p->kimlik_no ?? '')
+    ], $personeller), JSON_UNESCAPED_UNICODE) ?>;
+
+    function sablonIndir() {
+        const wb = XLSX.utils.book_new();
+        const satirlar = [['Personel Adı', 'TC Kimlik', 'Hakediş Yılı', 'Gün Sayısı', 'Açıklama']];
+        personelListesi.forEach(p => satirlar.push([p.ad, p.tc, '', '', '']));
+        const ws = XLSX.utils.aoa_to_sheet(satirlar);
+        ws['!cols'] = [{ wch: 35 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 30 }];
+        XLSX.utils.book_append_sheet(wb, ws, 'Hakedişler');
+        XLSX.writeFile(wb, 'hakedis_sablonu.xlsx');
+    }
+    $('#btn-sablon-indir-modal').on('click', sablonIndir);
+
+    // Dropzone
+    let parsedRows = [];
+    const $zone    = $('#hakedis-dropzone');
+    const $fileIn  = $('#excel-dosya');
+    const $preview = $('#hakedis-dropzone-preview');
+
+    $zone.on('click', () => $fileIn.trigger('click'));
+
+    $zone.on('dragover dragenter', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        $zone.addClass('dragover');
+    });
+    $zone.on('dragleave drop', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        $zone.removeClass('dragover');
+    });
+    $zone.on('drop', function(e) {
+        const file = e.originalEvent.dataTransfer.files[0];
+        if (file) parseFile(file);
+    });
+
+    $fileIn.on('change', function() {
+        if (this.files[0]) parseFile(this.files[0]);
+    });
+
+    $('#hakedis-preview-remove').on('click', resetDropzone);
+
+    function resetDropzone() {
+        $fileIn.val('');
+        $preview.hide();
+        $('#excel-onizleme').hide();
+        $('#excel-tbody').empty();
+        $('#btn-excel-aktar').prop('disabled', true);
+        parsedRows = [];
+    }
+
+    function parseFile(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['xls','xlsx'].includes(ext)) { swalWarning('Sadece .xls ve .xlsx dosyaları desteklenir.'); return; }
+        if (file.size > 5 * 1024 * 1024) { swalWarning('Dosya boyutu 5MB\'ı geçemez.'); return; }
+
+        $('#hakedis-preview-name').text(file.name);
+        $('#hakedis-preview-size').text((file.size / 1024).toFixed(1) + ' KB');
+        $preview.css('display', 'flex');
+
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const wb   = XLSX.read(ev.target.result, { type: 'binary' });
+            const ws   = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            if (rows.length < 2) { swalWarning('Dosyada veri bulunamadı.'); return; }
+
+            parsedRows = [];
+            const tbody = $('#excel-tbody').empty();
+            let gecerli = 0;
+
+            rows.slice(1).forEach((r, i) => {
+                const ad  = String(r[0] || '').trim();
+                const tc  = String(r[1] || '').trim();
+                const yil = parseInt(r[2]) || 0;
+                const gun = parseInt(r[3]) || 0;
+                const ack = String(r[4] || '').trim();
+                if (!ad && !tc && !yil && !gun) return;
+
+                parsedRows.push({ personel_adi: ad, tc_no: tc, yil, gun_sayisi: gun, aciklama: ack });
+                const hata = (!ad || yil <= 0 || gun <= 0);
+                if (!hata) gecerli++;
+                tbody.append(`<tr class="${hata ? 'table-danger' : ''}">
+                    <td class="text-center">${i + 2}</td>
+                    <td>${ad || '<em class="text-danger">Boş</em>'}</td>
+                    <td>${tc || '—'}</td>
+                    <td class="text-center">${yil || '<em class="text-danger">—</em>'}</td>
+                    <td class="text-center">${gun || '<em class="text-danger">—</em>'}</td>
+                    <td>${ack || '—'}</td>
+                </tr>`);
+            });
+
+            $('#excel-satir-sayisi').text(`${parsedRows.length} satır okundu, ${gecerli} geçerli`);
+            $('#excel-onizleme').show();
+            $('#btn-excel-aktar').prop('disabled', gecerli === 0);
+        };
+        reader.readAsBinaryString(file);
+    }
+
+    $('#btn-excel-aktar').on('click', function() {
+        if (!parsedRows.length) return;
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Aktarılıyor...');
+
+        fetch(HAKEDIS_API + '?action=bulk_add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsedRows)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status !== 'success') { swalError(res.message); return; }
+
+            const basarili = res.sonuclar.filter(s => s.status === 'success').length;
+            const atlanan  = res.sonuclar.filter(s => s.status === 'skip').length;
+            const hatali   = res.sonuclar.filter(s => s.status === 'error').length;
+
+            const detay = res.sonuclar.filter(s => s.status !== 'success')
+                .map(s => `<li class="${s.status === 'error' ? 'text-danger' : 'text-muted'}">${s.message}</li>`)
+                .join('');
+
+            Swal.fire({
+                icon: hatali > 0 ? 'warning' : 'success',
+                title: 'Aktarım Tamamlandı',
+                html: `<strong>${basarili}</strong> eklendi, <strong>${atlanan}</strong> atlandı, <strong>${hatali}</strong> hata.` +
+                      (detay ? `<ul class="text-start mt-2 small" style="max-height:200px;overflow-y:auto">${detay}</ul>` : ''),
+            });
+
+            bootstrap.Modal.getInstance('#modalExcel').hide();
+            loadList();
+        })
+        .finally(() => {
+            $('#btn-excel-aktar').prop('disabled', false).html('<i class="ti ti-upload me-1"></i> Aktar');
+        });
+    });
+
+    $('#modalExcel').on('hidden.bs.modal', resetDropzone);
+
+    loadList();
+});
+</script>

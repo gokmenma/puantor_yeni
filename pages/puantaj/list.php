@@ -1,6 +1,7 @@
 <?php
 require_once 'App/Helper/helper.php';
 require_once 'App/Helper/date.php';
+require_once ROOT . '/Model/IzinTalep.php';
 require_once 'App/Helper/projects.php';
 require_once 'App/Helper/puantaj.php';
 require_once 'Model/Persons.php';
@@ -91,6 +92,10 @@ $dates = Date::generateDates($year, $month, $days);
 
     // 2 ) Tüm puantaj türlerini TEK sorguda çek ve cache'le
 $allPuantajTurleri = $puantajObj->getAllPuantajTurleri();
+
+// Onaylı izin günlerini yükle: [person_id][YYYY-MM-DD] = {kod, arkaplan, font, turu, puantaj_turu_id}
+$izinModel = new IzinTalep();
+$onayliIzinGunleri = $izinModel->getOnayliIzinGunleriToplu($person_ids, $first_day_ymd, $last_day_ymd);
 
 // 3) Tüm proje isimlerini TEK sorguda çek ve cache'le
     $allProjects = $projects->getProjectsByFirm( $firm_id );
@@ -268,6 +273,13 @@ table#puantajTable.table {
 .gun.clicked {
     background-color: #FFED00 !important;
     cursor: pointer;
+}
+
+.gun.izin-kilitli {
+    cursor: not-allowed !important;
+    opacity: 0.85;
+    background: #d4edda !important;
+    color: #155724 !important;
 }
 
 .unclicked {
@@ -1291,8 +1303,22 @@ table {
                                 $totalDays = 0;
                                 $totalOvertime = 0;
                                 $personProjDays = [];
+                                $countedTalepIds = [];
                                 foreach ($dates as $date) {
                                     if ($jobStartDate <= $date && $jobEndDate >= $date) {
+                                        $dateYmdCalc = substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
+                                        $izinBilgiCalc = $onayliIzinGunleri[$person->id][$dateYmdCalc] ?? null;
+                                        if ($izinBilgiCalc) {
+                                            if (!isset($countedTalepIds[$izinBilgiCalc->talep_id])) {
+                                                $countedTalepIds[$izinBilgiCalc->talep_id] = true;
+                                                if (stripos($izinBilgiCalc->turu, 'ücretsiz') === false) {
+                                                    $totalDays += $izinBilgiCalc->gun_sayisi;
+                                                    $personProjDays[0] = ($personProjDays[0] ?? 0) + $izinBilgiCalc->gun_sayisi;
+                                                }
+                                            }
+                                            continue;
+                                        }
+
                                         $dateKey = str_replace('-', '', $date);
                                         $puantajRecord = $personPuantaj[$dateKey] ?? $personPuantaj[$date] ?? null;
                                         $puantaj_id = $puantajRecord->puantaj_id ?? '';
@@ -1316,13 +1342,6 @@ table {
                                                     if ($puantajTuru->Turu == 'Fazla Çalışma') {
                                                         $totalOvertime += floatval($puantajTuru->EklenecekSaat);
                                                     }
-                                                }
-                                            }
-                                        } else {
-                                            if (Date::isWeekend($date)) {
-                                                $weekendTuru = $allPuantajTurleri[53] ?? null;
-                                                if ($weekendTuru) {
-                                                    // HT is 'Ücretsiz', do not count in total days
                                                 }
                                             }
                                         }
@@ -1388,15 +1407,18 @@ table {
                                         if ($jobStartDate <= $month_date && $jobEndDate >= $month_date) {
                                             // Cache'den puantaj verisini al ( tiresiz formatta )
                 $dateKey = str_replace( '-', '', $date );
+                $dateYmd  = substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
                 $puantajRecord = $personPuantaj[ $dateKey ] ?? null;
                 $puantaj_id = $puantajRecord->puantaj_id ?? '';
 
-                if ( $puantaj_id >= 0 && $puantaj_id !== '' ) {
-                    $puantaj_project = $puantajRecord->project_id ?? 0;
+                $izinBilgi = $onayliIzinGunleri[$person->id][$dateYmd] ?? null;
 
-                    // Cache'den puantaj türü bilgisini al
-                                                $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
-                                                // Cache'den proje adını al
+                if ($izinBilgi) {
+                    $izKod = htmlspecialchars($izinBilgi->kod);
+                    echo "<td class='gun noselect izin-kilitli' data-izin-kilitli='1' data-change='false' data-project='0' data-id='{$izinBilgi->puantaj_turu_id}' title='Onaylı izin — düzenlenemez' style='background:{$izinBilgi->arkaplan};color:{$izinBilgi->font};min-width:40px !important;'>{$izKod}</td>";
+                } elseif ( $puantaj_id >= 0 && $puantaj_id !== '' ) {
+                    $puantaj_project = $puantajRecord->project_id ?? 0;
+                    $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
                     $tooltip = $projectNamesCache[ $puantaj_project ] ?? 'Proje Yok';
 
                     if ( $puantajTuru ) {
@@ -1415,13 +1437,12 @@ table {
                                 $selected = '';
                             }
                         }
-                        echo "<td class='gun noselect $selected' title='$tooltip' data-tooltip='$tooltip' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='background:" . $backcolor . ';color:' . $color . "; min-width: 40px !important;'>" . $puantajTuru->PuantajKod . '</td>';
+                        echo "<td class='gun noselect $selected' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " title='$tooltip' data-tooltip='$tooltip' style='background:" . $backcolor . ';color:' . $color . "; min-width: 40px !important;'>" . $puantajTuru->PuantajKod . '</td>';
                     } else {
                         echo "<td class='gun noselect' data-change='false' data-project='0' style='min-width: 40px !important;'></td>";
                     }
                 } else {
                     if ( Date::isWeekend( $date ) ) {
-                        // Hafta sonu varsayılan puantaj türü ( 53 )
                         $weekendTuru = $allPuantajTurleri[ 53 ] ?? null;
                         if ( $weekendTuru ) {
                             echo "<td class='gun noselect' data-tooltip='' data-change='false' data-project='' data-id='53' style='background:" . $weekendTuru->ArkaPlanRengi . ';color:' . $weekendTuru->FontRengi . "; min-width: 40px !important;'>" . $weekendTuru->PuantajKod . '</td>';

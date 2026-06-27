@@ -48,6 +48,7 @@ if ($_POST["action"] == "savePerson") {
     }
 
     $team_val = !empty($_POST["team_id"]) ? $_POST["team_id"] : null;
+    $team_id_val = is_numeric($team_val) ? (int)$team_val : null;
 
     $data = [
         "id" => $id,
@@ -58,7 +59,7 @@ if ($_POST["action"] == "savePerson") {
         "address" => Security::escape($_POST["address"]),
         "job" => $_POST["job"],
         "job_group" => $job_group,
-        "team_id" => $team_val,
+        "team_id" => $team_id_val,
         "ekip" => $team_val,
         "firm_id" => $_SESSION["firm_id"],
         "wage_type" => $_POST["wage_type"],
@@ -88,6 +89,22 @@ if ($_POST["action"] == "savePerson") {
             $message = "Personel başarıyla kaydedildi.";
         } else {
             $message = "Personel başarıyla güncellendi.";
+        }
+
+        // Yıllık izin hakedişlerini otomatik hesapla ve kaydet
+        $decrypted_person_id = (int) Security::decrypt($lastInsertId);
+        if ($decrypted_person_id > 0) {
+            require_once ROOT . '/Model/IzinHakedis.php';
+            $hakedisModel = new IzinHakedis();
+            $p = $Persons->find($decrypted_person_id);
+            if ($p && $p->job_start_date) {
+                $hakedisModel->hesaplaVeKaydet(
+                    $decrypted_person_id,
+                    (int)$_SESSION["firm_id"],
+                    $p->job_start_date,
+                    $p->birth_date ?? null
+                );
+            }
         }
 
 

@@ -11,3 +11,5 @@
 - Test için yazılan geçici dosyalar iş bitince silinecek.
 - Sonuç açıklamaları Türkçe yazılacak.
 - Kod içine yorum satırı eklenmeyecek; gerekmedikçe docstring yazılmayacak.
+- Model içinden başka Model'e direkt `require_once` ile erişilmeyecek; bağımlılıklar constructor injection ile verilecek (DIP).
+- Model, kendi sorumluluğu dışındaki işleri (bildirim, log gibi) doğrudan yapmamalı; bunlar servis katmanından çağrılacak (SRP).

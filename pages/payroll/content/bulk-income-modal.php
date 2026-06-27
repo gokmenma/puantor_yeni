@@ -27,8 +27,8 @@
             <span class="dropzone-title">Excel dosyasını buraya sürükleyin veya tıklayın</span>
             <span class="dropzone-sub">Sadece .xls ve .xlsx dosyaları desteklenir (Max 5MB)</span>
           </div>
-          <input type="file" id="bulk-income-file" accept=".xls,.xlsx" style="display: none;">
         </div>
+        <input type="file" id="bulk-income-file" accept=".xls,.xlsx" style="display: none;">
 
         <div class="dropzone-preview" id="preview-income">
           <div class="preview-icon">

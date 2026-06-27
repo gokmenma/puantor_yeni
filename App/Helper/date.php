@@ -81,7 +81,7 @@ class Date
         }
         $dateTime = new \DateTime($date);
         $dayOfWeek = $dateTime->format('N');
-        return ($dayOfWeek == 7);
+        return ($dayOfWeek >= 6);
     }
 
     public static function isDate($date)

@@ -109,7 +109,7 @@ foreach ($persons as $item) {
         if ($firstDay <= Date::Ymd(date('Y-m-d'))) {
             if (Date::isBetween($person->job_start_date, $firstDay, $lastDay) || Date::isBefore($person->job_start_date, $firstDay)) {
                 $bordro->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 16")->execute([$person->id, $month, $year]);
-                $bordro->connect()->prepare("UPDATE puantaj SET tutar = 0 WHERE person = ? AND gun >= ? AND gun <= ?")->execute([$person->id, $firstDay, $lastDay]);
+                $bordro->connect()->prepare("UPDATE puantaj SET tutar = 0 WHERE person = ? AND REPLACE(gun, '-', '') >= ? AND REPLACE(gun, '-', '') <= ?")->execute([$person->id, $firstDay, $lastDay]);
                 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
                 if ($person->wage_type == 1 && $show_white_collar != 1) {
                     $description = Date::monthName($month) . ' ' . $year . ' Maaş';
@@ -128,8 +128,11 @@ foreach ($persons as $item) {
                     }
                 } else {
                     $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
+                    $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
+                    $work_hour = str_replace(',', '.', $work_hour);
                     if ($person->wage_type == 1) {
                         $daily_rate = $person->daily_wages / 30;
+                        $hourly_rate = $daily_rate / floatval($work_hour);
                         $job_start = str_replace('.', '-', $person->job_start_date);
                         $job_start_ts = strtotime($job_start);
                         $month_start_ts = strtotime("$year-$month-01");
@@ -143,21 +146,42 @@ foreach ($persons as $item) {
                             $desc = Date::monthName($month) . ' ' . $year . ' Maaş';
                         }
                         $deductable_count = 0;
-                        foreach ($puantajRecords as $pr) {
-                            if (!empty($pr->is_deductable)) $deductable_count++;
+                        $paid_sum = 0;
+                        foreach ($puantajRecords as $p_record) {
+                            $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
+                            if (!empty($p_record->is_deductable)) {
+                                $deductable_count++;
+                                $tutar = 0;
+                                $saat = 0;
+                            } elseif ($puantaj_turu && $puantaj_turu->Turu === 'Ücretsiz') {
+                                $tutar = $daily_rate;
+                                $saat = floatval($work_hour);
+                            } else {
+                                $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
+                                $eff_hourly = $defined_wage > 0 ? (($defined_wage / 30) / floatval($work_hour)) : $hourly_rate;
+                                if ($puantaj_turu && $puantaj_turu->Turu != 'Saatlik') {
+                                    $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
+                                    $tutar = floatval($saat) * $eff_hourly;
+                                } else {
+                                    $saat = $puantaj_turu ? $puantaj_turu->PuantajSaati : 0;
+                                    $tutar = floatval($saat) * $eff_hourly;
+                                }
+                            }
+                            $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
+                            $paid_sum += $tutar;
                         }
-                        $net_salary = max(0, $base_salary - ($deductable_count * $daily_rate));
-                        $aciklama = $deductable_count > 0 ? "Aylık Maaş ($deductable_count gün devamsızlık)" : 'Aylık Maaş';
-                        $gun = sprintf('%d%02d01', $year, $month);
-                        $bordro->connect()->prepare("INSERT INTO maas_gelir_kesinti SET person_id=?, gun=?, ay=?, yil=?, tutar=?, kategori=16, turu=?, aciklama=?")
-                            ->execute([$person->id, $gun, $month, $year, $net_salary, $desc, $aciklama]);
+                        $net = max(0, $base_salary - ($deductable_count * $daily_rate));
+                        if ($paid_sum > $net + 0.01) {
+                            $balance = round($net - $paid_sum, 2);
+                            $gun = sprintf('%d%02d01', $year, $month);
+                            $bordro->connect()->prepare("INSERT INTO maas_gelir_kesinti SET person_id=?, gun=?, ay=?, yil=?, tutar=?, kategori=16, turu=?, aciklama=?")
+                                ->execute([$person->id, $gun, $month, $year, $balance, $desc, 'Maaş Düzeltme']);
+                        }
                     } else {
-                        $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
-                        $work_hour = str_replace(',', '.', $work_hour);
-                        $ucret = $person->daily_wages / $work_hour;
+                        $ucret = $person->daily_wages / floatval($work_hour);
                         foreach ($puantajRecords as $p_record) {
                             $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
-                            $current_daily_wage = $defined_wage > 0 ? ($defined_wage / $work_hour) : $ucret;
+                            $current_daily_wage = $defined_wage > 0 ? ($defined_wage / floatval($work_hour)) : $ucret;
                             $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
                             if ($puantaj_turu->Turu != 'Saatlik') {
                                 $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);

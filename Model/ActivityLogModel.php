@@ -28,7 +28,7 @@ class ActivityLogModel extends Model
                 error_log("Activity log INSERT failed: " . implode(" ", $sql->errorInfo()));
             }
             return $result;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             error_log("Activity log EXCEPTION: " . $e->getMessage());
             return false;
         }

@@ -189,13 +189,13 @@ $(document).keydown(function (event) {
 //mouse basılı tutulduğu zaman
 let isMouseDown = false;
 // Dinamik yüklenen satırlar için event delegation
-$(document).on("mouseover", ".gun:not(.selected)", function (event) {
+$(document).on("mouseover", ".gun:not(.selected):not(.izin-kilitli)", function (event) {
   if (isMouseDown) {
     $(this).addClass("clicked");
   }
 });
 
-$(document).on("mousedown", ".gun:not(.selected)", function (event) {
+$(document).on("mousedown", ".gun:not(.selected):not(.izin-kilitli)", function (event) {
   if (event.which === 1) {
     isMouseDown = true;
     $(this).toggleClass("clicked");

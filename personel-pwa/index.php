@@ -41,6 +41,11 @@ $routes = [
         'file' => 'modules/advance/index.php',
         'icon' => 'ti ti-wallet'
     ],
+    'leave' => [
+        'title' => 'Yıllık İzin',
+        'file' => 'modules/leave/index.php',
+        'icon' => 'ti ti-beach'
+    ],
     'profile' => [
         'title' => 'Profil',
         'file' => 'modules/profile/index.php',
@@ -115,6 +120,7 @@ $title = $current_route['title'];
             if ('<?php echo $route; ?>' === 'dashboard') app.loadSummary();
             if ('<?php echo $route; ?>' === 'advance') app.loadAdvances();
             if ('<?php echo $route; ?>' === 'attendance') app.loadAttendance();
+            // leave modülü kendi içinde başlatılır
         });
     </script>
 </body>

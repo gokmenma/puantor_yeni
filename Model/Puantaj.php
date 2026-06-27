@@ -74,7 +74,7 @@ class Puantaj extends Model
                                    INNER JOIN persons p ON p.id = pt.person 
                                    WHERE pt.person = ? 
                                    AND (pt.company_id = p.firm_id OR pt.company_id = 0 OR pt.company_id IS NULL)
-                                   ORDER BY pt.gun DESC");
+                                   ORDER BY CAST(REPLACE(pt.gun, '-', '') AS UNSIGNED) DESC");
         $sql->execute([$person_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }

@@ -9,9 +9,47 @@ use App\Helper\Helper;
 class Auths extends Model
 {
     protected $table = "auths";
+
+    // Request lifetime cache variables
+    private static $cachedAuthsByName = [];
+    private static $cachedAuthsById = [];
+    private static $userAuthIds = null;
+    private static $authsLoaded = false;
+
     public function __construct()
     {
         parent::__construct($this->table);
+    }
+
+    private function loadAuths()
+    {
+        if (!self::$authsLoaded) {
+            $sql = $this->db->prepare("SELECT id, auth_name, superadmin FROM $this->table WHERE is_active = 1");
+            $sql->execute();
+            $rows = $sql->fetchAll(PDO::FETCH_OBJ);
+            foreach ($rows as $row) {
+                if ($row->auth_name !== null && $row->auth_name !== '') {
+                    self::$cachedAuthsByName[$row->auth_name] = $row;
+                }
+                self::$cachedAuthsById[$row->id] = $row;
+            }
+            self::$authsLoaded = true;
+        }
+    }
+
+    private function loadUserAuthIds()
+    {
+        if (self::$userAuthIds === null) {
+            $role_id = $_SESSION['user']->user_roles ?? 0;
+            $sql = $this->db->prepare("SELECT auth_ids FROM role_auths WHERE role_id = ?");
+            $sql->execute([$role_id]);
+            $res = $sql->fetch(PDO::FETCH_OBJ);
+            if ($res && isset($res->auth_ids) && !empty($res->auth_ids)) {
+                self::$userAuthIds = array_filter(explode(',', $res->auth_ids));
+            } else {
+                self::$userAuthIds = [];
+            }
+        }
     }
 
 
@@ -78,38 +116,24 @@ class Auths extends Model
     {
         $isSuperadminUser = isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1;
 
-        // Yetki adından yetki id ve superadmin durumu getirilir
-        $sql = $this->db->prepare("SELECT id, superadmin FROM $this->table WHERE auth_name = ?");
-        $sql->execute([$auth_name]);
-        $auth = $sql->fetch(PDO::FETCH_OBJ);
+        if ($isSuperadminUser) {
+            return true;
+        }
+
+        $this->loadAuths();
+        $auth = self::$cachedAuthsByName[$auth_name] ?? null;
 
         if (!$auth) {
             return false;
         }
 
         // Yetki superadmin yetkisi ise ve giriş yapan kullanıcı superadmin değilse izin verme
-        if (isset($auth->superadmin) && $auth->superadmin == 1 && !$isSuperadminUser) {
+        if (isset($auth->superadmin) && $auth->superadmin == 1) {
             return false;
         }
 
-        if ($isSuperadminUser) {
-            return true;
-        }
-
-        $auth_id = $auth->id;
-        //Giriş yapan kullanıcının hangi role grubunda olduğu alınır
-        $role_id = $_SESSION['user']->user_roles;
-
-
-        //role_auts tablosunda role_id ile sorgulanır,auth_ids içinde var mı yok mu kontrol edilir varsa true döner değilse false döner
-        $sql = $this->db->prepare("SELECT * FROM role_auths WHERE role_id = ? and FIND_IN_SET(?,auth_ids)");
-        $sql->execute([$role_id, $auth_id]);
-        $result = $sql->fetch(PDO::FETCH_OBJ);
-        if (!$result) {
-            return false;
-        }
-        return true;
-
+        $this->loadUserAuthIds();
+        return in_array($auth->id, self::$userAuthIds);
     }
 
 
@@ -117,30 +141,24 @@ class Auths extends Model
     {
         $isSuperadminUser = isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1;
 
-        // Yetki id'sinden yetkinin superadmin durumu sorgulanır
-        $sql = $this->db->prepare("SELECT superadmin FROM $this->table WHERE id = ?");
-        $sql->execute([$auth_id]);
-        $auth = $sql->fetch(PDO::FETCH_OBJ);
-
-        // Yetki superadmin yetkisi ise ve giriş yapan kullanıcı superadmin değilse izin verme
-        if ($auth && isset($auth->superadmin) && $auth->superadmin == 1 && !$isSuperadminUser) {
-            return 0;
-        }
-
         if ($isSuperadminUser) {
             return true;
         }
 
-        //role_auts tablosunda role_id ile sorgulanır,auth_ids içinde var mı yok mu kontrol edilir varsa true döner değilse false döner
-        $role_id = $_SESSION['user']->user_roles;
-        $sql = $this->db->prepare("SELECT * FROM role_auths WHERE role_id = ? and FIND_IN_SET(?,auth_ids)");
-        $sql->execute([$role_id, $auth_id]);
-        $result = $sql->fetch(PDO::FETCH_OBJ);
-        if (!$result) {
+        $this->loadAuths();
+        $auth = self::$cachedAuthsById[$auth_id] ?? null;
+
+        if (!$auth) {
             return 0;
         }
-        return true;
 
+        // Yetki superadmin yetkisi ise ve giriş yapan kullanıcı superadmin değilse izin verme
+        if (isset($auth->superadmin) && $auth->superadmin == 1) {
+            return 0;
+        }
+
+        $this->loadUserAuthIds();
+        return in_array($auth_id, self::$userAuthIds) ? true : 0;
     }
 
 

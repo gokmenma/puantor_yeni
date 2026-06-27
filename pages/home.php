@@ -124,7 +124,16 @@ use App\Helper\Helper;
                     </h2>
                 </div>
                 <!-- Action Buttons Here -->
-                <div class="col-auto ms-auto d-print-none">
+                <div class="col-auto ms-auto d-print-none d-flex gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle align-text-top" data-bs-toggle="dropdown">
+                            <i class="ti ti-layout-dashboard me-2"></i> Kart Görünümü
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3" id="dashboard-colvis-menu"
+                            style="min-width: 240px; max-height: 380px; overflow-y: auto;">
+                            <!-- Dynamic checkboxes loaded via JS -->
+                        </div>
+                    </div>
                     <button class="btn btn-outline-secondary" onclick="resetDashboardLayout()">
                         <i class="ti ti-rotate-clockwise mb-0 me-2"></i> Varsayılana Dön
                     </button>
@@ -302,6 +311,7 @@ use App\Helper\Helper;
                 <?php include_once "home/project_gantt.php" ?>
                 <?php include_once "home/gorevler.php" ?>
                 <?php include_once "home/avans_talepleri.php" ?>
+                <?php include_once "home/izin_widget.php" ?>
                 <?php include_once "home/activity_logs.php" ?>
                 <?php include_once "home/login_logs.php" ?>
             </div>
@@ -342,10 +352,81 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             } catch(e) {}
         }
+
+        // Kapatılmış kartları gizle
+        document.querySelectorAll('[data-id]').forEach(function(el) {
+            var id = el.getAttribute('data-id');
+            if (id && localStorage.getItem('card_hidden_' + id) === '1') {
+                el.style.display = 'none';
+            }
+        });
     }
 
     // İlk olarak layout'u eski haline getir
     restoreLayout();
+
+    function initCardVisibilityDropdown() {
+        const colvisMenu = document.getElementById('dashboard-colvis-menu');
+        if (!colvisMenu) return;
+
+        colvisMenu.innerHTML = '';
+
+        const cards = [];
+        document.querySelectorAll('[data-id]').forEach(el => {
+            const id = el.getAttribute('data-id');
+            if (!id) return;
+
+            let title = '';
+            const titleEl = el.querySelector('.mac-title');
+            if (titleEl) {
+                title = titleEl.textContent.trim();
+            }
+            if (!title) {
+                if (id === 'stat-personel') title = 'PERSONEL';
+                else if (id === 'stat-proje') title = 'PROJE';
+                else if (id === 'stat-gelir') title = 'GELİR';
+                else if (id === 'stat-gider') title = 'GİDER';
+                else if (id === 'quick-actions') title = 'HIZLI İŞLEMLER';
+                else title = id.replace('widget-', '').replace('stat-', '').toUpperCase();
+            }
+
+            cards.push({ id, title, element: el });
+        });
+
+        cards.forEach(card => {
+            const isChecked = localStorage.getItem('card_hidden_' + card.id) !== '1';
+            
+            const div = document.createElement('div');
+            div.className = 'form-check mb-2';
+            
+            const chk = document.createElement('input');
+            chk.className = 'form-check-input dashboard-colvis-chk';
+            chk.type = 'checkbox';
+            chk.id = 'chk-colvis-' + card.id;
+            chk.checked = isChecked;
+            
+            const label = document.createElement('label');
+            label.className = 'form-check-label text-nowrap fw-medium';
+            label.htmlFor = chk.id;
+            label.textContent = card.title;
+            
+            chk.addEventListener('change', function() {
+                if (this.checked) {
+                    localStorage.removeItem('card_hidden_' + card.id);
+                    card.element.style.display = '';
+                } else {
+                    localStorage.setItem('card_hidden_' + card.id, '1');
+                    card.element.style.display = 'none';
+                }
+            });
+            
+            div.appendChild(chk);
+            div.appendChild(label);
+            colvisMenu.appendChild(div);
+        });
+    }
+
+    initCardVisibilityDropdown();
 
     function initSortable(containerId) {
         var el = document.getElementById(containerId);
@@ -428,10 +509,15 @@ document.addEventListener("DOMContentLoaded", function() {
     document.addEventListener('click', function(e) {
         // Kapatma
         if (e.target.classList.contains('mac-close')) {
-            let cardWrap = e.target.closest('[class*="col-"]');
+            let cardWrap = e.target.closest('[data-id]');
             if (cardWrap) {
                 cardWrap.style.display = 'none';
-                // Opsiyonel: Kapatılanları local storage'a kaydedebiliriz ama şimdilik sadece gizliyoruz
+                let id = cardWrap.getAttribute('data-id');
+                if (id) {
+                    localStorage.setItem('card_hidden_' + id, '1');
+                    let chk = document.getElementById('chk-colvis-' + id);
+                    if (chk) chk.checked = false;
+                }
             }
         }
         // Küçültme (Minimize)
@@ -467,6 +553,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 var id = el.getAttribute('data-id');
                 localStorage.removeItem('card_size_' + id);
                 localStorage.removeItem('card_min_' + id);
+                localStorage.removeItem('card_hidden_' + id);
             });
             window.location.reload();
         }
