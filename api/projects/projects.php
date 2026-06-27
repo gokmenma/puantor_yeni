@@ -36,9 +36,15 @@ if ($_POST['action'] == "saveProject") {
     }
     ;
 
-    //firma adı boş değilse
     if (!empty($_POST['project_company'])) {
         $data['company_id'] = Security::decrypt($_POST['project_company']);
+    }
+
+    if (!empty($_POST['is_home_gantt'])) {
+        $Projects->clearHomeGantt((int)$_SESSION['firm_id']);
+        $data['is_home_gantt'] = 1;
+    } else {
+        $data['is_home_gantt'] = 0;
     }
 
 

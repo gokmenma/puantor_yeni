@@ -291,7 +291,7 @@ class GorevModel extends Model
     public function getBildirimBekleyenGorevler()
     {
         $Settings = new \SettingsModel();
-        $offset = (int) ($Settings->getSettings('gorev_bildirim_dakika') ?? 0);
+        $offset = (int) ($Settings->getSettings('gorev_bildirim_dakika')->set_value ?? 0);
 
         // 1. ÖN BİLDİRİM BEKLEYENLER (Offset süresi gelenler)
         $sqlOn = "SELECT g.*, gl.baslik as liste_adi, gl.olusturan_id as liste_olusturan_id, 'on' as bildirim_tipi

@@ -2,6 +2,21 @@
 $firm_id = isset($_SESSION['firm_id']) ? $_SESSION['firm_id'] : 0;
 
 require_once "App/Helper/company.php";
+require_once ROOT . '/Model/DuyuruModel.php';
+require_once ROOT . '/App/Helper/security.php';
+
+$_topbar_kullanici_id  = $_SESSION['user']->id ?? 0;
+$_topbar_is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+$_topbar_is_main_user  = !$_topbar_is_superadmin && (($_SESSION['user']->parent_id ?? 1) == 0);
+$_topbar_okunmamis     = 0;
+$_topbar_son_duyurular = [];
+try {
+    $_topbar_duyuru        = new DuyuruModel();
+    $_topbar_okunmamis     = $_topbar_is_superadmin ? 0 : $_topbar_duyuru->getOkunmamisSayisi($_topbar_kullanici_id, $firm_id, $_topbar_is_main_user);
+    $_topbar_son_duyurular = $_topbar_duyuru->getDuyurular($_topbar_kullanici_id, $firm_id, $_topbar_is_superadmin, $_topbar_is_main_user);
+} catch (Exception $e) {
+    // duyurular tablosu henüz oluşturulmamış
+}
 
 $company = new CompanyHelper();
 
@@ -96,128 +111,52 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                     </a>
                     <div class="nav-item dropdown d-none d-md-flex me-3">
                         <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
-                            aria-label="Show notifications">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/bell -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="icon">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                <path
-                                    d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6">
-                                </path>
-                                <path d="M9 17v1a3 3 0 0 0 6 0v-1"></path>
-                            </svg>
-                            <span class="badge bg-red"></span>
+                            aria-label="Duyurular">
+                            <span class="position-relative d-inline-flex">
+                                <i class="ti ti-bell" style="font-size:1.25rem;"></i>
+                                <?php if ($_topbar_okunmamis > 0): ?>
+                                <span style="position:absolute;top:-5px;right:-7px;min-width:15px;height:15px;padding:0 3px;font-size:9px;line-height:15px;border-radius:8px;background:#d63939;color:#fff;text-align:center;pointer-events:none;font-weight:600;"><?= $_topbar_okunmamis ?></span>
+                                <?php endif; ?>
+                            </span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card" style="min-width:320px;">
                             <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Last updates</h3>
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h3 class="card-title">Duyurular</h3>
+                                    <a href="index.php?p=duyurular/list" class="btn btn-sm btn-ghost-primary">Tümü</a>
                                 </div>
-                                <div class="list-group list-group-flush list-group-hoverable">
-                                    <div class="list-group-item">
+                                <div class="list-group list-group-flush list-group-hoverable" style="max-height:320px;overflow-y:auto;">
+                                    <?php
+                                    $topbarList = array_slice($_topbar_son_duyurular, 0, 6);
+                                    if (empty($topbarList)):
+                                    ?>
+                                    <div class="list-group-item text-secondary text-center py-3">
+                                        Henüz duyuru yok
+                                    </div>
+                                    <?php else: foreach ($topbarList as $_td):
+                                        $_td_okundu  = !$_topbar_is_superadmin && !empty($_td->okundu_at);
+                                        $_td_oncelik_map   = ['acil' => 'bg-red', 'onemli' => 'bg-orange'];
+                                        $_td_oncelik_class = $_td_oncelik_map[$_td->oncelik] ?? 'bg-blue';
+                                    ?>
+                                    <div class="list-group-item topbar-duyuru-item"
+                                         data-id="<?= \App\Helper\Security::encrypt($_td->id) ?>"
+                                         data-okundu="<?= $_td_okundu ? '1' : '0' ?>"
+                                         style="cursor:pointer;">
                                         <div class="row align-items-center">
-                                            <div class="col-auto"><span
-                                                    class="status-dot status-dot-animated bg-red d-block"></span></div>
-                                            <div class="col text-truncate">
-                                                <a href="#" class="text-body d-block">Example 1</a>
-                                                <div class="d-block text-secondary text-truncate mt-n1">
-                                                    Change deprecated html tags to text decoration classes (#29604)
-                                                </div>
-                                            </div>
                                             <div class="col-auto">
-                                                <a href="#" class="list-group-item-actions">
-                                                    <!-- Download SVG icon from http://tabler-icons.io/i/star -->
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                        class="icon text-muted">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                        <path
-                                                            d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z">
-                                                        </path>
-                                                    </svg>
-                                                </a>
+                                                <span class="status-dot <?= $_td_okundu ? '' : 'status-dot-animated' ?> <?= $_td_oncelik_class ?> d-block"></span>
+                                            </div>
+                                            <div class="col text-truncate">
+                                                <span class="text-body d-block <?= $_td_okundu ? 'text-secondary' : 'fw-bold' ?>">
+                                                    <?= htmlspecialchars($_td->baslik) ?>
+                                                </span>
+                                                <div class="d-block text-secondary text-truncate mt-n1 small">
+                                                    <?= date('d.m.Y', strtotime($_td->created_at)) ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="list-group-item">
-                                        <div class="row align-items-center">
-                                            <div class="col-auto"><span class="status-dot d-block"></span></div>
-                                            <div class="col text-truncate">
-                                                <a href="#" class="text-body d-block">Example 2</a>
-                                                <div class="d-block text-secondary text-truncate mt-n1">
-                                                    justify-content:between ⇒ justify-content:space-between (#29734)
-                                                </div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <a href="#" class="list-group-item-actions show">
-                                                    <!-- Download SVG icon from http://tabler-icons.io/i/star -->
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                        class="icon text-yellow">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                        <path
-                                                            d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z">
-                                                        </path>
-                                                    </svg>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="list-group-item">
-                                        <div class="row align-items-center">
-                                            <div class="col-auto"><span class="status-dot d-block"></span></div>
-                                            <div class="col text-truncate">
-                                                <a href="#" class="text-body d-block">Example 3</a>
-                                                <div class="d-block text-secondary text-truncate mt-n1">
-                                                    Update change-version.js (#29736)
-                                                </div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <a href="#" class="list-group-item-actions">
-                                                    <!-- Download SVG icon from http://tabler-icons.io/i/star -->
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                        class="icon text-muted">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                        <path
-                                                            d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z">
-                                                        </path>
-                                                    </svg>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="list-group-item">
-                                        <div class="row align-items-center">
-                                            <div class="col-auto"><span
-                                                    class="status-dot status-dot-animated bg-green d-block"></span>
-                                            </div>
-                                            <div class="col text-truncate">
-                                                <a href="#" class="text-body d-block">Example 4</a>
-                                                <div class="d-block text-secondary text-truncate mt-n1">
-                                                    Regenerate package-lock.json (#29730)
-                                                </div>
-                                            </div>
-                                            <div class="col-auto">
-                                                <a href="#" class="list-group-item-actions">
-                                                    <!-- Download SVG icon from http://tabler-icons.io/i/star -->
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                        class="icon text-muted">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                        <path
-                                                            d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z">
-                                                        </path>
-                                                    </svg>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <?php endforeach; endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -249,3 +188,14 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
         </div>
     </div>
 </header>
+<script>
+$(document).on('click', '.topbar-duyuru-item', function () {
+    var encId = $(this).data('id');
+    var okundu = $(this).data('okundu');
+    var go = function () { window.location.href = 'index.php?p=duyurular/list'; };
+
+    if (okundu == '1') { go(); return; }
+
+    $.post('pages/duyurular/api.php', { action: 'okundu', id: encId }).always(go);
+});
+</script>

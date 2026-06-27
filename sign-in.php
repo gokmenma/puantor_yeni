@@ -122,10 +122,15 @@ if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
                     $has_active_sub = false;
                     if (($user->superadmin ?? 0) != 1) {
                       $owner_id = ($user->parent_id == 0) ? $user->id : $user->parent_id;
-                      $dbCheck = $User->getDb();
-                      $stmtCheck = $dbCheck->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ? AND durum = 'aktif' AND bitis_tarihi >= ?");
-                      $stmtCheck->execute([$owner_id, date('Y-m-d')]);
-                      $has_active_sub = $stmtCheck->fetchColumn() > 0;
+                      $owner_user = ($owner_id == $user->id) ? $user : $User->find($owner_id);
+                      if ($owner_user && ($owner_user->superadmin ?? 0) == 1) {
+                        $has_active_sub = true;
+                      } else {
+                        $dbCheck = $User->getDb();
+                        $stmtCheck = $dbCheck->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ? AND durum = 'aktif' AND bitis_tarihi >= ?");
+                        $stmtCheck->execute([$owner_id, date('Y-m-d')]);
+                        $has_active_sub = $stmtCheck->fetchColumn() > 0;
+                      }
                     }
                     if ($days >= 15 && $user->user_type == 1 && !$has_active_sub && ($user->superadmin ?? 0) != 1) {
                       echo alertdanger('Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.');

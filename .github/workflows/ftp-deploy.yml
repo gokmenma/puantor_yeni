@@ -39,6 +39,9 @@ jobs:
             cgi-bin/**
             logs/**
             .well-known/**
+            **/sql/**
+            **/scratch/**
+            **/.agent/**
           log-level: standard
           dry-run: false
           dangerous-clean-slate: false

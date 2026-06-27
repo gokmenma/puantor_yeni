@@ -36,7 +36,8 @@ if (
     $page == "users/manage" || $page == "cari/list" || $page == "cari/movements" ||
     $page == "raporlar/list" || $page == "avans-talepleri/list" ||
     $page == 'activities/index' ||
-    $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri'
+    $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri' ||
+    $page == 'duyurular/list'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }
@@ -44,14 +45,16 @@ if (
 
 
 
-//Summernote eklenecek sayfalar 
+//Summernote eklenecek sayfalar
 if (
     $page == "missions/manage" || $page == "feedback/list"
     || $page == "supports/tickets" || $page == "supports/ticket-view"
     || $page == "abonelik-islemleri/list"
+    || $page == "duyurular/list"
 ) {
     echo '<script src="./dist/libs/summernote/summernote-lite.min.js?1692870487"></script>';
     echo '<script src="./dist/libs/summernote/lang/summernote-tr-TR.min.js"></script>';
+    echo '<script src="./src/summernote-init.js"></script>';
 }
 
 
@@ -116,6 +119,9 @@ if ($page == 'projects/list' || $page == 'projects/manage') {
     echo '<script src="./src/project/expense.js"></script>';
     echo '<script src="./src/project/deduction.js"></script>';
     echo '<script src="./src/project/tasks.js?v='.time().'"></script>';
+    if ($page == 'projects/manage') {
+        echo '<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>';
+    }
 }
 // Bordro sayfası
 if ($page == 'payroll/list') {
@@ -208,6 +214,8 @@ if ($page == 'home') {
     echo '<script src="./dist/libs/jsvectormap/dist/maps/world-merc.js" defer></script>';
     echo '<script src="./src/charts.js" defer></script>';
     echo '<script src="./src/home/missions.js"></script>';
+    echo '<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>';
+    echo '<script src="./src/home/project_gantt.js?v=' . time() . '"></script>';
 }
 
 if ($page == 'activities/index') {

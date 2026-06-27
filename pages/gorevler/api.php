@@ -6,6 +6,8 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!defined('ROOT')) define('ROOT', dirname(__DIR__, 2));
 require_once ROOT . '/Database/db.php';
 require_once ROOT . '/Model/GorevModel.php';
+require_once ROOT . '/Model/SettingsModel.php';
+require_once ROOT . '/Model/UserModel.php';
 require_once ROOT . '/App/Helper/security.php';
 require_once ROOT . '/vendor/autoload.php';
 
@@ -299,7 +301,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // =====================================================
             case 'get-upcoming-alarms':
                 $Settings = new \SettingsModel();
-                $recipientsSetting = $Settings->getSettings('gorev_bildirim_kullanicilar');
+                $recipientsSetting = $Settings->getSettings('gorev_bildirim_kullanicilar')->set_value ?? null;
 
                 $targetUserIds = [];
                 if (!empty($recipientsSetting)) {
@@ -357,7 +359,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($result && $gorev) {
                     // Ayarlardaki kullanıcıları al
                     $Settings = new \SettingsModel();
-                    $recipientsSetting = $Settings->getSettings('gorev_bildirim_kullanicilar');
+                    $recipientsSetting = $Settings->getSettings('gorev_bildirim_kullanicilar')->set_value ?? null;
 
                     $targetUserIds = [];
                     if (!empty($recipientsSetting)) {
@@ -419,7 +421,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $User = new \UserModel();
 
                 // Kayıtlı seçili kullanıcıların gerçek ID'lerini al
-                $recipientsSetting = $Settings->getSettings('gorev_bildirim_kullanicilar') ?? '';
+                $recipientsSetting = $Settings->getSettings('gorev_bildirim_kullanicilar')->set_value ?? '';
                 $selectedRealIds = !empty($recipientsSetting) ? explode(',', $recipientsSetting) : [];
 
                 $users = $User->getUsersByFirm($firmaId);
@@ -427,13 +429,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 foreach ($users as $u) {
                     $userList[] = [
                         'id' => Security::encrypt($u->id),
-                        'text' => $u->adi_soyadi,
+                        'text' => $u->full_name,
                         'selected' => in_array($u->id, $selectedRealIds)
                     ];
                 }
 
                 $data = [
-                    'gorev_bildirim_dakika' => $Settings->getSettings('gorev_bildirim_dakika') ?? '15',
+                    'gorev_bildirim_dakika' => $Settings->getSettings('gorev_bildirim_dakika')->set_value ?? '15',
                     'users' => $userList
                 ];
                 echo json_encode(['success' => true, 'data' => $data]);
@@ -480,7 +482,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 foreach ($users as $u) {
                     $userList[] = [
                         'id' => Security::encrypt($u->id),
-                        'text' => $u->adi_soyadi,
+                        'text' => $u->full_name,
                         'selected' => in_array($u->id, $selectedRealIds)
                     ];
                 }

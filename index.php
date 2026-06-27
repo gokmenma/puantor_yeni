@@ -158,36 +158,42 @@ $menu_name = $menus->getMenusByLink($active_page);
 
 // Abonelik ve Deneme Süresi Kontrolü (Superadmin için kontrol atlanır)
 if (($user->superadmin ?? 0) != 1) {
-    require_once "App/Helper/date.php";
     $owner_id = $user->id;
     if (!empty($user->parent_id) && $user->parent_id != $user->id) {
         $owner_id = $user->parent_id;
     }
 
-    // 1. Aktif ücretli abonelik kontrolü
-    $dbCheck = $User->getDb();
-    $stmtCheck = $dbCheck->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ? AND durum = 'aktif' AND bitis_tarihi >= ?");
-    $stmtCheck->execute([$owner_id, date('Y-m-d')]);
-    $has_active_sub = $stmtCheck->fetchColumn() > 0;
+    // Üst kullanıcı (owner) bilgilerini kontrol et
+    $owner_user = ($owner_id == $user->id) ? $user : $User->find($owner_id);
 
-    $is_subscription_expired = !$has_active_sub;
+    // Eğer üst kullanıcı superadmin ise abonelik kontrolünü atla
+    if (!$owner_user || ($owner_user->superadmin ?? 0) != 1) {
+        require_once "App/Helper/date.php";
 
-    // 2. Aktif deneme süresi kontrolü (Eğer aktif ücretli paket yoksa ve demo kullanıcısıysa)
-    if ($is_subscription_expired) {
-        $owner_user = $User->find($owner_id);
-        if ($owner_user && $owner_user->user_type == 1) {
-            $days = \App\Helper\Date::getDateDiff($owner_user->created_at);
-            if ($days < 15) {
-                $is_subscription_expired = false;
+        // 1. Aktif ücretli abonelik kontrolü
+        $dbCheck = $User->getDb();
+        $stmtCheck = $dbCheck->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ? AND durum = 'aktif' AND bitis_tarihi >= ?");
+        $stmtCheck->execute([$owner_id, date('Y-m-d')]);
+        $has_active_sub = $stmtCheck->fetchColumn() > 0;
+
+        $is_subscription_expired = !$has_active_sub;
+
+        // 2. Aktif deneme süresi kontrolü (Eğer aktif ücretli paket yoksa ve demo kullanıcısıysa)
+        if ($is_subscription_expired) {
+            if ($owner_user && $owner_user->user_type == 1) {
+                $days = \App\Helper\Date::getDateDiff($owner_user->created_at);
+                if ($days < 15) {
+                    $is_subscription_expired = false;
+                }
             }
         }
-    }
 
-    if ($is_subscription_expired) {
-        // Sadece ayarlar sayfasına ve çıkışa gitmeye izin ver, diğer sayfalarda ise yönlendir
-        if ($active_page !== 'settings/manage' && $active_page !== 'logout') {
-            header("Location: index.php?p=settings/manage&view=profile&tab=edit-account&expired=1");
-            exit();
+        if ($is_subscription_expired) {
+            // Sadece ayarlar sayfasına ve çıkışa gitmeye izin ver, diğer sayfalarda ise yönlendir
+            if ($active_page !== 'settings/manage' && $active_page !== 'logout') {
+                header("Location: index.php?p=settings/manage&view=profile&tab=edit-account&expired=1");
+                exit();
+            }
         }
     }
 }

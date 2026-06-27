@@ -806,7 +806,8 @@ if ($(".select2").length > 0) {
     
     var options = {
       placeholder: placeholder,
-      allowClear: allowClear
+      allowClear: allowClear,
+      width: '100%'
     };
     
     var $modal = $el.closest('.modal');

@@ -69,6 +69,14 @@ class Model extends Db
 
     protected function insert()
     {
+        if (isset($this->attributes[$this->primaryKey]) && 
+            ($this->attributes[$this->primaryKey] === '' || 
+             $this->attributes[$this->primaryKey] === null || 
+             $this->attributes[$this->primaryKey] === 0 || 
+             $this->attributes[$this->primaryKey] === '0')) {
+            unset($this->attributes[$this->primaryKey]);
+        }
+
         $columns = implode(', ', array_keys($this->attributes));
         $values = ':' . implode(', :', array_keys($this->attributes));
         $sql = $this->db->prepare("INSERT INTO $this->table ($columns) VALUES ($values)");

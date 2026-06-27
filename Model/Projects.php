@@ -53,6 +53,19 @@ class Projects extends Model
         return $query->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function clearHomeGantt($firm_id)
+    {
+        $sql = $this->db->prepare("UPDATE projects SET is_home_gantt = 0 WHERE firm_id = ?");
+        $sql->execute([(int)$firm_id]);
+    }
+
+    public function getHomeGanttProject($firm_id)
+    {
+        $sql = $this->db->prepare("SELECT * FROM projects WHERE firm_id = ? AND is_home_gantt = 1 LIMIT 1");
+        $sql->execute([(int)$firm_id]);
+        return $sql->fetch(PDO::FETCH_OBJ) ?: null;
+    }
+
     public function belongsToFirm($project_id, $firm_id)
     {
         $query = $this->db->prepare('SELECT COUNT(*) as total FROM projects WHERE id = ? AND firm_id = ?');

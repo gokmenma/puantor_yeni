@@ -258,6 +258,19 @@ class UserModel extends Model
 
         $db = $this->getDb();
         
+        // 0. If owner is a superadmin, they have unlimited rights
+        $stmtOwner = $db->prepare("SELECT superadmin FROM users WHERE id = ?");
+        $stmtOwner->execute([$owner_id]);
+        $owner = $stmtOwner->fetch(PDO::FETCH_OBJ);
+        if ($owner && ($owner->superadmin ?? 0) == 1) {
+            return [
+                'has_sub' => true,
+                'paket_adi' => 'Süper Yönetici Paketi',
+                'alt_kullanici_hakki' => 9999,
+                'firma_hakki' => 9999
+            ];
+        }
+
         // 1. Check for active subscription in kullanici_abonelikleri
         $stmt = $db->prepare("
             SELECT ka.*, ap.ad as paket_adi
@@ -281,9 +294,9 @@ class UserModel extends Model
         // 2. If no active sub row, check if they are in the 15-day registration trial
         $stmtUser = $db->prepare("SELECT created_at, user_type FROM users WHERE id = ?");
         $stmtUser->execute([$owner_id]);
-        $owner = $stmtUser->fetch(PDO::FETCH_OBJ);
-        if ($owner && $owner->user_type == 1) {
-            $days = \App\Helper\Date::getDateDiff($owner->created_at);
+        $ownerData = $stmtUser->fetch(PDO::FETCH_OBJ);
+        if ($ownerData && $ownerData->user_type == 1) {
+            $days = \App\Helper\Date::getDateDiff($ownerData->created_at);
             if ($days < 15) {
                 // Return default trial limits: 10 Alt Kullanıcı, 1 Firma
                 return [
@@ -310,5 +323,37 @@ class UserModel extends Model
         $sql = $this->db->prepare("SELECT COUNT(*) FROM $this->table WHERE parent_id = ?");
         $sql->execute([$owner_id]);
         return (int)$sql->fetchColumn();
+    }
+
+    public function saveWithAttr($data)
+    {
+        $id = parent::saveWithAttr($data);
+        require_once __DIR__ . '/ActivityLogModel.php';
+        $action = (isset($data['id']) && $data['id'] > 0) ? 'güncellendi' : 'eklendi';
+        $name = $data['full_name'] ?? ($data['email'] ?? 'Kullanıcı');
+        ActivityLogModel::log('user', (isset($data['id']) && $data['id'] > 0) ? 'update' : 'add', "Kullanıcı {$action}: {$name}");
+        return $id;
+    }
+
+    public function delete($id)
+    {
+        $decryptedId = \App\Helper\Security::safeDecrypt($id);
+        $user = $this->find($decryptedId);
+        if ($user) {
+            require_once __DIR__ . '/ActivityLogModel.php';
+            ActivityLogModel::log('user', 'delete', "Kullanıcı silindi: {$user->full_name}");
+        }
+        return parent::delete($id);
+    }
+
+    public function softDelete($id)
+    {
+        $decryptedId = \App\Helper\Security::safeDecrypt($id);
+        $user = $this->find($decryptedId);
+        if ($user) {
+            require_once __DIR__ . '/ActivityLogModel.php';
+            ActivityLogModel::log('user', 'delete', "Kullanıcı silindi (arşive taşındı): {$user->full_name}");
+        }
+        return parent::softDelete($id);
     }
 }

@@ -171,6 +171,26 @@ $cityHelper = new Cities();
                             </div>
                         </div>
                     </div>
+
+                    <!-- Bölüm 5: Dashboard -->
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-azure-lt p-2 rounded-2 me-2" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+                                <i class="ti ti-layout-dashboard text-azure fs-2"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Dashboard Ayarları</h6>
+                        </div>
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_home_gantt" id="modal_is_home_gantt" value="1">
+                            <span class="form-check-label">
+                                <i class="ti ti-chart-bar me-1 text-primary"></i>
+                                Ana sayfada varsayılan Gantt projesi olarak göster
+                            </span>
+                        </label>
+                        <div class="text-muted small mt-1 ms-4 ps-2">
+                            Firmada yalnızca bir proje varsayılan olarak ayarlanabilir; diğerleri otomatik temizlenir.
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer bg-light-lt border-0 rounded-bottom-4">
                     <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">İptal</button>

@@ -25,6 +25,7 @@ $(document).on("click", "#addNewProject", function (e) {
     form[0].reset();
   }
   $("#modal_project_id").val(0);
+  $("#modal_is_home_gantt").prop("checked", false);
   $("#projectModalTitle").text("Yeni Proje Ekle");
   $("#modal_project_town").html('<option value="">İlçe seçiniz</option>');
   
@@ -66,6 +67,7 @@ $(document).on("click", ".update-project", function (e) {
         $("input[name='account_number']").val(p.account_number);
         $("textarea[name='address']").val(p.address);
         $("textarea[name='project']").val(p.notes);
+        $("#modal_is_home_gantt").prop("checked", p.is_home_gantt == 1);
 
         // Set town
         var townOption = new Option(p.town_name, p.town, true, true);

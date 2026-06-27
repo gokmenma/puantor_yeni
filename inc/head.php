@@ -60,6 +60,7 @@
     $page == "missions/manage" || $page == "feedback/list"
     || $page == "supports/tickets" || $page == "supports/ticket-view"
     || $page == "abonelik-islemleri/list"
+    || $page == "duyurular/list"
   ) {
 
     echo '<link href="./dist/libs/summernote/summernote-lite.min.css" rel="stylesheet">';
@@ -87,6 +88,51 @@
 
   if ($page == "supports/ticket-view") {
     echo '<link href="./dist/css/tickets.css" rel="stylesheet" />';
+  }
+
+  if ($page == 'projects/manage' || $page == 'home') {
+    echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css">';
+    echo '<style>
+      /* Bar renkleri */
+      .gantt .bar                                         { fill: #206bc4; }
+      .gantt .bar-progress                                { fill: #1a5699; }
+      .gantt .bar-wrapper.bar-in-progress .bar            { fill: #f59f00 !important; }
+      .gantt .bar-wrapper.bar-in-progress .bar-progress   { fill: #c97d00 !important; }
+      .gantt .bar-wrapper.bar-done .bar                   { fill: #2fb344 !important; }
+      .gantt .bar-wrapper.bar-done .bar-progress          { fill: #229132 !important; }
+      /* Hover */
+      .gantt .bar-wrapper:hover .bar,
+      .gantt .bar-wrapper:hover .bar-progress             { opacity: .82; cursor: grab; }
+      .gantt .bar-wrapper:active .bar                     { cursor: grabbing; }
+      /* Etiketler */
+      .gantt .bar-label                                   { fill: #fff; font-size: 11px; font-weight: 500; letter-spacing: .2px; }
+      .gantt .bar-label.big                               { fill: #374151; }
+      /* Grid */
+      .gantt .grid-header                                 { fill: #f8fafc; stroke: #e9ecef; }
+      .gantt .grid-row:nth-child(even)                    { fill: rgba(248,250,252,.6); }
+      .gantt .row-line                                    { stroke: #f1f3f5; }
+      .gantt .tick                                        { stroke: #e9ecef; }
+      .gantt .tick.thick                                  { stroke: #d0d5de; }
+      .gantt .upper-text                                  { fill: #374151; font-weight: 600; }
+      .gantt .lower-text                                  { fill: #6b7280; }
+      .gantt .today-highlight                             { fill: rgba(32,107,196,.07); }
+      /* Popup */
+      #tasks-gantt-container .popup-wrapper,
+      #home-gantt-container .popup-wrapper {
+        background: #fff !important;
+        color: #333 !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,.13) !important;
+        padding: 0 !important;
+        min-width: 220px !important;
+        width: auto !important;
+        max-width: 300px !important;
+        overflow: hidden !important;
+      }
+      #tasks-gantt-container .pointer,
+      #home-gantt-container .pointer { display: none !important; }
+    </style>';
   }
 
   ?>

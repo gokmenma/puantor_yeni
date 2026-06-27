@@ -209,19 +209,6 @@ $subscribers = $abonelerModel->getSubscribers();
 
 <script>
 $(document).ready(function () {
-    // Summernote <i/> self-closing yerine <i></i> üret — Tabler icon font için gerekli
-    (function ($) {
-        var orig = $.summernote.ui_template;
-        $.summernote.ui_template = function (options) {
-            var ui = orig.call(this, options);
-            ui.icon = function (iconClassName, tagName) {
-                tagName = tagName || 'i';
-                return '<' + tagName + ' class="' + iconClassName + '"></' + tagName + '>';
-            };
-            return ui;
-        };
-    }(jQuery));
-
     // Summernote başlat
     $('#mail-body').summernote({
         height: 280,
