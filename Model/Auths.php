@@ -76,14 +76,27 @@ class Auths extends Model
     // Bu yetki id'si role_auths tablosunda role_id ile sorgulanır
     public function Authorize($auth_name)
     {
-        if (isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1) {
-            return true;
-        }
-        //Yetki adından yetki id getirilir
-        $auth_id = $this->getAuthIdByName($auth_name)->id ?? 0;
-        if (!$auth_id) {
+        $isSuperadminUser = isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1;
+
+        // Yetki adından yetki id ve superadmin durumu getirilir
+        $sql = $this->db->prepare("SELECT id, superadmin FROM $this->table WHERE auth_name = ?");
+        $sql->execute([$auth_name]);
+        $auth = $sql->fetch(PDO::FETCH_OBJ);
+
+        if (!$auth) {
             return false;
         }
+
+        // Yetki superadmin yetkisi ise ve giriş yapan kullanıcı superadmin değilse izin verme
+        if (isset($auth->superadmin) && $auth->superadmin == 1 && !$isSuperadminUser) {
+            return false;
+        }
+
+        if ($isSuperadminUser) {
+            return true;
+        }
+
+        $auth_id = $auth->id;
         //Giriş yapan kullanıcının hangi role grubunda olduğu alınır
         $role_id = $_SESSION['user']->user_roles;
 
@@ -102,9 +115,22 @@ class Auths extends Model
 
     public function AuthorizeByAuthId($auth_id)
     {
-        if (isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1) {
+        $isSuperadminUser = isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1;
+
+        // Yetki id'sinden yetkinin superadmin durumu sorgulanır
+        $sql = $this->db->prepare("SELECT superadmin FROM $this->table WHERE id = ?");
+        $sql->execute([$auth_id]);
+        $auth = $sql->fetch(PDO::FETCH_OBJ);
+
+        // Yetki superadmin yetkisi ise ve giriş yapan kullanıcı superadmin değilse izin verme
+        if ($auth && isset($auth->superadmin) && $auth->superadmin == 1 && !$isSuperadminUser) {
+            return 0;
+        }
+
+        if ($isSuperadminUser) {
             return true;
         }
+
         //role_auts tablosunda role_id ile sorgulanır,auth_ids içinde var mı yok mu kontrol edilir varsa true döner değilse false döner
         $role_id = $_SESSION['user']->user_roles;
         $sql = $this->db->prepare("SELECT * FROM role_auths WHERE role_id = ? and FIND_IN_SET(?,auth_ids)");

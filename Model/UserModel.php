@@ -325,6 +325,29 @@ class UserModel extends Model
         return (int)$sql->fetchColumn();
     }
 
+    /**
+     * Get managers of a given firm ID who have access to advance requests.
+     */
+    public function getManagersByFirm($firm_id)
+    {
+        $sql = $this->db->prepare("
+            SELECT u.id, u.full_name, u.email 
+            FROM $this->table u
+            LEFT JOIN role_auths ra ON u.user_roles = ra.role_id
+            WHERE u.firm_id = :firm_id
+              AND u.deleted_at IS NULL
+              AND u.status = 1
+              AND (
+                u.parent_id = 0 
+                OR u.is_main_user = 1 
+                OR u.superadmin = 1 
+                OR FIND_IN_SET((SELECT id FROM auths WHERE auth_name = 'avans_talepleri'), ra.auth_ids)
+              )
+        ");
+        $sql->execute(['firm_id' => $firm_id]);
+        return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
     public function saveWithAttr($data)
     {
         $id = parent::saveWithAttr($data);

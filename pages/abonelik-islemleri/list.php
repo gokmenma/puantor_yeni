@@ -29,6 +29,9 @@ $subscribers = $abonelerModel->getSubscribers();
                         <button type="button" id="btn-send-mail" class="btn btn-primary d-none">
                             <i class="ti ti-mail icon me-2"></i> Mail Gönder
                         </button>
+                        <button type="button" id="btn-clear-data" class="btn btn-danger d-none">
+                            <i class="ti ti-trash icon me-2"></i> Verileri Temizle
+                        </button>
                     </div>
                 </div>
 
@@ -207,6 +210,97 @@ $subscribers = $abonelerModel->getSubscribers();
     </div>
 </div>
 
+<!-- Veri Temizleme Modal -->
+<div class="modal modal-blur fade" id="clearDataModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger-lt">
+                <h5 class="modal-title text-danger">
+                    <i class="ti ti-trash icon me-2 text-danger"></i>
+                    Abone Verilerini Temizle
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Seçili Aboneler</label>
+                    <div id="clear-recipients-display" class="p-2 border rounded bg-light" style="min-height:48px;"></div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label required">Temizlenecek Modüller</label>
+                    <div class="card p-3 bg-light-lt">
+                        <div class="mb-2">
+                            <label class="form-check m-0">
+                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="puantaj" checked>
+                                <span class="form-check-label">Puantaj Verileri <small class="text-muted">(Puantaj çalışma saatleri ve tutarları)</small></span>
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-check m-0">
+                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="personnel" checked>
+                                <span class="form-check-label">Personel Kayıtları <small class="text-muted">(Personel, izinler, avanslar, ücretler)</small></span>
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-check m-0">
+                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="finance" checked>
+                                <span class="form-check-label">Kasa Hareketleri <small class="text-muted">(Gelir ve gider işlemleri)</small></span>
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-check m-0">
+                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="companies" checked>
+                                <span class="form-check-label">Cari Firmalar <small class="text-muted">(Müşteri ve tedarikçi cari kartları)</small></span>
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-check m-0">
+                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="projects" checked>
+                                <span class="form-check-label">Projeler ve Görevler <small class="text-muted">(Projeler, proje görevleri ve gelir/gider)</small></span>
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-check m-0">
+                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="offers" checked>
+                                <span class="form-check-label">Teklifler <small class="text-muted">(Teklifler ve teklif kalemleri)</small></span>
+                            </label>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-check m-0">
+                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="roles" checked>
+                                <span class="form-check-label">Yetki Grupları <small class="text-muted">(Tanımlanan kullanıcı rolleri ve yetkileri)</small></span>
+                            </label>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-check m-0 text-danger">
+                                <input class="form-check-input clear-module-checkbox border-danger" type="checkbox" value="myfirms">
+                                <span class="form-check-label font-weight-bold">Firmalarım <small class="text-danger">(Kendi tanımladığınız firmalar. UYARI: Sıfırlanır!)</small></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label required">Yönetici Şifreniz</label>
+                    <input type="password" id="admin-password" class="form-control" placeholder="İşlemi onaylamak için şifrenizi giriniz...">
+                </div>
+
+                <div class="alert alert-warning mb-0">
+                    <h4 class="alert-title"><i class="ti ti-alert-triangle me-1"></i>Dikkat!</h4>
+                    <div class="text-muted">Seçtiğiniz veriler kalıcı olarak silinecektir ve bu işlem geri alınamaz.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" id="btn-confirm-clear" class="btn btn-danger">
+                    <i class="ti ti-trash icon me-2"></i> Verileri Kalıcı Olarak Sil
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 $(document).ready(function () {
     // Summernote başlat
@@ -281,6 +375,7 @@ $(document).ready(function () {
 
     const selectAll = document.getElementById('select-all-abones');
     const btnSendMail = document.getElementById('btn-send-mail');
+    const btnClearData = document.getElementById('btn-clear-data');
     const selectedCountEl = document.getElementById('selected-count');
 
     function getChecked() {
@@ -291,10 +386,12 @@ $(document).ready(function () {
         const count = getChecked().length;
         if (count > 0) {
             btnSendMail.classList.remove('d-none');
+            btnClearData.classList.remove('d-none');
             selectedCountEl.classList.remove('d-none');
             selectedCountEl.textContent = count + ' kişi seçildi';
         } else {
             btnSendMail.classList.add('d-none');
+            btnClearData.classList.add('d-none');
             selectedCountEl.classList.add('d-none');
         }
         const allBoxes = document.querySelectorAll('.abone-checkbox');
@@ -370,6 +467,77 @@ $(document).ready(function () {
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="ti ti-send icon me-2"></i> Gönder';
+        });
+    });
+
+    btnClearData.addEventListener('click', function () {
+        const checked = getChecked();
+        const display = document.getElementById('clear-recipients-display');
+        display.innerHTML = [...checked].map(cb =>
+            `<span class="badge bg-blue-lt text-blue me-1 mb-1">${cb.dataset.name}</span>`
+        ).join('');
+        document.getElementById('admin-password').value = '';
+        document.querySelectorAll('.clear-module-checkbox').forEach(cb => {
+            if (cb.value === 'myfirms') {
+                cb.checked = false;
+            } else {
+                cb.checked = true;
+            }
+        });
+        new bootstrap.Modal(document.getElementById('clearDataModal')).show();
+    });
+
+    document.getElementById('btn-confirm-clear').addEventListener('click', function () {
+        const checked = getChecked();
+        const userIds = [...checked].map(cb => cb.value);
+        
+        const selectedModules = [];
+        document.querySelectorAll('.clear-module-checkbox:checked').forEach(cb => {
+            selectedModules.push(cb.value);
+        });
+
+        const password = document.getElementById('admin-password').value.trim();
+
+        if (selectedModules.length === 0) {
+            Swal.fire('Uyarı', 'Lütfen temizlemek istediğiniz en az bir modül seçiniz.', 'warning');
+            return;
+        }
+
+        if (!password) {
+            Swal.fire('Uyarı', 'Lütfen işlemi onaylamak için şifrenizi giriniz.', 'warning');
+            return;
+        }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Temizleniyor...';
+
+        fetch('/api/abonelik-islemleri/clear-data.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user_ids: userIds, modules: selectedModules, password: password})
+        })
+        .then(res => res.json())
+        .then(data => {
+            bootstrap.Modal.getInstance(document.getElementById('clearDataModal')).hide();
+            Swal.fire({
+                title: data.success ? 'Başarılı' : 'Hata',
+                text: data.message,
+                icon: data.success ? 'success' : 'error'
+            }).then(() => {
+                if (data.success) {
+                    document.querySelectorAll('.abone-checkbox').forEach(cb => cb.checked = false);
+                    selectAll.checked = false;
+                    updateUI();
+                }
+            });
+        })
+        .catch(err => {
+            Swal.fire('Hata', 'Bir hata oluştu: ' + err.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ti ti-trash icon me-2"></i> Verileri Kalıcı Olarak Sil';
         });
     });
 });

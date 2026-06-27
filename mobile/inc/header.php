@@ -45,6 +45,28 @@ $toggle_theme = ($theme == 'dark') ? 'light' : 'dark';
       <?php endif; ?>
     </a>
 
+    <!-- Notification Bell -->
+    <?php
+    require_once ROOT . '/Model/DuyuruModel.php';
+    $_hdr_duyuru = new DuyuruModel();
+    $_hdr_kullanici_id = $_SESSION['user']->id ?? 0;
+    $_hdr_is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+    $_hdr_is_main_user = !$_hdr_is_superadmin && (($_SESSION['user']->parent_id ?? 1) == 0);
+    $_hdr_firm_id = $_SESSION['firm_id'] ?? 0;
+    $_hdr_okunmamis = 0;
+    try {
+        $_hdr_okunmamis = $_hdr_is_superadmin ? 0 : $_hdr_duyuru->getOkunmamisSayisi($_hdr_kullanici_id, $_hdr_firm_id, $_hdr_is_main_user);
+    } catch (Exception $e) {}
+    ?>
+    <a href="notifications" class="btn-active-scale text-reset text-decoration-none position-relative me-1">
+      <i class="ti ti-bell" style="font-size: 1.35rem; color: #626976;"></i>
+      <?php if ($_hdr_okunmamis > 0): ?>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.55rem; padding: 0.25em 0.45em; min-width: 14px; height: 14px; border: 1.5px solid var(--tblr-body-bg);">
+          <?= $_hdr_okunmamis ?>
+        </span>
+      <?php endif; ?>
+    </a>
+
     <!-- User Profile Dropdown / Indicator -->
     <a href="?p=more" class="btn-active-scale text-decoration-none d-flex align-items-center">
       <span class="avatar avatar-sm rounded-circle text-uppercase" style="background-color: rgba(32, 107, 196, 0.1); color: var(--tblr-primary); font-size: 0.75rem; font-weight: 700;">

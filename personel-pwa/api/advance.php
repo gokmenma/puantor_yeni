@@ -35,6 +35,57 @@ if ($action == 'list') {
     $query = $db->prepare("INSERT INTO personel_avans_talepleri (person_id, firm_id, tutar, aciklama, hedef_ay, hedef_yil) VALUES (?, ?, ?, ?, ?, ?)");
     try {
         $query->execute([$person_id, $firm_id, $tutar, $aciklama, $hedef_ay, $hedef_yil]);
+
+        // Yöneticilere bildirim gönderilmesi ve loglama
+        try {
+            if (!defined('ROOT')) {
+                define('ROOT', dirname(__DIR__, 2));
+            }
+            require_once ROOT . '/Model/DuyuruModel.php';
+            require_once ROOT . '/Model/UserModel.php';
+            require_once ROOT . '/Model/Persons.php';
+            require_once ROOT . '/Model/ActivityLogModel.php';
+
+            $Duyuru = new DuyuruModel();
+            $User = new UserModel();
+            $Persons = new Persons();
+
+            $person = $Persons->find($person_id);
+            $person_name = $person ? $person->full_name : 'Bilinmeyen Personel';
+
+            $managers = $User->getManagersByFirm($firm_id);
+            $manager_ids = array_map(function($m) { return $m->id; }, $managers);
+
+            if (!empty($manager_ids)) {
+                $monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                $ay_adi = isset($monthNames[$hedef_ay - 1]) ? $monthNames[$hedef_ay - 1] : '';
+                $donem = $ay_adi . ' ' . $hedef_yil;
+                
+                $duyuru_data = [
+                    'baslik' => 'Yeni Avans Talebi',
+                    'icerik' => htmlspecialchars($person_name) . " adlı personel, " . number_format($tutar, 2, ',', '.') . " TL tutarında avans talebi oluşturdu. (Dönem: " . htmlspecialchars($donem) . ")",
+                    'olusturan_id' => 0,
+                    'hedef_tip' => 'bazi_kullanicilar',
+                    'hedef_firma_id' => $firm_id,
+                    'baslangic_tarihi' => date('Y-m-d'),
+                    'bitis_tarihi' => date('Y-m-d', strtotime('+30 days')),
+                    'oncelik' => 'normal'
+                ];
+                
+                $duyuru_id = $Duyuru->ekle($duyuru_data);
+                if ($duyuru_id) {
+                    $Duyuru->setHedefler($duyuru_id, 'kullanici', $manager_ids);
+                }
+            }
+
+            // Aktivite günlüğü kaydı
+            ActivityLogModel::log('avans_talebi', 'create', "Personel " . htmlspecialchars($person_name) . " yeni bir avans talebi oluşturdu. Tutar: " . number_format($tutar, 2, ',', '.') . " TL");
+
+        } catch (Exception $logEx) {
+            // Log/Bildirim hatası ana işlemi durdurmasın diye sessizce loglayalım
+            error_log("Avans talebi bildirim/log hatası: " . $logEx->getMessage());
+        }
+
         echo json_encode(['status' => 'success', 'message' => 'Talep başarıyla oluşturuldu.']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'message' => 'Hata: ' . $e->getMessage()]);

@@ -260,6 +260,12 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                                 <span>Hesap Detayları</span>
                             </a>
                             <?php endif; ?>
+                            <?php if ($Auths->hasPermission("daily_working_hours_edit")): ?>
+                            <a href="#tabs-system-settings" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
+                                <i class="ti ti-settings icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
+                                <span>Sistem Ayarları</span>
+                            </a>
+                            <?php endif; ?>
                             <a href="#tabs-logs" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
                                 <i class="ti ti-history icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
                                 <span>Giriş Kayıtları</span>
@@ -303,6 +309,13 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                         </div>
                         <?php endif; ?>
                         
+                        <!-- Sistem Ayarları Sekmesi -->
+                        <?php if ($Auths->hasPermission("daily_working_hours_edit")): ?>
+                        <div class="tab-pane" id="tabs-system-settings" role="tabpanel">
+                            <?php include_once "content/0-general.php" ?>
+                        </div>
+                        <?php endif; ?>
+                        
                         <!-- Giriş Kayıtları Sekmesi -->
                         <div class="tab-pane" id="tabs-logs" role="tabpanel">
                             <?php include_once "content/5-logs.php" ?>
@@ -322,7 +335,7 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                     var saveBtnContainer = $("#btn-save-changes-container");
                     var reminderCard = $("#settings-reminder");
                     
-                    if (targetId === "#tabs-profile" || targetId === "#tabs-password") {
+                    if (targetId === "#tabs-profile" || targetId === "#tabs-password" || targetId === "#tabs-system-settings") {
                         saveBtnContainer.show();
                         reminderCard.show();
                     } else {
@@ -349,6 +362,8 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                         $("#profileForm").submit();
                     } else if (targetId === "#tabs-password") {
                         $("#passwordForm").submit();
+                    } else if (targetId === "#tabs-system-settings") {
+                        $("#home_save").click();
                     }
                 });
             });

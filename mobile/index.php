@@ -267,6 +267,11 @@ switch ($route) {
         $page_file = "modules/more/index.php";
         $active_page = "more";
         break;
+    case 'notifications':
+        $title = "Bildirimler";
+        $page_file = "modules/more/notifications.php";
+        $active_page = "more";
+        break;
     case 'advance-requests':
         $advance_auth = $Auths->getAuthIdByTitle("Avans Talepleri");
         if ($advance_auth && !$Auths->AuthorizeByAuthId($advance_auth->id)) {
