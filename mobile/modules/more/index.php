@@ -145,6 +145,21 @@ $userId = $user->id ?? 0;
     <?php endif; ?>
 
     <?php 
+    $izin_auth = $Auths->getAuthIdByTitle("İzin Talepleri");
+    if (!$izin_auth || $Auths->AuthorizeByAuthId($izin_auth->id)): ?>
+    <a href="leave-requests" class="list-group-item" data-id="leave-requests">
+      <div class="d-flex align-items-center gap-1">
+        <i class="ti ti-grip-vertical text-muted drag-handle"></i>
+        <div class="avatar avatar-sm rounded bg-azure-lt me-2">
+          <i class="ti ti-calendar-time text-azure"></i>
+        </div>
+        <span class="text-semibold text-sm">İzin Talepleri</span>
+      </div>
+      <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
+    </a>
+    <?php endif; ?>
+
+    <?php 
     $reports_auth = $Auths->getAuthIdByTitle("Raporlar");
     if (!$reports_auth || $Auths->AuthorizeByAuthId($reports_auth->id)): ?>
     <a href="reports" class="list-group-item" data-id="reports">

@@ -282,6 +282,17 @@ switch ($route) {
         $page_file = "modules/more/advance_requests.php";
         $active_page = "more";
         break;
+    case 'leave-requests':
+    case 'izin-talepleri':
+        $izin_auth = $Auths->getAuthIdByTitle("İzin Talepleri");
+        if ($izin_auth && !$Auths->AuthorizeByAuthId($izin_auth->id)) {
+            header("Location: dashboard");
+            exit();
+        }
+        $title = "İzin Talepleri";
+        $page_file = "modules/more/leave_requests.php";
+        $active_page = "more";
+        break;
     case 'cari':
         if (!$Auths->hasPermission("cari_takip")) {
             header("Location: dashboard");

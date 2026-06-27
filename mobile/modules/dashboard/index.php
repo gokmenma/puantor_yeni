@@ -136,10 +136,14 @@ $has_advance_auth = (!$advance_auth || $Auths->AuthorizeByAuthId($advance_auth->
       <?php endif; ?>
     </a>
     <?php endif; ?>
-    <a href="https://wa.me/905000000000" target="_blank" class="quick-action-btn">
-      <i class="ti ti-brand-whatsapp" style="color: #07d341; font-size: 1.35rem;"></i>
-      <span>WhatsApp<br>Destek</span>
+    <?php 
+    $izin_auth = $Auths->getAuthIdByTitle("İzin Talepleri");
+    if (!$izin_auth || $Auths->AuthorizeByAuthId($izin_auth->id)): ?>
+    <a href="leave-requests" class="quick-action-btn">
+      <i class="ti ti-calendar-time" style="color: #0072f5; font-size: 1.35rem;"></i>
+      <span>İzin<br>Talepleri</span>
     </a>
+    <?php endif; ?>
   </div>
 
   <?php if ($has_advance_auth): ?>

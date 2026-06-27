@@ -1,4 +1,4 @@
-const CACHE_NAME = 'puantor-personel-v14';
+const CACHE_NAME = 'puantor-personel-v15';
 const ASSETS = [
   './',
   './index.php',
@@ -7,7 +7,8 @@ const ASSETS = [
   './css/app.css',
   './manifest.json',
   './resources/Logo-ai.svg',
-  './static/Logo-ai.svg'
+  './static/Logo-ai.svg',
+  './index.html'
 ];
 
 self.addEventListener('install', (event) => {
