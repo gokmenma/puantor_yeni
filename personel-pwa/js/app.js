@@ -292,10 +292,8 @@ window.app = {
                     if (el) el.textContent = text;
                 };
 
-                setSafeText('total-hours', result.summary.total_hours || 0);
-                setSafeText('dashboard-overtime', `${result.summary.overtime || 0} s`);
-                setSafeText('dashboard-advance', `${result.summary.advance || 0} TL`);
-                setSafeText('dashboard-leave-days', `${result.summary.kalan_izin || 0} G`);
+                setSafeText('total-days', result.summary.total_work_days || 0);
+                setSafeText('dashboard-overtime', parseFloat(result.summary.overtime || 0).toFixed(1).replace('.0', ''));
                 
                 const balanceFormatted = parseFloat(result.summary.balance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2});
                 const usedFormatted = parseFloat(result.summary.advance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2});
@@ -306,8 +304,8 @@ window.app = {
                 setSafeText('remaining-limit-total', `₺ ${balanceFormatted}`);
 
                 // Update progress bar
-                const target = 180;
-                const current = result.summary.total_hours || 0;
+                const target = 26;
+                const current = result.summary.total_work_days || 0;
                 const percentage = Math.min(Math.round((current / target) * 100), 100);
                 const bar = document.querySelector('.progress-premium-bar');
                 const percentLabel = document.getElementById('dashboard-progress-percent');
@@ -730,7 +728,7 @@ window.app = {
         
         for (let i = 0; i < startingDay; i++) html += `<div></div>`;
         
-        let totalWorkDays = 0, totalHolidays = 0, totalWorkHours = 0;
+        let totalWorkDays = 0, totalHolidays = 0, totalWorkHours = 0, totalOvertime = 0;
 
         for (let i = 1; i <= daysInMonth; i++) {
             const dayStr = `${year}${month.toString().padStart(2, '0')}${i.toString().padStart(2, '0')}`;
@@ -751,6 +749,10 @@ window.app = {
                 } else if (record.attendance_type === 'Ücretsiz' || record.attendance_type === 'Ücretli İzin') {
                     isHoliday = true;
                     isWork = false;
+                }
+                
+                if (record.attendance_type === 'Fazla Çalışma') {
+                    totalOvertime += parseFloat(record.EklenecekSaat || 0);
                 }
                 
                 if (record.ArkaPlanRengi) {
@@ -775,7 +777,11 @@ window.app = {
 
         document.getElementById('summary-work-days').textContent = `${totalWorkDays} Gün`;
         document.getElementById('summary-holidays').textContent = `${totalHolidays} Gün`;
-        document.getElementById('summary-total-hours').textContent = `${totalWorkHours.toFixed(1).replace('.0', '')} s`;
+        
+        const summaryOvertimeEl = document.getElementById('summary-overtime');
+        if (summaryOvertimeEl) {
+            summaryOvertimeEl.textContent = `${totalOvertime.toFixed(1).replace('.0', '')} s`;
+        }
 
         const today = new Date();
         let defaultDay = (today.getMonth() + 1 === month && today.getFullYear() === year) ? today.getDate() : 1;

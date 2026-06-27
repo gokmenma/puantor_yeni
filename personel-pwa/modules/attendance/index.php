@@ -64,8 +64,8 @@
         </div>
         <div class="col-4">
             <div class="mobile-card text-center p-2">
-                <span class="text-muted small d-block mb-1">Toplam</span>
-                <h4 id="summary-total-hours" class="mb-0">0 s</h4>
+                <span class="text-muted small d-block mb-1">Fazla Mesai</span>
+                <h4 id="summary-overtime" class="mb-0">0 s</h4>
             </div>
         </div>
     </div>

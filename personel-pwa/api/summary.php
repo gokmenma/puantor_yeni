@@ -41,9 +41,18 @@ $attendance_data = $PuantajModel->getPuantajByPersonAndDate($person_id, $start_d
 // Calculate monthly totals
 $total_hours = 0;
 $overtime = 0;
+$total_work_days = 0;
 foreach ($attendance_data as $record) {
     if (isset($record->saat)) {
         $total_hours += (float)$record->saat;
+    }
+    if (isset($record->attendance_type)) {
+        if ($record->attendance_type !== 'Ücretsiz') {
+            $total_work_days++;
+        }
+        if ($record->attendance_type === 'Fazla Çalışma') {
+            $overtime += (float)($record->EklenecekSaat ?? 0);
+        }
     }
 }
 
@@ -62,6 +71,7 @@ $kalan_izin = $person->remaining_leave ?? 0;
 
 if (isset($balance)) {
     $balance->total_hours = $total_hours;
+    $balance->total_work_days = $total_work_days;
     $balance->overtime = $overtime;
     $balance->kalan_izin = $kalan_izin;
     $balance->advance = $monthly_advance;

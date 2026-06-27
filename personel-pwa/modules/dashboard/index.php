@@ -10,22 +10,29 @@
     </div>
 
     <div class="summary-card">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="avatar avatar-md rounded bg-white-20 text-white">
-                <i class="ti ti-clock"></i>
+        
+        <div class="row g-2 align-items-center mb-3">
+            <div class="col-6" style="border-right: 1px solid rgba(255, 255, 255, 0.15);">
+                <p class="text-white-80 small text-uppercase mb-1" style="font-weight: 600; font-size: 0.7rem; letter-spacing: 0.5px;">TOPLAM ÇALIŞILAN GÜN</p>
+                <div class="d-flex align-items-baseline gap-1">
+                    <h2 id="total-days" class="h1 mb-0 text-white" style="font-size: 2.2rem; font-weight: 800;">0</h2>
+                    <span class="text-white-80 small">gün</span>
+                </div>
             </div>
-            <span class="badge bg-white-20 text-white" style="backdrop-filter: blur(4px);">BU AY</span>
+            <div class="col-6" style="padding-left: 1.25rem;">
+                <p class="text-white-80 small text-uppercase mb-1" style="font-weight: 600; font-size: 0.7rem; letter-spacing: 0.5px;">TOPLAM FAZLA MESAİ</p>
+                <div class="d-flex align-items-baseline gap-1">
+                    <h2 id="dashboard-overtime" class="h1 mb-0 text-white" style="font-size: 2.2rem; font-weight: 800;">0</h2>
+                    <span class="text-white-80 small">saat</span>
+                </div>
+            </div>
         </div>
-        <p class="text-white-80 small text-uppercase mb-1" style="font-weight: 600;">TOPLAM ÇALIŞMA SÜRESİ</p>
-        <div class="d-flex align-items-baseline gap-2 mb-2">
-            <h2 id="total-hours" class="h1 mb-0 text-white" style="font-size: 2.5rem; font-weight: 800;">0</h2>
-            <span class="text-white-80">saat</span>
-        </div>
+
         <div class="progress-premium">
             <div class="progress-premium-bar" style="width: 0%;"></div>
         </div>
         <div class="d-flex justify-content-between mt-2 small text-white-80">
-            <span>Aylık Hedef: 180s</span>
+            <span>Aylık Hedef: 26 Gün</span>
             <span id="dashboard-progress-percent">%0</span>
         </div>
     </div>
@@ -46,35 +53,6 @@
             <i class="ti ti-file-text"></i>
             <span>Belgeler</span>
         </a>
-    </div>
-
-    <div class="row g-3 mb-4">
-        <div class="col-6">
-            <div class="mobile-card">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-sm rounded bg-blue-lt text-blue">
-                        <i class="ti ti-timer"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted small text-uppercase mb-0" style="font-size: 0.65rem;">Fazla Mesai</p>
-                        <h3 id="dashboard-overtime" class="mb-0" style="font-size: 1.1rem; font-weight: 700;">0 s</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="mobile-card">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-sm rounded bg-green-lt text-green">
-                        <i class="ti ti-plane-departure"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted small text-uppercase mb-0" style="font-size: 0.65rem;">Kalan İzin</p>
-                        <h3 id="dashboard-leave-days" class="mb-0" style="font-size: 1.1rem; font-weight: 700;">- G</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
