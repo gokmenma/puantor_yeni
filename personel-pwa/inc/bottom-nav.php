@@ -5,7 +5,7 @@
     </a>
     <a href="?route=attendance" class="nav-item <?php echo $route == 'attendance' ? 'active' : ''; ?>" data-tab="attendance-tab">
         <i class="ti ti-calendar-event"></i>
-        <span>Takvim</span>
+        <span>Puantaj</span>
     </a>
     <?php if ($personnel_advance_request_visible == 1): ?>
     <a href="?route=advance" class="nav-item <?php echo $route == 'advance' ? 'active' : ''; ?>" data-tab="advance-tab">

@@ -32,7 +32,7 @@ $routes = [
         'icon' => 'ti ti-smart-home'
     ],
     'attendance' => [
-        'title' => 'Takvim',
+        'title' => 'Puantaj',
         'file' => 'modules/attendance/index.php',
         'icon' => 'ti ti-calendar-event'
     ],

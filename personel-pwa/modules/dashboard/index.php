@@ -47,7 +47,7 @@
         <?php endif; ?>
         <a href="?route=attendance" class="quick-action-card">
             <i class="ti ti-calendar-event"></i>
-            <span>Takvim</span>
+            <span>Puantaj</span>
         </a>
         <a href="?route=profile" class="quick-action-card">
             <i class="ti ti-file-text"></i>
