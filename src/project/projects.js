@@ -246,6 +246,28 @@ $(document).ready(function () {
   }
 });
 
+// Proje manage sayfasında aktif sekmeyi localStorage'a kaydet ve geri yükle
+$(document).ready(function () {
+  if ($('[data-bs-toggle="tab"]').length === 0) return;
+
+  var tabKey = 'project_manage_tab_' + (new URLSearchParams(window.location.search).get('id') || 'new');
+  var savedTab = localStorage.getItem(tabKey);
+
+  if (savedTab) {
+    var $target = $('[href="' + savedTab + '"]');
+    if ($target.length) {
+      $('[data-bs-toggle="tab"].active').removeClass('active').attr('aria-selected', 'false');
+      $('.tab-pane.active').removeClass('active show');
+      $target.addClass('active').attr('aria-selected', 'true');
+      $(savedTab).addClass('active show');
+    }
+  }
+
+  $(document).on('shown.bs.tab', '[data-bs-toggle="tab"]', function () {
+    localStorage.setItem(tabKey, $(this).attr('href'));
+  });
+});
+
 //Project manage sayfasında Ödeme, hakediş gibi verileri ekledikten sonra tabloya eklemek için
 //expense.js ve progress-payment.js ve payment.js dosyalarında kullanılan addDataToTable fonksiyonu
 // deduction.js dosyasında kullanıldı
@@ -278,3 +300,67 @@ function addDataToTable(data) {
     .order([7, "desc"])
     .draw(false);
 }
+
+function updateSaveButtonVisibility() {
+  var activeTabHref = $('.nav-tabs .nav-link.active').attr("href");
+  if (activeTabHref === "#tabs-personnel-3") {
+    $("#saveProject").show();
+  } else {
+    $("#saveProject").hide();
+  }
+}
+
+$(document).ready(function () {
+  // URL'deki hash değerine göre ilgili tabı aktif et
+  var hash = window.location.hash;
+  if (hash) {
+    var tabTrigger = $('.nav-tabs a[href="' + hash + '"]');
+    if (tabTrigger.length) {
+      if (window.bootstrap && window.bootstrap.Tab) {
+        var tab = window.bootstrap.Tab.getOrCreateInstance(tabTrigger[0]);
+        tab.show();
+      } else if (typeof $.fn.tab !== 'undefined') {
+        tabTrigger.tab('show');
+      }
+    }
+  }
+  updateSaveButtonVisibility();
+});
+
+$(document).on('shown.bs.tab', 'a[data-bs-toggle="tab"]', function () {
+  updateSaveButtonVisibility();
+});
+
+$(document).on("click", "#saveProject", function () {
+  $("#savePersontoProject").trigger("click");
+});
+
+$(document).on("click", "#btn_toggle_puantaj_grouping", function(e) {
+  e.preventDefault();
+  var isGrouped = $(this).attr("data-grouped") === "true";
+  if (isGrouped) {
+    $("#puantaj_grouped_wrapper").hide();
+    $("#puantaj_detailed_wrapper").show();
+    $(this).attr("data-grouped", "false");
+    $(this).html('<i class="ti ti-users icon me-1"></i> Personel Bazlı Grupla');
+    
+    var table = $("#puantaj_info_table").DataTable();
+    table.columns.adjust().draw();
+  } else {
+    $("#puantaj_detailed_wrapper").hide();
+    $("#puantaj_grouped_wrapper").show();
+    $(this).attr("data-grouped", "true");
+    $(this).html('<i class="ti ti-list icon me-1"></i> Detaylı Göster');
+    
+    var table = $("#puantaj_info_grouped_table").DataTable();
+    table.columns.adjust().draw();
+  }
+});
+
+$(document).on("click", "#export_excel_puantaj_info_custom", function (e) {
+  e.preventDefault();
+  var isGrouped = $("#btn_toggle_puantaj_grouping").attr("data-grouped") === "true";
+  var tableSelector = isGrouped ? "#puantaj_info_grouped_table" : "#puantaj_info_table";
+  var table = $(tableSelector).DataTable();
+  table.button(".buttons-excel").trigger();
+});

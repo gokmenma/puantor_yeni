@@ -1235,3 +1235,81 @@ $(document).ready(function() {
         }
     });
 });
+
+/**
+ * Merkezi DataTable fabrika fonksiyonu.
+ * Ortak davranışları (arama satırı, dil, layout, initComplete) otomatik ekler.
+ * Sadece değişen kısımları (ajax, columns vb.) parametre olarak geçin.
+ *
+ * Desteklenen ek seçenekler:
+ *   skipSearch: string[] — arama kutusu eklenmeyecek sütun başlıkları (varsayılan: ['İşlem', 'Seç'])
+ *   initComplete: function — kendi initComplete callback'iniz; arama satırı eklendikten SONRA çağrılır
+ *
+ * Diğer tüm DataTables seçenekleri doğrudan geçilebilir (ordering, ajax, columns, …)
+ */
+window.createDataTable = function (selector, userOptions) {
+    userOptions = userOptions || {};
+
+    var $table = $(selector);
+    if (!$table.length || !$.fn.DataTable) return null;
+
+    var skipTitles    = userOptions.skipSearch || ['İşlem', 'Seç'];
+    var userInitDone  = userOptions.initComplete || null;
+
+    var $thead = $table.find('thead');
+    if ($thead.find('.search-input-row').length === 0) {
+        var colCount    = $thead.find('tr:first th, tr:first td').length;
+        var $searchRow  = $('<tr class="search-input-row"></tr>');
+        for (var c = 0; c < colCount; c++) {
+            $searchRow.append('<th class="search p-1"></th>');
+        }
+        $thead.append($searchRow);
+    }
+
+    var config = $.extend({
+        ordering:      false,
+        orderCellsTop: true,
+        language:      { url: 'src/tr.json' },
+        layout: {
+            bottomStart: 'pageLength',
+            bottom2Start: 'info',
+            topStart: null,
+            topEnd: null,
+        },
+    }, userOptions);
+
+    config.initComplete = function (settings, json) {
+        var api     = this.api();
+        var tableId = settings.sTableId;
+
+        api.columns().every(function () {
+            var column     = this;
+            var colIdx     = column.index();
+            var $headerTh  = $($table.find('thead tr:first th').get(colIdx));
+            var title      = $headerTh.text().trim();
+
+            if (!title || skipTitles.indexOf(title) !== -1 || $headerTh.find('input[type="checkbox"]').length > 0) return;
+
+            var input = document.createElement('input');
+            input.placeholder = title;
+            input.classList.add('form-control', 'form-control-sm');
+            input.setAttribute('autocomplete', 'off');
+
+            $('#' + tableId + ' .search-input-row th:eq(' + colIdx + ')').html(input);
+
+            $(input).on('keyup change', function () {
+                if (column.search() !== this.value) {
+                    column.search(this.value).draw();
+                }
+            });
+        });
+
+        if (typeof userInitDone === 'function') {
+            userInitDone.call(this, settings, json);
+        }
+    };
+
+    delete config.skipSearch;
+
+    return $table.DataTable(config);
+};

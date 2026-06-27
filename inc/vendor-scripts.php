@@ -25,7 +25,6 @@ if (
     $page == 'financial/transactions/list' ||
     $page == 'financial/transactions/manage' ||
     $page == 'projects/list' || $page == 'projects/manage' ||
-    $page == 'projects/add-person' ||
     $page == 'puantaj/list' ||
     $page == 'payroll/list' ||
     $page == 'defines/incexp/list' ||
@@ -110,12 +109,13 @@ if ($page == 'financial/transactions/list') {
     echo '<script src="./src/financial/transactions.js"></script>';
 }
 // Proje Ekleme,güncelleme ve listeleme sayfası
-if ($page == 'projects/list' || $page == 'projects/manage' || $page == 'projects/add-person') {
+if ($page == 'projects/list' || $page == 'projects/manage') {
     echo '<script src="./src/project/projects.js?v='.time().'"></script>';
     echo '<script src="./src/project/progress-payment.js"></script>';
     echo '<script src="./src/project/payment.js"></script>';
     echo '<script src="./src/project/expense.js"></script>';
     echo '<script src="./src/project/deduction.js"></script>';
+    echo '<script src="./src/project/tasks.js?v='.time().'"></script>';
 }
 // Bordro sayfası
 if ($page == 'payroll/list') {

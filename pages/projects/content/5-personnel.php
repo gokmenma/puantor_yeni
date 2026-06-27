@@ -7,7 +7,7 @@ $persons = $projectObj->getPersontoProject($firm_id, $id);
         <div class="card border-0 shadow-none">
             <div class="card-header border-0 pb-0">
                 <h3 class="card-title">Proje Personel Listesi</h3>
-                <div class="card-actions">
+                <div class="card-actions d-none">
                     <button type="button" class="btn btn-primary btn-sm" id="savePersontoProject">
                         <i class="ti ti-device-floppy icon me-2"></i> Personelleri Kaydet
                     </button>

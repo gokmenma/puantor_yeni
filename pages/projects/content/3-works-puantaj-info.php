@@ -20,6 +20,21 @@ $projectHelper = new Projects();
 //Projenin puantaj tablosundaki çalışma bilgilerini getirir
 $puantaj_info = $puantajObj->getPuantajInfoByProject($id);
 
+// Personel bazlı gruplama hesaplaması
+$grouped_puantaj_info = [];
+foreach ($puantaj_info as $item) {
+    $person_id = $item->person;
+    if (!isset($grouped_puantaj_info[$person_id])) {
+        $grouped_puantaj_info[$person_id] = [
+            'person_name' => $Persons->getPersonByField($person_id, "full_name") ?? '',
+            'total_hours' => 0.0,
+            'total_amount' => 0.0,
+        ];
+    }
+    $grouped_puantaj_info[$person_id]['total_hours'] += floatval($item->saat);
+    $grouped_puantaj_info[$person_id]['total_amount'] += floatval($item->tutar);
+}
+
 //Projenin toplam çalışan personel sayısını getirir
 $total_person = $puantajObj->getTotalWorksPersonByProject($id);
 
@@ -48,8 +63,11 @@ if (!$Auths->Authorize("person_page_puantaj_info")) {
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Proje Çalışma Bilgileri</h3>
-                    <div class="d-flex col-auto ms-auto">
-                        <a href="#" class="btn btn-icon me-2 excel" id="export_excel_puantaj_info" data-tooltip="Excele Aktar">
+                    <div class="d-flex col-auto ms-auto align-items-center">
+                        <button type="button" class="btn btn-outline-primary btn-sm me-2" id="btn_toggle_puantaj_grouping" data-grouped="false">
+                            <i class="ti ti-users icon me-1"></i> Personel Bazlı Grupla
+                        </button>
+                        <a href="#" class="btn btn-icon excel" id="export_excel_puantaj_info_custom" data-tooltip="Excele Aktar">
                             <i class="ti ti-file-excel icon"></i>
                         </a>
                     </div>
@@ -131,40 +149,61 @@ if (!$Auths->Authorize("person_page_puantaj_info")) {
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table card-table table-hover text-nowrap datatable" id="puantaj_info_table">
-                        <thead>
-                            <tr>
-                                <th style="width:7%">id</th>
-                                <th>Personel</th>
-                                <th>Puantaj Türü</th>
-                                <th>Tarih</th>
-                                <th>Saat</th>
-                                <th class="text-start">Tutar</th>
-
-                            </tr>
-                        </thead>
-                        <tbody>
-
-
-                            <?php foreach ($puantaj_info as $item):
-                                ?>
+                <div id="puantaj_detailed_wrapper">
+                    <div class="table-responsive">
+                        <table class="table card-table table-hover text-nowrap datatable" id="puantaj_info_table">
+                            <thead>
                                 <tr>
-                                    <td><?php echo $item->id ?></td>
-                                    <td><?php echo $Persons->getPersonByField($item->person,"full_name") ?? '' ?></td>
-                                    <td>
-                                        <?php
-                                        $puantaj_turu = $puantajObj->getPuantajTuruById($item->puantaj_id);
-                                        echo $puantaj_turu->PuantajKod . " - " . $puantaj_turu->PuantajAdi;
-                                        ?>
-                                    </td>
-                                    <td><?php echo Date::ymd($item->gun, "d.m.Y") ?></td>
-                                    <td class="text-start"><?php echo $item->saat ?></td>
-                                    <td class="text-start"><?php echo Helper::formattedMoney($item->tutar) ?></td>
+                                    <th style="width:7%">id</th>
+                                    <th>Personel</th>
+                                    <th>Puantaj Türü</th>
+                                    <th>Tarih</th>
+                                    <th>Saat</th>
+                                    <th class="text-start">Tutar</th>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($puantaj_info as $item): ?>
+                                    <tr>
+                                        <td><?php echo $item->id ?></td>
+                                        <td><?php echo $Persons->getPersonByField($item->person,"full_name") ?? '' ?></td>
+                                        <td>
+                                            <?php
+                                            $puantaj_turu = $puantajObj->getPuantajTuruById($item->puantaj_id);
+                                            echo $puantaj_turu->PuantajKod . " - " . $puantaj_turu->PuantajAdi;
+                                            ?>
+                                        </td>
+                                        <td><?php echo Date::ymd($item->gun, "d.m.Y") ?></td>
+                                        <td class="text-start"><?php echo $item->saat ?></td>
+                                        <td class="text-start"><?php echo Helper::formattedMoney($item->tutar) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="puantaj_grouped_wrapper" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table card-table table-hover text-nowrap datatable" id="puantaj_info_grouped_table">
+                            <thead>
+                                <tr>
+                                    <th>Personel</th>
+                                    <th>Toplam Saat</th>
+                                    <th class="text-start">Toplam Tutar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($grouped_puantaj_info as $g_item): ?>
+                                    <tr>
+                                        <td><?php echo $g_item['person_name'] ?></td>
+                                        <td><?php echo number_format($g_item['total_hours'], 2, '.', '') ?></td>
+                                        <td class="text-start"><?php echo Helper::formattedMoney($g_item['total_amount']) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>

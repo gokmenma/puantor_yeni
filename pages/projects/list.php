@@ -176,7 +176,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                          </div>
                                      </td>
                                     <td class="text-center">
-                                        <a href="#" class="btn btn-ghost-primary btn-sm show-project-personnel" data-id="<?php echo $project->id ?>" data-name="<?php echo $project->project_name ?>">
+                                        <a href="#" class="btn btn-ghost-primary btn-sm route-link" data-page="projects/manage&id=<?php echo $id ?>#tabs-personnel-3">
                                             <i class="ti ti-users icon me-1"></i>
                                             <?php echo $projectObj->getProjectPersonnelCount($project->id) ?>
                                         </a>
@@ -198,10 +198,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                                         <i class="ti ti-edit icon me-3"></i> Güncelle
                                                     </a>
                                                 <?php } ?>
-                                                <a class="dropdown-item route-link"
-                                                    data-page="projects/add-person&id=<?php echo $id ?>" href="#">
-                                                    <i class="ti ti-users-plus icon me-3"></i> Projeye Personel Ekle
-                                                </a>
+
                                                 <!-- Proje Alınan proje ise -->
                                                 <?php if ($project->type == 1) { ?>
                                                     <a class="dropdown-item add-progress-payment" href="#"
@@ -245,5 +242,4 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
 <?php include_once ROOT . '/pages/projects/modals/progress-payment-modal.php' ?>
 <?php include_once ROOT . '/pages/projects/modals/payment-modal.php' ?>
 <?php include_once ROOT . '/pages/projects/modals/expense-modal.php' ?>
-<?php include_once ROOT . '/pages/projects/modals/project-modal.php' ?>
-<?php include_once ROOT . '/pages/projects/modals/personnel-list-modal.php' ?>
+<?php include_once ROOT . '/pages/projects/modals/project-modal.php' ?>

@@ -59,7 +59,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                     </button>
                 </div>
                 <div class="col-auto ms-auto d-print-none">
-                    <button type="button" class="btn btn-primary" id="saveProject">
+                    <button type="button" class="btn btn-primary" id="saveProject" style="display: none;">
                         <i class="ti ti-device-floppy icon me-2"></i>
                         Kaydet
                     </button>
@@ -139,6 +139,14 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                             Proje Personelleri
                                         </a>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <a href="#tabs-tasks-3" class="nav-link" data-bs-toggle="tab"
+                                            aria-selected="false" tabindex="-1"
+                                            role="tab">
+                                            <i class="ti ti-clipboard-list icon me-1"></i>
+                                            İş Takibi
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                             <div class="card-body">
@@ -159,6 +167,10 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                         <?php include_once "content/5-personnel.php" ?>
 
                                     </div>
+                                    <div class="tab-pane" id="tabs-tasks-3" role="tabpanel">
+                                        <?php include_once "content/6-tasks.php" ?>
+
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -173,3 +185,4 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
 <?php include_once 'modals/payment-modal.php' ?>
 <?php include_once 'modals/progress-payment-modal.php' ?>
 <?php include_once 'modals/deduction-modal.php' ?>
+<?php include_once 'modals/task-modal.php' ?>

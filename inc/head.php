@@ -73,7 +73,7 @@
     || $page == "persons/list" || $page == "persons/manage"
     || $page == "mycompany/list" || $page == "financial/case/list"
     || $page == "financial/transactions/list" || $page == "financial/transactions/manage"
-    || $page == "projects/list" || $page == "projects/add-person" || $page == 'projects/manage'
+    || $page == "projects/list" || $page == 'projects/manage'
     || $page == "puantaj/list" || $page == "payroll/list" || $page == "defines/incexp/list"
     || $page == "missions/list" || $page == "missions/process/list" ||
     $page == 'missions/headers/manage' || $page == 'missions/headers/list' ||
