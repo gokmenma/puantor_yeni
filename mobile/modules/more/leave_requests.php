@@ -3,6 +3,8 @@
 require_once ROOT . "/App/Helper/helper.php";
 require_once ROOT . "/App/Helper/date.php";
 require_once ROOT . "/App/Helper/security.php";
+require_once ROOT . "/Model/Persons.php";
+require_once ROOT . "/Model/IzinTur.php";
 
 use App\Helper\Helper;
 use App\Helper\Date;
@@ -10,6 +12,12 @@ use App\Helper\Security;
 
 $firm_id = $_SESSION['firm_id'] ?? 0;
 $can_delete_approved = $Auths->Authorize('onayli_izinleri_sil') ? 'true' : 'false';
+
+$personsModel = new Persons();
+$turModel = new IzinTur();
+
+$personeller = $personsModel->getPersonsByFirm($firm_id);
+$turler = $turModel->getAktifTurler();
 ?>
 
 <style>
@@ -62,6 +70,9 @@ $can_delete_approved = $Auths->Authorize('onayli_izinleri_sil') ? 'true' : 'fals
             <h2 class="mb-1 text-semibold" style="letter-spacing: -0.5px;">İzin Talepleri</h2>
             <p class="text-muted text-xs mb-0">Personelden gelen yıllık ve diğer izin taleplerini yönetin.</p>
         </div>
+        <button class="btn btn-primary btn-icon rounded-circle" id="btn-yeni-talep" style="width: 42px; height: 42px; flex-shrink: 0;">
+            <i class="ti ti-plus" style="font-size: 1.25rem;"></i>
+        </button>
     </div>
 
     <!-- Filtreler -->
@@ -76,6 +87,66 @@ $can_delete_approved = $Auths->Authorize('onayli_izinleri_sil') ? 'true' : 'fals
         <!-- Talepler AJAX ile buraya yüklenecek -->
         <div class="text-center py-5">
             <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Yeni İzin Talebi Modalı -->
+<div class="modal fade" id="modalYeniTalep" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content border-0" style="border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-semibold" style="font-size: 1.1rem;">Yeni İzin Talebi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div class="mb-3">
+                    <label class="form-label text-xs text-muted">Personel</label>
+                    <select id="yeni-personel" class="form-select select2-yeni">
+                        <option value="">Seçiniz</option>
+                        <?php foreach ($personeller as $p): ?>
+                            <option value="<?php echo Security::encrypt($p->id); ?>"><?php echo htmlspecialchars($p->full_name); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-xs text-muted">İzin Türü</label>
+                    <select id="yeni-tur" class="form-select select2-yeni">
+                        <option value="">Seçiniz</option>
+                        <?php foreach ($turler as $t): ?>
+                            <option value="<?php echo $t->id; ?>"><?php echo htmlspecialchars($t->ad); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label text-xs text-muted">Başlangıç Tarihi</label>
+                        <input type="text" id="yeni-baslangic" class="form-control" placeholder="Seçiniz" readonly style="border-radius: 12px;">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-xs text-muted">Bitiş Tarihi</label>
+                        <input type="text" id="yeni-bitis" class="form-control" placeholder="Seçiniz" readonly style="border-radius: 12px;">
+                    </div>
+                </div>
+                <div class="mb-3 d-flex justify-content-between align-items-center bg-light p-2.5 rounded-3" style="font-size: 0.8rem;">
+                    <div>
+                        <span class="text-muted d-block" style="font-size: 0.72rem;">Takvim Günü:</span>
+                        <strong id="takvim-gun-sayisi-preview" class="text-dark">—</strong>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-muted d-block" style="font-size: 0.72rem;">Hakedişten Düşecek Gün:</span>
+                        <strong id="gun-sayisi-preview" class="text-azure">—</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-xs text-muted">Açıklama</label>
+                    <textarea id="yeni-aciklama" class="form-control" rows="2" placeholder="İzin gerekçesi, açıklama..." style="border-radius: 12px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex gap-2">
+                <button type="button" class="btn btn-light rounded-pill flex-fill" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" id="btn-talep-kaydet" class="btn btn-primary rounded-pill flex-fill">Talebi Oluştur</button>
+            </div>
         </div>
     </div>
 </div>
@@ -161,6 +232,21 @@ $(document).ready(function() {
         if (!d) return '—';
         const p = (d + '').split(/[-T ]/);
         return p.length >= 3 ? `${p[2]}.${p[1]}.${p[0]}` : d;
+    }
+
+    function parseTrDate(str) {
+        if (!str) return '';
+        const p = str.split('.');
+        return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : str;
+    }
+
+    function parseTr(str) {
+        if (!str) return null;
+        const parts = str.split('.');
+        if (parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        return null;
     }
 
     function renderLeaves(list) {
@@ -284,7 +370,125 @@ $(document).ready(function() {
         applyFilter($(this).data('status'));
     });
 
-    // Onayla Butonu
+    // ---------- Yeni İzin Talebi Ekleme İşlemleri ----------
+    let fpYeniBaslangic = null;
+    let fpYeniBitis = null;
+    let calcTimer = null;
+
+    // Yeni Talep Butonuna Tıklama (Modalı Açar)
+    $('#btn-yeni-talep').on('click', function() {
+        $('#yeni-personel, #yeni-tur').val('').trigger('change');
+        $('#yeni-aciklama').val('');
+        $('#gun-sayisi-preview').text('—');
+        $('#takvim-gun-sayisi-preview').text('—');
+        
+        if (fpYeniBaslangic) fpYeniBaslangic.clear();
+        if (fpYeniBitis) fpYeniBitis.clear();
+
+        // Modal'daki select2 elemanlarını modal açılırken başlat (dropdownParent sorunu olmaması için)
+        $('.select2-yeni').select2({
+            dropdownParent: $('#modalYeniTalep'),
+            width: '100%'
+        });
+
+        // flatpickr'ları başlat
+        fpYeniBaslangic = flatpickr('#yeni-baslangic', {
+            dateFormat: "d.m.Y",
+            locale: "tr",
+            disableMobile: "true",
+            onChange: function(dates) {
+                if (fpYeniBitis) {
+                    fpYeniBitis.set('minDate', dates[0] || null);
+                }
+                calcYeniGunler();
+            }
+        });
+
+        fpYeniBitis = flatpickr('#yeni-bitis', {
+            dateFormat: "d.m.Y",
+            locale: "tr",
+            disableMobile: "true",
+            onChange: calcYeniGunler
+        });
+
+        new bootstrap.Modal('#modalYeniTalep').show();
+    });
+
+    function calcYeniGunler() {
+        const b = $('#yeni-baslangic').val();
+        const s = $('#yeni-bitis').val();
+        if (!b || !s) {
+            $('#takvim-gun-sayisi-preview').text('—');
+            $('#gun-sayisi-preview').text('—');
+            return;
+        }
+
+        const d1 = parseTr(b);
+        const d2 = parseTr(s);
+        if (d1 && d2 && d2 >= d1) {
+            const diffTime = Math.abs(d2 - d1);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            $('#takvim-gun-sayisi-preview').text(diffDays + ' gün');
+        } else {
+            $('#takvim-gun-sayisi-preview').text('—');
+        }
+
+        clearTimeout(calcTimer);
+        calcTimer = setTimeout(() => {
+            $.get(API_URL, { action: 'calc_gun', baslangic: parseTrDate(b), bitis: parseTrDate(s) }, function(res) {
+                $('#gun-sayisi-preview').text(res.status === 'success' ? res.gun_sayisi + ' gün' : '—');
+            });
+        }, 400);
+    }
+
+    // Yeni Talep Kaydet Submit
+    $('#btn-talep-kaydet').on('click', function() {
+        const personelId = $('#yeni-personel').val();
+        const turId = $('#yeni-tur').val();
+        const baslangic = $('#yeni-baslangic').val();
+        const bitis = $('#yeni-bitis').val();
+        const aciklama = $('#yeni-aciklama').val();
+
+        if (!personelId || !turId || !baslangic || !bitis) {
+            Swal.fire('Hata!', 'Lütfen tüm zorunlu alanları doldurun.', 'warning');
+            return;
+        }
+
+        const data = {
+            action: 'add',
+            personel_id: personelId,
+            tur_id: turId,
+            baslangic_tarihi: parseTrDate(baslangic),
+            bitis_tarihi: parseTrDate(bitis),
+            aciklama: aciklama
+        };
+
+        $.post(API_URL, data, function(response) {
+            if (response.status === 'success') {
+                bootstrap.Modal.getInstance('#modalYeniTalep').hide();
+                Swal.fire({
+                    title: 'Başarılı!',
+                    text: response.message || 'İzin talebi başarıyla oluşturuldu.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    background: $('body').attr('data-bs-theme') === 'dark' ? '#1e293b' : '#ffffff',
+                    color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b'
+                });
+                loadLeaves();
+            } else {
+                Swal.fire({
+                    title: 'Hata!',
+                    text: response.message || 'İzin talebi oluşturulurken hata oluştu.',
+                    icon: 'error',
+                    background: $('body').attr('data-bs-theme') === 'dark' ? '#1e293b' : '#ffffff',
+                    color: $('body').attr('data-bs-theme') === 'dark' ? '#f4f6fa' : '#1d273b'
+                });
+            }
+        }, 'json');
+    });
+
+    // ---------- Onayla Butonu ----------
     $(document).on('click', '.btn-approve-action', function() {
         const id = $(this).data('id');
         Swal.fire({

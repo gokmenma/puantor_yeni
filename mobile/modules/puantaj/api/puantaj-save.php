@@ -30,6 +30,14 @@ try {
         exit();
     }
 
+    require_once ROOT . "/Model/IzinTalep.php";
+    $izinModel = new IzinTalep();
+    $onayliIzinler = $izinModel->getOnayliIzinGunleriToplu([$person_id], $date, $date);
+    if (!empty($onayliIzinler[$person_id][$date])) {
+        echo json_encode(['status' => 'error', 'message' => 'Bu tarihte onaylı bir izin talebi bulunmaktadır. Değişiklik yapılamaz.']);
+        exit();
+    }
+
     $puantajObj = new Puantaj();
     $personModel = new Persons();
     $wagesModel = new Wages();

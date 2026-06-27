@@ -7,6 +7,7 @@ require_once ROOT . "/App/Helper/security.php";
 require_once ROOT . "/Model/SettingsModel.php";
 require_once ROOT . "/App/Helper/jobs.php";
 require_once ROOT . "/App/Helper/teams.php";
+require_once ROOT . "/Model/IzinTalep.php";
 
 use App\Helper\Date;
 use App\Helper\Security;
@@ -94,6 +95,12 @@ $next_month_val = date('m', strtotime($next_month_date));
 
 // OPTİMİZASYON: Toplu veri çekme (N+1 query problemini çözer)
 $person_ids = array_map(function($p) { return $p->id; }, $persons);
+
+$izinModel = new IzinTalep();
+$onayliIzinGunleri = [];
+if (!empty($person_ids)) {
+    $onayliIzinGunleri = $izinModel->getOnayliIzinGunleriToplu($person_ids, $first_day_ymd, $last_day_ymd);
+}
 
 if ($view_mode === 'monthly') {
     $start_date = "$year-$month-01";
@@ -702,6 +709,21 @@ $months = [
                 if (!empty($current_status_id)) {
                     $current_type = $all_puantaj_types[$current_status_id] ?? null;
                 }
+
+                // Onaylı izin kontrolü
+                $has_onayli_izin = isset($onayliIzinGunleri[$person->id][$selected_date]);
+                if ($has_onayli_izin) {
+                    $izinBilgi = $onayliIzinGunleri[$person->id][$selected_date];
+                    $is_disabled = true;
+                    $disabled_project_name = 'Onaylı İzin';
+                    $current_status_id = $izinBilgi->puantaj_turu_id;
+                    $current_type = (object)[
+                        'ArkaPlanRengi' => $izinBilgi->arkaplan,
+                        'FontRengi' => $izinBilgi->font,
+                        'PuantajKod' => $izinBilgi->kod,
+                        'Turu' => $izinBilgi->turu
+                    ];
+                }
             }
         ?>
             <div class="person-item-wrapper" data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>">
@@ -1118,10 +1140,14 @@ document.addEventListener('DOMContentLoaded', function() {
     $(document).on('click', '.person-row', function(e) {
         if ($(this).attr('data-is-disabled') === 'true') {
             const disabledProjectName = $(this).attr('data-disabled-project-name') || 'Bilinmeyen Proje';
+            let alertText = `Bu personelin bu tarihteki puantajı başka bir projede (${disabledProjectName}) girilmiştir. Değiştirilemez.`;
+            if (disabledProjectName === 'Onaylı İzin') {
+                alertText = 'Bu personelin bu tarihte onaylı bir izin talebi bulunmaktadır. Değiştirilemez.';
+            }
             Swal.fire({
                 icon: 'info',
                 title: 'Puantaj Kilitli',
-                text: `Bu personelin bu tarihteki puantajı başka bir projede (${disabledProjectName}) girilmiştir. Değiştirilemez.`,
+                text: alertText,
                 confirmButtonText: 'Tamam'
             });
         } else {
@@ -1768,6 +1794,7 @@ function renderMonthlyEditCalendar(data, daysInMonth, year, month) {
         
         // Touch events for long press on mobile
         dayBox.addEventListener('touchstart', function(e) {
+            if (dayBox.getAttribute('data-is-locked') === 'true') return;
             dayLongPressTimer = setTimeout(() => {
                 if (!isMonthlyMultiSelectMode) {
                     startMonthlyMultiSelectMode(day);
@@ -1785,6 +1812,7 @@ function renderMonthlyEditCalendar(data, daysInMonth, year, month) {
         
         // Mouse events for long press on desktop
         dayBox.addEventListener('mousedown', function() {
+            if (dayBox.getAttribute('data-is-locked') === 'true') return;
             dayLongPressTimer = setTimeout(() => {
                 if (!isMonthlyMultiSelectMode) {
                     startMonthlyMultiSelectMode(day);
@@ -1802,6 +1830,15 @@ function renderMonthlyEditCalendar(data, daysInMonth, year, month) {
 
         // Click event handler
         dayBox.addEventListener('click', function() {
+            if (dayBox.getAttribute('data-is-locked') === 'true') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Puantaj Kilitli',
+                    text: 'Bu tarihte onaylı bir izin talebi bulunmaktadır. Değiştirilemez.',
+                    confirmButtonText: 'Tamam'
+                });
+                return;
+            }
             if (isMonthlyMultiSelectMode) {
                 toggleMonthlyDaySelection(day);
             } else {
@@ -1825,6 +1862,11 @@ function renderMonthlyEditCalendar(data, daysInMonth, year, month) {
                 dayNum.style.color = data[day].color;
                 dayNum.style.opacity = '0.7';
             }
+            if (data[day].is_locked) {
+                dayBox.classList.add('izin-kilitli');
+                dayBox.setAttribute('data-is-locked', 'true');
+                dayBox.style.cursor = 'not-allowed';
+            }
         } else {
             // Weekend check
             const dateObj = new Date(year, parseInt(month) - 1, day);
@@ -1844,6 +1886,9 @@ function renderMonthlyEditCalendar(data, daysInMonth, year, month) {
 }
 
 function startMonthlyMultiSelectMode(day) {
+    const cell = document.querySelector(`.calendar-day-edit[data-day="${day}"]`);
+    if (cell && cell.getAttribute('data-is-locked') === 'true') return;
+    
     isMonthlyMultiSelectMode = true;
     selectedMonthlyDays = [day];
     
@@ -1853,7 +1898,6 @@ function startMonthlyMultiSelectMode(day) {
     document.getElementById('monthlyModalBulkFooter').classList.add('d-flex');
     
     // Highlight selected cell
-    const cell = document.querySelector(`.calendar-day-edit[data-day="${day}"]`);
     if (cell) {
         cell.classList.add('selected-for-bulk');
     }
@@ -1866,8 +1910,10 @@ function startMonthlyMultiSelectMode(day) {
 }
 
 function toggleMonthlyDaySelection(day) {
-    const index = selectedMonthlyDays.indexOf(day);
     const cell = document.querySelector(`.calendar-day-edit[data-day="${day}"]`);
+    if (cell && cell.getAttribute('data-is-locked') === 'true') return;
+    
+    const index = selectedMonthlyDays.indexOf(day);
     
     if (index > -1) {
         selectedMonthlyDays.splice(index, 1);

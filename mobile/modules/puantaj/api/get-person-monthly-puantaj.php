@@ -7,6 +7,7 @@ try {
     require_once ROOT . "/Database/require.php";
     require_once ROOT . "/Model/Puantaj.php";
     require_once ROOT . "/App/Helper/security.php";
+    require_once ROOT . "/Model/IzinTalep.php";
 
     if (!isset($_SESSION['user'])) {
         echo json_encode(['status' => 'error', 'message' => 'Yetkisiz erişim']);
@@ -40,8 +41,29 @@ try {
             'id' => $row->puantaj_id,
             'code' => $type ? $type->PuantajKod : '?',
             'bg' => $type ? $type->ArkaPlanRengi : '#ccc',
-            'color' => $type ? $type->FontRengi : '#fff'
+            'color' => $type ? $type->FontRengi : '#fff',
+            'is_locked' => false
         ];
+    }
+
+    // Onaylı izinleri çek ve üzerine yazarak kilitle
+    $izinModel = new IzinTalep();
+    $onayliIzinler = $izinModel->getOnayliIzinGunleriToplu([$person_id], $start_date, $end_date);
+    $person_leaves = $onayliIzinler[$person_id] ?? [];
+
+    $days_in_month = (int)date('t', strtotime($start_date));
+    for ($d = 1; $d <= $days_in_month; $d++) {
+        $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $d);
+        if (isset($person_leaves[$dateStr])) {
+            $leaveInfo = $person_leaves[$dateStr];
+            $indexedAttendance[$d] = [
+                'id' => $leaveInfo->puantaj_turu_id,
+                'code' => $leaveInfo->kod,
+                'bg' => $leaveInfo->arkaplan,
+                'color' => $leaveInfo->font,
+                'is_locked' => true
+            ];
+        }
     }
 
     echo json_encode([
@@ -49,7 +71,7 @@ try {
         'data' => $indexedAttendance,
         'month' => $month,
         'year' => $year,
-        'days_in_month' => (int)date('t', strtotime($start_date))
+        'days_in_month' => $days_in_month
     ]);
 
 } catch (Exception $e) {

@@ -14,6 +14,7 @@ try {
     require_once ROOT . "/Model/SettingsModel.php";
     require_once ROOT . "/App/Helper/security.php";
     require_once ROOT . "/App/Helper/date.php";
+    require_once ROOT . "/Model/IzinTalep.php";
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -40,6 +41,7 @@ try {
     $personModel = new Persons();
     $wagesModel = new Wages();
     $settingsModel = new SettingsModel();
+    $izinModel = new IzinTalep();
 
     $work_hour = $settingsModel->getSettings("work_hour")->set_value ?? 8;
     $work_hour = floatval(str_replace(',', '.', $work_hour));
@@ -62,6 +64,12 @@ try {
             $project_id = intval($puantaj_item['project_id'] ?? 0);
 
             if (!$type_id) continue;
+
+            // Onaylı izin kontrolü
+            $onayliIzinler = $izinModel->getOnayliIzinGunleriToplu([$person_id], $date, $date);
+            if (!empty($onayliIzinler[$person_id][$date])) {
+                continue;
+            }
 
             $id = $puantajObj->getPuantajId($person_id, $date, $project_id);
 
