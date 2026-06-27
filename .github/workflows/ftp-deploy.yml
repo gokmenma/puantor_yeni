@@ -35,8 +35,7 @@ jobs:
             **/scratch/**
             **/uploads/**
             **/static/**
-            **/dist/**
-            cgi-bin/**
+             cgi-bin/**
             logs/**
             .well-known/**
             **/sql/**
