@@ -20,6 +20,10 @@ $jobsHelper = new Jobs();
 $teamsHelper = new Teams();
 
 $firm_id = $_SESSION['firm_id'] ?? 0;
+$view_mode = $_GET['view'] ?? 'daily'; // daily, monthly
+$month = $_GET['month'] ?? date('m');
+$year = $_GET['year'] ?? date('Y');
+
 $selected_date = $_GET['date'] ?? date('Y-m-d');
 $selected_project_id = intval($_GET['project_id'] ?? 0);
 $selected_job_group = $_GET['job_group'] ?? 0;
@@ -38,8 +42,21 @@ if ($selected_collar_type === 'all' && $showWhiteCollarSetting == 0) $showWhiteC
 
 
 // Masaüstü ile %100 aynı personelleri getirmek için ortak fonksiyonu kullanıyoruz
-$first_day_ymd = date('Ymd', strtotime($selected_date . ' -0 days'));
-$last_day_ymd = date('Ymd', strtotime(date('Y-m-t', strtotime($selected_date))));
+if ($view_mode === 'monthly') {
+    $first_day_ymd = "$year{$month}01";
+    $last_day_ymd = date('Ymd', strtotime(date('Y-m-t', strtotime("$year-$month-01"))));
+    // Set selected_date to a valid date within the month for fallback calculations
+    if (date('Y-m') === "$year-$month") {
+        $selected_date = date('Y-m-d');
+    } else {
+        $selected_date = "$year-$month-01";
+    }
+} else {
+    $month = date('m', strtotime($selected_date));
+    $year = date('Y', strtotime($selected_date));
+    $first_day_ymd = date('Ymd', strtotime($selected_date . ' -0 days'));
+    $last_day_ymd = date('Ymd', strtotime(date('Y-m-t', strtotime($selected_date))));
+}
 
 // Masaüstü listesi bu mantığı kullanır:
 $all_projects = $projectsModel->getProjectsByFirm($firm_id);
@@ -66,9 +83,26 @@ $next_date = date('Y-m-d', strtotime($selected_date . ' +1 day'));
 $today = date('Y-m-d');
 $is_today_or_future = ($selected_date >= $today);
 
+// Aylık navigasyon hesaplamaları
+$prev_month_date = date('Y-m-d', strtotime("$year-$month-01 -1 month"));
+$prev_month_year = date('Y', strtotime($prev_month_date));
+$prev_month_val = date('m', strtotime($prev_month_date));
+
+$next_month_date = date('Y-m-d', strtotime("$year-$month-01 +1 month"));
+$next_month_year = date('Y', strtotime($next_month_date));
+$next_month_val = date('m', strtotime($next_month_date));
+
 // OPTİMİZASYON: Toplu veri çekme (N+1 query problemini çözer)
 $person_ids = array_map(function($p) { return $p->id; }, $persons);
-$all_puantaj_data = $puantajModel->getAllPuantajForPersons($person_ids, $selected_date, $selected_date);
+
+if ($view_mode === 'monthly') {
+    $start_date = "$year-$month-01";
+    $end_date = date("Y-m-t", strtotime($start_date));
+    $all_puantaj_data = $puantajModel->getAllPuantajForPersons($person_ids, $start_date, $end_date);
+} else {
+    $all_puantaj_data = $puantajModel->getAllPuantajForPersons($person_ids, $selected_date, $selected_date);
+}
+
 $all_puantaj_types = $puantajModel->getAllPuantajTurleri();
 $date_nodash_global = str_replace('-', '', $selected_date);
 
@@ -77,6 +111,12 @@ $project_names_indexed = [];
 foreach ($all_projects as $proj) {
     $project_names_indexed[$proj->id] = $proj->project_name;
 }
+
+$months = [
+    '01' => 'Ocak', '02' => 'Şubat', '03' => 'Mart', '04' => 'Nisan',
+    '05' => 'Mayıs', '06' => 'Haziran', '07' => 'Temmuz', '08' => 'Ağustos',
+    '09' => 'Eylül', '10' => 'Ekim', '11' => 'Kasım', '12' => 'Aralık'
+];
 ?>
 
 <style>
@@ -365,6 +405,112 @@ foreach ($all_projects as $proj) {
         border-color: rgba(255,255,255,0.1);
         border-top-color: var(--mobile-primary);
     }
+
+    /* Aylık Düzenleme Takvimi Stilleri */
+    .calendar-day-edit {
+        aspect-ratio: 1.1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: #f8fafc;
+        border: 1.5px solid rgba(0,0,0,0.03);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 2px;
+    }
+    .calendar-day-edit .day-num {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 1px;
+    }
+    .calendar-day-edit .day-code {
+        font-size: 0.72rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .calendar-day-edit.empty {
+        background: transparent;
+        border: none;
+        pointer-events: none;
+    }
+    .calendar-day-edit.active-day {
+        border-color: var(--mobile-primary) !important;
+        box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.2);
+        transform: scale(1.05);
+        z-index: 5;
+    }
+    body[data-bs-theme="dark"] .calendar-day-edit {
+        background: #1e293b;
+        border-color: rgba(255,255,255,0.05);
+    }
+    body[data-bs-theme="dark"] .calendar-day-edit .day-num {
+        color: #94a3b8;
+    }
+    body[data-bs-theme="dark"] .calendar-day-edit.active-day {
+        border-color: var(--mobile-primary) !important;
+        box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.4);
+    }
+
+    /* Aylık Modal içi seçim stilleri */
+    .m-type-option-row {
+        border-color: #f1f5f9 !important;
+        background-color: #f8fafc;
+    }
+    .m-type-option-row:hover {
+        background-color: #f1f5f9;
+        border-color: #cbd5e1 !important;
+    }
+    .m-type-option-row.selected {
+        background-color: rgba(32, 107, 196, 0.08);
+        border-color: var(--mobile-primary) !important;
+    }
+    .m-type-option-row.selected .m-select-check-icon {
+        display: block !important;
+    }
+    body[data-bs-theme="dark"] .m-type-option-row {
+        border-color: var(--mobile-card-border-dark) !important;
+        background-color: #1e293b;
+    }
+    body[data-bs-theme="dark"] .m-type-option-row:hover {
+        background-color: #243049;
+    }
+    body[data-bs-theme="dark"] .m-type-option-row.selected {
+        background-color: rgba(32, 107, 196, 0.15);
+        border-color: var(--mobile-primary) !important;
+    }
+
+    /* Floating View Switcher Button styles */
+    .fab-switch-view {
+        box-shadow: 0 8px 16px rgba(32, 107, 196, 0.25) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .fab-switch-view:active {
+        transform: scale(0.9) translateY(2px);
+        box-shadow: 0 4px 8px rgba(32, 107, 196, 0.15) !important;
+    }
+    body.selection-active .fab-switch-view {
+        transform: translateY(-60px); /* shift up when selection mode is active to avoid overlapping bar */
+    }
+    
+    /* Calendar day selected for bulk assignment style */
+    .calendar-day-edit.selected-for-bulk {
+        border: 2px solid var(--mobile-primary) !important;
+        background-color: rgba(32, 107, 196, 0.12) !important;
+        position: relative;
+    }
+    .calendar-day-edit.selected-for-bulk::after {
+        content: '\eab5'; /* Checkmark icon using Tabler font */
+        font-family: 'tabler-icons' !important;
+        position: absolute;
+        bottom: 2px;
+        right: 4px;
+        font-size: 0.62rem;
+        font-weight: bold;
+        color: var(--mobile-primary);
+    }
 </style>
 
 <div class="container px-0">
@@ -372,15 +518,33 @@ foreach ($all_projects as $proj) {
         <?php 
         $base_params = $_GET;
         unset($base_params['date']);
+        unset($base_params['view']);
+        unset($base_params['month']);
+        unset($base_params['year']);
         $query_str = http_build_query($base_params);
         $prev_url = "puantaj?date=$prev_date" . ($query_str ? "&$query_str" : "");
         $next_url = "puantaj?date=$next_date" . ($query_str ? "&$query_str" : "");
         $today_url = "puantaj?date=" . date('Y-m-d') . ($query_str ? "&$query_str" : "");
         $yesterday_url = "puantaj?date=" . date('Y-m-d', strtotime('-1 day')) . ($query_str ? "&$query_str" : "");
         ?>
-        <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex align-items-center justify-content-between mb-2 px-2">
             <h2 class="mb-0 text-semibold" style="letter-spacing: -0.5px;">Hızlı Puantaj</h2>
-                <div class="d-flex align-items-center gap-2">
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <?php if ($view_mode === 'daily'): ?>
+                <!-- Günlük Görünüm Navigasyon & Butonları -->
+                <div class="d-flex gap-2 overflow-auto pb-1 no-scrollbar flex-grow-1" style="max-width: calc(100% - 150px);">
+                    <button class="btn btn-sm btn-pill <?php echo $selected_date == date('Y-m-d') ? 'btn-primary' : 'btn-outline-primary'; ?>" 
+                            onclick="location.href='<?php echo $today_url; ?>'">Bugün</button>
+                    <button class="btn btn-sm btn-pill <?php echo $selected_date == date('Y-m-d', strtotime('-1 day')) ? 'btn-primary' : 'btn-outline-primary'; ?>"
+                            onclick="location.href='<?php echo $yesterday_url; ?>'">Dün</button>
+                    <button class="btn btn-sm btn-pill btn-outline-secondary" onclick="openBulkPuantajModal()">Tümünü işaretle</button>
+                    <button class="btn btn-sm btn-icon <?php echo $isFiltered ? 'btn-primary' : 'btn-outline-secondary'; ?> rounded-pill" data-bs-toggle="modal" data-bs-target="#filterModal" style="width: 32px; height: 32px; min-height: auto !important; flex-shrink: 0;">
+                        <i class="ti ti-filter fs-3"></i>
+                    </button>
+                </div>
+                <div class="d-flex align-items-center gap-1 flex-shrink-0">
                     <a href="<?php echo $prev_url; ?>" class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0" style="width: 34px; height: 34px; min-height: auto !important; display: flex; align-items: center; justify-content: center;" title="Önceki Gün">
                         <i class="ti ti-chevron-left fs-3"></i>
                     </a>
@@ -400,16 +564,40 @@ foreach ($all_projects as $proj) {
                         </button>
                     <?php endif; ?>
                 </div>
-        </div>
-        <div class="d-flex gap-2 overflow-auto pb-2 no-scrollbar">
-            <button class="btn btn-sm btn-pill <?php echo $selected_date == date('Y-m-d') ? 'btn-primary' : 'btn-outline-primary'; ?>" 
-                    onclick="location.href='<?php echo $today_url; ?>'">Bugün</button>
-            <button class="btn btn-sm btn-pill <?php echo $selected_date == date('Y-m-d', strtotime('-1 day')) ? 'btn-primary' : 'btn-outline-primary'; ?>"
-                    onclick="location.href='<?php echo $yesterday_url; ?>'">Dün</button>
-            <button class="btn btn-sm btn-pill btn-outline-secondary" onclick="openBulkPuantajModal()">Tümünü işaretle</button>
-            <button class="btn btn-sm btn-icon <?php echo $isFiltered ? 'btn-primary' : 'btn-outline-secondary'; ?> rounded-pill" data-bs-toggle="modal" data-bs-target="#filterModal" style="width: 32px; height: 32px; min-height: auto !important;">
-                <i class="ti ti-filter fs-3"></i>
-            </button>
+            <?php else: ?>
+                <!-- Aylık Görünüm Navigasyon & Butonları -->
+                <div class="d-flex align-items-center justify-content-between w-100 px-2">
+                    <div>
+                        <button class="btn btn-sm btn-icon <?php echo $isFiltered ? 'btn-primary' : 'btn-outline-secondary'; ?> rounded-pill" data-bs-toggle="modal" data-bs-target="#filterModal" style="width: 32px; height: 32px; min-height: auto !important;">
+                            <i class="ti ti-filter fs-3"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <?php 
+                        $prev_month_url = "puantaj?view=monthly&month=$prev_month_val&year=$prev_month_year" . ($query_str ? "&$query_str" : "");
+                        $next_month_url = "puantaj?view=monthly&month=$next_month_val&year=$next_month_year" . ($query_str ? "&$query_str" : "");
+                        ?>
+                        <a href="<?php echo $prev_month_url; ?>" class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0" style="width: 34px; height: 34px; min-height: auto !important; display: flex; align-items: center; justify-content: center;" title="Önceki Ay">
+                            <i class="ti ti-chevron-left fs-3"></i>
+                        </a>
+                        <div class="d-flex gap-1">
+                            <select id="monthSelector" class="form-select form-select-sm border-0 bg-secondary-lt text-bold text-center" style="width: 110px; height: 34px; border-radius: 10px; font-size: 0.82rem; color: #1d273b !important; padding: 0 8px; min-height: auto !important;">
+                                <?php foreach ($months as $m => $name): ?>
+                                    <option value="<?php echo $m; ?>" <?php echo $m == $month ? 'selected' : ''; ?>><?php echo $name; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <select id="yearSelector" class="form-select form-select-sm border-0 bg-secondary-lt text-bold text-center" style="width: 80px; height: 34px; border-radius: 10px; font-size: 0.82rem; color: #1d273b !important; padding: 0 8px; min-height: auto !important;">
+                                <?php for ($y = date('Y') - 5; $y <= date('Y') + 2; $y++): ?>
+                                    <option value="<?php echo $y; ?>" <?php echo $y == $year ? 'selected' : ''; ?>><?php echo $y; ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                        <a href="<?php echo $next_month_url; ?>" class="btn btn-icon bg-secondary-lt border-0 text-secondary rounded-3 p-0" style="width: 34px; height: 34px; min-height: auto !important; display: flex; align-items: center; justify-content: center;" title="Sonraki Ay">
+                            <i class="ti ti-chevron-right fs-3"></i>
+                        </a>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
         
     </div>
@@ -455,32 +643,70 @@ foreach ($all_projects as $proj) {
             $date_dash = $selected_date; // 2026-05-08
             $date_nodash = str_replace('-', '', $selected_date); // 20260508
             
-            // TOPLU VERİDEN ÇEK (Eski N+1 metodları yerine)
-            $person_puantaj = $all_puantaj_data[$person->id][$date_nodash] ?? null;
-            
-            $current_status_id = $person_puantaj->puantaj_id ?? '';
-            $puantaj_project_id = $person_puantaj->project_id ?? 0;
+            $stats = [];
+            if ($view_mode === 'monthly') {
+                if (isset($all_puantaj_data[$person->id])) {
+                    foreach ($all_puantaj_data[$person->id] as $p_row) {
+                        $type = $all_puantaj_types[$p_row->puantaj_id] ?? null;
+                        if ($type) {
+                            $cat = $type->Turu;
+                            $color = $type->ArkaPlanRengi;
+                            $textColor = $type->FontRengi;
+                            
+                            // Kısaltma oluştur (Normal Çalışma -> NÇ)
+                            $words = explode(' ', $cat);
+                            $short = '';
+                            foreach($words as $w) {
+                                if (!empty($w)) $short .= mb_substr($w, 0, 1, 'UTF-8');
+                            }
+                            
+                            if (!isset($stats[$cat])) {
+                                $stats[$cat] = (object)[
+                                    'count' => 0,
+                                    'short' => $short,
+                                    'color' => $color,
+                                    'textColor' => $textColor
+                                ];
+                            }
+                            $stats[$cat]->count++;
+                        }
+                    }
+                }
+                
+                // Önem sırasına göre sırala
+                uksort($stats, function($a, $b) {
+                    if ($a == 'Normal Çalışma') return -1;
+                    if ($b == 'Normal Çalışma') return 1;
+                    return strcmp($a, $b);
+                });
+            } else {
+                // TOPLU VERİDEN ÇEK (Eski N+1 metodları yerine)
+                $person_puantaj = $all_puantaj_data[$person->id][$date_nodash] ?? null;
+                
+                $current_status_id = $person_puantaj->puantaj_id ?? '';
+                $puantaj_project_id = $person_puantaj->project_id ?? 0;
 
-            // Hafta sonu (Pazar) HT otomatik gösterme (Sadece hiç kayıt yoksa)
-            if (empty($current_status_id) && Date::isWeekend($selected_date)) {
-                $current_status_id = 53; // HT ID
-            }
-            
-            $is_disabled = false;
-            $disabled_project_name = '';
-            if ($selected_project_id > 0 && $puantaj_project_id > 0 && $puantaj_project_id != $selected_project_id) {
-                $is_disabled = true;
-                $disabled_project_name = $project_names_indexed[$puantaj_project_id] ?? 'Bilinmeyen Proje';
-            }
+                // Hafta sonu (Pazar) HT otomatik gösterme (Sadece hiç kayıt yoksa)
+                if (empty($current_status_id) && Date::isWeekend($selected_date)) {
+                    $current_status_id = 53; // HT ID
+                }
+                
+                $is_disabled = false;
+                $disabled_project_name = '';
+                if ($selected_project_id > 0 && $puantaj_project_id > 0 && $puantaj_project_id != $selected_project_id) {
+                    $is_disabled = true;
+                    $disabled_project_name = $project_names_indexed[$puantaj_project_id] ?? 'Bilinmeyen Proje';
+                }
 
-            $current_type = null;
-            if (!empty($current_status_id)) {
-                $current_type = $all_puantaj_types[$current_status_id] ?? null;
+                $current_type = null;
+                if (!empty($current_status_id)) {
+                    $current_type = $all_puantaj_types[$current_status_id] ?? null;
+                }
             }
         ?>
             <div class="person-item-wrapper" data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>">
                 <div class="person-item-actions">
-                    <button class="btn-swipe-clear" onclick="clearPuantaj('<?php echo $person->id; ?>', '<?php echo htmlspecialchars($person->full_name); ?>')" <?php echo $is_disabled ? 'disabled style="opacity: 0.5;"' : ''; ?>>
+                    <button class="btn-swipe-clear" onclick="clearPuantaj('<?php echo $person->id; ?>', '<?php echo htmlspecialchars($person->full_name); ?>')" <?php echo ($view_mode === 'daily' && $is_disabled) ? 'disabled style="opacity: 0.5;"' : ''; ?>>
                         <i class="ti ti-rotate-clockwise-2"></i>
                         <span>Temizle</span>
                     </button>
@@ -492,11 +718,11 @@ foreach ($all_projects as $proj) {
                          data-person-id="<?php echo $person->id; ?>" 
                          data-person-key="<?php echo Security::encrypt($person->id); ?>"
                          data-person-name="<?php echo htmlspecialchars($person->full_name); ?>"
-                         data-current-type-id="<?php echo $current_status_id; ?>"
+                         data-current-type-id="<?php echo ($view_mode === 'daily') ? $current_status_id : ''; ?>"
                          data-name="<?php echo mb_strtolower($person->full_name, 'UTF-8'); ?>"
-                         data-is-disabled="<?php echo $is_disabled ? 'true' : 'false'; ?>"
-                         data-disabled-project-name="<?php echo htmlspecialchars($disabled_project_name); ?>"
-                         style="gap: 12px; border-radius: 0; border: none; <?php echo $is_disabled ? 'opacity: 0.7; background-color: rgba(241, 245, 249, 0.4); pointer-events: auto;' : ''; ?>">
+                         data-is-disabled="<?php echo ($view_mode === 'daily' && $is_disabled) ? 'true' : 'false'; ?>"
+                         data-disabled-project-name="<?php echo ($view_mode === 'daily') ? htmlspecialchars($disabled_project_name) : ''; ?>"
+                         style="gap: 12px; border-radius: 0; border: none; <?php echo ($view_mode === 'daily' && $is_disabled) ? 'opacity: 0.7; background-color: rgba(241, 245, 249, 0.4); pointer-events: auto;' : ''; ?>">
                         <div class="d-flex align-items-center gap-2">
                             <div class="selection-indicator d-none">
                                 <input class="form-check-input m-0" type="checkbox" style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1; pointer-events: none;">
@@ -510,11 +736,11 @@ foreach ($all_projects as $proj) {
                                 <?php echo htmlspecialchars($person->full_name); ?>
                             </div>
                             <div class="text-muted" style="font-size: 0.72rem; opacity: 0.7; font-weight: 500; margin-top: 2px;">
-                                <?php if ($is_disabled): ?>
+                                <?php if ($view_mode === 'daily' && $is_disabled): ?>
                                     <span class="text-danger" style="font-weight: 600;"><i class="ti ti-lock me-1"></i><?php echo htmlspecialchars($disabled_project_name); ?> (Kilitli)</span>
                                 <?php else: ?>
                                     <?php 
-                                    if ($puantaj_project_id > 0 && $selected_project_id == 0) {
+                                    if ($view_mode === 'daily' && $puantaj_project_id > 0 && $selected_project_id == 0) {
                                         $proj_name = $project_names_indexed[$puantaj_project_id] ?? 'Bilinmeyen Proje';
                                         echo '<span class="text-primary" style="font-weight: 600;"><i class="ti ti-subtask me-1"></i>' . htmlspecialchars($proj_name) . '</span>';
                                     } else {
@@ -525,17 +751,40 @@ foreach ($all_projects as $proj) {
                             </div>
                         </div>
                         
-                        <!-- Sağ Taraf: Minimal Badge -->
+                        <!-- Sağ Taraf: Minimal Badge (Günlük) veya İstatistikler (Aylık) -->
                         <div style="flex-shrink: 0;">
-                            <?php if ($current_type): ?>
-                                <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle font-weight-bold" 
-                                     style="background-color: <?php echo htmlspecialchars($current_type->ArkaPlanRengi); ?>; color: <?php echo htmlspecialchars($current_type->FontRengi); ?>; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-transform: uppercase; border: 1.5px solid rgba(255,255,255,0.2);">
-                                    <?php echo htmlspecialchars($current_type->PuantajKod); ?>
-                                </div>
+                            <?php if ($view_mode === 'daily'): ?>
+                                <?php if ($current_type): ?>
+                                    <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle font-weight-bold" 
+                                         style="background-color: <?php echo htmlspecialchars($current_type->ArkaPlanRengi); ?>; color: <?php echo htmlspecialchars($current_type->FontRengi); ?>; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-transform: uppercase; border: 1.5px solid rgba(255,255,255,0.2);">
+                                        <?php echo htmlspecialchars($current_type->PuantajKod); ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle" 
+                                         style="background-color: #f8fafc; color: #94a3b8; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; border: 1px dashed #e2e8f0; text-transform: uppercase;">
+                                        -
+                                    </div>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <div id="status-badge-<?php echo $person->id; ?>" class="avatar avatar-sm rounded-circle" 
-                                     style="background-color: #f8fafc; color: #94a3b8; width: 36px; height: 36px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; border: 1px dashed #e2e8f0; text-transform: uppercase;">
-                                    -
+                                <div class="d-flex gap-1 flex-wrap justify-content-end align-items-center" style="max-width: 150px;" id="monthly-stats-<?php echo $person->id; ?>">
+                                  <?php 
+                                  $limit = 3;
+                                  $i = 0;
+                                  foreach ($stats as $catName => $stat): 
+                                      if ($i >= $limit) break;
+                                      if ($stat->count == 0) continue;
+                                  ?>
+                                    <div class="text-center px-1.5 py-0.5 rounded" style="min-width: 28px; background-color: <?php echo $stat->color; ?>15; border: 1px solid <?php echo $stat->color; ?>30;">
+                                      <div class="text-bold mb-0" style="font-size: 0.72rem; color: <?php echo $stat->color; ?>; line-height: 1.1;"><?php echo $stat->count; ?></div>
+                                      <div style="font-size: 7px; color: <?php echo $stat->color; ?>; font-weight: 800; opacity: 0.8; line-height: 1.1;"><?php echo $stat->short; ?></div>
+                                    </div>
+                                  <?php 
+                                    $i++;
+                                  endforeach; 
+                                  if (empty($stats)):
+                                  ?>
+                                    <span class="text-muted text-xs" style="font-size: 0.75rem;">Giriş yok</span>
+                                  <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -545,6 +794,17 @@ foreach ($all_projects as $proj) {
         <?php endforeach; ?>
     </div>
 </div>
+
+<!-- Floating View Mode Switcher -->
+<?php if ($view_mode === 'daily'): ?>
+    <a href="puantaj?view=monthly<?php echo $query_str ? "&$query_str" : ""; ?>" class="fab-switch-view btn btn-primary btn-icon rounded-circle shadow-lg" style="position: fixed; bottom: 75px; right: 20px; width: 52px; height: 52px; z-index: 1040; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.2);" title="Aylık Görünüm">
+        <i class="ti ti-calendar-stats" style="font-size: 1.55rem;"></i>
+    </a>
+<?php else: ?>
+    <a href="puantaj?view=daily<?php echo $query_str ? "&$query_str" : ""; ?>" class="fab-switch-view btn btn-primary btn-icon rounded-circle shadow-lg" style="position: fixed; bottom: 75px; right: 20px; width: 52px; height: 52px; z-index: 1040; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.2);" title="Günlük Görünüm">
+        <i class="ti ti-calendar-event" style="font-size: 1.55rem;"></i>
+    </a>
+<?php endif; ?>
 
 <!-- Toplu İşlem Barı -->
 <div id="bulkActionBar" class="fixed-bottom bg-white shadow-lg p-3 d-none" style="border-radius: 24px 24px 0 0; z-index: 1050; border-top: 1px solid rgba(0,0,0,0.05);">
@@ -568,7 +828,7 @@ foreach ($all_projects as $proj) {
             <div class="modal-header border-0 pb-0">
                 <div>
                     <h5 class="modal-title font-weight-bold text-dark mb-1" id="modalPersonName" style="font-size: 1.15rem;">Personel Adı</h5>
-                    <p class="text-muted text-xs mb-0" style="font-weight: 500;">
+                    <p class="text-muted text-xs mb-0" id="puantajModalDateSubtitle" style="font-weight: 500;">
                         <i class="ti ti-calendar me-1"></i><?php echo date('d.m.Y', strtotime($selected_date)); ?> Tarihli Puantaj Girişi
                     </p>
                 </div>
@@ -650,8 +910,9 @@ foreach ($all_projects as $proj) {
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0 d-flex justify-content-start">
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-between w-100">
                 <button type="button" class="btn btn-link text-muted px-0 text-decoration-none text-xs font-weight-bold" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-outline-danger btn-sm d-none" id="btnMonthlyModalClearDay" style="border-radius: 10px; font-weight: 600; font-size: 0.75rem;" onclick="clearActiveCalendarDay()">Temizle</button>
             </div>
         </div>
     </div>
@@ -733,6 +994,41 @@ foreach ($all_projects as $proj) {
     </div>
 </div>
 
+<!-- Aylık İnteraktif Takvim Düzenleme Modalı -->
+<div class="modal modal-blur fade" id="monthlyPuantajModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 20px; border: none;">
+            <div class="modal-header border-0 pb-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="modal-title font-weight-bold" id="monthlyModalTitle">Aylık Puantaj</h5>
+                    <p class="text-muted text-xs mb-0" id="monthlyModalSubtitle" style="font-weight: 500;">
+                        Personel takvimi düzenleniyor
+                    </p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body py-3 pb-1">
+                <!-- Takvim Grid'i -->
+                <div id="monthlyCalendarGrid" class="d-grid mb-1" style="grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                    <!-- Gün başlıkları ve günler JS ile doldurulacak -->
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-between align-items-center w-100">
+                <div id="monthlyModalNormalFooter" class="w-100 d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-link text-muted px-0 text-decoration-none text-xs font-weight-bold" data-bs-dismiss="modal">Kapat</button>
+                    <small class="text-muted" style="font-size: 0.68rem; font-weight: 500; opacity: 0.85;">Seçmek için günlere dokunun. Çoklu seçim için basılı tutun.</small>
+                </div>
+                <div id="monthlyModalBulkFooter" class="w-100 d-none justify-content-between align-items-center">
+                    <span class="text-bold text-dark text-xs" id="monthlySelectedDaysCount" style="font-weight: 600;">0 gün seçildi</span>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-xs btn-outline-secondary" onclick="cancelMonthlyDaySelection()" style="border-radius: 8px; font-weight: 600; font-size: 0.72rem; padding: 4px 10px;">Vazgeç</button>
+                        <button type="button" class="btn btn-xs btn-primary shadow-sm" onclick="openMonthlyBulkTypeSelector()" style="border-radius: 8px; font-weight: 600; font-size: 0.72rem; padding: 4px 10px;">Toplu Ata</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 // jQuery'nin $ olarak tanımlandığından emin olalım
@@ -742,7 +1038,33 @@ if (typeof $ === 'undefined' && typeof jQuery !== 'undefined') {
 
 document.addEventListener('DOMContentLoaded', function() {
     // Move modals to body to prevent backdrop stacking context issues on iOS/mobile
-    $('#puantajModal, #filterModal').appendTo('body');
+    $('#puantajModal, #filterModal, #monthlyPuantajModal').appendTo('body');
+
+    // Re-open monthly calendar modal when daily type selector is closed
+    document.getElementById('puantajModal').addEventListener('hidden.bs.modal', function () {
+        if (isMonthlyCalendarMode) {
+            const monthlyModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('monthlyPuantajModal'));
+            monthlyModal.show();
+            isMonthlyCalendarMode = false;
+        }
+    });
+
+    // Month/Year Selector change handler
+    const monthSelector = document.getElementById('monthSelector');
+    const yearSelector = document.getElementById('yearSelector');
+    if (monthSelector && yearSelector) {
+        const handleMonthYearChange = function() {
+            const m = monthSelector.value;
+            const y = yearSelector.value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', 'monthly');
+            url.searchParams.set('month', m);
+            url.searchParams.set('year', y);
+            location.href = url.toString();
+        };
+        monthSelector.addEventListener('change', handleMonthYearChange);
+        yearSelector.addEventListener('change', handleMonthYearChange);
+    }
 
     // Search Filtering
     const searchInput = document.getElementById('puantajSearchInput');
@@ -822,8 +1144,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Manual fallback if bootstrap class fails or fails to initialize
             const target = $(this).attr('data-bs-target') || $(this).attr('href');
             if (target) {
-                $('#v-pills-tab .nav-link').removeClass('active').attr('aria-selected', 'false');
-                $('#v-pills-tabContent .tab-pane').removeClass('show active');
+                const parentTabContainer = $(this).closest('.nav-pills');
+                const targetContentContainer = $(target).closest('.tab-content');
+                
+                parentTabContainer.find('.nav-link').removeClass('active').attr('aria-selected', 'false');
+                targetContentContainer.find('.tab-pane').removeClass('show active');
                 
                 $(this).addClass('active').attr('aria-selected', 'true');
                 $(target).addClass('show active');
@@ -996,13 +1321,19 @@ function handleRowClick(element) {
     if (isSelectionMode) {
         togglePersonSelection($(element));
     } else {
-        openPuantajModal(element);
+        const viewMode = '<?php echo $view_mode; ?>';
+        if (viewMode === 'monthly') {
+            openMonthlyEditModal(element);
+        } else {
+            openPuantajModal(element);
+        }
     }
 }
 
 function startSelectionMode($row) {
     isSelectionMode = true;
     document.getElementById('bulkActionBar').classList.remove('d-none');
+    document.body.classList.add('selection-active');
     togglePersonSelection($row);
     
     if (window.navigator && window.navigator.vibrate) {
@@ -1041,6 +1372,7 @@ function cancelSelection() {
     $('.person-row').removeClass('selected');
     $('.form-check-input').prop('checked', false);
     document.getElementById('bulkActionBar').classList.add('d-none');
+    document.body.classList.remove('selection-active');
 }
 
 function openBulkPuantajModal(fromSelection = false) {
@@ -1130,10 +1462,18 @@ function selectTypeOption(element) {
     currentSelectedTypeId = element.getAttribute('data-type-id');
     
     // Seçim yapınca direkt atama yapsın!
-    if (isBulkMode) {
-        saveBulkPuantaj(element);
+    if (isMonthlyCalendarMode) {
+        if (isMonthlyBulkMode) {
+            saveMonthlyBulkPuantaj(element);
+        } else {
+            saveMonthlySingleDayPuantaj(element);
+        }
     } else {
-        saveSelectedPuantaj(element);
+        if (isBulkMode) {
+            saveBulkPuantaj(element);
+        } else {
+            saveSelectedPuantaj(element);
+        }
     }
 }
 
@@ -1347,4 +1687,575 @@ document.getElementById('filterModal').addEventListener('show.bs.modal', functio
         });
     }
 });
+
+let activeMonthlyPersonId = null;
+let activeMonthlyPersonKey = null;
+let activeMonthlyPersonName = null;
+let activeMonthlyDay = null;
+let monthlyDaysInMonth = 0;
+let monthlyYear = '<?php echo $year; ?>';
+let monthlyMonth = '<?php echo $month; ?>';
+let monthlyAttendanceData = {};
+let dayLongPressTimer = null;
+let isMonthlyMultiSelectMode = false;
+let selectedMonthlyDays = [];
+let isMonthlyCalendarMode = false;
+let isMonthlyBulkMode = false;
+
+function openMonthlyEditModal(element) {
+    activeMonthlyPersonId = element.getAttribute('data-person-id');
+    activeMonthlyPersonKey = element.getAttribute('data-person-key');
+    activeMonthlyPersonName = element.getAttribute('data-person-name');
+    
+    document.getElementById('monthlyModalTitle').innerText = activeMonthlyPersonName;
+    const monthNames = <?php echo json_encode($months); ?>;
+    const monthName = monthNames[monthlyMonth] || '';
+    document.getElementById('monthlyModalSubtitle').innerText = `${monthName} ${monthlyYear} Dönemi Puantaj Girişi`;
+    
+    const grid = document.getElementById('monthlyCalendarGrid');
+    grid.innerHTML = '<div class="text-center py-4 w-100" style="grid-column: span 7;"><div class="spinner-border text-primary" role="status"></div></div>';
+    
+    cancelMonthlyDaySelection();
+    
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('monthlyPuantajModal'));
+    modal.show();
+
+    // Fetch monthly data
+    fetch(`modules/puantaj/api/get-person-monthly-puantaj.php?person_id=${activeMonthlyPersonId}&month=${monthlyMonth}&year=${monthlyYear}`)
+        .then(response => response.json())
+        .then(res => {
+            if (res.status === 'success') {
+                monthlyAttendanceData = res.data;
+                monthlyDaysInMonth = res.days_in_month;
+                renderMonthlyEditCalendar(res.data, res.days_in_month, monthlyYear, monthlyMonth);
+            } else {
+                grid.innerHTML = `<div class="alert alert-danger" style="grid-column: span 7;">${res.message}</div>`;
+            }
+        })
+        .catch(err => {
+            grid.innerHTML = '<div class="alert alert-danger" style="grid-column: span 7;">Veriler alınırken bağlantı hatası oluştu.</div>';
+        });
+}
+
+function renderMonthlyEditCalendar(data, daysInMonth, year, month) {
+    const grid = document.getElementById('monthlyCalendarGrid');
+    grid.innerHTML = '';
+    
+    // Day headers
+    const dayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    dayNames.forEach(name => {
+        const h = document.createElement('div');
+        h.className = 'text-center text-xs font-weight-bold text-muted pb-1';
+        h.innerText = name;
+        grid.appendChild(h);
+    });
+
+    // Offset spaces
+    const firstDay = new Date(year, parseInt(month) - 1, 1).getDay();
+    const startOffset = (firstDay === 0 ? 6 : firstDay - 1);
+
+    for (let i = 0; i < startOffset; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'calendar-day-edit empty';
+        grid.appendChild(empty);
+    }
+
+    // Days
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayBox = document.createElement('div');
+        dayBox.className = 'calendar-day-edit';
+        dayBox.setAttribute('data-day', day);
+        
+        // Touch events for long press on mobile
+        dayBox.addEventListener('touchstart', function(e) {
+            dayLongPressTimer = setTimeout(() => {
+                if (!isMonthlyMultiSelectMode) {
+                    startMonthlyMultiSelectMode(day);
+                }
+            }, 600);
+        }, { passive: true });
+        
+        dayBox.addEventListener('touchend', function() {
+            clearTimeout(dayLongPressTimer);
+        }, { passive: true });
+        
+        dayBox.addEventListener('touchmove', function() {
+            clearTimeout(dayLongPressTimer);
+        }, { passive: true });
+        
+        // Mouse events for long press on desktop
+        dayBox.addEventListener('mousedown', function() {
+            dayLongPressTimer = setTimeout(() => {
+                if (!isMonthlyMultiSelectMode) {
+                    startMonthlyMultiSelectMode(day);
+                }
+            }, 600);
+        });
+        
+        dayBox.addEventListener('mouseup', function() {
+            clearTimeout(dayLongPressTimer);
+        });
+        
+        dayBox.addEventListener('mouseleave', function() {
+            clearTimeout(dayLongPressTimer);
+        });
+
+        // Click event handler
+        dayBox.addEventListener('click', function() {
+            if (isMonthlyMultiSelectMode) {
+                toggleMonthlyDaySelection(day);
+            } else {
+                handleMonthlyDayClick(day);
+            }
+        });
+        
+        const dayNum = document.createElement('span');
+        dayNum.className = 'day-num';
+        dayNum.innerText = day;
+        dayBox.appendChild(dayNum);
+        
+        const dayCode = document.createElement('span');
+        dayCode.className = 'day-code';
+        
+        if (data[day]) {
+            dayCode.innerText = data[day].code;
+            dayBox.style.backgroundColor = data[day].bg;
+            dayCode.style.color = data[day].color;
+            if (data[day].bg !== '#f8fafc' && data[day].bg !== 'transparent') {
+                dayNum.style.color = data[day].color;
+                dayNum.style.opacity = '0.7';
+            }
+        } else {
+            // Weekend check
+            const dateObj = new Date(year, parseInt(month) - 1, day);
+            const dNum = dateObj.getDay();
+            const isWeekend = (dNum === 6 || dNum === 0);
+            
+            dayCode.innerText = isWeekend ? 'HT' : '-';
+            dayCode.style.color = isWeekend ? '#d97706' : '#94a3b8';
+            if (isWeekend) {
+                dayBox.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+            }
+        }
+        
+        dayBox.appendChild(dayCode);
+        grid.appendChild(dayBox);
+    }
+}
+
+function startMonthlyMultiSelectMode(day) {
+    isMonthlyMultiSelectMode = true;
+    selectedMonthlyDays = [day];
+    
+    // Update footer UI
+    document.getElementById('monthlyModalNormalFooter').classList.add('d-none');
+    document.getElementById('monthlyModalBulkFooter').classList.remove('d-none');
+    document.getElementById('monthlyModalBulkFooter').classList.add('d-flex');
+    
+    // Highlight selected cell
+    const cell = document.querySelector(`.calendar-day-edit[data-day="${day}"]`);
+    if (cell) {
+        cell.classList.add('selected-for-bulk');
+    }
+    
+    updateMonthlySelectedDaysCount();
+    
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+    }
+}
+
+function toggleMonthlyDaySelection(day) {
+    const index = selectedMonthlyDays.indexOf(day);
+    const cell = document.querySelector(`.calendar-day-edit[data-day="${day}"]`);
+    
+    if (index > -1) {
+        selectedMonthlyDays.splice(index, 1);
+        if (cell) cell.classList.remove('selected-for-bulk');
+    } else {
+        selectedMonthlyDays.push(day);
+        if (cell) cell.classList.add('selected-for-bulk');
+    }
+    
+    updateMonthlySelectedDaysCount();
+    
+    if (selectedMonthlyDays.length === 0) {
+        cancelMonthlyDaySelection();
+    }
+}
+
+function updateMonthlySelectedDaysCount() {
+    document.getElementById('monthlySelectedDaysCount').innerText = `${selectedMonthlyDays.length} gün seçildi`;
+}
+
+function cancelMonthlyDaySelection() {
+    isMonthlyMultiSelectMode = false;
+    selectedMonthlyDays = [];
+    
+    document.querySelectorAll('.calendar-day-edit').forEach(el => {
+        el.classList.remove('selected-for-bulk');
+    });
+    
+    const normalFooter = document.getElementById('monthlyModalNormalFooter');
+    const bulkFooter = document.getElementById('monthlyModalBulkFooter');
+    if (normalFooter && bulkFooter) {
+        bulkFooter.classList.add('d-none');
+        bulkFooter.classList.remove('d-flex');
+        normalFooter.classList.remove('d-none');
+    }
+}
+
+function handleMonthlyDayClick(day) {
+    activeMonthlyDay = day;
+    isMonthlyCalendarMode = true;
+    isMonthlyBulkMode = false;
+    
+    // Format date string for Turkish locale display
+    const dateObj = new Date(monthlyYear, parseInt(monthlyMonth) - 1, day);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateStrTR = dateObj.toLocaleDateString('tr-TR', options);
+    
+    // Set daily modal header details
+    document.getElementById('modalPersonName').innerText = activeMonthlyPersonName;
+    document.getElementById('puantajModalDateSubtitle').innerHTML = `<i class="ti ti-calendar me-1"></i>${dateStrTR} Tarihli Puantaj Girişi`;
+    
+    // Show 'Temizle' button in daily modal footer
+    $('#btnMonthlyModalClearDay').removeClass('d-none');
+    
+    // Pre-select current day's type in the modal if it exists
+    const dayData = monthlyAttendanceData[day];
+    const currentTypeId = (dayData && dayData.id) ? dayData.id : null;
+    currentSelectedTypeId = currentTypeId;
+    currentSelectedPersonId = activeMonthlyPersonId;
+    currentSelectedPersonKey = activeMonthlyPersonKey;
+    isBulkMode = false;
+    
+    document.querySelectorAll('.type-option-row').forEach(row => {
+        row.classList.remove('selected');
+    });
+    
+    if (currentTypeId) {
+        const activeOption = document.querySelector(`.type-option-row[data-type-id="${currentTypeId}"]`);
+        if (activeOption) {
+            activeOption.classList.add('selected');
+            const tabPane = activeOption.closest('.tab-pane');
+            if (tabPane) {
+                const tabButtonId = tabPane.getAttribute('aria-labelledby');
+                if (tabButtonId) {
+                    const tabButton = document.getElementById(tabButtonId);
+                    if (tabButton) {
+                        bootstrap.Tab.getOrCreateInstance(tabButton).show();
+                    }
+                }
+            }
+        }
+    } else {
+        // Default to Normal Çalışma tab
+        const tabButtons = Array.from(document.querySelectorAll('#v-pills-tab button'));
+        const normalTabButton = tabButtons.find(btn => btn.innerText.trim() === 'Normal Çalışma');
+        if (normalTabButton) {
+            bootstrap.Tab.getOrCreateInstance(normalTabButton).show();
+        } else if (tabButtons.length > 0) {
+            bootstrap.Tab.getOrCreateInstance(tabButtons[0]).show();
+        }
+    }
+    
+    // Hide monthly modal first to prevent backdrop z-index issues
+    const monthlyModal = bootstrap.Modal.getInstance(document.getElementById('monthlyPuantajModal'));
+    if (monthlyModal) monthlyModal.hide();
+    
+    // Open the daily modal puantajModal
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('puantajModal'));
+    modal.show();
+}
+
+function openMonthlyBulkTypeSelector() {
+    isMonthlyCalendarMode = true;
+    isMonthlyBulkMode = true;
+    isBulkMode = true;
+    
+    currentSelectedPersonId = activeMonthlyPersonId;
+    currentSelectedPersonKey = activeMonthlyPersonKey;
+    currentSelectedTypeId = null;
+    
+    document.getElementById('modalPersonName').innerText = `${activeMonthlyPersonName} - Toplu İşlem`;
+    document.getElementById('puantajModalDateSubtitle').innerHTML = `<i class="ti ti-calendar me-1"></i>Seçili ${selectedMonthlyDays.length} Gün İçin Puantaj Girişi`;
+    
+    // Hide 'Temizle' button since we are bulk assigning
+    $('#btnMonthlyModalClearDay').addClass('d-none');
+    
+    document.querySelectorAll('.type-option-row').forEach(row => {
+        row.classList.remove('selected');
+    });
+    
+    const tabButtons = Array.from(document.querySelectorAll('#v-pills-tab button'));
+    const normalTabButton = tabButtons.find(btn => btn.innerText.trim() === 'Normal Çalışma');
+    if (normalTabButton) {
+        bootstrap.Tab.getOrCreateInstance(normalTabButton).show();
+    } else if (tabButtons.length > 0) {
+        bootstrap.Tab.getOrCreateInstance(tabButtons[0]).show();
+    }
+    
+    // Hide monthly modal first
+    const monthlyModal2 = bootstrap.Modal.getInstance(document.getElementById('monthlyPuantajModal'));
+    if (monthlyModal2) monthlyModal2.hide();
+    
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('puantajModal'));
+    modal.show();
+}
+
+function saveMonthlySingleDayPuantaj(selectedOption) {
+    const typeId = selectedOption.getAttribute('data-type-id');
+    const typeCode = selectedOption.getAttribute('data-type-code');
+    const typeLabel = selectedOption.getAttribute('data-type-label');
+    const typeColor = selectedOption.getAttribute('data-type-color');
+    const typeTextColor = selectedOption.getAttribute('data-type-text-color');
+    
+    const dateStr = `${monthlyYear}-${monthlyMonth}-${String(activeMonthlyDay).padStart(2, '0')}`;
+    
+    const activeBox = document.querySelector(`.calendar-day-edit[data-day="${activeMonthlyDay}"]`);
+    const originalContent = activeBox ? activeBox.innerHTML : '';
+    if (activeBox) {
+        activeBox.innerHTML = '<div class="loading-spinner-inner" style="width: 14px; height: 14px;"></div>';
+    }
+    
+    const modalEl = document.getElementById('puantajModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    
+    jQuery.ajax({
+        url: 'modules/puantaj/api/puantaj-save.php',
+        method: 'POST',
+        data: {
+            person_id: activeMonthlyPersonId,
+            date: dateStr,
+            type_id: typeId,
+            project_id: <?php echo (int)$selected_project_id; ?>
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success') {
+                // Update local monthly data
+                monthlyAttendanceData[activeMonthlyDay] = {
+                    id: typeId,
+                    code: typeCode,
+                    bg: typeColor,
+                    color: typeTextColor
+                };
+                
+                // Update dayBox UI
+                if (activeBox) {
+                    activeBox.innerHTML = `<span class="day-num" style="color: ${typeTextColor}; opacity: 0.7;">${activeMonthlyDay}</span><span class="day-code" style="color: ${typeTextColor};">${typeCode}</span>`;
+                    activeBox.style.backgroundColor = typeColor;
+                }
+                
+                // Update background personnel statistics summary immediately
+                updateBackgroundPersonStats(activeMonthlyPersonId);
+            } else {
+                if (activeBox) activeBox.innerHTML = originalContent;
+                Swal.fire('Hata', response.message, 'error');
+            }
+        },
+        error: function(xhr) {
+            if (activeBox) activeBox.innerHTML = originalContent;
+            Swal.fire('Hata', 'Kayıt sırasında bağlantı hatası oluştu.', 'error');
+        }
+    });
+}
+
+function saveMonthlyBulkPuantaj(selectedOption) {
+    const typeId = selectedOption.getAttribute('data-type-id');
+    const typeCode = selectedOption.getAttribute('data-type-code');
+    const typeLabel = selectedOption.getAttribute('data-type-label');
+    const typeColor = selectedOption.getAttribute('data-type-color');
+    const typeTextColor = selectedOption.getAttribute('data-type-text-color');
+    
+    const modalEl = document.getElementById('puantajModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+
+    // Prepare payload
+    const payload = {};
+    payload[activeMonthlyPersonKey] = {};
+    
+    selectedMonthlyDays.forEach(day => {
+        const dateStr = `${monthlyYear}-${monthlyMonth}-${String(day).padStart(2, '0')}`;
+        payload[activeMonthlyPersonKey][dateStr] = {
+            puantajId: typeId,
+            project_id: <?php echo (int)$selected_project_id; ?>
+        };
+        
+        // Show spinner on dayBoxes
+        const activeBox = document.querySelector(`.calendar-day-edit[data-day="${day}"]`);
+        if (activeBox) {
+            activeBox.innerHTML = '<div class="loading-spinner-inner" style="width: 14px; height: 14px;"></div>';
+        }
+    });
+    
+    jQuery.ajax({
+        url: 'modules/puantaj/api/puantaj-bulk-save.php',
+        method: 'POST',
+        data: {
+            action: 'savePuantaj',
+            data: JSON.stringify(payload)
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success' || response.status === 'info') {
+                selectedMonthlyDays.forEach(day => {
+                    // Update local monthly data
+                    monthlyAttendanceData[day] = {
+                        id: typeId,
+                        code: typeCode,
+                        bg: typeColor,
+                        color: typeTextColor
+                    };
+                    
+                    // Update dayBox UI
+                    const activeBox = document.querySelector(`.calendar-day-edit[data-day="${day}"]`);
+                    if (activeBox) {
+                        activeBox.innerHTML = `<span class="day-num" style="color: ${typeTextColor}; opacity: 0.7;">${day}</span><span class="day-code" style="color: ${typeTextColor};">${typeCode}</span>`;
+                        activeBox.style.backgroundColor = typeColor;
+                    }
+                });
+                
+                // Clear selection
+                cancelMonthlyDaySelection();
+                
+                // Update background personnel statistics summary immediately
+                updateBackgroundPersonStats(activeMonthlyPersonId);
+            } else {
+                Swal.fire('Hata', response.message, 'error');
+                // Re-fetch monthly data to restore calendar
+                openMonthlyEditModal({
+                    getAttribute: (attr) => {
+                        if (attr === 'data-person-id') return activeMonthlyPersonId;
+                        if (attr === 'data-person-key') return activeMonthlyPersonKey;
+                        if (attr === 'data-person-name') return activeMonthlyPersonName;
+                    }
+                });
+            }
+        },
+        error: function(xhr) {
+            Swal.fire('Hata', 'Toplu kayıt sırasında bağlantı hatası oluştu.', 'error');
+        }
+    });
+}
+
+function clearActiveCalendarDay() {
+    if (!activeMonthlyPersonId || !activeMonthlyDay) return;
+    
+    const dateStr = `${monthlyYear}-${monthlyMonth}-${String(activeMonthlyDay).padStart(2, '0')}`;
+    const activeBox = document.querySelector(`.calendar-day-edit[data-day="${activeMonthlyDay}"]`);
+    const originalContent = activeBox ? activeBox.innerHTML : '';
+    if (activeBox) {
+        activeBox.innerHTML = '<div class="loading-spinner-inner" style="width: 14px; height: 14px;"></div>';
+    }
+    
+    const modalEl = document.getElementById('puantajModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    
+    jQuery.ajax({
+        url: 'modules/puantaj/api/puantaj-delete.php',
+        method: 'POST',
+        data: {
+            person_id: activeMonthlyPersonId,
+            date: dateStr,
+            project_id: <?php echo (int)($selected_project_id ?: -1); ?>
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success' || response.status === 'info') {
+                // Clear local monthly data
+                delete monthlyAttendanceData[activeMonthlyDay];
+                
+                // Reset dayBox UI (checking weekend for default HT)
+                const dateObj = new Date(monthlyYear, parseInt(monthlyMonth) - 1, activeMonthlyDay);
+                const dNum = dateObj.getDay();
+                const isWeekend = (dNum === 6 || dNum === 0);
+                
+                const codeText = isWeekend ? 'HT' : '-';
+                const codeColor = isWeekend ? '#d97706' : '#94a3b8';
+                
+                if (activeBox) {
+                    activeBox.innerHTML = `<span class="day-num">${activeMonthlyDay}</span><span class="day-code" style="color: ${codeColor};">${codeText}</span>`;
+                    activeBox.style.backgroundColor = isWeekend ? 'rgba(245, 158, 11, 0.1)' : '';
+                }
+                
+                // Update background personnel statistics summary immediately
+                updateBackgroundPersonStats(activeMonthlyPersonId);
+            } else {
+                if (activeBox) activeBox.innerHTML = originalContent;
+                Swal.fire('Hata', response.message, 'error');
+            }
+        },
+        error: function() {
+            if (activeBox) activeBox.innerHTML = originalContent;
+            Swal.fire('Hata', 'Silme sırasında bağlantı hatası oluştu.', 'error');
+        }
+    });
+}
+
+function updateBackgroundPersonStats(personId) {
+    const statsContainer = document.getElementById(`monthly-stats-${personId}`);
+    if (!statsContainer) return;
+    
+    // We can count types directly from our monthlyAttendanceData
+    const counts = {};
+    const allTypes = <?php echo json_encode($all_puantaj_types); ?>;
+    
+    for (let day in monthlyAttendanceData) {
+        const item = monthlyAttendanceData[day];
+        if (item && item.id) {
+            const type = allTypes[item.id];
+            if (type) {
+                const cat = type.Turu;
+                const color = type.ArkaPlanRengi;
+                const textColor = type.FontRengi;
+                
+                // Abbreviation (Normal Çalışma -> NÇ)
+                const words = cat.split(' ');
+                let short = '';
+                words.forEach(w => { if(w) short += w.substring(0, 1); });
+                
+                if (!counts[cat]) {
+                    counts[cat] = {
+                        count: 0,
+                        short: short,
+                        color: color
+                    };
+                }
+                counts[cat].count++;
+            }
+        }
+    }
+    
+    // Render back HTML
+    let html = '';
+    const sortedCats = Object.keys(counts).sort((a, b) => {
+        if (a === 'Normal Çalışma') return -1;
+        if (b === 'Normal Çalışma') return 1;
+        return a.localeCompare(b);
+    });
+    
+    let limit = 3;
+    let i = 0;
+    sortedCats.forEach(catName => {
+        const stat = counts[catName];
+        if (i < limit && stat.count > 0) {
+            html += `<div class="text-center px-1.5 py-0.5 rounded" style="min-width: 28px; background-color: ${stat.color}15; border: 1px solid ${stat.color}30;">
+              <div class="text-bold mb-0" style="font-size: 0.72rem; color: ${stat.color}; line-height: 1.1;">${stat.count}</div>
+              <div style="font-size: 7px; color: ${stat.color}; font-weight: 800; opacity: 0.8; line-height: 1.1;">${stat.short}</div>
+            </div>`;
+            i++;
+        }
+    });
+    
+    if (html === '') {
+        html = '<span class="text-muted text-xs" style="font-size: 0.75rem;">Giriş yok</span>';
+    }
+    
+    statsContainer.innerHTML = html;
+}
 </script>
