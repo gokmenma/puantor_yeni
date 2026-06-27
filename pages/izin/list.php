@@ -152,8 +152,14 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                     </div>
                 </div>
                 <div class="mt-2 mb-3 p-2 bg-light rounded">
-                    <span class="text-muted small">İş günü sayısı: </span>
-                    <strong id="gun-sayisi-preview" class="text-success">—</strong>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Kullanılacak İzin Günü:</span>
+                        <strong id="takvim-gun-sayisi-preview" class="text-secondary">—</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Düşülecek İzin Günü (İş Günü):</span>
+                        <strong id="gun-sayisi-preview" class="text-success">—</strong>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Açıklama <span class="text-muted small">(opsiyonel)</span></label>
@@ -422,7 +428,30 @@ $(document).ready(function() {
     function calcGun() {
         const b = $('#yeni-baslangic').val();
         const s = $('#yeni-bitis').val();
-        if (!b || !s) { $('#gun-sayisi-preview').text('—'); return; }
+        if (!b || !s) { 
+            $('#gun-sayisi-preview').text('—'); 
+            $('#takvim-gun-sayisi-preview').text('—'); 
+            return; 
+        }
+
+        const parseTr = (str) => {
+            const parts = str.split('.');
+            if (parts.length === 3) {
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            return null;
+        };
+
+        const d1 = parseTr(b);
+        const d2 = parseTr(s);
+        if (d1 && d2 && d2 >= d1) {
+            const diffTime = Math.abs(d2 - d1);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            $('#takvim-gun-sayisi-preview').text(diffDays + ' gün');
+        } else {
+            $('#takvim-gun-sayisi-preview').text('—');
+        }
+
         clearTimeout(calcTimer);
         calcTimer = setTimeout(() => {
             $.get(IZIN_API, { action: 'calc_gun', baslangic: parseTrDate(b), bitis: parseTrDate(s) }, function(res) {
@@ -436,6 +465,7 @@ $(document).ready(function() {
         $('#yeni-personel, #yeni-tur').val(null).trigger('change');
         $('#yeni-aciklama').val('');
         $('#gun-sayisi-preview').text('—');
+        $('#takvim-gun-sayisi-preview').text('—');
         if (fpBaslangic) fpBaslangic.clear();
         if (fpBitis) fpBitis.clear();
         new bootstrap.Modal('#modalYeniTalep').show();

@@ -2,18 +2,18 @@
   "name": "Puantor Personel",
   "short_name": "Personel",
   "description": "Puantor Personel PWA Uygulaması",
-  "start_url": "/index.html",
+  "start_url": "index.php",
   "display": "standalone",
   "background_color": "#f6f8fb",
   "theme_color": "#206bc4",
   "icons": [
     {
-      "src": "/static/Logo-ai.svg",
+      "src": "resources/Logo-ai.svg",
       "sizes": "192x192",
       "type": "image/svg+xml"
     },
     {
-      "src": "/static/Logo-ai.svg",
+      "src": "resources/Logo-ai.svg",
       "sizes": "512x512",
       "type": "image/svg+xml"
     }

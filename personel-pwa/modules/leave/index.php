@@ -106,9 +106,15 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
                         <input type="date" id="leave-bitis" class="form-control">
                     </div>
                 </div>
-                <div class="mb-3 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
-                    <span class="text-muted small">İş günü sayısı:</span>
-                    <strong id="leave-gun-preview" class="text-info">—</strong>
+                <div class="mb-3 p-3 bg-light rounded-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Kullanılacak İzin Günü:</span>
+                        <strong id="leave-takvim-gun-preview" class="text-secondary">—</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Düşülecek İzin Günü (İş Günü):</span>
+                        <strong id="leave-gun-preview" class="text-info">—</strong>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Açıklama <span class="text-muted fw-normal">(opsiyonel)</span></label>
@@ -249,7 +255,7 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
                 if (res.status !== 'success') return;
                 const sel = document.getElementById('leave-tur');
                 sel.innerHTML = '<option value="">Seçiniz</option>' +
-                    res.list.map(t => `<option value="${t.id}">${t.ad}</option>`).join('');
+                    res.list.map(t => `<option value="${t.id}" data-kod="${t.kod}">${t.ad}</option>`).join('');
                 if (callback) callback();
             });
     }
@@ -273,7 +279,19 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
         const b = document.getElementById('leave-baslangic').value;
         const s = document.getElementById('leave-bitis').value;
         const el = document.getElementById('leave-gun-preview');
-        if (!b || !s || s < b) { el.textContent = '—'; return; }
+        const elTakvim = document.getElementById('leave-takvim-gun-preview');
+        if (!b || !s || s < b) { 
+            el.textContent = '—'; 
+            elTakvim.textContent = '—'; 
+            return; 
+        }
+
+        const date1 = new Date(b);
+        const date2 = new Date(s);
+        const diffTime = Math.abs(date2 - date1);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        elTakvim.textContent = diffDays + ' gün';
+
         clearTimeout(calcTimer);
         calcTimer = setTimeout(() => {
             fetch(`${LEAVE_API}?action=calc_gun&baslangic=${b}&bitis=${s}`)
@@ -344,11 +362,12 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
             document.getElementById('leave-bitis').value = tomorrowStr;
             document.getElementById('leave-aciklama').value = '';
             document.getElementById('leave-gun-preview').textContent = '—';
+            document.getElementById('leave-takvim-gun-preview').textContent = '—';
             
             loadTurler(function() {
                 const select = document.getElementById('leave-tur');
                 for (let i = 0; i < select.options.length; i++) {
-                    if (select.options[i].text.toLowerCase().includes('yıllık izin')) {
+                    if (select.options[i].getAttribute('data-kod') === 'yillik') {
                         select.selectedIndex = i;
                         break;
                     }

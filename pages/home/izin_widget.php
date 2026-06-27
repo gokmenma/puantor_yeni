@@ -32,7 +32,7 @@ $yaklasan_hakedisler = $izinHakedisModel->getYaklasanHakedisler($firm_id);
 
             <!-- İstatistik rozetleri -->
             <div class="d-flex gap-2 flex-wrap p-3 border-bottom">
-                <a href="?p=izin/list&durum=beklemede" class="badge bg-warning-lt text-warning-fg border border-warning-subtle text-decoration-none px-3 py-2">
+                <a href="?p=izin/list&durum=beklemede" class="badge bg-warning-lt text-warning border border-warning-subtle text-decoration-none px-3 py-2">
                     <i class="ti ti-clock me-1"></i> <?= $bekleyen_sayi ?> Bekleyen Talep
                 </a>
                 <span class="badge bg-blue-lt px-3 py-2">
