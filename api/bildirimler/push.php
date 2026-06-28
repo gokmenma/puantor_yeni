@@ -7,7 +7,8 @@ ini_set('display_errors', 0);
 if (!defined('ROOT')) define('ROOT', dirname(__DIR__, 2));
 
 require_once ROOT . '/Database/db.php';
-require_once ROOT . '/vendor/autoload.php';
+if (file_exists(ROOT . '/vendor/autoload.php')) require_once ROOT . '/vendor/autoload.php';
+require_once ROOT . '/Service/WebPushSender.php';
 require_once ROOT . '/Service/PushBildirimService.php';
 require_once ROOT . '/Model/Persons.php';
 require_once ROOT . '/Model/Auths.php';

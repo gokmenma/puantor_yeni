@@ -2,13 +2,9 @@
 
 namespace Service;
 
-use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Subscription;
-
 class PushBildirimService
 {
     private \PDO $db;
-    private WebPush $webPush;
 
     public function __construct(\PDO $db)
     {
@@ -17,15 +13,6 @@ class PushBildirimService
         if (!defined('VAPID_PUBLIC_KEY')) {
             require_once dirname(__DIR__) . '/configs/push_config.php';
         }
-
-        $this->webPush = new WebPush([
-            'VAPID' => [
-                'subject'    => VAPID_SUBJECT,
-                'publicKey'  => VAPID_PUBLIC_KEY,
-                'privateKey' => VAPID_PRIVATE_KEY,
-            ],
-        ]);
-        $this->webPush->setDefaultOptions(['TTL' => 2419200]);
     }
 
     public function yoneticilereGonder(int $firma_id, string $baslik, string $icerik, array $ekVeri = []): void
@@ -58,19 +45,31 @@ class PushBildirimService
 
     private function gonder(array $subscriptions, string $baslik, string $icerik, array $ekVeri = []): void
     {
-        if (empty($subscriptions)) {
-            return;
-        }
+        if (empty($subscriptions)) return;
 
-        $payload = json_encode([
-            'title' => $baslik,
-            'body'  => $icerik,
-            'data'  => $ekVeri,
-        ], JSON_UNESCAPED_UNICODE);
+        $payload = json_encode(['title' => $baslik, 'body' => $icerik, 'data' => $ekVeri], JSON_UNESCAPED_UNICODE);
+
+        if (class_exists('\Minishlink\WebPush\WebPush')) {
+            $this->gonderMinishlink($subscriptions, $payload);
+        } else {
+            $this->gonderNative($subscriptions, $payload);
+        }
+    }
+
+    private function gonderMinishlink(array $subscriptions, string $payload): void
+    {
+        $webPush = new \Minishlink\WebPush\WebPush([
+            'VAPID' => [
+                'subject'    => VAPID_SUBJECT,
+                'publicKey'  => VAPID_PUBLIC_KEY,
+                'privateKey' => VAPID_PRIVATE_KEY,
+            ],
+        ]);
+        $webPush->setDefaultOptions(['TTL' => 2419200]);
 
         foreach ($subscriptions as $sub) {
-            $this->webPush->queueNotification(
-                Subscription::create([
+            $webPush->queueNotification(
+                \Minishlink\WebPush\Subscription::create([
                     'endpoint' => $sub->endpoint,
                     'keys'     => ['p256dh' => $sub->p256dh, 'auth' => $sub->auth],
                 ]),
@@ -78,9 +77,24 @@ class PushBildirimService
             );
         }
 
-        foreach ($this->webPush->flush() as $report) {
+        foreach ($webPush->flush() as $report) {
             if (!$report->isSuccess()) {
                 $this->temizleGecersizEndpoint($report->getEndpoint());
+            }
+        }
+    }
+
+    private function gonderNative(array $subscriptions, string $payload): void
+    {
+        $sender = new WebPushSender(VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT);
+
+        foreach ($subscriptions as $sub) {
+            try {
+                if (!$sender->send($sub->endpoint, $sub->p256dh, $sub->auth, $payload)) {
+                    $this->temizleGecersizEndpoint($sub->endpoint);
+                }
+            } catch (\Throwable $e) {
+                $this->temizleGecersizEndpoint($sub->endpoint);
             }
         }
     }
