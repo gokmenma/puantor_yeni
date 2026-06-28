@@ -1,4 +1,4 @@
-const CACHE_NAME = 'puantor-v2';
+const CACHE_NAME = 'puantor-v3';
 const ASSETS_TO_CACHE = [
   'index.php',
   'manifest.json',
@@ -54,10 +54,16 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const relUrl = event.notification.data?.url || '';
+  const targetUrl = relUrl ? (self.registration.scope + relUrl) : self.registration.scope;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      if (list.length > 0) return list[0].focus();
-      return clients.openWindow('./');
+      for (const client of list) {
+        if (client.url.startsWith(self.registration.scope) && 'navigate' in client) {
+          return client.navigate(targetUrl).then(() => client.focus());
+        }
+      }
+      return clients.openWindow(targetUrl);
     })
   );
 });

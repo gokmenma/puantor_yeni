@@ -397,7 +397,7 @@ $(document).ready(function () {
         e.preventDefault();
         const icerik = $('#duyuruIcerik').summernote('code').trim();
         if (!icerik || $('#duyuruIcerik').summernote('isEmpty')) {
-            alert('İçerik boş olamaz.');
+            Swal.fire('Hata', 'İçerik boş olamaz.', 'error');
             return;
         }
         $('#formIcerik').val(icerik);
@@ -413,13 +413,24 @@ $(document).ready(function () {
             .then(res => {
                 if (res.success) {
                     bootstrap.Modal.getInstance(document.getElementById('duyuruModal')).hide();
-                    location.reload();
+                    Swal.fire({
+                        title: 'Başarılı',
+                        text: isEdit ? 'Duyuru güncellendi.' : 'Duyuru eklendi.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert(res.message || 'Bir hata oluştu.');
+                    Swal.fire('Hata', res.message || 'Bir hata oluştu.', 'error');
                     btn.prop('disabled', false);
                 }
             })
-            .catch(() => { alert('Sunucu hatası.'); btn.prop('disabled', false); });
+            .catch(() => { 
+                Swal.fire('Hata', 'Sunucu hatası.', 'error');
+                btn.prop('disabled', false);
+            });
     });
 
     // ── Detay ──
@@ -486,9 +497,33 @@ $(document).ready(function () {
 
     // ── Sil ──
     $(document).on('click', '.btn-sil', function () {
-        if (!confirm('Bu duyuruyu silmek istediğinize emin misiniz?')) return;
         const encId = $(this).data('id');
-        apiPost('sil', { id: encId }, () => location.reload(), msg => alert(msg || 'Silme başarısız.'));
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu duyuruyu silmek istediğinize emin misiniz?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'Vazgeç'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                apiPost('sil', { id: encId }, () => {
+                    Swal.fire({
+                        title: 'Silindi!',
+                        text: 'Duyuru başarıyla silindi.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                }, msg => {
+                    Swal.fire('Hata', msg || 'Silme başarısız.', 'error');
+                });
+            }
+        });
     });
 
     function apiPost(action, params, onSuccess, onError) {

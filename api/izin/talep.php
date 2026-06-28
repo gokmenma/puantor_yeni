@@ -14,6 +14,9 @@ try {
     require_once ROOT . '/App/Helper/security.php';
     require_once ROOT . '/Model/IzinTalep.php';
     require_once ROOT . '/Model/IzinTur.php';
+    if (file_exists(ROOT . '/vendor/autoload.php')) require_once ROOT . '/vendor/autoload.php';
+    require_once ROOT . '/Service/WebPushSender.php';
+    require_once ROOT . '/Service/PushBildirimService.php';
 
     $Auths = new Auths();
     if (!isset($_SESSION['user'])) {
@@ -82,6 +85,16 @@ try {
 
         $sonuc = $model->onayla($id, $user_id);
 
+        if ($sonuc['success']) {
+            try {
+                $mesaj_onay = "İzin talebiniz onaylandı ({$talep->baslangic_tarihi} - {$talep->bitis_tarihi}).";
+                $pushService = new \Service\PushBildirimService($db);
+                $pushService->personeleGonder((int) $talep->personel_id, $firma_id, 'İzin Talebiniz Onaylandı', $mesaj_onay, []);
+                require_once ROOT . '/Model/PersonelBildirimModel.php';
+                (new PersonelBildirimModel($db))->kaydet((int) $talep->personel_id, $firma_id, 'İzin Talebiniz Onaylandı', $mesaj_onay, 'leave');
+            } catch (\Throwable $pe) {}
+        }
+
         ob_clean();
         echo json_encode(array_merge(['status' => $sonuc['success'] ? 'success' : 'error'], $sonuc), JSON_UNESCAPED_UNICODE);
         exit;
@@ -97,6 +110,16 @@ try {
 
         $sonuc = $model->kismiOnayla($id, $user_id, $yeni_bitis);
 
+        if ($sonuc['success']) {
+            try {
+                $mesaj_kismi = "İzin talebiniz kısmi onaylandı ({$talep->baslangic_tarihi} - {$yeni_bitis}).";
+                $pushService = new \Service\PushBildirimService($db);
+                $pushService->personeleGonder((int) $talep->personel_id, $firma_id, 'İzin Talebiniz Kısmi Onaylandı', $mesaj_kismi, []);
+                require_once ROOT . '/Model/PersonelBildirimModel.php';
+                (new PersonelBildirimModel($db))->kaydet((int) $talep->personel_id, $firma_id, 'İzin Talebiniz Kısmi Onaylandı', $mesaj_kismi, 'leave');
+            } catch (\Throwable $pe) {}
+        }
+
         ob_clean();
         echo json_encode(array_merge(['status' => $sonuc['success'] ? 'success' : 'error'], $sonuc), JSON_UNESCAPED_UNICODE);
         exit;
@@ -111,6 +134,16 @@ try {
         if (!$talep || (int) $talep->firma_id !== $firma_id) throw new Exception('Talep bulunamadı.');
 
         $sonuc = $model->reddet($id, $user_id, $not);
+
+        if ($sonuc['success']) {
+            try {
+                $mesaj_red = "İzin talebiniz reddedildi ({$talep->baslangic_tarihi} - {$talep->bitis_tarihi}).";
+                $pushService = new \Service\PushBildirimService($db);
+                $pushService->personeleGonder((int) $talep->personel_id, $firma_id, 'İzin Talebiniz Reddedildi', $mesaj_red, []);
+                require_once ROOT . '/Model/PersonelBildirimModel.php';
+                (new PersonelBildirimModel($db))->kaydet((int) $talep->personel_id, $firma_id, 'İzin Talebiniz Reddedildi', $mesaj_red, 'leave');
+            } catch (\Throwable $pe) {}
+        }
 
         ob_clean();
         echo json_encode(array_merge(['status' => $sonuc['success'] ? 'success' : 'error'], $sonuc), JSON_UNESCAPED_UNICODE);

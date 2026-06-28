@@ -66,6 +66,7 @@ window.app = {
 
         if (this.user) {
             this.initPushNotifications();
+            this.loadNotificationCount();
         }
     },
 
@@ -989,6 +990,149 @@ window.app = {
                 Swal.fire('Hata', 'Hata oluştu.', 'error');
             }
         });
+    },
+
+    async loadNotificationCount() {
+        if (!this.user) return;
+        try {
+            const res = await fetch('api/notifications.php?action=unread_count');
+            const data = await res.json();
+            if (data.status === 'success') this._updateNotifBadge(data.count);
+        } catch (e) {}
+    },
+
+    _updateNotifBadge(count) {
+        const badge = document.getElementById('notif-badge');
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.remove('d-none');
+        } else {
+            badge.classList.add('d-none');
+        }
+    },
+
+    toggleNotificationSheet() {
+        const sheet = document.getElementById('notif-sheet');
+        if (!sheet) return;
+        if (sheet.classList.contains('active')) {
+            this.closeNotificationSheet();
+        } else {
+            sheet.classList.add('active');
+            document.getElementById('notif-overlay')?.classList.add('active');
+            this.loadNotifications();
+        }
+    },
+
+    closeNotificationSheet() {
+        document.getElementById('notif-sheet')?.classList.remove('active');
+        document.getElementById('notif-overlay')?.classList.remove('active');
+    },
+
+    async loadNotifications() {
+        const list = document.getElementById('notif-list');
+        if (!list) return;
+        list.innerHTML = '<div class="notif-empty"><i class="ti ti-loader-2 ti-spin d-block fs-1 mb-2"></i>Yükleniyor...</div>';
+        try {
+            const res = await fetch('api/notifications.php?action=list');
+            const data = await res.json();
+            if (data.status === 'success') {
+                this._renderNotifications(data.list);
+            } else {
+                list.innerHTML = '<div class="notif-empty">Yüklenemedi.</div>';
+            }
+        } catch (e) {
+            list.innerHTML = '<div class="notif-empty">Yüklenemedi.</div>';
+        }
+    },
+
+    _renderNotifications(items) {
+        const list = document.getElementById('notif-list');
+        if (!items || items.length === 0) {
+            list.innerHTML = '<div class="notif-empty"><i class="ti ti-bell-off d-block fs-1 mb-2"></i>Henüz bildirim yok</div>';
+            return;
+        }
+        list.innerHTML = items.map(n => `
+            <div class="notif-item${n.okundu == 0 ? ' unread' : ''}" data-id="${n.id}">
+                <div class="notif-item-body" onclick="app.onNotifClick(${n.id}, '${this._esc(n.url || '')}')">
+                    <div class="notif-item-title">${this._esc(n.baslik)}</div>
+                    ${n.icerik ? `<div class="notif-item-text">${this._esc(n.icerik)}</div>` : ''}
+                    <div class="notif-item-time">${this._timeAgo(n.created_at)}</div>
+                </div>
+                <button class="btn btn-sm btn-icon notif-delete-btn" onclick="app.deleteNotification(${n.id})" title="Sil">
+                    <i class="ti ti-trash fs-4"></i>
+                </button>
+            </div>
+        `).join('');
+    },
+
+    async onNotifClick(id, url) {
+        await this.markNotificationRead(id);
+        this.closeNotificationSheet();
+        if (url) {
+            const route = url.trim().replace(/^\.?\/?/, '');
+            if (route && !window.location.search.includes('route=' + route)) {
+                window.location.href = 'index.php?route=' + route;
+            }
+        }
+    },
+
+    async markNotificationRead(id) {
+        const item = document.querySelector(`.notif-item[data-id="${id}"]`);
+        if (item) item.classList.remove('unread');
+        try {
+            const fd = new FormData();
+            fd.append('action', 'mark_read');
+            fd.append('id', id);
+            await fetch('api/notifications.php', { method: 'POST', body: fd });
+            this.loadNotificationCount();
+        } catch (e) {}
+    },
+
+    async markAllNotificationsRead() {
+        try {
+            const fd = new FormData();
+            fd.append('action', 'mark_all_read');
+            await fetch('api/notifications.php', { method: 'POST', body: fd });
+            document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+            this._updateNotifBadge(0);
+        } catch (e) {}
+    },
+
+    async deleteNotification(id) {
+        try {
+            const fd = new FormData();
+            fd.append('action', 'delete');
+            fd.append('id', id);
+            const res = await fetch('api/notifications.php', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const item = document.querySelector(`.notif-item[data-id="${id}"]`);
+                if (item) item.remove();
+                const list = document.getElementById('notif-list');
+                if (list && !list.querySelector('.notif-item')) {
+                    list.innerHTML = '<div class="notif-empty"><i class="ti ti-bell-off d-block fs-1 mb-2"></i>Henüz bildirim yok</div>';
+                }
+                this.loadNotificationCount();
+            }
+        } catch (e) {}
+    },
+
+    _timeAgo(dateStr) {
+        const date = new Date(dateStr);
+        const diff = Math.floor((Date.now() - date) / 1000);
+        if (diff < 60) return 'Az önce';
+        if (diff < 3600) return Math.floor(diff / 60) + ' dk önce';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' saat önce';
+        if (diff < 604800) return Math.floor(diff / 86400) + ' gün önce';
+        return date.toLocaleDateString('tr-TR');
+    },
+
+    _esc(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
     },
 
     showModal(title, bodyHtml) {

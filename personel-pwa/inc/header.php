@@ -6,6 +6,10 @@
         <h2 id="page-title" class="h3 mb-0" style="font-weight: 700;">Puantör</h2>
     </div>
     <div class="d-flex align-items-center gap-3">
+        <a href="javascript:void(0)" onclick="app.toggleNotificationSheet()" class="text-reset text-decoration-none position-relative">
+            <i class="ti ti-bell fs-2"></i>
+            <span id="notif-badge" class="notif-badge d-none"></span>
+        </a>
         <a href="javascript:void(0)" onclick="app.toggleTheme()" class="text-reset text-decoration-none">
             <i id="theme-icon" class="ti ti-moon fs-2"></i>
         </a>

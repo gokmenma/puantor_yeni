@@ -89,6 +89,23 @@ $title = $current_route['title'];
         <?php include_once "inc/bottom-nav.php"; ?>
     </div>
 
+    <!-- Bildirim Overlay & Sheet -->
+    <div id="notif-overlay" class="notif-overlay" onclick="app.closeNotificationSheet()"></div>
+    <div id="notif-sheet" class="notif-sheet">
+        <div class="notif-sheet-header">
+            <span class="fw-bold fs-4">Bildirimler</span>
+            <div class="d-flex align-items-center gap-1">
+                <button class="btn btn-sm btn-ghost-secondary" onclick="app.markAllNotificationsRead()">Tümünü okundu</button>
+                <button class="btn btn-sm btn-icon btn-ghost-secondary" onclick="app.closeNotificationSheet()">
+                    <i class="ti ti-x fs-3"></i>
+                </button>
+            </div>
+        </div>
+        <div id="notif-list" class="notif-list">
+            <div class="notif-empty">Yükleniyor...</div>
+        </div>
+    </div>
+
     <!-- Global Modal Shell -->
     <div class="modal modal-blur fade modal-bottom-sheet" id="app-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">

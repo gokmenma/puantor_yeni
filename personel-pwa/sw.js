@@ -1,4 +1,4 @@
-const CACHE_NAME = 'puantor-personel-v18';
+const CACHE_NAME = 'puantor-personel-v19';
 const ASSETS = [
   './manifest.json',
   './css/app.css',
@@ -61,10 +61,16 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const relUrl = event.notification.data?.url || '';
+  const targetUrl = relUrl ? (self.registration.scope + relUrl) : self.registration.scope;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      if (list.length > 0) return list[0].focus();
-      return clients.openWindow('./');
+      for (const client of list) {
+        if (client.url.startsWith(self.registration.scope) && 'navigate' in client) {
+          return client.navigate(targetUrl).then(() => client.focus());
+        }
+      }
+      return clients.openWindow(targetUrl);
     })
   );
 });

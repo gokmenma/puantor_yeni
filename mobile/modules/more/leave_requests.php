@@ -156,9 +156,9 @@ $turler = $turModel->getAktifTurler();
 </div>
 
 <!-- Yeni İzin Talebi Modalı -->
-<div class="modal fade" id="modalYeniTalep" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
-        <div class="modal-content border-0" style="border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+<div class="modal fade modal-bottom-sheet" id="modalYeniTalep" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title text-semibold" style="font-size: 1.1rem;">Yeni İzin Talebi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
@@ -216,9 +216,9 @@ $turler = $turModel->getAktifTurler();
 </div>
 
 <!-- Kısmi Onayla Modalı -->
-<div class="modal fade" id="modalKismiOnay" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
-        <div class="modal-content border-0" style="border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+<div class="modal fade modal-bottom-sheet" id="modalKismiOnay" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title text-semibold" style="font-size: 1.1rem;">Kısmi Onayla</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
@@ -248,9 +248,9 @@ $turler = $turModel->getAktifTurler();
 </div>
 
 <!-- Reddet Modalı -->
-<div class="modal fade" id="modalRed" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
-        <div class="modal-content border-0" style="border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+<div class="modal fade modal-bottom-sheet" id="modalRed" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title text-semibold" style="font-size: 1.1rem;">Red Nedeni Girin</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
@@ -272,6 +272,10 @@ $turler = $turModel->getAktifTurler();
 
 <script>
 $(document).ready(function() {
+    $('#modalYeniTalep').appendTo('body');
+    $('#modalKismiOnay').appendTo('body');
+    $('#modalRed').appendTo('body');
+
     const CAN_DELETE_APPROVED = <?php echo $can_delete_approved; ?>;
     const API_URL = 'api/izin.php';
 
