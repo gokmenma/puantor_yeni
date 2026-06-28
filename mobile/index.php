@@ -19,16 +19,16 @@ $Auths = new Auths();
 
 // Oturum kontrolü
 if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
-    if (isset($_COOKIE['remember_me'])) {
-        $token = $_COOKIE['remember_me'];
-        $cookie_user = $User->getUserBySessionToken($token);
+    if (isset($_COOKIE['remember_me_mobile'])) {
+        $token = $_COOKIE['remember_me_mobile'];
+        $cookie_user = $User->getUserByMobileSessionToken($token);
         if ($cookie_user && $cookie_user->status == 1) {
             $_SESSION['user'] = $cookie_user;
             $_SESSION['firm_id'] = $cookie_user->firm_id;
             $_SESSION['full_name'] = $cookie_user->full_name;
             $_SESSION['user_role'] = $cookie_user->user_roles;
             // Refresh cookie expiry
-            setcookie('remember_me', $token, time() + 30 * 24 * 3600, '/');
+            setcookie('remember_me_mobile', $token, time() + 30 * 24 * 3600, '/');
         } else {
             header("Location: sign-in.php");
             exit();

@@ -76,6 +76,13 @@ try {
             $_SESSION['personel_user'] = $person;
             $_SESSION['personel_id'] = $person->id;
             $_SESSION['firm_id'] = $person->firm_id;
+
+            // Beni Hatırla seçildiyse
+            if (isset($_POST['remember']) && $_POST['remember'] === '1') {
+                $token = bin2hex(random_bytes(32));
+                $Persons->setSessionToken($person->id, $token);
+                setcookie('personel_remember_me', $token, time() + 30 * 24 * 3600, '/');
+            }
             
             // Remove sensitive data for JSON response
             $person_response = clone $person;
@@ -92,6 +99,9 @@ try {
             exit;
         }
     } else if ($action == 'logout') {
+        if (isset($_COOKIE['personel_remember_me'])) {
+            setcookie('personel_remember_me', '', time() - 3600, '/');
+        }
         session_destroy();
         echo json_encode(['status' => 'success']);
         exit;

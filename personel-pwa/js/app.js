@@ -192,6 +192,7 @@ window.app = {
     async handleLogin() {
         const kimlikNo = document.getElementById('kimlik_no').value;
         const password = document.getElementById('password').value;
+        const rememberMe = document.getElementById('rememberMe') ? document.getElementById('rememberMe').checked : false;
 
         try {
             const response = await fetch('api/auth.php', {
@@ -199,7 +200,8 @@ window.app = {
                 body: new URLSearchParams({
                     action: 'login',
                     kimlik_no: kimlikNo,
-                    password: password
+                    password: password,
+                    remember: rememberMe ? '1' : '0'
                 })
             });
             const result = await response.json();

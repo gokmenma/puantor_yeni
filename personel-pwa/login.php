@@ -1,5 +1,26 @@
 <?php
-session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once __DIR__ . "/../Database/require.php";
+require_once __DIR__ . "/../Model/Persons.php";
+require_once __DIR__ . "/../App/Helper/security.php";
+
+// Beni Hatırla kontrolü (PWA için)
+if (!isset($_SESSION['personel_id']) && isset($_COOKIE['personel_remember_me'])) {
+    $token = $_COOKIE['personel_remember_me'];
+    $PersonsModel = new Persons();
+    $cookie_person = $PersonsModel->getPersonBySessionToken($token);
+    if ($cookie_person && empty($cookie_person->job_end_date)) {
+        $_SESSION['personel_user'] = $cookie_person;
+        $_SESSION['personel_id'] = $cookie_person->id;
+        $_SESSION['firm_id'] = $cookie_person->firm_id;
+        
+        // Refresh cookie expiry
+        setcookie('personel_remember_me', $token, time() + 30 * 24 * 3600, '/');
+    }
+}
+
 if (isset($_SESSION['personel_id'])) {
     header("Location: index.php");
     exit;

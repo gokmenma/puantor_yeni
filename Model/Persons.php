@@ -309,4 +309,26 @@ class Persons extends Model
         }
         return null;
     }
+
+    public function setSessionToken($id, $token)
+    {
+        $sql = $this->db->prepare("UPDATE $this->table SET session_token = ? WHERE id = ?");
+        $sql->execute([$token, $id]);
+        return $token;
+    }
+
+    public function getPersonBySessionToken($token)
+    {
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE session_token = ? AND deleted_at IS NULL");
+        $sql->execute([$token]);
+        $person = $sql->fetch(PDO::FETCH_OBJ);
+        if ($person) {
+            $person->kimlik_no = Security::safeDecrypt($person->kimlik_no);
+            $person->phone = Security::safeDecrypt($person->phone);
+            $person->email = Security::safeDecrypt($person->email);
+            $person->iban_number = Security::safeDecrypt($person->iban_number);
+            return $person;
+        }
+        return null;
+    }
 }

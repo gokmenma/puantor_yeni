@@ -131,6 +131,20 @@ class UserModel extends Model
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 
+    public function setMobileToken($id, $token)
+    {
+        $sql = $this->db->prepare("UPDATE $this->table SET mobile_session_token = ? WHERE id = ?");
+        $sql->execute(array($token, $id));
+        return $token;
+    }
+
+    public function getUserByMobileSessionToken($token)
+    {
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE mobile_session_token = ?");
+        $sql->execute(array($token));
+        return $sql->fetch(PDO::FETCH_OBJ);
+    }
+
     public function getUserByResetToken($token)
     {
         $sql = $this->db->prepare("SELECT * FROM $this->table WHERE reset_token = ? ");
