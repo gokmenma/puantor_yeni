@@ -2,13 +2,9 @@
 
 namespace Service;
 
-use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Subscription;
-
 class PushBildirimService
 {
     private \PDO $db;
-    private WebPush $webPush;
 
     public function __construct(\PDO $db)
     {
@@ -17,15 +13,6 @@ class PushBildirimService
         if (!defined('VAPID_PUBLIC_KEY')) {
             require_once dirname(__DIR__) . '/configs/push_config.php';
         }
-
-        $this->webPush = new WebPush([
-            'VAPID' => [
-                'subject'    => VAPID_SUBJECT,
-                'publicKey'  => VAPID_PUBLIC_KEY,
-                'privateKey' => VAPID_PRIVATE_KEY,
-            ],
-        ]);
-        $this->webPush->setDefaultOptions(['TTL' => 2419200]);
     }
 
     public function yoneticilereGonder(int $firma_id, string $baslik, string $icerik, array $ekVeri = []): void
@@ -62,6 +49,19 @@ class PushBildirimService
             return;
         }
 
+        if (!class_exists('\Minishlink\WebPush\WebPush')) {
+            return;
+        }
+
+        $webPush = new \Minishlink\WebPush\WebPush([
+            'VAPID' => [
+                'subject'    => VAPID_SUBJECT,
+                'publicKey'  => VAPID_PUBLIC_KEY,
+                'privateKey' => VAPID_PRIVATE_KEY,
+            ],
+        ]);
+        $webPush->setDefaultOptions(['TTL' => 2419200]);
+
         $payload = json_encode([
             'title' => $baslik,
             'body'  => $icerik,
@@ -69,8 +69,8 @@ class PushBildirimService
         ], JSON_UNESCAPED_UNICODE);
 
         foreach ($subscriptions as $sub) {
-            $this->webPush->queueNotification(
-                Subscription::create([
+            $webPush->queueNotification(
+                \Minishlink\WebPush\Subscription::create([
                     'endpoint' => $sub->endpoint,
                     'keys'     => ['p256dh' => $sub->p256dh, 'auth' => $sub->auth],
                 ]),
@@ -78,7 +78,7 @@ class PushBildirimService
             );
         }
 
-        foreach ($this->webPush->flush() as $report) {
+        foreach ($webPush->flush() as $report) {
             if (!$report->isSuccess()) {
                 $this->temizleGecersizEndpoint($report->getRequest()->getUri()->__toString());
             }

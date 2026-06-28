@@ -8,6 +8,7 @@ if (!defined('ROOT')) define('ROOT', dirname(__DIR__, 2));
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/vendor/autoload.php';
 require_once ROOT . '/configs/push_config.php';
+require_once ROOT . '/Service/PushBildirimService.php';
 
 use Service\PushBildirimService;
 

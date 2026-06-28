@@ -8,6 +8,7 @@ if (!defined('ROOT')) define('ROOT', dirname(__DIR__, 2));
 
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/vendor/autoload.php';
+require_once ROOT . '/Service/PushBildirimService.php';
 require_once ROOT . '/Model/IzinTalep.php';
 require_once ROOT . '/Model/IzinHakedis.php';
 require_once ROOT . '/Model/IzinTur.php';
