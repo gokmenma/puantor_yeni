@@ -43,6 +43,7 @@ jobs:
             **/.agent/**
             **/CLAUDE.md
             **/claude-scratch/**
+            **/composer.phar
           log-level: standard
           dry-run: false
           dangerous-clean-slate: false

@@ -1,10 +1,11 @@
-const CACHE_NAME = 'puantor-personel-v16';
+const CACHE_NAME = 'puantor-personel-v17';
 const ASSETS = [
   './',
   './index.php',
   './login.php',
   './js/app.js',
   './css/app.css',
+  '../dist/js/pull-to-refresh.js',
   './manifest.json',
   './resources/Logo-ai.svg',
   './static/Logo-ai.svg',

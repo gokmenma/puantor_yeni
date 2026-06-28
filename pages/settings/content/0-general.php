@@ -2,20 +2,20 @@
 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
 ?>
-<div class="card" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+<div class="card">
     <div class="card-body p-4">
         <div class="d-flex align-items-center mb-4">
-            <span class="avatar avatar-md me-3 bg-light text-dark rounded-circle" style="width: 45px; height: 45px;">
+            <span class="avatar avatar-md me-3 bg-light text-dark rounded-circle">
                 <i class="ti ti-settings" style="font-size: 1.5rem;"></i>
             </span>
             <div>
-                <h3 class="card-title mb-1 fw-bold text-dark" style="font-size: 1.15rem;">Sistem Ayarları</h3>
+                <h3 class="card-title mb-1 fw-bold text-dark">Program Ayarları</h3>
                 <p class="text-secondary small mb-0">Firmanızın genel çalışma ve görünürlük ayarlarını buradan yönetebilirsiniz.</p>
                 <small class="text-danger fw-bold" style="font-size: 0.8rem;">Bu ayarlarda yapılacak değişiklikler tüm hesaplamaları etkileyebilir.</small>
             </div>
         </div>
 
-        <?php if ($Auths->hasPermission("daily_working_hours_edit")): ?>
+        <?php if ($is_superadmin || $Auths->hasPermission("daily_working_hours_edit")): ?>
         <form id="settingsHomeForm">
             <!-- Programmatic trigger button for backwards compatibility with settings.js -->
             <button type="button" id="home_save" style="display: none;"></button>
@@ -23,7 +23,7 @@ $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">Günlük Çalışma Saati</label>
-                    <input type="number" class="form-control py-2" name="work_hour" placeholder="Örn: 8" value="<?php echo htmlspecialchars($work_hour); ?>" style="border-radius: 8px;">
+                    <input type="number" class="form-control" name="work_hour" placeholder="Örn: 8" value="<?php echo htmlspecialchars($work_hour); ?>">
                 </div>
             </div>
 
@@ -43,7 +43,7 @@ $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set
             </div>
         </form>
         <?php else: ?>
-        <div class="alert alert-warning mb-0" style="border-radius: 8px;">
+        <div class="alert alert-warning mb-0">
             Bu ayarları düzenlemek için gerekli yetkiniz bulunmamaktadır.
         </div>
         <?php endif; ?>

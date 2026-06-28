@@ -3,11 +3,16 @@
  * Self-contained touch listener and animated SVG spinner indicator.
  */
 (function() {
-    document.addEventListener('DOMContentLoaded', () => {
+    function initPullToRefresh() {
         const scrollEl = document.querySelector('.app-content');
         const shellEl = document.querySelector('.app-shell');
         
-        if (!scrollEl || !shellEl) return;
+        if (!scrollEl || !shellEl) {
+            console.warn('Puantor Pull-to-Refresh: .app-content or .app-shell not found.');
+            return;
+        }
+        
+        console.log('Puantor Pull-to-Refresh: Initializing on', window.location.pathname);
         
         // 1. Inject CSS Styles Dynamically
         const style = document.createElement('style');
@@ -191,5 +196,12 @@
                 window.location.reload();
             }, 600);
         };
-    });
+    }
+
+    // Initialize checking DOM state
+    if (document.readyState !== 'loading') {
+        initPullToRefresh();
+    } else {
+        document.addEventListener('DOMContentLoaded', initPullToRefresh);
+    }
 })();

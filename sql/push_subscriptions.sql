@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS `push_subscriptions` (
     UNIQUE KEY `unique_endpoint` (`endpoint`(191)),
     KEY `idx_firma_user` (`firma_id`, `user_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `menu` (`page_name`, `page_link`, `icon`, `parent_id`, `isActive`, `isMenu`, `index_no`, `is_authorize`)
+VALUES ('Bildirimler', 'bildirimler/push', 'ti ti-bell-ringing', 0, 1, 1, 95, 1);

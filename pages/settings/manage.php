@@ -23,21 +23,21 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
 ?>
     <style>
         .settings-sidebar-link.active {
-            background-color: #1d1d20 !important;
+            background-color: var(--tblr-primary, #206bc4) !important;
             color: #fff !important;
-            border-color: #1d1d20 !important;
+            border-color: var(--tblr-primary, #206bc4) !important;
         }
         .settings-sidebar-link.active i {
             color: #fff !important;
         }
         .settings-sidebar-link {
-            color: #495057 !important;
+            color: inherit !important;
             border-left: 3px solid transparent;
             font-weight: 500;
             transition: all 0.2s ease;
         }
         .settings-sidebar-link:hover:not(.active) {
-            background-color: #f8f9fa !important;
+            background-color: rgba(var(--tblr-text-secondary-rgb, 108, 117, 125), 0.08) !important;
         }
         @media (min-width: 768px) {
             .border-end-md {
@@ -51,19 +51,20 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
         <div class="container-xl">
             <div class="row g-2 align-items-center">
                 <div class="col">
-                    <h2 class="page-title fw-bold text-dark" style="font-size: 1.75rem;">
+                    <div class="page-pretitle">Ayarlar</div>
+                    <h2 class="page-title">
                         <?php echo $pageTitle; ?>
                     </h2>
                     <?php if ($view == 'profile'): ?>
-                        <p class="text-secondary mb-0 mt-1" style="font-size: 0.95rem;">Kişisel bilgilerinizi, güvenlik tercihlerinizi ve hesap detaylarınızı buradan yönetin.</p>
+                        <p class="text-secondary mb-0 mt-1">Kişisel bilgilerinizi, güvenlik tercihlerinizi ve hesap detaylarınızı buradan yönetin.</p>
                     <?php else: ?>
-                        <p class="text-secondary mb-0 mt-1" style="font-size: 0.95rem;">İşçi Maaş Rapor Takip Platformunun genel, SMTP, güvenlik ve sistem yedekleme tercihlerini yönetin.</p>
+                        <p class="text-secondary mb-0 mt-1">İşçi Maaş Rapor Takip Platformunun genel, SMTP, güvenlik ve sistem yedekleme tercihlerini yönetin.</p>
                     <?php endif; ?>
                 </div>
                 
                 <div class="col-auto ms-auto" id="btn-save-changes-container" style="display: none;">
-                    <button type="button" class="btn btn-dark px-4 py-2" id="btn-save-changes" style="border-radius: 8px; background-color: #1d1d20; border-color: #1d1d20; font-weight: 600;">
-                        <i class="ti ti-device-floppy icon me-2" style="font-size: 1.1rem;"></i>
+                    <button type="button" class="btn btn-primary" id="btn-save-changes">
+                        <i class="ti ti-device-floppy me-2"></i>
                         Değişiklikleri Kaydet
                     </button>
                 </div>
@@ -80,7 +81,7 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
             <div class="row g-4">
                 <!-- Sol Kenar Çubuğu (Sidebar) -->
                 <div class="col-md-3">
-                    <div class="card mb-3" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); overflow: hidden;">
+                    <div class="card mb-3">
                         <div class="list-group list-group-flush" id="system-settings-tabs" role="tablist">
                             <a href="#tabs-system-general" class="list-group-item list-group-item-action settings-sidebar-link active py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
                                 <i class="ti ti-world icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
@@ -89,6 +90,10 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                             <a href="#tabs-system-smtp" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
                                 <i class="ti ti-mail icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
                                 <span>SMTP E-Posta</span>
+                            </a>
+                            <a href="#tabs-program-settings" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
+                                <i class="ti ti-settings icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
+                                <span>Program Ayarları</span>
                             </a>
                             <a href="#tabs-system-security" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
                                 <i class="ti ti-shield icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
@@ -106,14 +111,15 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                     </div>
                     
                     <!-- Hatırlatma Kutusu -->
-                    <div class="card bg-white" id="system-settings-reminder" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: none;">
+                    <div class="card mb-3" id="system-settings-reminder" style="display: none;">
+                        <div class="card-status-start bg-info"></div>
                         <div class="card-body p-3">
                             <div class="d-flex align-items-start">
-                                <div class="text-blue me-2 mt-0.5">
+                                <div class="text-info me-2 mt-0.5">
                                     <i class="ti ti-info-circle" style="font-size: 1.35rem;"></i>
                                 </div>
                                 <div>
-                                    <h4 class="card-title mb-1 fw-bold text-dark" style="font-size: 0.9rem;">Hatırlatma</h4>
+                                    <h4 class="card-title mb-1 fw-bold" style="font-size: 0.9rem;">Hatırlatma</h4>
                                     <p class="text-secondary small mb-0" style="font-size: 0.8rem; line-height: 1.4;">Yapılan değişikliklerin yürürlüğe girmesi için sağ üst köşedeki "Değişiklikleri Kaydet" butonuna tıklamalısınız.</p>
                                 </div>
                             </div>
@@ -132,6 +138,11 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                         <!-- SMTP Sekmesi -->
                         <div class="tab-pane" id="tabs-system-smtp" role="tabpanel">
                             <?php include_once "content/system-smtp.php" ?>
+                        </div>
+
+                        <!-- Program Ayarları Sekmesi -->
+                        <div class="tab-pane" id="tabs-program-settings" role="tabpanel">
+                            <?php include_once "content/0-general.php" ?>
                         </div>
                         
                         <!-- Güvenlik Sekmesi -->
@@ -163,7 +174,7 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                     var saveBtnContainer = $("#btn-save-changes-container");
                     var reminderCard = $("#system-settings-reminder");
                     
-                    if (targetId === "#tabs-system-general" || targetId === "#tabs-system-smtp") {
+                    if (targetId === "#tabs-system-general" || targetId === "#tabs-system-smtp" || targetId === "#tabs-program-settings") {
                         saveBtnContainer.show();
                         reminderCard.show();
                     } else {
@@ -190,6 +201,8 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                         $("#systemGeneralForm").submit();
                     } else if (targetId === "#tabs-system-smtp") {
                         $("#systemSmtpForm").submit();
+                    } else if (targetId === "#tabs-program-settings") {
+                        $("#home_save").click();
                     }
                 });
             });
@@ -197,31 +210,6 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
             
             <?php else: ?>
             <!-- Profile Settings (New Sidebar Split Layout) -->
-            <style>
-                .settings-sidebar-link.active {
-                    background-color: #1d1d20 !important;
-                    color: #fff !important;
-                    border-color: #1d1d20 !important;
-                }
-                .settings-sidebar-link.active i {
-                    color: #fff !important;
-                }
-                .settings-sidebar-link {
-                    color: #495057 !important;
-                    border-left: 3px solid transparent;
-                    font-weight: 500;
-                    transition: all 0.2s ease;
-                }
-                .settings-sidebar-link:hover:not(.active) {
-                    background-color: #f8f9fa !important;
-                }
-                @media (min-width: 768px) {
-                    .border-end-md {
-                        border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-                    }
-                }
-            </style>
-            
             <div class="row g-4">
                 <!-- Sol Kenar Çubuğu (Sidebar) -->
                 <div class="col-md-3">
@@ -235,16 +223,16 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                     $initials = mb_strtoupper(mb_substr($initials, 0, 2, 'UTF-8'));
                     if (empty($initials)) { $initials = "U"; }
                     ?>
-                    <div class="card mb-3" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+                    <div class="card mb-3">
                         <div class="card-body text-center p-4">
-                            <span class="avatar avatar-xl mb-3 rounded-circle bg-dark text-white fw-bold" style="font-size: 1.5rem; width: 80px; height: 80px; line-height: 80px; display: inline-flex; align-items: center; justify-content: center; background-color: #1d1d20 !important;"><?php echo htmlspecialchars($initials); ?></span>
-                            <h3 class="mb-1 fw-bold text-dark" style="font-size: 1.15rem;"><?php echo htmlspecialchars($user->full_name ?? ''); ?></h3>
-                            <div class="text-secondary small" style="font-size: 0.85rem;"><?php echo htmlspecialchars($user->email ?? ''); ?></div>
+                            <span class="avatar avatar-xl mb-3 rounded-circle bg-primary text-white fw-bold"><?php echo htmlspecialchars($initials); ?></span>
+                            <h3 class="mb-1 fw-bold"><?php echo htmlspecialchars($user->full_name ?? ''); ?></h3>
+                            <div class="text-secondary small"><?php echo htmlspecialchars($user->email ?? ''); ?></div>
                         </div>
                     </div>
                     
                     <!-- Dikey Sekme Listesi -->
-                    <div class="card mb-3" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01); overflow: hidden;">
+                    <div class="card mb-3">
                         <div class="list-group list-group-flush" id="settings-tabs" role="tablist">
                             <a href="#tabs-profile" class="list-group-item list-group-item-action settings-sidebar-link active py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
                                 <i class="ti ti-user icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
@@ -260,10 +248,10 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                                 <span>Hesap Detayları</span>
                             </a>
                             <?php endif; ?>
-                            <?php if ($Auths->hasPermission("daily_working_hours_edit")): ?>
+                            <?php if ($is_superadmin || $Auths->hasPermission("daily_working_hours_edit")): ?>
                             <a href="#tabs-system-settings" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
                                 <i class="ti ti-settings icon me-3 text-secondary" style="font-size: 1.2rem;"></i>
-                                <span>Sistem Ayarları</span>
+                                <span>Program Ayarları</span>
                             </a>
                             <?php endif; ?>
                             <a href="#tabs-logs" class="list-group-item list-group-item-action settings-sidebar-link py-3 px-4 d-flex align-items-center" data-bs-toggle="tab" role="tab">
@@ -274,14 +262,15 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                     </div>
                     
                     <!-- Hatırlatma Kutusu -->
-                    <div class="card bg-white" id="settings-reminder" style="border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: none;">
+                    <div class="card mb-3" id="settings-reminder" style="display: none;">
+                        <div class="card-status-start bg-info"></div>
                         <div class="card-body p-3">
                             <div class="d-flex align-items-start">
-                                <div class="text-blue me-2 mt-0.5">
+                                <div class="text-info me-2 mt-0.5">
                                     <i class="ti ti-info-circle" style="font-size: 1.35rem;"></i>
                                 </div>
                                 <div>
-                                    <h4 class="card-title mb-1 fw-bold text-dark" style="font-size: 0.9rem;">Hatırlatma</h4>
+                                    <h4 class="card-title mb-1 fw-bold" style="font-size: 0.9rem;">Hatırlatma</h4>
                                     <p class="text-secondary small mb-0" style="font-size: 0.8rem; line-height: 1.4;">Profil değişikliklerinizin kaydedilmesi için sağ üst köşedeki "Değişiklikleri Kaydet" butonuna tıklayınız.</p>
                                 </div>
                             </div>
@@ -309,8 +298,8 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                         </div>
                         <?php endif; ?>
                         
-                        <!-- Sistem Ayarları Sekmesi -->
-                        <?php if ($Auths->hasPermission("daily_working_hours_edit")): ?>
+                        <!-- Program Ayarları Sekmesi -->
+                        <?php if ($is_superadmin || $Auths->hasPermission("daily_working_hours_edit")): ?>
                         <div class="tab-pane" id="tabs-system-settings" role="tabpanel">
                             <?php include_once "content/0-general.php" ?>
                         </div>

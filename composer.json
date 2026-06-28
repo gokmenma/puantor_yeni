@@ -7,7 +7,7 @@
         "mpdf/mpdf": "^8.2",
         "phpmailer/phpmailer": "^6.9",
         "mikehaertl/phpwkhtmltopdf": "^2.5",
-        "minishlink/web-push": "^9.0"
+        "minishlink/web-push": "^10.1"
     },
 
     "autoload": {
