@@ -40,7 +40,9 @@ if (
     $page == 'duyurular/list' ||
     $page == 'izin/list' ||
     $page == 'izin/hakedis' ||
-    $page == 'bildirimler/push'
+    $page == 'bildirimler/push' ||
+    $page == 'supports/tickets' || $page == 'supports/ticket-view' ||
+    $page == 'supports/admin-tickets' || $page == 'supports/admin-ticket-view'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }
@@ -52,6 +54,7 @@ if (
 if (
     $page == "missions/manage" || $page == "feedback/list"
     || $page == "supports/tickets" || $page == "supports/ticket-view"
+    || $page == "supports/admin-tickets" || $page == "supports/admin-ticket-view"
     || $page == "abonelik-islemleri/list"
     || $page == "duyurular/list"
 ) {
@@ -182,7 +185,7 @@ if ($page == 'feedback/list') {
     echo '<script src="./src/feedback.js"></script>';
 }
 
-if ($page == 'supports/tickets' || $page == 'supports/ticket-view') {
+if ($page == 'supports/tickets' || $page == 'supports/ticket-view' || $page == 'supports/admin-tickets' || $page == 'supports/admin-ticket-view') {
     echo '<script src="./src/supports/tickets.js"></script>';
 }
 

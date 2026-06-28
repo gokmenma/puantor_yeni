@@ -77,9 +77,14 @@ if (isset($_POST['action']) && $_POST['action'] == 'saveSupportTicket') {
 
 if (isset($_POST['action']) && $_POST['action'] == 'newTicketMessage') {
     $support_id = Security::decrypt($_POST['support_id']);
+    
+    $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+    $author = $is_superadmin ? ($_SESSION['user']->full_name ?? 'Destek Ekibi') : 0;
+
     $data = [
         'support_id' => $support_id,
-        'message' => $_POST['message']
+        'message' => $_POST['message'],
+        'author' => $author
     ];
 
     try {
@@ -90,35 +95,57 @@ if (isset($_POST['action']) && $_POST['action'] == 'newTicketMessage') {
         try {
 
             $ticket_number = Security::decrypt($lastInsertId);
-            $ticket_subject = $Supports->find($support_id)->subject;
-            $user_name = $_SESSION["user"]->full_name;
-            $user_email = $_SESSION["user"]->email;
+            $support_ticket = $Supports->find($support_id);
+            $ticket_subject = $support_ticket->subject;
             $message_body = strip_tags($_POST["message"]);
 
+            if ($is_superadmin) {
+                require_once ROOT . '/Model/UserModel.php';
+                $UserModel = new UserModel();
+                $ticket_user = $UserModel->find($support_ticket->user_id);
+                $user_name = $ticket_user->full_name;
+                $user_email = $ticket_user->email;
 
+                $mail_header_title = "Destek Talebiniz Yanıtlandı";
+                $mail_intro = "Destek ekibimiz talebinize yeni bir yanıt gönderdi. Detayları aşağıda bulabilirsiniz:";
+                $mail_info_section_title = "Destek Talebi Sahibi";
+                $mail_sender_title = "Ad Soyad:";
+                $mail_sender_email_title = "E-posta:";
+                $mail_ticket_number_title = "Talep Numarası:";
+                $mail_footer_text = "Destek panelinizden talebinizi görüntüleyebilir ve gerektiğinde tekrar yanıt yazabilirsiniz.";
 
-            // ticket-mail.php dosyasını dahil et ve değişkenleri geçir
-            ob_start();
-            include(ROOT . "/pages/supports/ticket-mail.php");
-            $body = ob_get_clean();
+                ob_start();
+                include(ROOT . "/pages/supports/ticket-mail.php");
+                $body = ob_get_clean();
 
+                $mail->setFrom('sifre@puantor.com.tr', 'Puantor Destek Ekibi');
+                $mail->addReplyTo('destek@puantor.com.tr', 'Puantor Destek');
+                $mail->addAddress($user_email, $user_name);
+                $mail->Subject = 'Destek Talebiniz Yanıtlandı - ' . $ticket_subject;
+            } else {
+                $user_name = $_SESSION["user"]->full_name;
+                $user_email = $_SESSION["user"]->email;
 
-            // Alıcılar
-            $mail->setFrom('sifre@puantor.com.tr', 'Yeni Destek mesajı');
-            $mail->addReplyTo($_SESSION["user"]->email, $_SESSION["user"]->full_name);
-            $mail->addAddress('destek@puantor.com.tr');
-            $mail->addAddress('mbeyazilim@gmail.com');
+                ob_start();
+                include(ROOT . "/pages/supports/ticket-mail.php");
+                $body = ob_get_clean();
+
+                $mail->setFrom('sifre@puantor.com.tr', 'Yeni Destek mesajı');
+                $mail->addReplyTo($_SESSION["user"]->email, $_SESSION["user"]->full_name);
+                $mail->addAddress('destek@puantor.com.tr');
+                $mail->addAddress('mbeyazilim@gmail.com');
+                $mail->Subject = 'Destek Mesajı Bildirimi';
+            }
+
             $mail->isHTML(true);
-
-            $mail->Subject = 'Destek Mesajı Bildirimi';
             $mail->Body = $body;
             $mail->AltBody = strip_tags($body);
-            //Karakter seti
             $mail->CharSet = 'UTF-8';
 
             $mail->send();
         } catch (Exception $e) {
-            echo "E-posta gönderilemedi. Hata: {$mail->ErrorInfo}";
+            // E-posta gönderimindeki hatayı yut ama hata logu yaz
+            error_log("Destek talebi e-posta gönderimi başarısız: " . $e->getMessage());
         }
 
     } catch (PDOException $ex) {

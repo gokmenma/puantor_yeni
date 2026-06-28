@@ -31,10 +31,10 @@ $Auths = new Auths();
                     <span class="input-icon-addon">
                         <i class="ti ti-search text-secondary"></i>
                     </span>
-                    <input type="search" id="menu-search-input" class="form-control text-white" placeholder="Menüde ara..." aria-label="Menü ara">
+                    <input type="search" id="menu-search-input" autocomplete="off" class="form-control text-white" placeholder="Menüde ara..." aria-label="Menü ara">
                 </div>
             </div>
-            <ul class="navbar-nav 1">
+            <ul class="navbar-nav 1" id="sortable-menu">
 
                 <?php
 
@@ -42,10 +42,15 @@ $Auths = new Auths();
                 $active_page = $_GET['p'] ?? '';
 
                 //Menü isimleri Model altındakii Menus.php sayfası ile tablodan getirilir
-                $top_menus = $menus->getMenus();
+                $top_menus = $menus->getMenus($_SESSION['user']->id ?? null);
 
                 //Gelen menü isimlerinde döngüye girilir
                 foreach ($top_menus as $menu) {
+
+                    // Superadmin menü kontrolü
+                    if ($menu->page_link == 'supports/admin-tickets' && ($_SESSION['user']->superadmin ?? 0) != 1) {
+                        continue;
+                    }
 
 
 
@@ -108,9 +113,9 @@ $Auths = new Auths();
 
 
                     <!-- Menü oluşturulur -->
-                    <li class="nav-item <?php echo $active ?> dropdown ">
+                    <li class="nav-item <?php echo $active ?> dropdown " data-id="<?php echo $menu->id; ?>">
 
-                        <a class="nav-link <?php echo $dropdown_toogle; ?>"
+                        <a class="nav-link <?php echo $dropdown_toogle; ?>" draggable="false"
                             href="index.php?p=<?php echo $menu->page_link ?>" data-bs-toggle="<?php echo $dropdown; ?>"
                             data-bs-auto-close="false" role="button" aria-expanded="false">
 
@@ -164,6 +169,7 @@ $Auths = new Auths();
     </div>
 </aside>
 
+<script src="./dist/js/Sortable.min.js"></script>
 <script>
 $(document).ready(function() {
     var $searchInput = $('#menu-search-input');
@@ -255,5 +261,75 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Menü sürükle-bırak sıralama
+        var sortableEl = document.getElementById('sortable-menu');
+        console.log("[Menu Sortable] Element:", sortableEl);
+        if (sortableEl) {
+            console.log("[Menu Sortable] Initializing Sortable...");
+            new Sortable(sortableEl, {
+                animation: 150,
+                ghostClass: 'menu-sortable-ghost',
+                chosenClass: 'menu-sortable-chosen',
+                dragClass: 'menu-sortable-drag',
+                draggable: '.nav-item',
+                onEnd: function (evt) {
+                    var order = [];
+                    $('#sortable-menu > li.nav-item').each(function(index) {
+                        var menuId = $(this).attr('data-id');
+                        if (menuId) {
+                            order.push({
+                                id: menuId,
+                                index: index
+                            });
+                        }
+                    });
+
+                    if (order.length > 0) {
+                        $.ajax({
+                            url: 'api/users/menu_order.php',
+                            type: 'POST',
+                            data: {
+                                action: 'save_order',
+                                order: JSON.stringify(order)
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.success) {
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: 'top-end',
+                                        showConfirmButton: false,
+                                        timer: 1500,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                        }
+                                    });
+                                    Toast.fire({
+                                        icon: 'success',
+                                        title: 'Menü sırası güncellendi'
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Hata',
+                                        text: response.message
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Hata',
+                                    text: 'İletişim hatası oluştu.'
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        }
 });
 </script>

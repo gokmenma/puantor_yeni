@@ -324,6 +324,7 @@ use App\Helper\Helper;
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const layoutKey = 'dashboard_layout_v2';
+    const cardSelector = '#stats-sortable > [data-id], #quick-actions-sortable > [data-id], #widgets-sortable > [data-id]';
 
     function saveLayout() {
         const layout = {
@@ -354,7 +355,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         // Kapatılmış kartları gizle
-        document.querySelectorAll('[data-id]').forEach(function(el) {
+        document.querySelectorAll(cardSelector).forEach(function(el) {
             var id = el.getAttribute('data-id');
             if (id && localStorage.getItem('card_hidden_' + id) === '1') {
                 el.style.display = 'none';
@@ -372,7 +373,7 @@ document.addEventListener("DOMContentLoaded", function() {
         colvisMenu.innerHTML = '';
 
         const cards = [];
-        document.querySelectorAll('[data-id]').forEach(el => {
+        document.querySelectorAll(cardSelector).forEach(el => {
             const id = el.getAttribute('data-id');
             if (!id) return;
 
@@ -473,7 +474,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     document.querySelectorAll('.card').forEach(function(card) {
-        var wrapper = card.closest('[data-id]');
+        var wrapper = card.closest(cardSelector);
         if (wrapper) {
             // Add resizable class
             card.classList.add('resizable-card');
@@ -549,7 +550,7 @@ document.addEventListener("DOMContentLoaded", function() {
     window.resetDashboardLayout = function() {
         if(confirm("Pano düzenini ve boyutlarını sıfırlamak istediğinize emin misiniz?")) {
             localStorage.removeItem(layoutKey);
-            document.querySelectorAll('[data-id]').forEach(function(el) {
+            document.querySelectorAll(cardSelector).forEach(function(el) {
                 var id = el.getAttribute('data-id');
                 localStorage.removeItem('card_size_' + id);
                 localStorage.removeItem('card_min_' + id);

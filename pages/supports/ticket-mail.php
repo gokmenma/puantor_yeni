@@ -1,3 +1,12 @@
+<?php
+$mail_header_title = $mail_header_title ?? "Yeni Destek Bildirimi Alındı";
+$mail_intro = $mail_intro ?? "Bir müşteriden yeni bir destek bildirimi alınmıştır. Detayları aşağıda bulabilirsiniz:";
+$mail_info_section_title = $mail_info_section_title ?? "Müşteri Bilgileri";
+$mail_sender_title = $mail_sender_title ?? "Ad Soyad:";
+$mail_sender_email_title = $mail_sender_email_title ?? "E-posta:";
+$mail_ticket_number_title = $mail_ticket_number_title ?? "Bildirim Numarası:";
+$mail_footer_text = $mail_footer_text ?? "Lütfen müşteri ile en kısa sürede iletişime geçilmesini sağlayın. Müşteri memnuniyeti için bu bildirimle ilgilenmeniz önemlidir.";
+?>
 <!DOCTYPE html>
 <html lang="tr">
 
@@ -13,25 +22,25 @@
         <tr>
             <td
                 style="padding: 20px; background-color: #0073e6; color: #ffffff; text-align: center; border-top-left-radius: 6px; border-top-right-radius: 6px;">
-                <h2>Yeni Destek Bildirimi Alındı</h2>
+                <h2><?php echo $mail_header_title; ?></h2>
             </td>
         </tr>
         <tr>
             <td style="padding: 20px;">
                 <p>Merhaba</p>
-                <p>Bir müşteriden yeni bir destek bildirimi alınmıştır. Detayları aşağıda bulabilirsiniz:</p>
+                <p><?php echo $mail_intro; ?></p>
 
                 <hr style="border: 1px solid #e0e0e0; margin: 20px 0;">
 
-                <h3 style="color: #0073e6; margin: 0;">Müşteri Bilgileri</h3>
+                <h3 style="color: #0073e6; margin: 0;"><?php echo $mail_info_section_title; ?></h3>
                 <p style="margin-top: 8px;">
-                    <strong>Ad Soyad:</strong> <?php echo $user_name; ?><br>
-                    <strong>E-posta:</strong> <?php echo $user_email; ?><br>
+                    <strong><?php echo $mail_sender_title; ?></strong> <?php echo $user_name; ?><br>
+                    <strong><?php echo $mail_sender_email_title; ?></strong> <?php echo $user_email; ?><br>
                 </p>
 
                 <h3 style="color: #0073e6; margin: 0;">Bildirim Detayları</h3>
                 <p style="margin-top: 8px;">
-                    <strong>Bildirim Numarası:</strong> <?php echo $ticket_number; ?><br>
+                    <strong><?php echo $mail_ticket_number_title; ?></strong> <?php echo $ticket_number; ?><br>
                     <strong>Konu:</strong><?php echo $ticket_subject ?? 'Destek'; ?> <br>
                     <strong>Bildirim Tarihi:</strong> <?php echo date("d.m.Y h:i:A"); ?><br>
 
@@ -44,8 +53,7 @@
 
                 <hr style="border: 1px solid #e0e0e0; margin: 20px 0;">
 
-                <p>Lütfen müşteri ile en kısa sürede iletişime geçilmesini sağlayın. Müşteri memnuniyeti için bu
-                    bildirimle ilgilenmeniz önemlidir.</p>
+                <p><?php echo $mail_footer_text; ?></p>
 
                 <p>Saygılarımızla,<br><strong>MbeYazılım Destek Ekibi</strong></p>
             </td>

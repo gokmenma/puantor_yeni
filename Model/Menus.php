@@ -9,11 +9,46 @@ class Menus extends Model
         parent::__construct();
     }
 
-    public function getMenus()
+    public function getMenus($userId = null)
     {
-        $sql = $this->db->prepare("SELECT * FROM menu where parent_id = ? and isActive = ? ORDER BY index_no ASC");
-        $sql->execute([0, 1]);
+        if ($userId !== null) {
+            $sql = $this->db->prepare("
+                SELECT m.*, COALESCE(umo.index_no, m.index_no) as custom_index 
+                FROM menu m 
+                LEFT JOIN user_menu_order umo ON m.id = umo.menu_id AND umo.user_id = ? 
+                WHERE m.parent_id = ? AND m.isActive = ? 
+                ORDER BY custom_index ASC, m.index_no ASC, m.id ASC
+            ");
+            $sql->execute([$userId, 0, 1]);
+        } else {
+            $sql = $this->db->prepare("SELECT * FROM menu where parent_id = ? and isActive = ? ORDER BY index_no ASC");
+            $sql->execute([0, 1]);
+        }
         return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function saveUserMenuOrder($userId, $order)
+    {
+        try {
+            $this->db->beginTransaction();
+
+            $sqlDelete = $this->db->prepare("DELETE FROM user_menu_order WHERE user_id = ?");
+            $sqlDelete->execute([$userId]);
+
+            $sqlInsert = $this->db->prepare("INSERT INTO user_menu_order (user_id, menu_id, index_no) VALUES (?, ?, ?)");
+            
+            foreach ($order as $item) {
+                $menuId = (int)$item['id'];
+                $indexNo = (int)$item['index'];
+                $sqlInsert->execute([$userId, $menuId, $indexNo]);
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     public function getMenusByLink($page_link)

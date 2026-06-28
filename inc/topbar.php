@@ -109,6 +109,39 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                             </path>
                         </svg>
                     </a>
+                    
+                    <?php
+                    $_topbar_has_support_permission = false;
+                    if (isset($_SESSION['user'])) {
+                        if (isset($Auths)) {
+                            $_topbar_has_support_permission = $Auths->Authorize('supports_tickets_view');
+                        } else {
+                            require_once ROOT . '/Model/Auths.php';
+                            $_topbar_auth = new Auths();
+                            $_topbar_has_support_permission = $_topbar_auth->Authorize('supports_tickets_view');
+                        }
+                    }
+
+                    if ($_topbar_has_support_permission) {
+                        require_once ROOT . '/Model/SupportsModel.php';
+                        try {
+                            $_topbar_supports_model = new SupportsModel();
+                            $_topbar_open_supports_count = $_topbar_supports_model->getOpenSupportsCount();
+                        } catch (Exception $e) {
+                            $_topbar_open_supports_count = 0;
+                        }
+                    ?>
+                    <a href="index.php?p=supports/tickets" class="nav-link px-0 me-3"
+                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Destek Talepleri" aria-label="Destek Talepleri">
+                        <span class="position-relative d-inline-flex">
+                            <i class="ti ti-headset" style="font-size:1.25rem;"></i>
+                            <?php if ($_topbar_open_supports_count > 0): ?>
+                            <span style="position:absolute;top:-5px;right:-7px;min-width:15px;height:15px;padding:0 3px;font-size:9px;line-height:15px;border-radius:8px;background:#2fb344;color:#fff;text-align:center;pointer-events:none;font-weight:600;"><?= $_topbar_open_supports_count ?></span>
+                            <?php endif; ?>
+                        </span>
+                    </a>
+                    <?php } ?>
+
                     <div class="nav-item dropdown d-none d-md-flex me-3">
                         <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
                             aria-label="Duyurular">
@@ -172,6 +205,12 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                        <?php if ($_topbar_is_superadmin): ?>
+                        <a href="index.php?p=supports/admin-tickets" class="dropdown-item">
+                            <i class="ti ti-headset me-2"></i> Destek Yönetimi
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <?php endif; ?>
                         <a href="index.php?p=settings/manage&view=profile" class="dropdown-item">
                             <i class="ti ti-user me-2"></i> Profil Bilgileri
                         </a>

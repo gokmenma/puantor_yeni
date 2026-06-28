@@ -59,6 +59,7 @@
   if (
     $page == "missions/manage" || $page == "feedback/list"
     || $page == "supports/tickets" || $page == "supports/ticket-view"
+    || $page == "supports/admin-tickets" || $page == "supports/admin-ticket-view"
     || $page == "abonelik-islemleri/list"
     || $page == "duyurular/list"
   ) {
@@ -82,12 +83,13 @@
     $page == "financial/case/manage" || $page == 'defines/project-status/list' ||
     $page == 'todos/list' || $page == 'raporlar/list' || $page == 'activities/index' || 
     $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri' ||
-    $page == 'bildirimler/push' || $page == 'izin/list' || $page == 'izin/hakedis'
+    $page == 'bildirimler/push' || $page == 'izin/list' || $page == 'izin/hakedis' ||
+    $page == 'supports/tickets' || $page == 'supports/admin-tickets'
   ) {
     echo '<link href="./dist/libs/datatable/datatables.min.css" rel="stylesheet" />';
 }
 
-  if ($page == "supports/ticket-view") {
+  if ($page == "supports/ticket-view" || $page == "supports/admin-ticket-view") {
     echo '<link href="./dist/css/tickets.css" rel="stylesheet" />';
   }
 
