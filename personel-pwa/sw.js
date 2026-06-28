@@ -1,22 +1,16 @@
-const CACHE_NAME = 'puantor-personel-v17';
+const CACHE_NAME = 'puantor-personel-v18';
 const ASSETS = [
-  './',
-  './index.php',
-  './login.php',
-  './js/app.js',
-  './css/app.css',
-  '../dist/js/pull-to-refresh.js',
   './manifest.json',
-  './resources/Logo-ai.svg',
+  './css/app.css',
+  './js/app.js',
   './static/Logo-ai.svg',
-  './index.html'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return Promise.allSettled(ASSETS.map(url => cache.add(url).catch(() => {})));
     })
   );
 });
