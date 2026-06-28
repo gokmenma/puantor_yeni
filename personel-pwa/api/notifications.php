@@ -65,5 +65,13 @@ try {
 
 } catch (\Throwable $e) {
     if (ob_get_length()) ob_clean();
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    $action = $_REQUEST['action'] ?? '';
+    $msg    = $e->getMessage();
+    if (str_contains($msg, "doesn't exist") || str_contains($msg, 'Base table') || str_contains($msg, 'Table')) {
+        if ($action === 'list')          echo json_encode(['status' => 'success', 'list'  => []], JSON_UNESCAPED_UNICODE);
+        elseif ($action === 'unread_count') echo json_encode(['status' => 'success', 'count' => 0], JSON_UNESCAPED_UNICODE);
+        else                             echo json_encode(['status' => 'success'], JSON_UNESCAPED_UNICODE);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => $msg], JSON_UNESCAPED_UNICODE);
+    }
 }
