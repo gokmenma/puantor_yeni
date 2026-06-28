@@ -6,16 +6,13 @@ ini_set('display_errors', 0);
 
 if (!defined('ROOT')) define('ROOT', dirname(__DIR__, 2));
 
-require_once ROOT . '/Database/db.php';
+require_once ROOT . '/Database/require.php';
 if (file_exists(ROOT . '/vendor/autoload.php')) require_once ROOT . '/vendor/autoload.php';
 require_once ROOT . '/Service/WebPushSender.php';
 require_once ROOT . '/Service/PushBildirimService.php';
 require_once ROOT . '/Model/Persons.php';
-require_once ROOT . '/Model/Auths.php';
 
 use Service\PushBildirimService;
-
-if (session_status() === PHP_SESSION_NONE) session_start();
 
 if (!isset($_SESSION['user'])) {
     ob_clean(); echo json_encode(['status' => 'error', 'message' => 'Oturum kapalı.'], JSON_UNESCAPED_UNICODE); exit;
