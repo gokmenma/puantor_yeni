@@ -371,6 +371,7 @@ include_once __DIR__ . "/inc/head.php";
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/tr.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="../dist/js/pull-to-refresh.js?v=<?php echo filemtime(ROOT . '/dist/js/pull-to-refresh.js'); ?>"></script>
     <script>
         jQuery(document).ready(function($) {
             // Global Flatpickr initialization for mobile

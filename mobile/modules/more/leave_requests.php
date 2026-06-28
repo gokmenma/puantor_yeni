@@ -534,7 +534,7 @@ $(document).ready(function() {
 
         $.post(API_URL, data, function(response) {
             if (response.status === 'success') {
-                bootstrap.Modal.getInstance('#modalYeniTalep').hide();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalYeniTalep')).hide();
                 Swal.fire({
                     title: 'Başarılı!',
                     text: response.message || 'İzin talebi başarıyla oluşturuldu.',
@@ -592,7 +592,7 @@ $(document).ready(function() {
         const id = $(this).data('id');
         $('#red-talep-id').val(id);
         $('#red-notu').val('');
-        const modal = new bootstrap.Modal('#modalRed');
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalRed'));
         modal.show();
     });
 
@@ -602,7 +602,7 @@ $(document).ready(function() {
         const not = $('#red-notu').val();
         
         $.post(API_URL, { action: 'reject', id: id, not: not }, function(response) {
-            bootstrap.Modal.getInstance('#modalRed').hide();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalRed')).hide();
             Swal.fire({
                 title: response.status === 'success' ? 'Başarılı!' : 'Hata!',
                 text: response.message,
@@ -642,7 +642,7 @@ $(document).ready(function() {
             defaultDate: end
         });
 
-        const modal = new bootstrap.Modal('#modalKismiOnay');
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalKismiOnay'));
         modal.show();
     });
 
@@ -661,7 +661,7 @@ $(document).ready(function() {
         const yeniBitis = p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : yeniBitisRaw;
 
         $.post(API_URL, { action: 'partial_approve', id: id, yeni_bitis: yeniBitis }, function(response) {
-            bootstrap.Modal.getInstance('#modalKismiOnay').hide();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalKismiOnay')).hide();
             Swal.fire({
                 title: response.status === 'success' ? 'Başarılı!' : 'Hata!',
                 text: response.message,

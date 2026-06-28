@@ -5,6 +5,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script src="js/app.js?v=1.6"></script>
+<script src="../dist/js/pull-to-refresh.js?v=<?php echo filemtime(__DIR__ . '/../../dist/js/pull-to-refresh.js'); ?>"></script>
 <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js');
