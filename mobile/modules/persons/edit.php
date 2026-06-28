@@ -720,9 +720,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
     </div>
 
     <!-- Floating Action Button for Finance (Moved higher to avoid overlap with Menu FAB) -->
-    <a href="#" class="mobile-fab shadow-lg" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="right: 1rem; bottom: 145px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4);">
+    <button type="button" class="mobile-fab shadow-lg border-0" id="btn-add-person-transaction" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="right: 1rem; bottom: 145px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4);">
       <i class="ti ti-plus"></i>
-    </a>
+    </button>
   </div>
 
   <div id="tab-documents" class="person-tab-content <?php echo $activeTab != 'documents' ? 'd-none' : ''; ?>">
@@ -785,9 +785,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
 </div>
 
 <!-- Add Person Transaction Modal -->
-<div class="modal modal-blur fade" id="add-person-transaction-modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content" style="border-radius: 20px; border: none;">
+<div class="modal modal-blur fade modal-bottom-sheet" id="add-person-transaction-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable" role="document">
+    <div class="modal-content">
       <div class="modal-header py-3" style="border-bottom: 1px solid rgba(0,0,0,0.06);">
         <h5 class="modal-title text-semibold">Yeni Ödeme / Gelir</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -957,6 +957,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
 
 <script>
 $(document).ready(function() {
+    $('#add-person-transaction-modal').appendTo('body');
+    $('#btn-add-person-transaction').appendTo('body');
     // Select2'yi sayfa ilk yüklendiğinde de başlat
     if ($.fn.select2) {
         $('.select2-init').select2();

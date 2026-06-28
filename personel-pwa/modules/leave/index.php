@@ -339,6 +339,15 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Move FAB and modals to body to prevent pull-to-refresh transition visual shifts and backdrop overlay bugs
+        const btnNewLeave = document.getElementById('btn-new-leave');
+        const modalYeniIzin = document.getElementById('modalYeniIzin');
+        const modalHakedisler = document.getElementById('modalHakedisler');
+
+        if (btnNewLeave) document.body.appendChild(btnNewLeave);
+        if (modalYeniIzin) document.body.appendChild(modalYeniIzin);
+        if (modalHakedisler) document.body.appendChild(modalHakedisler);
+
         loadLeave();
 
         document.getElementById('btn-show-hakedis').addEventListener('click', showHakedisModal);

@@ -200,14 +200,14 @@ body[data-bs-theme="dark"] .transaction-item-content {
     </div>
 </div>
 
-<a href="#" class="mobile-fab" data-bs-toggle="modal" data-bs-target="#add-movement-modal">
+<button type="button" class="mobile-fab border-0" id="btn-add-movement">
     <i class="ti ti-plus"></i>
-</a>
+</button>
 
 <!-- Add Movement Modal -->
-<div class="modal modal-blur fade" id="add-movement-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="border-radius: 20px;">
+<div class="modal modal-blur fade modal-bottom-sheet" id="add-movement-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
             <div class="modal-header py-3">
                 <h5 class="modal-title">Yeni Hareket Ekle</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -270,6 +270,14 @@ body[data-bs-theme="dark"] .transaction-item-content {
 
 <script>
 $(document).ready(function() {
+    $('#add-movement-modal').appendTo('body');
+    $('#btn-add-movement').appendTo('body');
+
+    $('#btn-add-movement').on('click', function(e) {
+        e.preventDefault();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('add-movement-modal')).show();
+    });
+
     if (typeof flatpickr !== 'undefined') {
         flatpickr("#mIslemTarihi", {
             dateFormat: "d.m.Y",

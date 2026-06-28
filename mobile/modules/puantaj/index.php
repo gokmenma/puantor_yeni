@@ -1061,6 +1061,7 @@ if (typeof $ === 'undefined' && typeof jQuery !== 'undefined') {
 document.addEventListener('DOMContentLoaded', function() {
     // Move modals to body to prevent backdrop stacking context issues on iOS/mobile
     $('#puantajModal, #filterModal, #monthlyPuantajModal').appendTo('body');
+    $('.fab-switch-view').appendTo('body');
 
     // Re-open monthly calendar modal when daily type selector is closed
     document.getElementById('puantajModal').addEventListener('hidden.bs.modal', function () {

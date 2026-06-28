@@ -76,6 +76,17 @@ if ($action == 'list') {
                 if ($duyuru_id) {
                     $Duyuru->setHedefler($duyuru_id, 'kullanici', $manager_ids);
                 }
+
+                if (file_exists(ROOT . '/vendor/autoload.php')) require_once ROOT . '/vendor/autoload.php';
+                require_once ROOT . '/Service/WebPushSender.php';
+                require_once ROOT . '/Service/PushBildirimService.php';
+                $push_mesaj = $person_name . ' ' . number_format($tutar, 2, ',', '.') . ' TL tutarında avans talebi oluşturdu.';
+                (new \Service\PushBildirimService($db))->yoneticilereGonder(
+                    (int) $firm_id,
+                    'Yeni Avans Talebi',
+                    $push_mesaj,
+                    ['url' => 'modules/more/advance_requests.php']
+                );
             }
 
             // Aktivite günlüğü kaydı

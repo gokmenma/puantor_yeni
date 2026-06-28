@@ -343,14 +343,14 @@ body[data-bs-theme="dark"] .transaction-item-content {
 </div>
 
 <!-- Floating Action Button (FAB) -->
-<a href="#" class="mobile-fab" data-bs-toggle="modal" data-bs-target="#add-transaction-modal">
+<button type="button" class="mobile-fab border-0" id="btn-add-transaction">
   <i class="ti ti-plus"></i>
-</a>
+</button>
 
 <!-- Add Transaction Modal -->
-<div class="modal modal-blur fade" id="add-transaction-modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
-    <div class="modal-content" style="border-radius: 20px; border: none;">
+<div class="modal modal-blur fade modal-bottom-sheet" id="add-transaction-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable" role="document">
+    <div class="modal-content">
       <div class="modal-header py-3" style="border-bottom: 1px solid rgba(0,0,0,0.06);">
         <h5 class="modal-title text-semibold" style="font-size: 1.05rem;">Yeni İşlem Ekle</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -495,14 +495,26 @@ body[data-bs-theme="dark"] .transaction-item-content {
 
 <script>
 $(document).ready(function() {
+    $('#add-transaction-modal').appendTo('body');
+    $('#btn-add-transaction').appendTo('body');
     const apiUrl = '<?php echo $apiUrl; ?>';
 
-    // Initialize Select2 with dropdownParent to fix modal focus issues
-    if (jQuery.fn && jQuery.fn.select2) {
-        jQuery('.select2-init, select.select2').select2({
-            dropdownParent: jQuery('#add-transaction-modal')
-        });
-    }
+    // Show Modal manually on FAB click
+    $('#btn-add-transaction').on('click', function(e) {
+        e.preventDefault();
+        var modalEl = document.getElementById('add-transaction-modal');
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+
+    // Initialize/Re-initialize Select2 when the modal is shown to avoid layout/focus issues
+    $('#add-transaction-modal').on('shown.bs.modal', function () {
+        if (jQuery.fn && jQuery.fn.select2) {
+            jQuery('.select2-init, select.select2').select2({
+                dropdownParent: jQuery('#add-transaction-modal'),
+                width: '100%'
+            });
+        }
+    });
 
     // 1. Initialize Flatpickr with global Turkish locale
     if (typeof flatpickr !== 'undefined') {
@@ -623,7 +635,7 @@ $(document).ready(function() {
                     var res = typeof response === 'object' ? response : JSON.parse(response);
                     if (res.status === 'success') {
                         showToast(res.message, false);
-                        $('#add-transaction-modal').modal('hide');
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('add-transaction-modal')).hide();
                         setTimeout(function() {
                             location.reload();
                         }, 1000);

@@ -102,6 +102,24 @@ try {
         }
 
         $db->commit();
+
+        if ($status == 1 || $status == 2) {
+            try {
+                if (file_exists(ROOT . '/vendor/autoload.php')) require_once ROOT . '/vendor/autoload.php';
+                require_once ROOT . '/Service/WebPushSender.php';
+                require_once ROOT . '/Service/PushBildirimService.php';
+                require_once ROOT . '/Model/PersonelBildirimModel.php';
+
+                $baslik = $status == 1 ? 'Avans Talebiniz Onaylandı' : 'Avans Talebiniz Reddedildi';
+                $mesaj  = $status == 1
+                    ? 'Avans talebiniz onaylandı. Tutar: ' . number_format($request->tutar, 2, ',', '.') . ' TL'
+                    : 'Avans talebiniz reddedildi. Tutar: ' . number_format($request->tutar, 2, ',', '.') . ' TL';
+
+                (new \Service\PushBildirimService($db))->personeleGonder((int) $request->person_id, (int) $firm_id, $baslik, $mesaj, []);
+                (new PersonelBildirimModel($db))->kaydet((int) $request->person_id, (int) $firm_id, $baslik, $mesaj, 'advance');
+            } catch (\Throwable $pe) {}
+        }
+
         if (ob_get_length()) ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'Talep güncellendi.'], JSON_UNESCAPED_UNICODE);
         exit;

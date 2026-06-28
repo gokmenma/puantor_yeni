@@ -191,9 +191,9 @@ body[data-bs-theme="dark"] .project-item-content {
 </div>
 
 <!-- Floating Action Button (FAB) -->
-<a href="#" class="mobile-fab" id="addNewProject">
+<button type="button" class="mobile-fab border-0" id="addNewProject">
   <i class="ti ti-plus"></i>
-</a>
+</button>
 
 <script src="js/projects.js?v=<?php echo time(); ?>"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
@@ -201,6 +201,9 @@ body[data-bs-theme="dark"] .project-item-content {
 
 <script>
 $(document).ready(function() {
+  $('#projectModal').appendTo('body');
+  $('#addNewProject').appendTo('body');
+
   // Money mask initialization for mobile modal
   if ($.fn.inputmask) {
     $(".money").inputmask("decimal", {

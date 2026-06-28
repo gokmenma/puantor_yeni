@@ -177,14 +177,14 @@ body[data-bs-theme="dark"] .transaction-item-content {
     </div>
 </div>
 
-<a href="#" class="mobile-fab" data-bs-toggle="modal" data-bs-target="#add-cari-modal">
+<button type="button" class="mobile-fab border-0" id="btn-add-cari">
     <i class="ti ti-plus"></i>
-</a>
+</button>
 
 <!-- Add Cari Modal -->
-<div class="modal modal-blur fade" id="add-cari-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="border-radius: 20px;">
+<div class="modal modal-blur fade modal-bottom-sheet" id="add-cari-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
             <div class="modal-header py-3">
                 <h5 class="modal-title">Yeni Cari Ekle</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -231,6 +231,14 @@ body[data-bs-theme="dark"] .transaction-item-content {
 
 <script>
 $(document).ready(function() {
+    $('#add-cari-modal').appendTo('body');
+    $('#btn-add-cari').appendTo('body');
+
+    $('#btn-add-cari').on('click', function(e) {
+        e.preventDefault();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('add-cari-modal')).show();
+    });
+
     // Contact Picker API
     const btnPickContact = document.getElementById('btnPickContact');
     if (!('contacts' in navigator && 'select' in navigator.contacts)) {

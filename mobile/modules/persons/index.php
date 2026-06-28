@@ -296,6 +296,7 @@ foreach($persons as $p) {
 
 <script>
 $(document).ready(function() {
+  $('.mobile-fab').appendTo('body');
   // Real-time search function (FIXED - search directly on wrapper element data-name)
   $('#personSearchInput').on('keyup', function() {
     var value = $(this).val().toLowerCase();

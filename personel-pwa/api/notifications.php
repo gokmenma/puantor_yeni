@@ -16,7 +16,7 @@ if (!isset($_SESSION['personel_id'])) {
 }
 
 $person_id = (int) $_SESSION['personel_id'];
-$firma_id  = (int) ($_SESSION['personel_user']->firma_id ?? 0);
+$firma_id  = (int) ($_SESSION['firm_id'] ?? 0);
 
 try {
     $model  = new PersonelBildirimModel($db);

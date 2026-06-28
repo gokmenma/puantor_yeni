@@ -184,14 +184,14 @@ body[data-bs-theme="dark"] .form-floating > .form-control:focus {
 </div>
 
 <!-- Floating Action Button (FAB) -->
-<a href="#" class="mobile-fab" onclick="openTicketModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;">
+<button type="button" class="mobile-fab border-0" id="btn-add-ticket" onclick="openTicketModal()" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;">
     <i class="ti ti-plus"></i>
-</a>
+</button>
 
 <!-- Modal Structure -->
-<div class="modal modal-blur fade" id="ticketModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="border-radius: 20px; border: none;">
+<div class="modal modal-blur fade modal-bottom-sheet" id="ticketModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
             <div class="modal-header py-3" style="border-bottom: 1px solid rgba(0,0,0,0.06);">
                 <h5 class="modal-title text-semibold" style="font-size: 1.05rem;">Yeni Destek Talebi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
@@ -227,9 +227,14 @@ body[data-bs-theme="dark"] .form-floating > .form-control:focus {
 </div>
 
 <script>
+$(document).ready(function() {
+    $('#ticketModal').appendTo('body');
+    $('#btn-add-ticket').appendTo('body');
+});
+
 function openTicketModal() {
     $('#ticketForm')[0].reset();
-    new bootstrap.Modal($('#ticketModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('ticketModal')).show();
 }
 
 function saveTicket(e) {

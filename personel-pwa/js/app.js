@@ -143,6 +143,7 @@ window.app = {
         // New advance button
         const btnNewAdvance = document.getElementById('btn-new-advance');
         if (btnNewAdvance) {
+            document.body.appendChild(btnNewAdvance);
             btnNewAdvance.addEventListener('click', () => {
                 this.showNewAdvanceModal();
             });

@@ -4,8 +4,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-<script src="js/app.js?v=1.6"></script>
-<script src="../dist/js/pull-to-refresh.js?v=<?php echo filemtime(__DIR__ . '/../../dist/js/pull-to-refresh.js'); ?>"></script>
+<script src="js/app.js?v=<?php echo filemtime(__DIR__ . '/../js/app.js'); ?>"></script>
+<script src="js/pull-to-refresh.js?v=<?php echo filemtime(__DIR__ . '/../js/pull-to-refresh.js'); ?>"></script>
 <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js');

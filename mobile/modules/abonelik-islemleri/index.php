@@ -591,9 +591,9 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
             <?php endif; ?>
 
             <!-- Floating Action Button for adding Package -->
-            <a href="#" class="mobile-fab btn-add-paket-mobile" style="position: fixed; right: 20px; bottom: 80px; z-index: 100; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(32, 107, 196, 0.4); text-decoration: none;">
+            <button type="button" class="mobile-fab btn-add-paket-mobile border-0" style="position: fixed; right: 20px; bottom: 80px; z-index: 100; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(32, 107, 196, 0.4); text-decoration: none;">
                 <i class="ti ti-plus" style="font-size: 1.5rem;"></i>
-            </a>
+            </button>
         </div>
         <?php endif; ?>
 
@@ -736,9 +736,9 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
             <?php endif; ?>
 
             <!-- Floating Action Button for adding Transaction -->
-            <a href="#" class="mobile-fab btn-add-transaction-mobile" style="position: fixed; right: 20px; bottom: 80px; z-index: 100; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(32, 107, 196, 0.4); text-decoration: none;">
+            <button type="button" class="mobile-fab btn-add-transaction-mobile border-0" style="position: fixed; right: 20px; bottom: 80px; z-index: 100; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(32, 107, 196, 0.4); text-decoration: none;">
                 <i class="ti ti-plus" style="font-size: 1.5rem;"></i>
-            </a>
+            </button>
         </div>
         <?php endif; ?>
 
@@ -750,8 +750,8 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
 
 <?php if ($hasPaketler): ?>
 <!-- A. Mobil Paket Ekle / Güncelle Modalı -->
-<div class="modal modal-blur fade" id="paketModalMobile" tabindex="-1" style="display: none;" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+<div class="modal modal-blur fade modal-bottom-sheet" id="paketModalMobile" tabindex="-1" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header py-3 px-4 border-bottom border-light">
                 <h5 class="modal-title font-weight-bold" id="paketModalTitleMobile" style="font-size: 1.1rem; display: flex; align-items: center; gap: 6px;">
@@ -825,8 +825,8 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
 
 <?php if ($hasSatinAlma): ?>
 <!-- B. Mobil Yeni Satış İşlemi Ekle Modalı -->
-<div class="modal modal-blur fade" id="transactionModalMobile" tabindex="-1" style="display: none;" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+<div class="modal modal-blur fade modal-bottom-sheet" id="transactionModalMobile" tabindex="-1" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header py-3 px-4 border-bottom border-light">
                 <h5 class="modal-title font-weight-bold" style="font-size: 1.1rem; display: flex; align-items: center; gap: 6px;">
@@ -916,6 +916,11 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
 <!-- ---------------- JAVASCRIPT KODLARI ---------------- -->
 <script>
 $(document).ready(function() {
+    if ($('#paketModalMobile').length) $('#paketModalMobile').appendTo('body');
+    if ($('#transactionModalMobile').length) $('#transactionModalMobile').appendTo('body');
+    if ($('.btn-add-paket-mobile').length) $('.btn-add-paket-mobile').appendTo('body');
+    if ($('.btn-add-transaction-mobile').length) $('.btn-add-transaction-mobile').appendTo('body');
+
     // Sekme geçişlerinde Floating Action Button'ların doğru gösterimi
     function adjustFabVisibility() {
         // Tüm fab'leri gizle

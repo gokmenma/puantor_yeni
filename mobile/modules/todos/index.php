@@ -349,14 +349,14 @@ foreach ($todos as $todo) {
 </div>
 
 <!-- Floating Action Button (FAB) matches finance page FAB perfectly -->
-<a href="#" class="mobile-fab" onclick="openTodoModal()">
+<button type="button" class="mobile-fab border-0" id="btn-add-todo" onclick="openTodoModal()">
   <i class="ti ti-plus"></i>
-</a>
+</button>
 
 <!-- Modal Structure matches finance perfectly -->
-<div class="modal modal-blur fade" id="todoModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="border-radius: 20px; border: none;">
+<div class="modal modal-blur fade modal-bottom-sheet" id="todoModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
             <div class="modal-header py-3" style="border-bottom: 1px solid rgba(0,0,0,0.06);">
                 <h5 class="modal-title text-semibold" id="todoModalTitle" style="font-size: 1.05rem;">Yeni Görev Ekle</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
@@ -465,12 +465,18 @@ foreach ($todos as $todo) {
 
 <script>
 $(document).ready(function() {
-    // Initialize Select2 with dropdownParent to fix modal focus issues
-    if (jQuery.fn && jQuery.fn.select2) {
-        jQuery('.select2-init, select.select2').select2({
-            dropdownParent: jQuery('#todoModal')
-        });
-    }
+    $('#todoModal').appendTo('body');
+    $('#btn-add-todo').appendTo('body');
+
+    // Initialize/Re-initialize Select2 when the modal is shown to avoid layout/focus issues
+    $('#todoModal').on('shown.bs.modal', function () {
+        if (jQuery.fn && jQuery.fn.select2) {
+            jQuery('.select2-init, select.select2').select2({
+                dropdownParent: jQuery('#todoModal'),
+                width: '100%'
+            });
+        }
+    });
 
     if (typeof flatpickr !== 'undefined') {
         flatpickr("#todoTarih", {
@@ -583,7 +589,7 @@ function openTodoModal() {
         $('#todoListeId').val($('#todoListeId option:first').val()).trigger('change');
     }
     
-    new bootstrap.Modal($('#todoModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('todoModal')).show();
 }
 
 function getGorevApiUrl() {
@@ -663,7 +669,7 @@ function editTodo(id) {
     }
 
     $('#todoModalTitle').text('Görevi Düzenle');
-    new bootstrap.Modal($('#todoModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('todoModal')).show();
 }
 
 function toggleTodoStatusDirect(id, currentStatus) {
