@@ -281,6 +281,17 @@ class GorevModel extends Model
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
+    public function getGorevDetail($id, $firma_id)
+    {
+        $sql = "SELECT g.*, gl.baslik as liste_adi, gl.renk as liste_renk 
+                FROM gorevler g 
+                JOIN gorev_listeleri gl ON g.liste_id = gl.id 
+                WHERE g.id = :id AND g.firma_id = :firma_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id' => $id, ':firma_id' => $firma_id]);
+        return $stmt->fetch(PDO::FETCH_OBJ);
+    }
+
     // =====================================================
     // BİLDİRİM İŞLEMLERİ
     // =====================================================

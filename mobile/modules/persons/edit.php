@@ -720,7 +720,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
     </div>
 
     <!-- Floating Action Button for Finance (Moved higher to avoid overlap with Menu FAB) -->
-    <button type="button" class="mobile-fab shadow-lg border-0" id="btn-add-person-transaction" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="right: 1rem; bottom: 145px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4);">
+    <button type="button" class="mobile-fab shadow-lg border-0" id="btn-add-person-transaction" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="right: 1rem; bottom: 145px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4); display: <?php echo $activeTab == 'finance' ? 'flex' : 'none'; ?>;">
       <i class="ti ti-plus"></i>
     </button>
   </div>
@@ -959,6 +959,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
 $(document).ready(function() {
     $('#add-person-transaction-modal').appendTo('body');
     $('#btn-add-person-transaction').appendTo('body');
+    $('#person-menu-dropup').appendTo('body');
     // Select2'yi sayfa ilk yüklendiğinde de başlat
     if ($.fn.select2) {
         $('.select2-init').select2();
@@ -1039,9 +1040,12 @@ $(document).ready(function() {
             $('.select2-init').select2();
         }
 
-        // Kasa alt türlerini yükle (Eğer finans sekmesi açıldıysa)
+        // Eğer finans sekmesi açıldıysa ödeme ekleme butonunu göster, yoksa gizle
         if (tabId === 'finance') {
+            $('#btn-add-person-transaction').show();
             fetchSubTypes($('input[name="transaction_type"]:checked').val());
+        } else {
+            $('#btn-add-person-transaction').hide();
         }
     });
 
@@ -1053,6 +1057,14 @@ $(document).ready(function() {
     } else if (urlParams.has('month') || urlParams.has('year')) {
         // URL'de ay/yıl parametresi varsa Puantaj sekmesini otomatik aç
         $('.tab-trigger[data-tab="puantaj"]').click();
+    } else {
+        // Varsayılan sekmeye göre buton görünürlüğünü ayarla
+        var defaultTab = '<?php echo $activeTab; ?>';
+        if (defaultTab === 'finance') {
+            $('#btn-add-person-transaction').show();
+        } else {
+            $('#btn-add-person-transaction').hide();
+        }
     }
 
     // 1. Kasa Alt Türlerini Getir
@@ -1746,7 +1758,7 @@ body[data-bs-theme="dark"] .calendar-day.empty {
 </style>
 
 <!-- Floating Action Button (FAB) for Personnel Menu -->
-<div class="dropup position-fixed" style="right: 1rem; bottom: 80px; z-index: 1060;">
+<div class="dropup position-fixed" id="person-menu-dropup" style="right: 1rem; bottom: 80px; z-index: 1060;">
   <button class="mobile-fab border-0 shadow-lg dropdown-toggle no-caret" id="personTabsDropdown" type="button" aria-expanded="false" style="position: static; box-shadow: 0 4px 20px rgba(32, 107, 196, 0.5) !important;">
     <i class="ti ti-dots-vertical"></i>
   </button>

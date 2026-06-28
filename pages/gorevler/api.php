@@ -260,11 +260,62 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
                 break;
 
+            case 'get-gorev-detail':
+                $id = Security::decrypt($_POST['gorev_id']);
+                $gorev = $Gorev->getGorevDetail($id, $firmaId);
+                if (!$gorev) {
+                    throw new Exception("Görev bulunamadı veya bu işlem için yetkiniz yok.");
+                }
+
+                // Görev kullanıcılarının isimlerini alalım
+                $kullanicilar = [];
+                if (!empty($gorev->gorev_kullanicilari)) {
+                    $userIds = explode(',', $gorev->gorev_kullanicilari);
+                    $User = new \UserModel();
+                    foreach ($userIds as $uId) {
+                        $u = $User->find((int)$uId);
+                        if ($u) {
+                            $kullanicilar[] = $u->full_name;
+                        }
+                    }
+                }
+                $gorev->kullanicilar = $kullanicilar;
+
+                // Tarihi formatlayalım
+                if ($gorev->tarih) {
+                    $gorev->tarih_formatli = date('d.m.Y', strtotime($gorev->tarih));
+                } else {
+                    $gorev->tarih_formatli = null;
+                }
+
+                if ($gorev->saat) {
+                    $gorev->saat_formatli = substr($gorev->saat, 0, 5);
+                } else {
+                    $gorev->saat_formatli = null;
+                }
+
+                // Log kaydı oluşturuluyor (görüntüleme için)
+                require_once ROOT . '/Model/ActivityLogModel.php';
+                ActivityLogModel::log('gorev', 'detay_gor', "Görev detayı görüntülendi: {$gorev->baslik}");
+
+                // Encrypt edilecek ID'ler
+                $gorev->id = Security::encrypt($gorev->id);
+                $gorev->liste_id = Security::encrypt($gorev->liste_id);
+
+                echo json_encode(['success' => true, 'data' => $gorev]);
+                break;
+
             case 'tamamla':
                 $id = Security::decrypt($_POST['gorev_id']);
+                $gorev = $Gorev->findGorev($id);
+                if (!$gorev || $gorev->firma_id != $firmaId) {
+                    throw new Exception("Bu işlem için yetkiniz yok.");
+                }
                 $result = $Gorev->tamamla($id);
 
                 if ($result) {
+                    require_once ROOT . '/Model/ActivityLogModel.php';
+                    ActivityLogModel::log('gorev', 'tamamla', "Görev tamamlandı olarak işaretlendi: {$gorev->baslik}");
                     echo json_encode(['success' => true, 'message' => 'Görev tamamlandı.']);
                 } else {
                     throw new Exception("İşlem başarısız.");
@@ -273,9 +324,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             case 'geri-al':
                 $id = Security::decrypt($_POST['gorev_id']);
+                $gorev = $Gorev->findGorev($id);
+                if (!$gorev || $gorev->firma_id != $firmaId) {
+                    throw new Exception("Bu işlem için yetkiniz yok.");
+                }
                 $result = $Gorev->tamamlamayiGeriAl($id);
 
                 if ($result) {
+                    require_once ROOT . '/Model/ActivityLogModel.php';
+                    ActivityLogModel::log('gorev', 'geri_al', "Görev tamamlanması geri alındı: {$gorev->baslik}");
                     echo json_encode(['success' => true, 'message' => 'Görev geri alındı.']);
                 } else {
                     throw new Exception("İşlem başarısız.");
