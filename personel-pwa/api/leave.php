@@ -7,6 +7,7 @@ ob_start();
 if (!defined('ROOT')) define('ROOT', dirname(__DIR__, 2));
 
 require_once ROOT . '/Database/require.php';
+require_once ROOT . '/vendor/autoload.php';
 require_once ROOT . '/Model/IzinTalep.php';
 require_once ROOT . '/Model/IzinHakedis.php';
 require_once ROOT . '/Model/IzinTur.php';
@@ -14,6 +15,8 @@ require_once ROOT . '/Model/DuyuruModel.php';
 require_once ROOT . '/Model/UserModel.php';
 require_once ROOT . '/Model/Persons.php';
 require_once ROOT . '/Model/ActivityLogModel.php';
+
+use Service\PushBildirimService;
 
 $action = $_REQUEST['action'] ?? '';
 
@@ -123,6 +126,14 @@ try {
                         'is_active'       => 1,
                     ]);
                 }
+
+                $pushService = new PushBildirimService($db);
+                $pushService->yoneticilereGonder(
+                    $firm_id,
+                    'Yeni İzin Talebi',
+                    $mesaj,
+                    ['url' => 'modules/more/leave_requests.php']
+                );
             } catch (Exception $ne) {}
         }
 

@@ -16,6 +16,9 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
         <div class="row g-2 align-items-center">
             <div class="col">
                 <h2 class="page-title">Yıllık İzin Hakedişleri</h2>
+                <div class="text-muted small mt-1">
+                    <i class="ti ti-info-circle text-info me-1"></i> Yıllık izin hakedişleri her gece saat 01:00'da otomatik olarak hesaplanmaktadır.
+                </div>
             </div>
             <div class="col-auto ms-auto d-flex gap-2">
                 <button class="btn btn-primary" id="btn-hesapla-hepsi">

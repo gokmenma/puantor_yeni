@@ -15,13 +15,41 @@
   <meta name="apple-mobile-web-app-title" content="Puantor">
   <link rel="apple-touch-icon" href="../static/png/icon-192x192.png">
 
-  <!-- Service Worker Registration -->
+  <!-- Service Worker & Push Notification Registration -->
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('Service Worker registered', reg))
-          .catch(err => console.log('Service Worker registration failed', err));
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('sw.js');
+
+          if (!('PushManager' in window)) return;
+
+          const res = await fetch('api/push-subscribe.php?action=vapid-public-key');
+          const json = await res.json();
+          if (json.status !== 'success') return;
+
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') return;
+
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) {
+            const keyBytes = (() => {
+              const b64 = (json.key + '='.repeat((4 - json.key.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+              const raw = atob(b64);
+              return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+            })();
+            sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
+          }
+
+          const keys = sub.toJSON().keys;
+          const params = new URLSearchParams({
+            action:   'subscribe',
+            endpoint: sub.endpoint,
+            p256dh:   keys.p256dh,
+            auth:     keys.auth,
+          });
+          await fetch('api/push-subscribe.php', { method: 'POST', body: params });
+        } catch (e) {}
       });
     }
   </script>

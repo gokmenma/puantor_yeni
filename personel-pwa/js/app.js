@@ -63,6 +63,52 @@ window.app = {
 
         this.bindEvents();
         this.initTheme();
+
+        if (this.user) {
+            this.initPushNotifications();
+        }
+    },
+
+    async initPushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+        try {
+            const res = await fetch('api/push-subscribe.php?action=vapid-public-key&person_id=' + this.user.id + '&firm_id=' + this.user.firm_id);
+            const json = await res.json();
+            if (json.status !== 'success') return;
+
+            const vapidKey = json.key;
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') return;
+
+            const reg = await navigator.serviceWorker.ready;
+            let sub = await reg.pushManager.getSubscription();
+
+            if (!sub) {
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: this._urlBase64ToUint8Array(vapidKey),
+                });
+            }
+
+            const keys = sub.toJSON().keys;
+            const params = new URLSearchParams({
+                action:     'subscribe',
+                person_id:  this.user.id,
+                firm_id:    this.user.firm_id,
+                endpoint:   sub.endpoint,
+                p256dh:     keys.p256dh,
+                auth:       keys.auth,
+            });
+            await fetch('api/push-subscribe.php', { method: 'POST', body: params });
+        } catch (e) {}
+    },
+
+    _urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const raw = atob(base64);
+        return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
     },
 
     initModal() {

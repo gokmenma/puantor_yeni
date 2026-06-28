@@ -62,6 +62,70 @@ $turler = $turModel->getAktifTurler();
         background-color: var(--tblr-primary) !important;
         color: #fff !important;
     }
+
+    /* Premium Select2 Styling for Mobile */
+    .select2-container--default .select2-selection--single {
+        height: 46px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(0,0,0,0.12) !important;
+        background-color: #fff !important;
+        display: flex !important;
+        align-items: center !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+    }
+    body[data-bs-theme="dark"] .select2-container--default .select2-selection--single {
+        background-color: #1e293b !important;
+        border-color: rgba(255,255,255,0.12) !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 46px !important;
+        padding-left: 14px !important;
+        font-size: 0.88rem !important;
+        font-weight: 500 !important;
+        color: var(--tblr-body-color) !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 44px !important;
+        right: 8px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: #94a3b8 transparent transparent transparent !important;
+        border-width: 5px 4px 0 4px !important;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #206bc4 !important;
+        box-shadow: 0 0 0 0.25rem rgba(32, 107, 196, 0.15) !important;
+    }
+    /* Select2 Dropdown List Styling */
+    .select2-dropdown {
+        border-radius: 16px !important;
+        border: 1px solid rgba(0,0,0,0.08) !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        overflow: hidden !important;
+        background-color: #fff !important;
+        z-index: 999999 !important; /* Ensure dropdown is above Bootstrap Modal */
+    }
+    body[data-bs-theme="dark"] .select2-dropdown {
+        background-color: #1e293b !important;
+        border-color: rgba(255,255,255,0.08) !important;
+    }
+    .select2-container--default .select2-results__option {
+        padding: 10px 14px !important;
+        font-size: 0.88rem !important;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #206bc4 !important;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border-radius: 8px !important;
+        border: 1px solid rgba(0,0,0,0.1) !important;
+        padding: 6px 10px !important;
+    }
+    body[data-bs-theme="dark"] .select2-container--default .select2-search--dropdown .select2-search__field {
+        background-color: #0f172a !important;
+        border-color: rgba(255,255,255,0.1) !important;
+        color: #fff !important;
+    }
 </style>
 
 <div class="container px-0">
@@ -385,33 +449,38 @@ $(document).ready(function() {
         if (fpYeniBaslangic) fpYeniBaslangic.clear();
         if (fpYeniBitis) fpYeniBitis.clear();
 
-        // Modal'daki select2 elemanlarını modal açılırken başlat (dropdownParent sorunu olmaması için)
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalYeniTalep')).show();
+    });
+
+    // Modal açıldığında Select2 ve Flatpickr'ları başlat (hidden element bug'larını önlemek için)
+    $('#modalYeniTalep').on('shown.bs.modal', function () {
         $('.select2-yeni').select2({
             dropdownParent: $('#modalYeniTalep'),
             width: '100%'
         });
 
-        // flatpickr'ları başlat
-        fpYeniBaslangic = flatpickr('#yeni-baslangic', {
-            dateFormat: "d.m.Y",
-            locale: "tr",
-            disableMobile: "true",
-            onChange: function(dates) {
-                if (fpYeniBitis) {
-                    fpYeniBitis.set('minDate', dates[0] || null);
+        if (!fpYeniBaslangic) {
+            fpYeniBaslangic = flatpickr('#yeni-baslangic', {
+                dateFormat: "d.m.Y",
+                locale: "tr",
+                disableMobile: "true",
+                onChange: function(dates) {
+                    if (fpYeniBitis) {
+                        fpYeniBitis.set('minDate', dates[0] || null);
+                    }
+                    calcYeniGunler();
                 }
-                calcYeniGunler();
-            }
-        });
+            });
+        }
 
-        fpYeniBitis = flatpickr('#yeni-bitis', {
-            dateFormat: "d.m.Y",
-            locale: "tr",
-            disableMobile: "true",
-            onChange: calcYeniGunler
-        });
-
-        new bootstrap.Modal('#modalYeniTalep').show();
+        if (!fpYeniBitis) {
+            fpYeniBitis = flatpickr('#yeni-bitis', {
+                dateFormat: "d.m.Y",
+                locale: "tr",
+                disableMobile: "true",
+                onChange: calcYeniGunler
+            });
+        }
     });
 
     function calcYeniGunler() {

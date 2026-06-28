@@ -1,4 +1,4 @@
-const CACHE_NAME = 'puantor-personel-v15';
+const CACHE_NAME = 'puantor-personel-v16';
 const ASSETS = [
   './',
   './index.php',
@@ -35,7 +35,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for PHP files to ensure routing works, Cache-first for assets
   if (event.request.url.includes('.php') || event.request.url.endsWith('/') || event.request.url.includes('?route=')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
@@ -47,4 +46,30 @@ self.addEventListener('fetch', (event) => {
       })
     );
   }
+});
+
+self.addEventListener('push', (event) => {
+  let data = { title: 'Puantor', body: 'Yeni bildirim.' };
+  if (event.data) {
+    try { data = event.data.json(); } catch (e) { data.body = event.data.text(); }
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body:    data.body,
+      icon:    './static/Logo-ai.svg',
+      badge:   './static/Logo-ai.svg',
+      vibrate: [200, 100, 200],
+      data:    data.data || {},
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      if (list.length > 0) return list[0].focus();
+      return clients.openWindow('./');
+    })
+  );
 });
