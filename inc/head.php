@@ -81,7 +81,8 @@
     $page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage' ||
     $page == "financial/case/manage" || $page == 'defines/project-status/list' ||
     $page == 'todos/list' || $page == 'raporlar/list' || $page == 'activities/index' || 
-    $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri'
+    $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri' ||
+    $page == 'bildirimler/push' || $page == 'izin/list' || $page == 'izin/hakedis'
   ) {
     echo '<link href="./dist/libs/datatable/datatables.min.css" rel="stylesheet" />';
 }

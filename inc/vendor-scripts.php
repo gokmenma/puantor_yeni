@@ -39,7 +39,8 @@ if (
     $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri' ||
     $page == 'duyurular/list' ||
     $page == 'izin/list' ||
-    $page == 'izin/hakedis'
+    $page == 'izin/hakedis' ||
+    $page == 'bildirimler/push'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }

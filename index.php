@@ -222,6 +222,16 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 
 <body class="layout-fluid" data-bs-theme="<?php echo $theme; ?>">
 
+    <?php if ($active_page === 'under-maintance'): ?>
+        <div class="page page-center">
+            <?php include "pages/under-maintance.php"; ?>
+        </div>
+        <?php include "inc/vendor-scripts.php" ?>
+    </body>
+    </html>
+    <?php exit(); ?>
+    <?php endif; ?>
+
     <div class="page">
 
 

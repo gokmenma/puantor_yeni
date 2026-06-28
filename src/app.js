@@ -1,3 +1,51 @@
+// Inject custom layout styles for DataTables footer controls (info, length, paging) in a single row
+$(function() {
+  $("<style>")
+    .prop("type", "text/css")
+    .html(`
+      .dt-layout-row:last-child {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 1.5rem !important;
+        padding: 0.75rem 1.25rem !important;
+        background-color: transparent !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+      }
+      .dt-layout-row:last-child .dt-layout-start {
+        display: flex !important;
+        align-items: center !important;
+        gap: 1.5rem !important;
+        flex-wrap: wrap !important;
+        margin: 0 !important;
+      }
+      .dt-layout-row:last-child .dt-layout-start > * {
+        margin: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
+      }
+      .dt-layout-row:last-child .dt-layout-end {
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+      .dt-layout-row:last-child .dt-layout-end .dt-paging {
+        margin: 0 !important;
+      }
+      .dt-length select {
+        padding: 0.15rem 1.5rem 0.15rem 0.5rem !important;
+        font-size: 0.875rem !important;
+        border-radius: 4px !important;
+        margin: 0 0.25rem !important;
+        display: inline-block !important;
+        width: auto !important;
+      }
+    `)
+    .appendTo("head");
+});
+
 if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankDataTable").length > 0) {
 
   // DataTables 2.x: arama satırını init ÖNCE ekle ki header yönetimi bozulmasın
@@ -49,8 +97,8 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
       }
     ],
     layout: {
-      bottomStart: "pageLength",
-      bottom2Start: "info",
+      bottomStart: ["info", "pageLength"],
+      bottomEnd: "paging",
       topStart: null,
       topEnd: null
     },
@@ -149,8 +197,8 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
         { defaultContent: "", targets: "_all" }
       ],
       layout: {
-        bottomStart: "pageLength",
-        bottom2Start: "info",
+        bottomStart: ["info", "pageLength"],
+        bottomEnd: "paging",
         topStart: null,
         topEnd: "search"
       },
@@ -1272,8 +1320,8 @@ window.createDataTable = function (selector, userOptions) {
         orderCellsTop: true,
         language:      { url: 'src/tr.json' },
         layout: {
-            bottomStart: 'pageLength',
-            bottom2Start: 'info',
+            bottomStart: ['info', 'pageLength'],
+            bottomEnd: 'paging',
             topStart: null,
             topEnd: null,
         },

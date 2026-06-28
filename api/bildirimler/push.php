@@ -11,6 +11,8 @@ if (file_exists(ROOT . '/vendor/autoload.php')) require_once ROOT . '/vendor/aut
 require_once ROOT . '/Service/WebPushSender.php';
 require_once ROOT . '/Service/PushBildirimService.php';
 require_once ROOT . '/Model/Persons.php';
+require_once ROOT . '/Model/GonderilenBildirimlerModel.php';
+require_once ROOT . '/Model/PersonelBildirimModel.php';
 
 use Service\PushBildirimService;
 
@@ -50,6 +52,40 @@ try {
         exit;
     }
 
+    if ($action === 'list') {
+        $gModel = new GonderilenBildirimlerModel();
+        $list = $gModel->getList($firma_id);
+
+        $Person = new Persons();
+        $persons = $Person->getPersonsByFirm($firma_id);
+        $person_map = [];
+        foreach ($persons as $p) {
+            $person_map[$p->id] = $p->full_name;
+        }
+
+        foreach ($list as $row) {
+            if ($row->hedef === 'hepsi') {
+                $row->hedef_aciklama = 'Tüm Personeller';
+            } else {
+                $ids = array_filter(explode(',', $row->personel_ids ?? ''));
+                $names = [];
+                foreach ($ids as $id) {
+                    if (isset($person_map[$id])) {
+                        $names[] = $person_map[$id];
+                    }
+                }
+                $row->hedef_aciklama = empty($names) ? 'Seçili Personeller' : implode(', ', $names);
+            }
+        }
+
+        ob_clean();
+        echo json_encode([
+            'status' => 'success',
+            'list' => $list
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     if ($action === 'gonder') {
         $hedef   = $_POST['hedef'] ?? 'hepsi';
         $baslik  = trim($_POST['baslik'] ?? '');
@@ -67,11 +103,28 @@ try {
             );
             $stmt->execute([$firma_id]);
             $personel_ids = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+            $Person = new Persons();
+            $all_firm_persons = $Person->getPersonsByFirm($firma_id);
+            $all_personel_ids = [];
+            foreach ($all_firm_persons as $p) {
+                $all_personel_ids[] = (int) $p->id;
+            }
         } else {
             $raw_ids = $_POST['personel_ids'] ?? [];
             $personel_ids = array_map('intval', (array) $raw_ids);
+            $all_personel_ids = $personel_ids;
         }
 
+        // Save to history table
+        $gModel = new GonderilenBildirimlerModel();
+        $sender_id = (int) $_SESSION['user']->id;
+        $gModel->kaydet($firma_id, $sender_id, $hedef, $hedef === 'hepsi' ? null : $personel_ids, $baslik, $icerik, $url);
+
+        // Save to personnel notifications inbox table
+        $pBildirimModel = new PersonelBildirimModel($db);
+
+        // Send push notification
         foreach ($personel_ids as $pid) {
             $service->personeleGonder(
                 $pid,
@@ -80,17 +133,22 @@ try {
                 $icerik,
                 $url ? ['url' => $url] : []
             );
+        }
+
+        // Insert PWA inbox records
+        foreach ($all_personel_ids as $pid) {
+            $pBildirimModel->kaydet($pid, $firma_id, $baslik, $icerik, $url);
             $gonderilen++;
         }
 
         require_once ROOT . '/Model/ActivityLogModel.php';
-        $target_desc = $hedef === 'hepsi' ? 'Tüm Personeller' : count($personel_ids) . ' Seçili Personel';
+        $target_desc = $hedef === 'hepsi' ? 'Tüm Personeller' : count($all_personel_ids) . ' Seçili Personel';
         ActivityLogModel::log('push_notification', 'send', "Push bildirim gönderildi. Başlık: \"{$baslik}\". Hedef: {$target_desc}.");
 
         ob_clean();
         echo json_encode([
             'status'    => 'success',
-            'message'   => "{$gonderilen} personele bildirim gönderildi.",
+            'message'   => $hedef === 'hepsi' ? "Tüm personellerin bildirim kutusuna ve push abonelerine gönderildi." : "{$gonderilen} personele bildirim gönderildi.",
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
