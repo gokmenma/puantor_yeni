@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS `duyurular` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `baslik` varchar(255) NOT NULL,
-  `icerik` text NOT NULL,
+  `icerik` longtext NOT NULL,
   `olusturan_id` int(11) NOT NULL,
   `hedef_tip` enum('aboneler','firma_kullanicilari','firma_personelleri','herkese') NOT NULL DEFAULT 'herkese',
   `hedef_firma_id` int(11) DEFAULT NULL,

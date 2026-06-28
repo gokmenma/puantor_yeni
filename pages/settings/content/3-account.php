@@ -144,7 +144,8 @@ if (count($loginLogs) > 1) {
                             <?php foreach ($subHistory as $sub): 
                                 $startDate = $sub->baslangic_tarihi ? date('d.m.Y', strtotime($sub->baslangic_tarihi)) : '-';
                                 $endDate = $sub->bitis_tarihi ? date('d.m.Y', strtotime($sub->bitis_tarihi)) : '-';
-                                $tutar = $sub->paket_fiyati ? '₺' . number_format($sub->paket_fiyati, 0, ',', '.') : '-';
+                                $tutarValue = ($sub->odeme_tutar !== null) ? $sub->odeme_tutar : $sub->paket_fiyati;
+                                $tutar = $tutarValue !== null ? '₺' . number_format($tutarValue, 0, ',', '.') : '-';
                                 
                                 // Format status badge
                                 $statusBadge = '';

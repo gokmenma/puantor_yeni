@@ -37,7 +37,8 @@ try {
             'ArkaPlanRengi' => $_POST['background_color'] ?? '#ffffff',
             'isActive' => isset($_POST['isActive']) ? 1 : 0,
             'IzinRapor' => isset($_POST['IzinRapor']) ? 1 : 0,
-            'is_deductable' => isset($_POST['is_deductable']) ? 1 : 0
+            'is_deductable' => isset($_POST['is_deductable']) ? 1 : 0,
+            'beyaz_yaka_kesinti' => isset($_POST['beyaz_yaka_kesinti']) ? 1 : 0
         ];
 
         $lastInsertId = $PuantajTuru->saveWithAttr($data) ?? $decrypted_id;

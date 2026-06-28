@@ -1304,6 +1304,7 @@ table {
                                 $totalOvertime = 0;
                                 $personProjDays = [];
                                 $countedTalepIds = [];
+                                $deductableCount = 0;
                                 foreach ($dates as $date) {
                                     if ($jobStartDate <= $date && $jobEndDate >= $date) {
                                         $dateYmdCalc = substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
@@ -1314,6 +1315,8 @@ table {
                                                 if (stripos($izinBilgiCalc->turu, 'ücretsiz') === false) {
                                                     $totalDays += $izinBilgiCalc->gun_sayisi;
                                                     $personProjDays[0] = ($personProjDays[0] ?? 0) + $izinBilgiCalc->gun_sayisi;
+                                                } else {
+                                                    $deductableCount += $izinBilgiCalc->gun_sayisi;
                                                 }
                                             }
                                             continue;
@@ -1335,16 +1338,40 @@ table {
                                             if ($should_count) {
                                                 $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
                                                 if ($puantajTuru) {
-                                                    if ($puantajTuru->Turu != 'Ücretsiz') {
-                                                        $totalDays++;
-                                                        $personProjDays[$puantaj_project] = ($personProjDays[$puantaj_project] ?? 0) + 1;
+                                                    if ($person->wage_type == 1) {
+                                                        if (!empty($puantajTuru->is_deductable)) {
+                                                            $deductableCount++;
+                                                        } else {
+                                                            $totalDays++;
+                                                            $personProjDays[$puantaj_project] = ($personProjDays[$puantaj_project] ?? 0) + 1;
+                                                        }
+                                                    } else {
+                                                        if ($puantajTuru->Turu != 'Ücretsiz') {
+                                                            $totalDays++;
+                                                            $personProjDays[$puantaj_project] = ($personProjDays[$puantaj_project] ?? 0) + 1;
+                                                        }
                                                     }
                                                     if ($puantajTuru->Turu == 'Fazla Çalışma') {
                                                         $totalOvertime += floatval($puantajTuru->EklenecekSaat);
                                                     }
                                                 }
                                             }
+                                        } else {
+                                            if ($person->wage_type == 1) {
+                                                if (Date::isWeekend($date)) {
+                                                    $totalDays++;
+                                                    $personProjDays[0] = ($personProjDays[0] ?? 0) + 1;
+                                                }
+                                            }
                                         }
+                                    }
+                                }
+
+                                if ($person->wage_type == 1) {
+                                    if ($deductableCount == 0) {
+                                        $totalDays = 30;
+                                    } else {
+                                        $totalDays = max(0, 30 - $deductableCount);
                                     }
                                 }
 

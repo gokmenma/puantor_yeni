@@ -258,6 +258,62 @@ class Puantaj extends Model
     }
 
     /**
+     * Inserts default HT (Hafta Tatili) records for weekend days (Saturday/Sunday)
+     * during the employee's active period in the month, if no record exists.
+     */
+    public function insertDefaultWeekendRecords($person_id, $firstDay, $lastDay, $project_id, $firm_id)
+    {
+        $Persons = new Persons();
+        $person = $Persons->find($person_id);
+        if (!$person) {
+            return;
+        }
+
+        // Convert dates
+        $first_day_ymd = Date::Ymd($firstDay, 'Y-m-d');
+        $last_day_ymd = Date::Ymd($lastDay, 'Y-m-d');
+
+        $active_start_ymd = date('Y-m-d', strtotime(str_replace('.', '-', $person->job_start_date)));
+        $active_start = ($active_start_ymd > $first_day_ymd) ? $active_start_ymd : $first_day_ymd;
+
+        if (!empty($person->job_end_date)) {
+            $job_end_ymd = date('Y-m-d', strtotime(str_replace('.', '-', $person->job_end_date)));
+            $active_end = ($job_end_ymd < $last_day_ymd) ? $job_end_ymd : $last_day_ymd;
+        } else {
+            $active_end = $last_day_ymd;
+        }
+
+        $start_ts = strtotime($active_start);
+        $end_ts = strtotime($active_end);
+
+        for ($ts = $start_ts; $ts <= $end_ts; $ts = strtotime("+1 day", $ts)) {
+            $current_date_ymd = date('Y-m-d', $ts);
+            $current_date_nodash = date('Ymd', $ts);
+
+            // Check if record exists
+            $check_stmt = $this->db->prepare(
+                "SELECT id FROM puantaj WHERE person = ? AND (gun = ? OR gun = ?)"
+            );
+            $check_stmt->execute([$person_id, $current_date_ymd, $current_date_nodash]);
+            $exists = $check_stmt->fetch(PDO::FETCH_OBJ);
+
+            if (!$exists) {
+                if (Date::isWeekend($current_date_ymd)) {
+                    $ins_stmt = $this->db->prepare(
+                        "INSERT INTO puantaj SET company_id = ?, person = ?, project_id = ?, puantaj_id = 53, gun = ?, saat = 0, tutar = 0, description = 'Puantaj Çalışma', created_at = NOW()"
+                    );
+                    $ins_stmt->execute([
+                        $firm_id ?? 0,
+                        $person_id,
+                        $project_id > 0 ? $project_id : 0,
+                        $current_date_ymd
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
      * Tüm puantaj türlerini tek sorguda getirir (cache için).
      * Dönen veri: [id] = {PuantajKod, ArkaPlanRengi, FontRengi, ...}
      */

@@ -49,6 +49,7 @@ $(document).on("click", "#btnNewTimesheetType", function () {
   $("#isActive").prop("checked", true);
   $("#IzinRapor").prop("checked", false);
   $("#is_deductable").prop("checked", false);
+  $("#beyaz_yaka_kesinti").prop("checked", false);
 });
 
 // Güncelle butonuna tıklandığında veriler forma aktarılır ve modal açılır
@@ -76,6 +77,7 @@ $(document).on("click", ".btn-edit-timesheet-type", function (e) {
   $("#isActive").prop("checked", btn.data("active") == 1);
   $("#IzinRapor").prop("checked", btn.data("izin") == 1);
   $("#is_deductable").prop("checked", btn.data("deductable") == 1);
+  $("#beyaz_yaka_kesinti").prop("checked", btn.data("beyaz-yaka-kesinti") == 1);
   
   $("#timesheetTypeModal").modal("show");
 });

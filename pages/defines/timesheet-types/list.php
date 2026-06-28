@@ -73,6 +73,7 @@ $turOptions = [
                                 <th>Türü</th>
                                 <th>İzin/Rapor</th>
                                 <th>Kesinti?</th>
+                                <th>BY Kesinti?</th>
                                 <th>Durum</th>
                                 <th style="width:7%">İşlem</th>
                             </tr>
@@ -103,7 +104,8 @@ $turOptions = [
                                             data-font="<?php echo htmlspecialchars($type->FontRengi) ?>"
                                             data-active="<?php echo htmlspecialchars($type->isActive) ?>"
                                             data-izin="<?php echo htmlspecialchars($type->IzinRapor) ?>"
-                                            data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>">
+                                            data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>"
+                                            data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>">
                                             <?php echo htmlspecialchars($type->PuantajAdi); ?>
                                         </a>
                                     </td>
@@ -121,6 +123,13 @@ $turOptions = [
                                     <td>
                                         <?php if (($type->is_deductable ?? 0) == 1): ?>
                                             <span class="badge bg-warning-lt">Evet</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary-lt">Hayır</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (($type->beyaz_yaka_kesinti ?? 0) == 1): ?>
+                                            <span class="badge bg-danger-lt">Evet</span>
                                         <?php else: ?>
                                             <span class="badge bg-secondary-lt">Hayır</span>
                                         <?php endif; ?>
@@ -149,7 +158,8 @@ $turOptions = [
                                                     data-font="<?php echo htmlspecialchars($type->FontRengi) ?>"
                                                     data-active="<?php echo htmlspecialchars($type->isActive) ?>"
                                                     data-izin="<?php echo htmlspecialchars($type->IzinRapor) ?>"
-                                                    data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>">
+                                                    data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>"
+                                                    data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>">
                                                     <i class="ti ti-edit icon me-3"></i> Güncelle
                                                 </a>
                                                 <a class="dropdown-item delete-timesheet-type" href="#"
@@ -259,6 +269,13 @@ $turOptions = [
                                 <input class="form-check-input" type="checkbox" name="is_deductable" id="is_deductable">
                                 <span class="form-check-label">Bordrodan Kesinti Yapılsın</span>
                             </label>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="beyaz_yaka_kesinti" id="beyaz_yaka_kesinti">
+                                <span class="form-check-label">Beyaz Yaka Maaş Kesintisi</span>
+                            </label>
+                            <div class="text-muted" style="font-size:0.75rem">Aylık maaşlı personelde bu gün maaştan düşülür</div>
                         </div>
                     </div>
                 </form>
