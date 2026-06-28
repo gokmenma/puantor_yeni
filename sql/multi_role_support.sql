@@ -1,0 +1,1 @@
+ALTER TABLE `users` MODIFY COLUMN `user_roles` TEXT DEFAULT NULL;

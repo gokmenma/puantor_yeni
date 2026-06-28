@@ -20,15 +20,24 @@ class SupportsModel extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
-    //Kullanıcının açık destek taleplerinin sayısını getirir
+    //Kullanıcının açık destek taleplerinin sayısını getirir (Süperadmin ise tüm sistemdeki açık talepler)
     public function getOpenSupportsCount(){
         $user_id = $_SESSION['user']->id ?? 0;
         if (!$user_id) return 0;
-        $sql = $this->db->prepare("SELECT COUNT(*) FROM $this->table WHERE user_id = :user_id and program_name = :program_name and status = 0");
-        $sql->execute([
-            'user_id' => $user_id,
-            'program_name' => 'puantor'
-        ]);
+        
+        $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+        if ($is_superadmin) {
+            $sql = $this->db->prepare("SELECT COUNT(*) FROM $this->table WHERE program_name = :program_name and status = 0");
+            $sql->execute([
+                'program_name' => 'puantor'
+            ]);
+        } else {
+            $sql = $this->db->prepare("SELECT COUNT(*) FROM $this->table WHERE user_id = :user_id and program_name = :program_name and status = 0");
+            $sql->execute([
+                'user_id' => $user_id,
+                'program_name' => 'puantor'
+            ]);
+        }
         return (int)$sql->fetchColumn();
     }
 

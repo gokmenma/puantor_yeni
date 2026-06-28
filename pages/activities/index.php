@@ -52,8 +52,9 @@ if (!$menuNode) {
 
 // 3. Mevcut kullanıcının (admin/main user ise) yetki grubuna bu yetkiyi ekle
 if (isset($_SESSION['user']->user_roles)) {
-    $role_id = $_SESSION['user']->user_roles;
-    
+    $role_ids_arr = array_values(array_filter(array_map('intval', explode(',', $_SESSION['user']->user_roles))));
+    $role_id = $role_ids_arr[0] ?? null;
+
     $sqlRoleCheck = $db->prepare("SELECT auth_ids FROM role_auths WHERE role_id = ? LIMIT 1");
     $sqlRoleCheck->execute([$role_id]);
     $roleAuth = $sqlRoleCheck->fetch(PDO::FETCH_OBJ);

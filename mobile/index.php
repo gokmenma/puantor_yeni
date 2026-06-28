@@ -238,13 +238,15 @@ switch ($route) {
         $active_page = "persons";
         break;
     case 'tickets':
-        $title = "Teknik Destek";
-        $page_file = "modules/supports/tickets.php";
+        $is_superadmin = ($user->superadmin ?? 0) == 1;
+        $title = $is_superadmin ? "Destek Yönetimi" : "Teknik Destek";
+        $page_file = $is_superadmin ? "modules/supports/admin-tickets.php" : "modules/supports/tickets.php";
         $active_page = "more";
         break;
     case 'ticket-view':
+        $is_superadmin = ($user->superadmin ?? 0) == 1;
         $title = "Destek Talebi";
-        $page_file = "modules/supports/ticket-view.php";
+        $page_file = $is_superadmin ? "modules/supports/admin-ticket-view.php" : "modules/supports/ticket-view.php";
         $active_page = "more";
         break;
     case 'settings':

@@ -131,7 +131,7 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                             $_topbar_open_supports_count = 0;
                         }
                     ?>
-                    <a href="index.php?p=supports/tickets" class="nav-link px-0 me-3"
+                    <a href="index.php?p=<?php echo $_topbar_is_superadmin ? 'supports/admin-tickets' : 'supports/tickets'; ?>" class="nav-link px-0 me-3"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Destek Talepleri" aria-label="Destek Talepleri">
                         <span class="position-relative d-inline-flex">
                             <i class="ti ti-headset" style="font-size:1.25rem;"></i>

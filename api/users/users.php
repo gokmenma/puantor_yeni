@@ -75,7 +75,7 @@ if ($_POST["action"] == "userSave") {
             "full_name" => $_POST["full_name"],
             "email" => $_POST["email"],
             "username" => $username,
-            "user_roles" => $_POST["user_roles"],
+            "user_roles" => implode(',', array_filter(array_map('intval', (array)($_POST["user_roles"] ?? [])))),
             "phone" => $_POST["phone"],
             "job" => $_POST["job"],
             "responsible_projects" => $responsible_projects,

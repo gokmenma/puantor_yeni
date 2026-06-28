@@ -1482,3 +1482,152 @@ min-height: 100px !important;} */
     40%, 60%, 80% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg); }
     100% { transform: scale3d(1, 1, 1); }
 }
+
+/* ==========================================================================
+   Tabler-Compatible DataTables Styling
+   ========================================================================== */
+
+/* Main Container Layout Adjustments */
+div.dt-container {
+    font-family: inherit;
+}
+
+div.dt-container .dt-layout-row {
+    margin: 1.25rem 0 !important;
+    align-items: center;
+}
+
+/* Info Text Styling */
+div.dt-container .dt-info {
+    font-size: 0.875rem;
+    color: var(--tblr-secondary, #626976) !important;
+    font-weight: 400;
+}
+
+/* Page Length Selector Styling */
+div.dt-container .dt-length {
+    font-size: 0.875rem;
+    color: var(--tblr-secondary, #626976);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+div.dt-container .dt-length select.dt-input {
+    display: inline-block;
+    width: auto;
+    padding: 0.25rem 1.75rem 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--tblr-body-color, #1e293b);
+    background-color: var(--tblr-bg-surface, #ffffff);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23626976' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    border: 1px solid var(--tblr-border-color, #dadcde);
+    border-radius: var(--tblr-border-radius, 4px);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+div.dt-container .dt-length select.dt-input:focus {
+    border-color: #90bbf0;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(32, 107, 196, 0.25);
+}
+
+/* Pagination Container & Button Styling */
+div.dt-container .dt-paging {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+div.dt-container .dt-paging .dt-paging-button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0.25rem 0.75rem;
+    margin: 0 !important;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none !important;
+    color: var(--tblr-body-color, #1e293b) !important;
+    background-color: var(--tblr-bg-surface, #ffffff) !important;
+    background: var(--tblr-bg-surface, #ffffff) !important;
+    border: 1px solid var(--tblr-border-color, #dadcde) !important;
+    border-radius: var(--tblr-border-radius, 4px) !important;
+    cursor: pointer;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    box-shadow: none !important;
+}
+
+/* Active Page State */
+div.dt-container .dt-paging .dt-paging-button.current, 
+div.dt-container .dt-paging .dt-paging-button.current:hover {
+    z-index: 3;
+    color: #ffffff !important;
+    background-color: var(--tblr-primary, #206bc4) !important;
+    background: var(--tblr-primary, #206bc4) !important;
+    border-color: var(--tblr-primary, #206bc4) !important;
+    font-weight: 600;
+}
+
+/* Hover Page State */
+div.dt-container .dt-paging .dt-paging-button:hover:not(.current):not(.disabled) {
+    color: var(--tblr-primary, #206bc4) !important;
+    background-color: var(--tblr-bg-hover, rgba(32, 107, 196, 0.06)) !important;
+    background: var(--tblr-bg-hover, rgba(32, 107, 196, 0.06)) !important;
+    border-color: var(--tblr-border-color-hover, #cbd5e1) !important;
+}
+
+/* Disabled Page State */
+div.dt-container .dt-paging .dt-paging-button.disabled, 
+div.dt-container .dt-paging .dt-paging-button.disabled:hover, 
+div.dt-container .dt-paging .dt-paging-button.disabled:active {
+    cursor: not-allowed;
+    color: var(--tblr-disabled-color, #a0a0a0) !important;
+    background-color: var(--tblr-bg-surface, #ffffff) !important;
+    background: var(--tblr-bg-surface, #ffffff) !important;
+    border-color: var(--tblr-border-color, #e6e8eb) !important;
+    opacity: 0.55;
+    box-shadow: none !important;
+}
+
+/* Dark Mode Refinements */
+[data-bs-theme="dark"] div.dt-container .dt-length select.dt-input {
+    color: var(--tblr-body-color, #f8fafc);
+    background-color: #151f2c;
+    border-color: #2d394b;
+}
+
+[data-bs-theme="dark"] div.dt-container .dt-paging .dt-paging-button {
+    color: var(--tblr-body-color, #f8fafc) !important;
+    background-color: #151f2c !important;
+    background: #151f2c !important;
+    border-color: #2d394b !important;
+}
+
+[data-bs-theme="dark"] div.dt-container .dt-paging .dt-paging-button:hover:not(.current):not(.disabled) {
+    color: #4299e1 !important;
+    background-color: rgba(66, 153, 225, 0.1) !important;
+    background: rgba(66, 153, 225, 0.1) !important;
+    border-color: #2d394b !important;
+}
+
+[data-bs-theme="dark"] div.dt-container .dt-paging .dt-paging-button.disabled {
+    background-color: #151f2c !important;
+    background: #151f2c !important;
+    border-color: #1d2735 !important;
+    color: #4b5563 !important;
+}

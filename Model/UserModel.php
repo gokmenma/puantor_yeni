@@ -143,10 +143,13 @@ class UserModel extends Model
 
     public function roleName($id)
     {
-        $sql = $this->db->prepare("SELECT * FROM userroles WHERE id = ?");
-        $sql->execute(array($id));
-        $result = $sql->fetch(PDO::FETCH_OBJ);
-        return $result->roleName ?? "Bilinmiyor";
+        $ids = array_values(array_filter(array_map('intval', explode(',', $id))));
+        if (empty($ids)) return "Bilinmiyor";
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = $this->db->prepare("SELECT roleName FROM userroles WHERE id IN ($placeholders)");
+        $sql->execute($ids);
+        $names = $sql->fetchAll(PDO::FETCH_COLUMN);
+        return !empty($names) ? implode(', ', $names) : "Bilinmiyor";
     }
 
     //Email adresi ve Firma İd'si ile kullanıcıyı getirir
@@ -331,17 +334,20 @@ class UserModel extends Model
     public function getManagersByFirm($firm_id)
     {
         $sql = $this->db->prepare("
-            SELECT u.id, u.full_name, u.email 
+            SELECT u.id, u.full_name, u.email
             FROM $this->table u
-            LEFT JOIN role_auths ra ON u.user_roles = ra.role_id
             WHERE u.firm_id = :firm_id
               AND u.deleted_at IS NULL
               AND u.status = 1
               AND (
-                u.parent_id = 0 
-                OR u.is_main_user = 1 
-                OR u.superadmin = 1 
-                OR FIND_IN_SET((SELECT id FROM auths WHERE auth_name = 'avans_talepleri'), ra.auth_ids)
+                u.parent_id = 0
+                OR u.is_main_user = 1
+                OR u.superadmin = 1
+                OR EXISTS (
+                    SELECT 1 FROM role_auths ra
+                    WHERE FIND_IN_SET(ra.role_id, u.user_roles)
+                      AND FIND_IN_SET((SELECT id FROM auths WHERE auth_name = 'avans_talepleri'), ra.auth_ids)
+                )
               )
         ");
         $sql->execute(['firm_id' => $firm_id]);

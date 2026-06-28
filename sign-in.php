@@ -11,8 +11,8 @@ $Settings = new SettingsModel();
 
 $User = new UserModel();
 
-use App\Helper\Date;
 use App\Helper\Security;
+use App\Helper\Date;
 
 // Beni Hatırla Kontrolü (Cookie)
 if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['remember_me'])) {

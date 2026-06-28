@@ -90,18 +90,20 @@ class UserHelper extends Db
     public function userRoles($name = "user_roles", $id = null)
     {
         $firm_id = $_SESSION["firm_id"];
-        $query = $this->db->prepare("SELECT * FROM userroles where firm_id = ? "); // Tüm sütunları seç
+        $query = $this->db->prepare("SELECT * FROM userroles where firm_id = ?");
         $query->execute([$firm_id]);
-        $results = $query->fetchAll(PDO::FETCH_OBJ); // Tüm sonuçları al
+        $results = $query->fetchAll(PDO::FETCH_OBJ);
 
-        // Benzersiz bir ID oluşturmak için uniqid() kullanılıyor.
+        $selectedIds = [];
+        if (!empty($id)) {
+            $selectedIds = array_filter(array_map('intval', explode(',', $id)));
+        }
+
         $selectId = $name . "_" . uniqid();
-        $select = '<select name="' . $name . '" class="form-select select2" id="' . $selectId . '" style="width:100%">';
-        $select .= '<option value="">Rol Seçiniz</option>';
-        foreach ($results as $row) { // $results üzerinde döngü
-            // Kullanıcıdan gelen $selectedId ile karşılaştırma yapılıyor.
-            $selected = $id == $row->id ? ' selected' : ''; // Eğer id varsa seçili yap
-            $select .= '<option value="' . $row->id . '"'  . $selected . '>' . $row->roleName . '</option>';
+        $select = '<select name="' . $name . '[]" class="form-select select2" id="' . $selectId . '" style="width:100%" multiple data-placeholder="Rol Seçiniz">';
+        foreach ($results as $row) {
+            $selected = in_array((int)$row->id, $selectedIds) ? ' selected' : '';
+            $select .= '<option value="' . $row->id . '"' . $selected . '>' . $row->roleName . '</option>';
         }
         $select .= '</select>';
         return $select;

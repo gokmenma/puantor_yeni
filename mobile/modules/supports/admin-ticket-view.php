@@ -1,16 +1,22 @@
 <?php
 require_once ROOT . "/Model/SupportsModel.php";
 require_once ROOT . "/Model/SupportsMessagesModel.php";
+require_once ROOT . "/Model/UserModel.php";
 require_once ROOT . "/App/Helper/security.php";
 
 use App\Helper\Security;
+
+// Yetki kontrolü (Sadece superadmin girebilir)
+if (($_SESSION['user']->superadmin ?? 0) != 1) {
+    header("Location: dashboard");
+    exit();
+}
 
 // Dynamic Absolute AJAX URL Calculation
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 $domainName = $_SERVER['HTTP_HOST'];
 $script_dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
 $ajaxUrl = $protocol . $domainName . ($script_dir == '/' ? '' : $script_dir) . '/api/supports/tickets.php';
-
 
 $encrypted_id = $_GET['id'] ?? '';
 $support_id = Security::decrypt($encrypted_id);
@@ -22,24 +28,18 @@ if (!$support_id) {
 
 $supportsModel = new SupportsModel();
 $messagesModel = new SupportsMessagesModel();
+$userModel = new UserModel();
 
 $support = $supportsModel->find($support_id);
-$messages = $messagesModel->getMessagesByTicketId($support_id);
-
 if (!$support) {
     echo "<div class='alert alert-danger m-3'>Destek talebi bulunamadı.</div>";
     exit;
 }
 
-$lastMessage = $messagesModel->getLastMessageByTicketId($support_id);
-$lastAuthor = $lastMessage->author ?? 0;
+$messages = $messagesModel->getMessagesByTicketId($support_id);
+$ticket_user = $userModel->find($support->user_id);
 
-// If the last message author is 0, then the user sent it, meaning we are waiting for a support reply
-if ($lastAuthor == 0) {
-    $showNewMessage = false;
-} else {
-    $showNewMessage = true;
-}
+$showNewMessage = ($support->status == 0);
 ?>
 
 <style>
@@ -182,16 +182,16 @@ body[data-bs-theme="dark"] .input-bar {
 
 <div class="container px-0">
     <div class="mb-4 d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-2">
-            <a href="tickets" class="btn btn-icon btn-sm btn-outline-secondary border-0 text-muted">
+        <div class="d-flex align-items-center gap-2" style="min-width: 0; flex: 1;">
+            <a href="tickets" class="btn btn-icon btn-sm btn-outline-secondary border-0 text-muted" style="flex-shrink: 0;">
                 <i class="ti ti-chevron-left" style="font-size: 1.5rem;"></i>
             </a>
-            <div>
-                <h2 class="mb-0 text-semibold" style="letter-spacing: -0.5px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?php echo htmlspecialchars($support->subject); ?></h2>
-                <p class="text-muted text-xs mb-0">Destek Bildirimi #<?php echo $support_id; ?></p>
+            <div style="min-width: 0; flex: 1;">
+                <h2 class="mb-0 text-semibold text-truncate" style="letter-spacing: -0.5px;"><?php echo htmlspecialchars($support->subject); ?></h2>
+                <p class="text-muted text-xs mb-0 text-truncate">Kullanıcı: <?php echo htmlspecialchars($ticket_user->full_name ?? 'Bilinmeyen'); ?></p>
             </div>
         </div>
-        <div class="d-flex gap-1">
+        <div class="d-flex gap-1" style="flex-shrink: 0;">
             <?php if ($support->status == 0): ?>
                 <button type="button" class="btn btn-sm btn-outline-danger px-3" id="closeTicketBtn" onclick="closeTicket()" style="border-radius: 8px;">
                     <i class="ti ti-lock me-1"></i> Kapat
@@ -213,18 +213,18 @@ body[data-bs-theme="dark"] .input-bar {
                 // Display in chronological order
                 $chrono_messages = array_reverse($messages);
                 foreach ($chrono_messages as $message): 
-                    $is_user = ($message->author == 0);
-                    $author_name = $is_user ? 'Ben' : 'Destek';
-                    $avatar_text = $is_user ? mb_substr($_SESSION['user']->full_name ?? 'U', 0, 1, 'UTF-8') : 'D';
+                    $is_me = ($message->author != 0);
+                    $bubble_class = $is_me ? 'user' : 'support'; // Right for me (admin), left for customer
+                    $avatar_text = $is_me ? 'D' : mb_substr($ticket_user->full_name ?? 'U', 0, 1, 'UTF-8');
                     $msg_date = new DateTime($message->created_at);
                     $formatted_time = $msg_date->format('H:i') . ' • ' . $msg_date->format('d.m.Y');
                 ?>
-                    <div class="chat-bubble-wrapper <?php echo $is_user ? 'user' : 'support'; ?>">
+                    <div class="chat-bubble-wrapper <?php echo $bubble_class; ?>">
                         <div class="chat-avatar">
-                            <?php if ($is_user): ?>
-                                <?php echo htmlspecialchars($avatar_text); ?>
-                            <?php else: ?>
+                            <?php if ($is_me): ?>
                                 <i class="ti ti-headset"></i>
+                            <?php else: ?>
+                                <?php echo htmlspecialchars($avatar_text); ?>
                             <?php endif; ?>
                         </div>
                         <div>
@@ -250,21 +250,17 @@ body[data-bs-theme="dark"] .input-bar {
                 <input type="hidden" name="support_id" value="<?php echo $encrypted_id; ?>">
                 <div class="d-flex align-items-end gap-2 mb-3">
                     <div class="input-bar flex-grow-1">
-                        <textarea class="form-control" name="message" required rows="1" placeholder="Mesajınızı yazın..." oninput="autoGrow(this)"></textarea>
+                        <textarea class="form-control" name="message" required rows="1" placeholder="Yanıtınızı yazın..." oninput="autoGrow(this)"></textarea>
                     </div>
                     <button type="submit" class="btn btn-icon btn-primary rounded-circle" id="sendReplyBtn" style="width: 42px; height: 42px; background: #4f46e5; border: none; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-bottom: 2px;">
                         <i class="ti ti-send" style="font-size: 1.1rem;"></i>
                     </button>
                 </div>
             </form>
-        <?php else: ?>
-            <div class="text-center p-3 rounded-3 bg-light border text-xs text-danger blinking-text" style="border-radius: 12px !important; font-weight: 500;">
-                <i class="ti ti-clock-play me-1"></i> Destek ekibinin cevabı bekleniyor.
-            </div>
         <?php endif; ?>
     <?php else: ?>
         <div class="text-center p-3 rounded-3 bg-light border text-xs text-secondary" style="border-radius: 12px !important; font-weight: 500;">
-            <i class="ti ti-lock me-1"></i> Bu destek bildirimi kapatılmıştır. Yeni bir destek bildirimi açabilirsiniz!
+            <i class="ti ti-lock me-1"></i> Bu destek bildirimi kapatılmıştır.
         </div>
     <?php endif; ?>
 </div>
@@ -304,7 +300,7 @@ function sendReply(e) {
             if (response.status === 'success') {
                 location.reload();
             } else {
-                Swal.fire('Hata', response.message || 'Mesaj gönderilemedi.', 'error');
+                Swal.fire('Hata', response.message || 'Yanıt gönderilemedi.', 'error');
             }
         },
         error: function() {
@@ -320,7 +316,7 @@ function closeTicket() {
         text: "Bu destek bildirimini kapatmak istediğinize emin misiniz?",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#22c55e',
+        confirmButtonColor: '#d33',
         confirmButtonText: 'Evet, Kapat',
         cancelButtonText: 'İptal'
     }).then((result) => {

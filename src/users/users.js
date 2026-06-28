@@ -19,7 +19,7 @@ $(document).on("click", "#kullanici_kaydet", function () {
           return $("#user_id").val() == "0";
         }
       },
-      user_roles: {
+      "user_roles[]": {
         required: true
       }
     },
@@ -37,8 +37,8 @@ $(document).on("click", "#kullanici_kaydet", function () {
       password: {
         required: "Lütfen şifreyi giriniz"
       },
-      user_roles: {
-        required: "Lütfen kullanıcı rolünü seçiniz"
+      "user_roles[]": {
+        required: "Lütfen en az bir kullanıcı rolü seçiniz"
       }
     },
     errorPlacement: function (error, element) {

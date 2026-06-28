@@ -31,6 +31,8 @@ if (
     $page == 'missions/list' || $page == 'missions/process/list' ||
     $page == 'missions/headers/manage' || $page == 'missions/headers/list' ||
     $page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage' ||
+    $page == 'defines/national-holidays/list' || $page == 'defines/national-holidays/manage' ||
+    $page == 'defines/timesheet-types/list' || $page == 'defines/timesheet-types/manage' ||
     $page == 'defines/project-status/list' ||
     $page == 'todos/list' ||
     $page == "users/manage" || $page == "cari/list" || $page == "cari/movements" ||
@@ -171,9 +173,16 @@ if ($page == 'payroll/xls/payment-load-from-xls') {
 if ($page == 'persons/xls/person-load') {
     echo '<script src="./src/persons/persons-load.js"></script>';
 }
-
 if ($page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage') {
     echo '<script src="./src/defines/job-groups.js"></script>';
+}
+
+if ($page == 'defines/national-holidays/list' || $page == 'defines/national-holidays/manage') {
+    echo '<script src="./src/defines/national-holidays.js"></script>';
+}
+
+if ($page == 'defines/timesheet-types/list' || $page == 'defines/timesheet-types/manage') {
+    echo '<script src="./src/defines/timesheet-types.js"></script>';
 }
 
 if ($page == 'settings/manage') {

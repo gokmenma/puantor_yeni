@@ -40,15 +40,28 @@ class Auths extends Model
     private function loadUserAuthIds()
     {
         if (self::$userAuthIds === null) {
-            $role_id = $_SESSION['user']->user_roles ?? 0;
-            $sql = $this->db->prepare("SELECT auth_ids FROM role_auths WHERE role_id = ?");
-            $sql->execute([$role_id]);
-            $res = $sql->fetch(PDO::FETCH_OBJ);
-            if ($res && isset($res->auth_ids) && !empty($res->auth_ids)) {
-                self::$userAuthIds = array_filter(explode(',', $res->auth_ids));
-            } else {
+            $user_roles_raw = $_SESSION['user']->user_roles ?? '';
+            $role_ids = array_values(array_filter(array_map('intval', explode(',', $user_roles_raw))));
+
+            if (empty($role_ids)) {
                 self::$userAuthIds = [];
+                return;
             }
+
+            $placeholders = implode(',', array_fill(0, count($role_ids), '?'));
+            $sql = $this->db->prepare("SELECT auth_ids FROM role_auths WHERE role_id IN ($placeholders)");
+            $sql->execute($role_ids);
+            $rows = $sql->fetchAll(PDO::FETCH_OBJ);
+
+            $allAuthIds = [];
+            foreach ($rows as $row) {
+                if (!empty($row->auth_ids)) {
+                    foreach (array_filter(explode(',', $row->auth_ids)) as $aid) {
+                        $allAuthIds[$aid] = true;
+                    }
+                }
+            }
+            self::$userAuthIds = array_keys($allAuthIds);
         }
     }
 
