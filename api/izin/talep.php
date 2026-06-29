@@ -57,6 +57,7 @@ try {
         $baslangic   = trim($_POST['baslangic_tarihi'] ?? '');
         $bitis       = trim($_POST['bitis_tarihi'] ?? '');
         $aciklama    = trim($_POST['aciklama'] ?? '');
+        $adres       = trim($_POST['adres'] ?? '');
 
         if (!$personel_id || !$tur_id || !$baslangic || !$bitis) throw new Exception('Eksik veri.');
         if ($bitis < $baslangic) throw new Exception('Bitiş tarihi başlangıçtan önce olamaz.');
@@ -68,6 +69,7 @@ try {
             'baslangic_tarihi'=> $baslangic,
             'bitis_tarihi'    => $bitis,
             'aciklama'        => $aciklama,
+            'adres'           => $adres,
             'olusturan_id'    => $user_id,
         ]);
 

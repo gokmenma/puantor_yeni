@@ -84,6 +84,7 @@ try {
         $baslangic  = trim($_POST['baslangic_tarihi'] ?? '');
         $bitis      = trim($_POST['bitis_tarihi'] ?? '');
         $aciklama   = trim($_POST['aciklama'] ?? '');
+        $adres      = trim($_POST['adres'] ?? '');
 
         if (!$person_id || !$firm_id || !$tur_id || !$baslangic || !$bitis) {
             throw new Exception('Eksik veri.');
@@ -98,6 +99,7 @@ try {
             'baslangic_tarihi' => $baslangic,
             'bitis_tarihi'     => $bitis,
             'aciklama'         => $aciklama,
+            'adres'            => $adres,
             'olusturan_id'     => $person_id,
         ]);
 
@@ -151,6 +153,7 @@ try {
         $baslangic  = trim($_POST['baslangic_tarihi'] ?? '');
         $bitis      = trim($_POST['bitis_tarihi'] ?? '');
         $aciklama   = trim($_POST['aciklama'] ?? '');
+        $adres      = trim($_POST['adres'] ?? '');
 
         if (!$talep_id || !$person_id || !$tur_id || !$baslangic || !$bitis) {
             throw new Exception('Eksik veri.');
@@ -164,6 +167,7 @@ try {
             'baslangic_tarihi' => $baslangic,
             'bitis_tarihi'     => $bitis,
             'aciklama'         => $aciklama,
+            'adres'            => $adres,
         ]);
 
         ob_clean();

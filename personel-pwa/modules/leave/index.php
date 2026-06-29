@@ -120,6 +120,10 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
                     <label class="form-label fw-semibold">Açıklama <span class="text-muted fw-normal">(opsiyonel)</span></label>
                     <textarea id="leave-aciklama" class="form-control" rows="2" style="resize:none;"></textarea>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">İznin Geçirileceği Adres</label>
+                    <textarea id="leave-adres" class="form-control" rows="2" style="resize:none;" placeholder="İzninizi geçireceğiniz adres..."></textarea>
+                </div>
             </div>
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-light w-100 mb-2" data-bs-dismiss="modal">İptal</button>
@@ -267,6 +271,7 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
         document.getElementById('leave-baslangic').value = t.baslangic_tarihi;
         document.getElementById('leave-bitis').value = t.bitis_tarihi;
         document.getElementById('leave-aciklama').value = t.aciklama || '';
+        document.getElementById('leave-adres').value = t.adres || '';
         calcGun();
         loadTurler(function() {
             document.getElementById('leave-tur').value = t.tur_id;
@@ -370,6 +375,7 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
             document.getElementById('leave-baslangic').value = tomorrowStr;
             document.getElementById('leave-bitis').value = tomorrowStr;
             document.getElementById('leave-aciklama').value = '';
+            document.getElementById('leave-adres').value = '';
             document.getElementById('leave-gun-preview').textContent = '—';
             document.getElementById('leave-takvim-gun-preview').textContent = '—';
             
@@ -401,6 +407,7 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
             body.append('baslangic_tarihi', document.getElementById('leave-baslangic').value);
             body.append('bitis_tarihi', document.getElementById('leave-bitis').value);
             body.append('aciklama', document.getElementById('leave-aciklama').value);
+            body.append('adres', document.getElementById('leave-adres').value);
 
             fetch(LEAVE_API, { method: 'POST', body })
                 .then(r => r.json())

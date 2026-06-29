@@ -165,6 +165,10 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                     <label class="form-label">Açıklama <span class="text-muted small">(opsiyonel)</span></label>
                     <textarea id="yeni-aciklama" class="form-control" rows="6"></textarea>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">İznin Geçirileceği Adres</label>
+                    <textarea id="yeni-adres" class="form-control" rows="3" placeholder="İzninizi geçireceğiniz adres..."></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -275,6 +279,88 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
     </div>
 </div>
 
+<!-- Modal: Formu Yazdır / İmza Modali -->
+<div class="modal modal-blur fade" id="modalYazdir" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">İzin Formu İmza Bilgileri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="print-talep-id">
+                <p class="text-muted small mb-3">İzin talep formunun altında yer alacak onaylayan kişileri ve ünvanlarını seçiniz. Yeni bir ünvan veya isim eklemek için yazıp <strong>Enter</strong> tuşuna basınız.</p>
+                
+                <div class="card mb-2">
+                    <div class="card-header py-2 bg-light">
+                        <h3 class="card-title text-muted fw-bold small mb-0">1. ONAYLAYAN (Örn: İnsan Kaynakları)</h3>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label text-muted small mb-1">Ünvan/Görev</label>
+                                <select id="print-unvan-1" class="form-select select2-modal-signature" data-type="unvan"></select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small mb-1">Ad Soyad</label>
+                                <select id="print-isim-1" class="form-select select2-modal-signature" data-type="isim"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-2">
+                    <div class="card-header py-2 bg-light">
+                        <h3 class="card-title text-muted fw-bold small mb-0">2. ONAYLAYAN (Örn: Bölüm Yöneticisi)</h3>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label text-muted small mb-1">Ünvan/Görev</label>
+                                <select id="print-unvan-2" class="form-select select2-modal-signature" data-type="unvan"></select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small mb-1">Ad Soyad</label>
+                                <select id="print-isim-2" class="form-select select2-modal-signature" data-type="isim"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-2">
+                    <div class="card-header py-2 bg-light">
+                        <h3 class="card-title text-muted fw-bold small mb-0">3. ONAYLAYAN (Örn: Genel Müdür)</h3>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label text-muted small mb-1">Ünvan/Görev</label>
+                                <select id="print-unvan-3" class="form-select select2-modal-signature" data-type="unvan"></select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small mb-1">Ad Soyad</label>
+                                <select id="print-isim-3" class="form-select select2-modal-signature" data-type="isim"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="btn-form-yazdir">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
+                        <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
+                        <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
+                    </svg>
+                    Yazdır
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 const CAN_DELETE_APPROVED = <?= $Auths->Authorize('onayli_izinleri_sil') ? 'true' : 'false' ?>;
 
@@ -363,6 +449,15 @@ $(document).ready(function() {
 
     function buildActions(row) {
         let html = '';
+        const printBtn = `<button class="btn btn-icon btn-sm rounded-circle btn-outline-primary ms-1" onclick="openPrintModal('${row.id}')" title="Formu Yazdır" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
+                <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
+                <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
+            </svg>
+        </button>`;
+
         if (row.durum === 'beklemede') {
             html += `<button class="btn btn-icon btn-sm rounded-circle btn-outline-success me-1" onclick="onayla('${row.id}')" title="Onayla" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
@@ -379,12 +474,13 @@ $(document).ready(function() {
                     <path d="M9 15l2 2l4 -4" />
                 </svg>
             </button>`;
-            html += `<button class="btn btn-icon btn-sm rounded-circle btn-outline-danger" onclick="openRedModal('${row.id}')" title="Reddet" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+            html += `<button class="btn btn-icon btn-sm rounded-circle btn-outline-danger me-1" onclick="openRedModal('${row.id}')" title="Reddet" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
                     <path d="M18 6l-12 12"></path>
                     <path d="M6 6l12 12"></path>
                 </svg>
             </button>`;
+            html += printBtn;
         } else if (row.durum === 'onaylandi') {
             html += `<button class="btn btn-xs btn-outline-danger" onclick="openRedModal('${row.id}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.15rem 0.4rem; font-weight: 500; height: 20px; font-size: 11px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
@@ -395,7 +491,7 @@ $(document).ready(function() {
                 Geri Al
             </button>`;
             if (CAN_DELETE_APPROVED) {
-                html += ` <button class="btn btn-xs btn-outline-danger" onclick="talepSil('${row.id}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.15rem 0.4rem; font-weight: 500; height: 20px; font-size: 11px;">
+                html += ` <button class="btn btn-xs btn-outline-danger me-1" onclick="talepSil('${row.id}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.15rem 0.4rem; font-weight: 500; height: 20px; font-size: 11px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
                         <path d="M4 7h16"></path>
                         <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
@@ -404,6 +500,7 @@ $(document).ready(function() {
                     Sil
                 </button>`;
             }
+            html += printBtn;
         } else if (row.durum === 'reddedildi') {
             if (CAN_DELETE_APPROVED) {
                 html += `<button class="btn btn-xs btn-outline-danger" onclick="talepSil('${row.id}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.15rem 0.4rem; font-weight: 500; height: 20px; font-size: 11px;">
@@ -464,6 +561,7 @@ $(document).ready(function() {
     $('#btn-yeni-talep').on('click', function() {
         $('#yeni-personel, #yeni-tur').val(null).trigger('change');
         $('#yeni-aciklama').val('');
+        $('#yeni-adres').val('');
         $('#gun-sayisi-preview').text('—');
         $('#takvim-gun-sayisi-preview').text('—');
         if (fpBaslangic) fpBaslangic.clear();
@@ -479,6 +577,7 @@ $(document).ready(function() {
             baslangic_tarihi: parseTrDate($('#yeni-baslangic').val()),
             bitis_tarihi:     parseTrDate($('#yeni-bitis').val()),
             aciklama:         $('#yeni-aciklama').val(),
+            adres:            $('#yeni-adres').val(),
         };
         $.post(IZIN_API, data, function(res) {
             Swal.fire({
@@ -635,6 +734,183 @@ $(document).ready(function() {
         flatpickr('#filter-baslangic').clear();
         flatpickr('#filter-bitis').clear();
         loadList();
+    });
+
+    // ---------- Signature Printing Modal Logic ----------
+    let loadedOptions = { unvan: [], isim: [] };
+
+    function templateResultFormat(state) {
+        if (!state.id || state.id === "") {
+            return state.text;
+        }
+        if (!state.element) {
+            return state.text;
+        }
+        const selectEl = $(state.element).closest('select');
+        const type = selectEl.data('type');
+        if (!type) return state.text;
+
+        const opt = loadedOptions[type].find(o => o.deger === state.text);
+        if (!opt) {
+            return state.text;
+        }
+
+        return $(
+            '<div class="d-flex justify-content-between align-items-center w-100">' +
+                '<span>' + state.text + '</span>' +
+                '<button type="button" class="btn btn-sm btn-ghost-danger p-0 delete-sig-opt" data-id="' + opt.id + '" style="line-height: 1; height: 18px; width: 18px; display: inline-flex; align-items: center; justify-content: center; border:none; background:transparent;">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-danger p-0 m-0"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>' +
+                '</button>' +
+            '</div>'
+        );
+    }
+
+    $('.select2-modal-signature').select2({
+        width: '100%',
+        allowClear: true,
+        placeholder: 'Seçiniz veya yazınız...',
+        dropdownParent: $('#modalYazdir'),
+        tags: true,
+        templateResult: templateResultFormat
+    });
+
+    function loadSignatureOptions(callback) {
+        $.get('api/izin/form_onay_options.php', { action: 'list' }, function(res) {
+            if (res.status === 'success') {
+                loadedOptions.unvan = res.unvanlar;
+                loadedOptions.isim = res.isimler;
+
+                populateSelect2Signature('#print-unvan-1', res.unvanlar);
+                populateSelect2Signature('#print-unvan-2', res.unvanlar);
+                populateSelect2Signature('#print-unvan-3', res.unvanlar);
+
+                populateSelect2Signature('#print-isim-1', res.isimler);
+                populateSelect2Signature('#print-isim-2', res.isimler);
+                populateSelect2Signature('#print-isim-3', res.isimler);
+
+                if (res.last_selections) {
+                    $('#print-unvan-1').val(res.last_selections.izin_form_onaylayan_unvan_1 || '').trigger('change');
+                    $('#print-isim-1').val(res.last_selections.izin_form_onaylayan_isim_1 || '').trigger('change');
+                    $('#print-unvan-2').val(res.last_selections.izin_form_onaylayan_unvan_2 || '').trigger('change');
+                    $('#print-isim-2').val(res.last_selections.izin_form_onaylayan_isim_2 || '').trigger('change');
+                    $('#print-unvan-3').val(res.last_selections.izin_form_onaylayan_unvan_3 || '').trigger('change');
+                    $('#print-isim-3').val(res.last_selections.izin_form_onaylayan_isim_3 || '').trigger('change');
+                }
+
+                if (callback) callback();
+            }
+        });
+    }
+
+    function populateSelect2Signature(selector, data) {
+        const select = $(selector);
+        const currentVal = select.val();
+        let html = '<option value="">Seçiniz</option>';
+        data.forEach(item => {
+            html += `<option value="${item.deger}">${item.deger}</option>`;
+        });
+        select.html(html);
+        select.val(currentVal);
+    }
+
+    $('.select2-modal-signature').on('select2:select', function(e) {
+        const data = e.params.data;
+        const selectEl = $(this);
+        const type = selectEl.data('type');
+        const text = data.text.trim();
+
+        const exists = loadedOptions[type].some(opt => opt.deger.toLowerCase() === text.toLowerCase());
+        if (!exists && text !== '') {
+            $.post('api/izin/form_onay_options.php', { action: 'add', type: type, val: text }, function(res) {
+                if (res.status === 'success') {
+                    loadedOptions[type].push({ id: res.id, deger: text });
+                    $(`.select2-modal-signature[data-type="${type}"]`).each(function() {
+                        const s = $(this);
+                        const val = s.val();
+                        let html = '<option value="">Seçiniz</option>';
+                        loadedOptions[type].forEach(item => {
+                            html += `<option value="${item.deger}">${item.deger}</option>`;
+                        });
+                        s.html(html).val(val).trigger('change');
+                    });
+                    // Restore the newly added value on the current select
+                    selectEl.val(text).trigger('change');
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.delete-sig-opt', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const btn = $(this);
+        const id = btn.data('id');
+
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu seçenek silinecektir. Sildiğinizde listede tekrar görünmeyecektir.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('.select2-modal-signature').select2('close');
+                $.post('api/izin/form_onay_options.php', { action: 'delete', id: id }, function(res) {
+                    if (res.status === 'success') {
+                        // Clear selected values that match the deleted option
+                        $('.select2-modal-signature').each(function() {
+                            if ($(this).val() === btn.parent().find('span').text()) {
+                                $(this).val('').trigger('change');
+                            }
+                        });
+                        loadSignatureOptions();
+                    } else {
+                        Swal.fire('Hata!', res.message, 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    window.openPrintModal = function(encId) {
+        $('#print-talep-id').val(encId);
+        loadSignatureOptions(function() {
+            new bootstrap.Modal('#modalYazdir').show();
+        });
+    };
+
+    $('#btn-form-yazdir').on('click', function() {
+        const id = $('#print-talep-id').val();
+        const selections = {
+            izin_form_onaylayan_unvan_1: $('#print-unvan-1').val() || '',
+            izin_form_onaylayan_isim_1: $('#print-isim-1').val() || '',
+            izin_form_onaylayan_unvan_2: $('#print-unvan-2').val() || '',
+            izin_form_onaylayan_isim_2: $('#print-isim-2').val() || '',
+            izin_form_onaylayan_unvan_3: $('#print-unvan-3').val() || '',
+            izin_form_onaylayan_isim_3: $('#print-isim-3').val() || ''
+        };
+
+        $.post('api/izin/form_onay_options.php', { action: 'save_last', selections: selections }, function(res) {
+            if (res.status === 'success') {
+                bootstrap.Modal.getInstance('#modalYazdir').hide();
+                const params = new URLSearchParams({
+                    id: id,
+                    u1: selections.izin_form_onaylayan_unvan_1,
+                    i1: selections.izin_form_onaylayan_isim_1,
+                    u2: selections.izin_form_onaylayan_unvan_2,
+                    i2: selections.izin_form_onaylayan_isim_2,
+                    u3: selections.izin_form_onaylayan_unvan_3,
+                    i3: selections.izin_form_onaylayan_isim_3
+                });
+                window.open('print_izin.php?' + params.toString(), '_blank');
+            } else {
+                Swal.fire('Hata!', 'Tercihler kaydedilemedi: ' + res.message, 'error');
+            }
+        });
     });
 
     loadList();

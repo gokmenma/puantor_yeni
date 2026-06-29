@@ -140,6 +140,7 @@ class IzinTalep extends Model
             'gun_sayisi'      => $gun_sayisi,
             'durum'           => 'beklemede',
             'aciklama'        => $data['aciklama'] ?? null,
+            'adres'           => $data['adres'] ?? null,
             'olusturan_id'    => $data['olusturan_id'] ?? null,
         ];
         $enc_id = $this->insert();
@@ -196,7 +197,7 @@ class IzinTalep extends Model
 
         $sql = $this->db->prepare(
             "UPDATE {$this->table} 
-             SET tur_id = ?, baslangic_tarihi = ?, bitis_tarihi = ?, gun_sayisi = ?, aciklama = ? 
+             SET tur_id = ?, baslangic_tarihi = ?, bitis_tarihi = ?, gun_sayisi = ?, aciklama = ?, adres = ? 
              WHERE id = ?"
         );
         $sql->execute([
@@ -205,6 +206,7 @@ class IzinTalep extends Model
             $data['bitis_tarihi'],
             $gun_sayisi,
             $data['aciklama'] ?? null,
+            $data['adres'] ?? null,
             $talep_id
         ]);
 

@@ -206,6 +206,10 @@ $turler = $turModel->getAktifTurler();
                     <label class="form-label text-xs text-muted">Açıklama</label>
                     <textarea id="yeni-aciklama" class="form-control" rows="2" placeholder="İzin gerekçesi, açıklama..." style="border-radius: 12px;"></textarea>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label text-xs text-muted">İznin Geçirileceği Adres</label>
+                    <textarea id="yeni-adres" class="form-control" rows="2" placeholder="İzninizi geçireceğiniz adres..." style="border-radius: 12px;"></textarea>
+                </div>
             </div>
             <div class="modal-footer border-0 pt-0 d-flex gap-2">
                 <button type="button" class="btn btn-light rounded-pill flex-fill" data-bs-dismiss="modal">Vazgeç</button>
@@ -447,6 +451,7 @@ $(document).ready(function() {
     $('#btn-yeni-talep').on('click', function() {
         $('#yeni-personel, #yeni-tur').val('').trigger('change');
         $('#yeni-aciklama').val('');
+        $('#yeni-adres').val('');
         $('#gun-sayisi-preview').text('—');
         $('#takvim-gun-sayisi-preview').text('—');
         
@@ -521,6 +526,7 @@ $(document).ready(function() {
         const baslangic = $('#yeni-baslangic').val();
         const bitis = $('#yeni-bitis').val();
         const aciklama = $('#yeni-aciklama').val();
+        const adres = $('#yeni-adres').val();
 
         if (!personelId || !turId || !baslangic || !bitis) {
             Swal.fire('Hata!', 'Lütfen tüm zorunlu alanları doldurun.', 'warning');
@@ -533,7 +539,8 @@ $(document).ready(function() {
             tur_id: turId,
             baslangic_tarihi: parseTrDate(baslangic),
             bitis_tarihi: parseTrDate(bitis),
-            aciklama: aciklama
+            aciklama: aciklama,
+            adres: adres
         };
 
         $.post(API_URL, data, function(response) {
