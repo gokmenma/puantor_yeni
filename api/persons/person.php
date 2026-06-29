@@ -10,9 +10,11 @@ require_once "../../Model/Auths.php";
 require_once "../../App/Helper/helper.php";
 require_once "../../Model/Projects.php";
 require_once ROOT . "/Model/CaseTransactions.php";
+require_once ROOT . "/App/Helper/date.php";
 
 use App\Helper\Security;
 use App\Helper\Helper;
+use App\Helper\Date;
 
 // Silently log or ignore if log fails
 @file_put_contents(ROOT . "/debug_api.log", date("Y-m-d H:i:s") . " - Action: " . ($_POST["action"] ?? "none") . " - User: " . ($_SESSION["user"]->id ?? "none") . "\n", FILE_APPEND);
@@ -69,6 +71,7 @@ if ($_POST["action"] == "savePerson") {
         "daily_wages" => Helper::formattedMoneyToNumber($_POST["daily_wages"]),
         "job_start_date" => $_POST["job_start_date"],
         "job_end_date" => $_POST["job_end_date"],
+        "birth_date" => !empty($_POST["birth_date"]) ? Date::Ymd($_POST["birth_date"], 'Y-m-d') : null,
         "password" => !empty($_POST["password"]) ? password_hash($_POST["password"], PASSWORD_DEFAULT) : null,
 
         // "status" => $_POST["status"],

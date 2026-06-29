@@ -116,6 +116,14 @@ if (isset($person->wage_type) && $person->wage_type == 1) {
                 <div class="col-md-2">
                     <input type="text" class="form-control" name="email" value="<?php echo $person->email ?? ''; ?>">
                 </div>
+
+                <div class="col-md-2 mt-2">
+                    <label for="">Doğum Tarihi</label>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control flatpickr" name="birth_date"
+                        placeholder="Doğum Tarihi" value="<?php echo !empty($person->birth_date) ? Date::dmY($person->birth_date) : ''; ?>">
+                </div>
             </div>
 
             <div class="row mt-2">
