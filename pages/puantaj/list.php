@@ -237,7 +237,7 @@ table#puantajTable.table {
     width: 100% !important;
     table-layout: auto !important;
     border-collapse: separate !important;
-    border-spacing: 0 !important;
+    border-spacing: 4px !important;
     margin: 0 !important;
     border: 1px solid var(--tblr-border-color) !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -249,6 +249,7 @@ table#puantajTable.table {
     padding: 8px 6px !important;
     vertical-align: middle !important;
     white-space: nowrap !important;
+    border-radius: 4px !important;
 }
 
 /* First column greedy behavior */
@@ -472,6 +473,7 @@ table {
 
 #puantajTable {
     border-collapse: separate !important;
+    border-spacing: 4px !important;
 }
 
 #puantajTable thead th {
