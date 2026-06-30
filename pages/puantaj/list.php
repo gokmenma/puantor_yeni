@@ -118,6 +118,41 @@ $onayliIzinGunleri = $izinModel->getOnayliIzinGunleriToplu($person_ids, $first_d
     }
     // ===  == OPTİMİZASYON SONU ===  == ?>
 <style>
+/* Çok büyük ekranlarda puantaj sayfasının çok fazla genişlemesini önlemek için */
+@media (min-width: 1200px) {
+    .container-xl {
+        max-width: 1900px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}
+
+.container-xl.expanded-container {
+    max-width: 100% !important;
+}
+
+/* Dikey Başlık Hücreleri */
+.vertical-header-th {
+    height: 110px !important;
+    vertical-align: bottom !important;
+    padding-bottom: 12px !important;
+    padding-top: 12px !important;
+    text-align: center !important;
+    box-sizing: border-box;
+}
+
+.vertical-header {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1 !important;
+}
+
 /* Dynamic AJAX Top Progress Bar */
 #puantaj-top-loading-bar {
     position: fixed;
@@ -219,8 +254,12 @@ table#puantajTable.table {
 /* First column greedy behavior */
 #puantajTable th:nth-child(1),
 #puantajTable td:nth-child(1) {
-    width: auto !important;
-    min-width: 220px !important;
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #puantajTable th:nth-child(2),
@@ -766,6 +805,18 @@ table {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
+
+    /* Print overrides for vertical headers */
+    .vertical-header-th {
+        height: auto !important;
+        vertical-align: middle !important;
+    }
+    .vertical-header {
+        writing-mode: horizontal-tb !important;
+        transform: none !important;
+        white-space: normal !important;
+        font-size: 8px !important;
+    }
 }
 
 /* Seçili Tür Kısayolu ve Hover Efekti */
@@ -905,7 +956,7 @@ table {
 <?php include_once 'content/puantaj-istatistik-modal.php' ?>
 <?php include_once 'content/puantaj-excel-modal.php' ?>
 
-<div class='container-fluid mt-3'>
+<div class='container-xl mt-3'>
     <form action='' method='post' id='puantajInfoForm'>
         <div class='row g-2 align-items-center d-print-none'>
             <div class='col-md-3'>
@@ -985,7 +1036,7 @@ table {
     </form>
 </div>
 
-<div class='container-fluid mt-3'>
+<div class='container-xl mt-3'>
     <div class='row row-deck row-cards'>
         <div class='col-12'>
             <div class='card'>
@@ -1232,16 +1283,24 @@ table {
                 ?>
                                 <?php endforeach;
                 ?>
-                                <th class='ld extra-column extra-toplam-gun text-center'
-                                    style='width: 80px !important;'>Toplam Gün</th>
-                                <th class='ld extra-column extra-toplam-fazla-mesai text-center'
-                                    style='width: 80px !important;'>Toplam FM</th>
+                                <th class='ld extra-column extra-toplam-gun text-center vertical-header-th' rowspan='2'
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'>
+                                    <div class='vertical-header'>Toplam Gün</div>
+                                </th>
+                                <th class='ld extra-column extra-toplam-fazla-mesai text-center vertical-header-th' rowspan='2'
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'>
+                                    <div class='vertical-header'>Toplam FM</div>
+                                </th>
                                 <?php foreach ( $allProjects as $proj ): ?>
-                                <th class='ld extra-column extra-project-totals text-center'
-                                    style='width: 90px !important;'><?php echo htmlspecialchars($proj->project_name); ?></th>
+                                <th class='ld extra-column extra-project-totals text-center vertical-header-th' rowspan='2'
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'>
+                                    <div class='vertical-header'><?php echo htmlspecialchars($proj->project_name); ?></div>
+                                </th>
                                 <?php endforeach; ?>
-                                <th class='ld extra-column extra-project-totals text-center'
-                                    style='width: 90px !important;'>Proje Yok</th>
+                                <th class='ld extra-column extra-project-totals text-center vertical-header-th' rowspan='2'
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'>
+                                    <div class='vertical-header'>Proje Yok</div>
+                                </th>
                             </tr>
 
                             <tr>
@@ -1264,13 +1323,6 @@ table {
                 ?>
                                 <?php endforeach;
                 ?>
-                                <th class='ld extra-column extra-toplam-gun' style='width: 80px !important;'></th>
-                                <th class='ld extra-column extra-toplam-fazla-mesai' style='width: 80px !important;'>
-                                </th>
-                                <?php foreach ( $allProjects as $proj ): ?>
-                                <th class='ld extra-column extra-project-totals' style='width: 90px !important;'></th>
-                                <?php endforeach; ?>
-                                <th class='ld extra-column extra-project-totals' style='width: 90px !important;'></th>
                             </tr>
 
                         </thead>
@@ -1488,21 +1540,21 @@ table {
                                 <?php endforeach;
             ?>
                                 <td class='text-center extra-column extra-toplam-gun td-toplam-gun fw-semibold'
-                                    style='width: 80px !important;'><?php echo $totalDays;
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'><?php echo $totalDays;
             ?></td>
                                 <td class='text-center extra-column extra-toplam-fazla-mesai td-toplam-fazla-mesai text-danger fw-bold'
-                                    style='width: 80px !important;'>
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'>
                                     <?php echo $totalOvertime > 0 ? str_replace( '.0', '', ( string )$totalOvertime ) : '0';
             ?>
                                 </td>
                                 <?php foreach ( $allProjects as $proj ): ?>
                                 <td class='text-center extra-column extra-project-totals fw-semibold'
-                                    style='width: 90px !important;'>
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'>
                                     <?php echo $personProjDays[$proj->id] ?? 0; ?>
                                 </td>
                                 <?php endforeach; ?>
                                 <td class='text-center extra-column extra-project-totals fw-semibold text-warning'
-                                    style='width: 90px !important;'>
+                                    style='width: 45px !important; min-width: 45px !important; max-width: 45px !important;'>
                                     <?php echo ($personProjDays[0] ?? 0) + ($personProjDays[''] ?? 0); ?>
                                 </td>
                             </tr>

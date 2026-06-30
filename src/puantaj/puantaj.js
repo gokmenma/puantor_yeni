@@ -628,14 +628,26 @@ $(window).on('beforeunload', function() {
 
 // Sütun göster/gizle fonksiyonu
 window.applyColumnVisibility = function() {
+    var hasExtraVisible = false;
     $(".column-toggle-check").each(function() {
         var columnClass = $(this).data("column");
-        if ($(this).is(":checked")) {
+        var isChecked = $(this).is(":checked");
+        if (isChecked) {
             $("." + columnClass).show();
+            // Ekstra detay sütunları (Unvan, İş Grubu, Ekip) açıldıysa konteyneri genişlet
+            if (columnClass === 'extra-unvan' || columnClass === 'extra-grup' || columnClass === 'extra-ekip') {
+                hasExtraVisible = true;
+            }
         } else {
             $("." + columnClass).hide();
         }
     });
+
+    if (hasExtraVisible) {
+        $(".container-xl").addClass("expanded-container");
+    } else {
+        $(".container-xl").removeClass("expanded-container");
+    }
 };
 
 // Sütun göster/gizle (Bağımsız seçim)
