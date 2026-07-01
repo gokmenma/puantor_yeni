@@ -237,7 +237,7 @@ table#puantajTable.table {
     width: 100% !important;
     table-layout: auto !important;
     border-collapse: separate !important;
-    border-spacing: 4px !important;
+    border-spacing: 2px !important;
     margin: 0 !important;
     border: 1px solid var(--tblr-border-color) !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -249,7 +249,7 @@ table#puantajTable.table {
     padding: 8px 6px !important;
     vertical-align: middle !important;
     white-space: nowrap !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important;
 }
 
 /* First column greedy behavior */
@@ -473,7 +473,7 @@ table {
 
 #puantajTable {
     border-collapse: separate !important;
-    border-spacing: 4px !important;
+    border-spacing: 2px !important;
 }
 
 #puantajTable thead th {
@@ -951,6 +951,33 @@ table {
 .select2-container .select2-selection--multiple .select2-selection__choice__remove:hover {
     color: #ff4d4d !important;
     background-color: transparent !important;
+}
+
+/* Datatable pagination and length two yana yaslı (space-between) */
+div.dt-container .dt-layout-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-direction: row !important;
+}
+
+div.dt-container .dt-layout-cell.dt-layout-start {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 15px !important;
+}
+
+div.dt-container .dt-layout-cell.dt-layout-end {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+}
+
+/* Hover durumunda hücrenin z-index değerini artırarak tooltips'in başlık ve diğer hücrelerin üzerinde görünmesini sağla */
+#puantajTable td[data-tooltip]:hover {
+    z-index: 1050 !important;
 }
 </style>
 

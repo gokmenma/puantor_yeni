@@ -97,11 +97,12 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                             <tr>
                                 <th>Personel</th>
                                 <th>İzin Türü</th>
-                                <th>Başlangıç</th>
-                                <th>Bitiş</th>
-                                <th class="text-center">Gün</th>
-                                <th class="text-center">Durum</th>
-                                <th>Talep Tarihi</th>
+                                <th style="width: 95px; max-width: 95px;">Başlangıç</th>
+                                <th style="width: 95px; max-width: 95px;">Bitiş</th>
+                                <th class="text-center" style="width: 75px; max-width: 75px;">Toplam Gün</th>
+                                <th class="text-center" style="width: 75px; max-width: 75px;">Düşülecek Gün</th>
+                                <th class="text-center" style="width: 90px; max-width: 90px;">Durum</th>
+                                <th style="width: 95px; max-width: 95px;">Talep Tarihi</th>
                                 <th class="text-center">İşlem</th>
                             </tr>
                         </thead>
@@ -397,12 +398,13 @@ $(document).ready(function() {
             { data: 'tur_adi' },
             { data: 'baslangic_tarihi', render: fmtDate },
             { data: 'bitis_tarihi',     render: fmtDate },
-            { data: 'gun_sayisi', className: 'text-center', render: d => `<strong>${d}</strong>` },
+            { data: 'toplam_gun', className: 'text-center', width: '80px', render: d => `<strong>${d}</strong>` },
+            { data: 'gun_sayisi', className: 'text-center', width: '100px', render: d => `<strong>${d}</strong>` },
             { data: 'durum', className: 'text-center', render: durumBadge },
             { data: 'olusturma_tarihi', render: fmtDate },
             { data: null, orderable: false, className: 'text-center', render: (d, t, row) => buildActions(row) }
         ],
-        order: [[6, 'desc']],
+        order: [[7, 'desc']],
         pageLength: 25,
         skipSearch: ['İşlem'],
     });

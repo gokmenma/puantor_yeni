@@ -1,6 +1,7 @@
 <?php
 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
+$yillik_izin_dusmeyecek_gunler = $Settings->getSettings("yillik_izin_dusmeyecek_gunler")->set_value ?? "6,7";
 ?>
 <div class="card">
     <div class="card-body p-4">
@@ -27,6 +28,17 @@ $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set
                 </div>
             </div>
 
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">Yıllık İzinden Düşmeyecek Günler</label>
+                    <select class="form-select select2-setting" name="yillik_izin_dusmeyecek_gunler" id="yillik_izin_dusmeyecek_gunler">
+                        <option value="6,7" <?php echo $yillik_izin_dusmeyecek_gunler === '6,7' ? 'selected' : ''; ?>>Cumartesi ve Pazar</option>
+                        <option value="7" <?php echo $yillik_izin_dusmeyecek_gunler === '7' ? 'selected' : ''; ?>>Sadece Pazar</option>
+                    </select>
+                    <small class="text-secondary d-block mt-1" style="font-size: 0.8rem;">Seçilen günler yıllık izin hakedişlerinden düşmeyecektir.</small>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-12">
                     <label class="form-label fw-bold text-dark small mb-2">Puantaj Görünürlük Ayarları</label>
@@ -49,3 +61,14 @@ $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    if ($.fn.select2) {
+        $('.select2-setting').select2({
+            width: '100%',
+            minimumResultsForSearch: -1
+        });
+    }
+});
+</script>

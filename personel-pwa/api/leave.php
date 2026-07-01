@@ -71,9 +71,21 @@ try {
         $baslangic = $_GET['baslangic'] ?? '';
         $bitis     = $_GET['bitis'] ?? '';
         if (!$baslangic || !$bitis) throw new Exception('Tarih belirtilmedi.');
+        
+        $firm_id = (int) ($_SESSION['firm_id'] ?? 0);
+        if ($firm_id <= 0) {
+            $person_id = (int) ($_GET['person_id'] ?? $_POST['person_id'] ?? 0);
+            if ($person_id > 0) {
+                $personObj = (new Persons())->find($person_id);
+                if ($personObj) {
+                    $firm_id = (int) $personObj->firm_id;
+                }
+            }
+        }
+        
         $model = new IzinTalep();
         ob_clean();
-        echo json_encode(['status' => 'success', 'gun_sayisi' => $model->calcIsGunu($baslangic, $bitis)], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['status' => 'success', 'gun_sayisi' => $model->calcIsGunu($baslangic, $bitis, $firm_id)], JSON_UNESCAPED_UNICODE);
         exit;
     }
 

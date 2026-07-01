@@ -1344,7 +1344,17 @@ window.createDataTable = function (selector, userOptions) {
             input.classList.add('form-control', 'form-control-sm');
             input.setAttribute('autocomplete', 'off');
 
-            $('#' + tableId + ' .search-input-row th:eq(' + colIdx + ')').html(input);
+            var $searchTh = $('#' + tableId + ' .search-input-row th:eq(' + colIdx + ')');
+            $searchTh.html(input);
+
+            // Copy style attributes (like width, max-width) from the header cell to search cell
+            var styleAttr = $headerTh.attr('style');
+            if (styleAttr) {
+                $searchTh.attr('style', styleAttr);
+            }
+
+            // Force input to fill 100% of the cell width and allow shrinking (min-width: 0)
+            input.setAttribute('style', 'width: 100% !important; min-width: 0 !important; max-width: 100% !important;');
 
             $(input).on('keyup change', function () {
                 if (column.search() !== this.value) {

@@ -1493,8 +1493,41 @@ div.dt-container {
 }
 
 div.dt-container .dt-layout-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
     margin: 1.25rem 0 !important;
-    align-items: center;
+    gap: 1rem !important;
+}
+
+div.dt-container .dt-layout-cell.dt-layout-start {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+}
+
+div.dt-container .dt-layout-cell.dt-layout-end {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+}
+
+/* Mobil Uyumlu Düzenlemeler */
+@media (max-width: 767.98px) {
+    div.dt-container .dt-layout-row {
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 0.75rem !important;
+    }
+    div.dt-container .dt-layout-cell.dt-layout-start,
+    div.dt-container .dt-layout-cell.dt-layout-end {
+        justify-content: center !important;
+        width: 100% !important;
+    }
 }
 
 /* Info Text Styling */

@@ -132,10 +132,15 @@ if ($_POST["action"] == "homeSettings") {
 
     $work_hour = $_POST["work_hour"];
     $show_white_collar = isset($_POST["show_white_collar_in_puantaj"]) ? 1 : 0;
+    $yillik_izin_dusmeyecek_gunler = $_POST["yillik_izin_dusmeyecek_gunler"] ?? "6,7";
 
     try {
         $Settings->upsertSetting("work_hour", $work_hour);
         $Settings->upsertSetting("show_white_collar_in_puantaj", $show_white_collar);
+        $Settings->upsertSetting("yillik_izin_dusmeyecek_gunler", $yillik_izin_dusmeyecek_gunler);
+        
+        require_once ROOT . "/Model/ActivityLogModel.php";
+        ActivityLogModel::log("program_settings", "update_general", "Program genel ayarları güncellendi.");
         
         $status = "success";
         $message = "Ayarlar başarıyla tamamlandı.";

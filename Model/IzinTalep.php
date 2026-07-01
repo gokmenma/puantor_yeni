@@ -15,13 +15,34 @@ class IzinTalep extends Model
         $this->hakedisModel = new IzinHakedis();
     }
 
+    public function getExcludeDays(int $firma_id = 0): array
+    {
+        if ($firma_id <= 0) {
+            $firma_id = (int) ($_SESSION['firm_id'] ?? 0);
+        }
+        if ($firma_id <= 0) {
+            return [6, 7];
+        }
+
+        $sql = $this->db->prepare("SELECT set_value FROM settings WHERE firm_id = ? AND set_name = 'yillik_izin_dusmeyecek_gunler' LIMIT 1");
+        $sql->execute([$firma_id]);
+        $res = $sql->fetch(PDO::FETCH_OBJ);
+
+        if ($res && !empty($res->set_value)) {
+            return array_map('intval', explode(',', $res->set_value));
+        }
+
+        return [6, 7];
+    }
+
     /**
      * Verilen tarih aralığındaki iş günü sayısını hesaplar.
-     * Cumartesi, Pazar ve resmi tatiller çalışma günü sayılmaz.
+     * Ayarlarda belirtilen günler ve resmi tatiller çalışma günü sayılmaz.
      */
-    public function calcIsGunu(string $baslangic, string $bitis): int
+    public function calcIsGunu(string $baslangic, string $bitis, int $firma_id = 0): int
     {
         $tatiller = $this->getResmiTatilDates($baslangic, $bitis);
+        $excludeDays = $this->getExcludeDays($firma_id);
 
         $current = new DateTime($baslangic);
         $end = new DateTime($bitis);
@@ -31,7 +52,7 @@ class IzinTalep extends Model
             $dayOfWeek = (int) $current->format('N');
             $dateStr = $current->format('Y-m-d');
 
-            if ($dayOfWeek < 6 && !in_array($dateStr, $tatiller)) {
+            if (!in_array($dayOfWeek, $excludeDays) && !in_array($dateStr, $tatiller)) {
                 $gun++;
             }
             $current->modify('+1 day');
@@ -105,7 +126,7 @@ class IzinTalep extends Model
      */
     public function olustur(array $data): array
     {
-        $gun_sayisi = $this->calcIsGunu($data['baslangic_tarihi'], $data['bitis_tarihi']);
+        $gun_sayisi = $this->calcIsGunu($data['baslangic_tarihi'], $data['bitis_tarihi'], (int) $data['firma_id']);
         if ($gun_sayisi <= 0) {
             return ['success' => false, 'message' => 'Seçilen tarih aralığında iş günü bulunmuyor.'];
         }
@@ -168,7 +189,7 @@ class IzinTalep extends Model
             return ['success' => false, 'message' => 'Yetkisiz işlem.'];
         }
 
-        $gun_sayisi = $this->calcIsGunu($data['baslangic_tarihi'], $data['bitis_tarihi']);
+        $gun_sayisi = $this->calcIsGunu($data['baslangic_tarihi'], $data['bitis_tarihi'], (int) ($data['firma_id'] ?? $talep->firma_id));
         if ($gun_sayisi <= 0) {
             return ['success' => false, 'message' => 'Seçilen tarih aralığında iş günü bulunmuyor.'];
         }
@@ -263,7 +284,7 @@ class IzinTalep extends Model
         if ($yeni_bitis < $talep->baslangic_tarihi) return ['success' => false, 'message' => 'Bitiş tarihi başlangıçtan önce olamaz.'];
         if ($yeni_bitis > $talep->bitis_tarihi) return ['success' => false, 'message' => 'Kısmi onay tarihi orijinal bitiş tarihini geçemez.'];
 
-        $yeni_gun = $this->calcIsGunu($talep->baslangic_tarihi, $yeni_bitis);
+        $yeni_gun = $this->calcIsGunu($talep->baslangic_tarihi, $yeni_bitis, (int) $talep->firma_id);
         if ($yeni_gun <= 0) return ['success' => false, 'message' => 'Seçilen tarih aralığında iş günü bulunmuyor.'];
 
         require_once __DIR__ . '/IzinTur.php';
@@ -419,12 +440,13 @@ class IzinTalep extends Model
         $tatiller = $this->getResmiTatilDates($talep->baslangic_tarihi, $talep->bitis_tarihi);
         $current = new DateTime($talep->baslangic_tarihi);
         $end = new DateTime($talep->bitis_tarihi);
+        $excludeDays = $this->getExcludeDays((int) $talep->firma_id);
 
         while ($current <= $end) {
             $dayOfWeek = (int) $current->format('N');
             $dateStr = $current->format('Y-m-d');
 
-            if ($dayOfWeek < 6 && !in_array($dateStr, $tatiller)) {
+            if (!in_array($dayOfWeek, $excludeDays) && !in_array($dateStr, $tatiller)) {
                 $mevcut = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? AND (gun = ? OR gun = ?) AND (project_id = 0 OR project_id IS NULL) LIMIT 1");
                 $mevcut->execute([$talep->personel_id, $dateStr, str_replace('-', '', $dateStr)]);
                 if (!$mevcut->fetch()) {
@@ -511,7 +533,8 @@ class IzinTalep extends Model
         }
 
         $sql = $this->db->prepare(
-            "SELECT t.*, it.ad AS tur_adi, p.full_name AS personel_adi, u.full_name AS onaylayan_adi
+            "SELECT t.*, it.ad AS tur_adi, p.full_name AS personel_adi, u.full_name AS onaylayan_adi,
+                    (DATEDIFF(t.bitis_tarihi, t.baslangic_tarihi) + 1) AS toplam_gun
              FROM {$this->table} t
              JOIN izin_turler it ON it.id = t.tur_id
              JOIN persons p ON p.id = t.personel_id

@@ -293,10 +293,57 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
     </div>
 </div>
 
+<!-- Modal: Kullanılan İzinler -->
+<div class="modal modal-blur fade" id="modalKullanilanIzinler" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event me-2 text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"></path>
+                        <path d="M16 3l0 4"></path>
+                        <path d="M8 3l0 4"></path>
+                        <path d="M4 11l16 0"></path>
+                        <path d="M8 15h2v2h-2z"></path>
+                    </svg>
+                    <span id="kullanilan-izinler-title">Kullanılan İzinler</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-vcenter table-hover card-table mb-0" id="kullanilan-izinler-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>İzin Türü</th>
+                                <th class="text-center">Başlangıç</th>
+                                <th class="text-center">Bitiş</th>
+                                <th class="text-center">Süre</th>
+                                <th>Açıklama</th>
+                                <th>Onaylayan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Yükleniyor...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 #hakedis-table tbody tr { cursor: pointer; }
 #hakedis-table tbody tr.shown { background-color: rgba(var(--tblr-primary-rgb), 0.02); }
 #hakedis-table td.dt-control i { transition: transform 0.2s ease; }
+#hakedis-table td.dt-control::before { display: none !important; }
 .dropzone-area { border:2px dashed #86efac; border-radius:12px; padding:2.5rem 1.5rem; text-align:center; background:#f0fdf4; cursor:pointer; transition:all .2s ease-in-out; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; }
 .dropzone-area:hover, .dropzone-area.dragover { border-color:#2fb344; background:#dcfce7; }
 .dropzone-area:hover .dropzone-icon i, .dropzone-area.dragover .dropzone-icon i { transform:translateY(-5px); }
@@ -314,6 +361,68 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
 <script>
 $(document).ready(function() {
     const HAKEDIS_API = 'api/izin/hakedis.php';
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Click handler for showing used leaves in modal
+    $('#hakedis-table').on('click', '.show-leaves', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const personelId = $(this).data('personel-id');
+        const personelName = $(this).data('personel-name');
+        
+        $('#kullanilan-izinler-title').text(`${personelName} - Kullanılan İzinler`);
+        
+        const tbody = $('#kullanilan-izinler-table tbody');
+        tbody.html('<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm text-secondary me-2"></span> Yükleniyor...</td></tr>');
+        
+        const modalEl = document.getElementById('modalKullanilanIzinler');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        
+        $.get('api/izin/talep.php', { action: 'list', personel_id: personelId, durum: 'onaylandi' }, function(res) {
+            if (res.status !== 'success') {
+                tbody.html(`<tr><td colspan="6" class="text-center text-danger py-4">Hata: ${res.message}</td></tr>`);
+                return;
+            }
+            
+            if (!res.list || res.list.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center text-muted py-4">Kullanılmış izin kaydı bulunamadı.</td></tr>');
+                return;
+            }
+            
+            let html = '';
+            res.list.forEach(item => {
+                const aciklama = item.aciklama ? escapeHtml(item.aciklama) : '—';
+                const onaylayan = item.onaylayan_adi ? escapeHtml(item.onaylayan_adi) : '—';
+                html += `
+                    <tr>
+                        <td>
+                            <span class="badge bg-blue-lt">${escapeHtml(item.tur_adi)}</span>
+                        </td>
+                        <td class="text-center">${fmtDate(item.baslangic_tarihi)}</td>
+                        <td class="text-center">${fmtDate(item.bitis_tarihi)}</td>
+                        <td class="text-center font-weight-bold">${item.gun_sayisi} Gün</td>
+                        <td><small class="text-muted">${aciklama}</small></td>
+                        <td><small>${onaylayan}</small></td>
+                    </tr>
+                `;
+            });
+            tbody.html(html);
+        }).fail(function() {
+            tbody.html('<tr><td colspan="6" class="text-center text-danger py-4">İzin listesi yüklenirken bir hata oluştu.</td></tr>');
+        });
+    });
 
     function swalSuccess(msg) {
         Swal.fire({ icon: 'success', title: 'Başarılı!', text: msg, timer: 2000, showConfirmButton: false, toast: true, position: 'top-end' });
@@ -362,12 +471,16 @@ $(document).ready(function() {
                 `;
             }
 
+            const kullanilanGunHtml = parseInt(h.kullanilan_gun) > 0 
+                ? `<span class="show-leaves cursor-pointer text-decoration-underline fw-bold text-danger" data-personel-id="${h.personel_id}" data-personel-name="${d.personel_adi}">${h.kullanilan_gun} Gün</span>` 
+                : `<span class="text-danger">${h.kullanilan_gun} Gün</span>`;
+
             rowsHtml += `
                 <tr>
                     <td class="ps-3 font-weight-bold text-muted">${h.yil}${h.yil < 100 ? '. Yıl' : ''}</td>
                     <td>${fmtDate(h.hakedis_tarihi)}</td>
                     <td class="text-center font-weight-medium">${h.gun_sayisi} Gün</td>
-                    <td class="text-center text-danger">${h.kullanilan_gun} Gün</td>
+                    <td class="text-center">${kullanilanGunHtml}</td>
                     <td class="text-center font-weight-bold text-success">${kalan} Gün</td>
                     <td class="text-center">${badge}</td>
                     <td><small class="text-muted">${h.aciklama || '—'}</small></td>
@@ -425,7 +538,16 @@ $(document).ready(function() {
                 }
             },
             { data: 'total_hakedis', className: 'text-center fw-medium', render: d => `${d} Gün` },
-            { data: 'total_kullanilan', className: 'text-center text-danger', render: d => `${d} Gün` },
+            { 
+                data: 'total_kullanilan', 
+                className: 'text-center text-danger', 
+                render: (d, t, row) => {
+                    if (parseInt(d) > 0) {
+                        return `<span class="show-leaves cursor-pointer text-decoration-underline fw-bold" data-personel-id="${row.personel_id}" data-personel-name="${row.personel_adi}">${d} Gün</span>`;
+                    }
+                    return `${d} Gün`;
+                }
+            },
             {
                 data: null, className: 'text-center fw-bold',
                 render: (d, t, row) => {
@@ -441,7 +563,7 @@ $(document).ready(function() {
 
     // Add event listener for opening and closing details
     $('#hakedis-table tbody').on('click', 'td.dt-control, tr', function (e) {
-        if ($(e.target).closest('button, a, input, select').length) {
+        if ($(e.target).closest('button, a, input, select, .show-leaves').length) {
             return;
         }
 

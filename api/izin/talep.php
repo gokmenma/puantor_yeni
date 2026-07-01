@@ -45,7 +45,7 @@ try {
         $baslangic = $_GET['baslangic'] ?? '';
         $bitis     = $_GET['bitis'] ?? '';
         if (!$baslangic || !$bitis) throw new Exception('Tarih belirtilmedi.');
-        $gun = $model->calcIsGunu($baslangic, $bitis);
+        $gun = $model->calcIsGunu($baslangic, $bitis, $firma_id);
         ob_clean();
         echo json_encode(['status' => 'success', 'gun_sayisi' => $gun], JSON_UNESCAPED_UNICODE);
         exit;
