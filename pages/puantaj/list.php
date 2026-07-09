@@ -1053,10 +1053,11 @@ div.dt-container .dt-layout-cell.dt-layout-end {
         </div>
         <div id='project-empty-warning-bar' class='row d-none mt-2'>
             <div class='col-12'>
-                <div class='alert alert-warning py-2 px-3 mb-0 d-flex align-items-center'
+                <div class='alert alert-warning alert-dismissible py-2 px-3 mb-0 d-flex align-items-center'
                     style='font-size: 12px; line-height: 1.4; border-radius: 4px; background-color: #fff3cd; border-color: #ffecb5; color: #664d03;'>
                     <i class='ti ti-alert-triangle me-2 fs-2' style='color: #664d03;'></i>
                     <span><strong>Proje Seçilmedi!</strong> Proje seçmeden de puantaj girişi yapabilirsiniz. Verileri projeye göre filtrelemek için en az bir proje seçiniz.</span>
+                    <a class='btn-close' data-bs-dismiss='alert' aria-label='close' style='top: 50%; transform: translateY(-50%); padding: 0 1.25rem;'></a>
                 </div>
             </div>
         </div>
