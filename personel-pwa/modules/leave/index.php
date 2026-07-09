@@ -106,7 +106,7 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
                         <input type="date" id="leave-bitis" class="form-control">
                     </div>
                 </div>
-                <div class="mb-3 p-3 bg-light rounded-3">
+                <div class="mb-3 p-3 bg-light rounded-3" id="leave-preview-container">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="text-muted small">Kullanılacak İzin Günü:</span>
                         <strong id="leave-takvim-gun-preview" class="text-secondary">—</strong>
@@ -117,10 +117,10 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Açıklama <span class="text-muted fw-normal">(opsiyonel)</span></label>
+                    <label class="form-label fw-semibold" id="leave-aciklama-label">Açıklama <span class="text-muted fw-normal">(opsiyonel)</span></label>
                     <textarea id="leave-aciklama" class="form-control" rows="2" style="resize:none;"></textarea>
                 </div>
-                <div class="mb-3">
+                <div class="mb-3" id="leave-adres-container">
                     <label class="form-label fw-semibold">İznin Geçirileceği Adres</label>
                     <textarea id="leave-adres" class="form-control" rows="2" style="resize:none;" placeholder="İzninizi geçireceğiniz adres..."></textarea>
                 </div>
@@ -275,6 +275,7 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
         calcGun();
         loadTurler(function() {
             document.getElementById('leave-tur').value = t.tur_id;
+            handleLeaveTurChange();
         });
         new bootstrap.Modal('#modalYeniIzin').show();
     };
@@ -360,6 +361,33 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
         document.getElementById('leave-baslangic').addEventListener('change', calcGun);
         document.getElementById('leave-bitis').addEventListener('change', calcGun);
 
+        function handleLeaveTurChange() {
+            const select = document.getElementById('leave-tur');
+            const selectedOpt = select.options[select.selectedIndex];
+            const kod = selectedOpt ? selectedOpt.getAttribute('data-kod') : '';
+            const previewContainer = document.getElementById('leave-preview-container');
+            const adresContainer = document.getElementById('leave-adres-container');
+            const aciklamaLabel = document.getElementById('leave-aciklama-label');
+            const aciklamaInput = document.getElementById('leave-aciklama');
+
+            if (kod === 'ucretsiz') {
+                if (previewContainer) previewContainer.style.display = 'none';
+                if (adresContainer) adresContainer.style.display = 'none';
+                if (aciklamaLabel) aciklamaLabel.textContent = 'Mazeret';
+                if (aciklamaInput && !aciklamaInput.value.trim()) {
+                    aciklamaInput.value = 'Özel sebeplerden dolayı';
+                }
+            } else {
+                if (previewContainer) previewContainer.style.display = 'block';
+                if (adresContainer) adresContainer.style.display = 'block';
+                if (aciklamaLabel) aciklamaLabel.innerHTML = 'Açıklama <span class="text-muted fw-normal">(opsiyonel)</span>';
+                if (aciklamaInput && aciklamaInput.value === 'Özel sebeplerden dolayı') {
+                    aciklamaInput.value = '';
+                }
+            }
+        }
+        document.getElementById('leave-tur').addEventListener('change', handleLeaveTurChange);
+
         document.getElementById('btn-new-leave').addEventListener('click', function() {
             editingTalepId = null;
             document.querySelector('#modalYeniIzin .modal-title').textContent = 'Yeni İzin Talebi';
@@ -387,6 +415,7 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
                         break;
                     }
                 }
+                handleLeaveTurChange();
             });
             
             calcGun();

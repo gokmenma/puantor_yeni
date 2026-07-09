@@ -72,6 +72,7 @@ $turOptions = [
                                 <th>Eklenecek Saat</th>
                                 <th>Türü</th>
                                 <th>İzin/Rapor</th>
+                                <th>P. Görsün?</th>
                                 <th>Kesinti?</th>
                                 <th>BY Kesinti?</th>
                                 <th>Durum</th>
@@ -104,6 +105,7 @@ $turOptions = [
                                             data-font="<?php echo htmlspecialchars($type->FontRengi) ?>"
                                             data-active="<?php echo htmlspecialchars($type->isActive) ?>"
                                             data-izin="<?php echo htmlspecialchars($type->IzinRapor) ?>"
+                                            data-personel-gorsun="<?php echo htmlspecialchars($type->personel_gorsun ?? 0) ?>"
                                             data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>"
                                             data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>">
                                             <?php echo htmlspecialchars($type->PuantajAdi); ?>
@@ -115,6 +117,13 @@ $turOptions = [
                                     <td><span class="badge bg-blue-lt"><?php echo htmlspecialchars($type->Turu); ?></span></td>
                                     <td>
                                         <?php if ($type->IzinRapor == 1): ?>
+                                            <span class="badge bg-success-lt">Evet</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-danger-lt">Hayır</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (($type->personel_gorsun ?? 0) == 1): ?>
                                             <span class="badge bg-success-lt">Evet</span>
                                         <?php else: ?>
                                             <span class="badge bg-danger-lt">Hayır</span>
@@ -158,6 +167,7 @@ $turOptions = [
                                                     data-font="<?php echo htmlspecialchars($type->FontRengi) ?>"
                                                     data-active="<?php echo htmlspecialchars($type->isActive) ?>"
                                                     data-izin="<?php echo htmlspecialchars($type->IzinRapor) ?>"
+                                                    data-personel-gorsun="<?php echo htmlspecialchars($type->personel_gorsun ?? 0) ?>"
                                                     data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>"
                                                     data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>">
                                                     <i class="ti ti-edit icon me-3"></i> Güncelle
@@ -276,6 +286,13 @@ $turOptions = [
                                 <span class="form-check-label">Beyaz Yaka Maaş Kesintisi</span>
                             </label>
                             <div class="text-muted" style="font-size:0.75rem">Aylık maaşlı personelde bu gün maaştan düşülür</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="personel_gorsun" id="personel_gorsun">
+                                <span class="form-check-label">Personel Görsün</span>
+                            </label>
+                            <div class="text-muted" style="font-size:0.75rem">İzin talebi oluştururken gösterilsin</div>
                         </div>
                     </div>
                 </form>

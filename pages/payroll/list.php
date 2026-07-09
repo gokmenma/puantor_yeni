@@ -485,10 +485,46 @@ $total_kalan = $total_gelir - $total_odeme;
                                     <td><?php echo $person->job_start_date; ?></td>
 
                                     <!-- Gelir -->
-                                    <td class="text-end ">
+                                    <?php
+                                    $wage_type_text = $person->wage_type == 1 ? 'Aylık' : 'Günlük';
+                                    if ($person->wage_type == 1) {
+                                        $monthly_wage = floatval($person->daily_wages ?? 0);
+                                        $daily_wage = $monthly_wage / 30;
+                                        
+                                        $monthly_wage_text = Helper::formattedMoney($monthly_wage);
+                                        $daily_wage_text = Helper::formattedMoney($daily_wage);
+                                    } else {
+                                        $daily_wage = floatval($person->daily_wages ?? 0);
+                                        $monthly_wage_text = '-';
+                                        $daily_wage_text = Helper::formattedMoney($daily_wage);
+                                    }
+                                    
+                                    $popover_content = "
+                                    <div class='p-1'>
+                                      <div class='mb-2 pb-1 border-bottom d-flex justify-content-between align-items-center gap-4'>
+                                        <span class='text-secondary small font-weight-medium'>Ücret Türü</span>
+                                        <span class='badge bg-blue-lite text-blue'>" . htmlspecialchars($wage_type_text, ENT_QUOTES, 'UTF-8') . "</span>
+                                      </div>
+                                      <div class='d-flex justify-content-between py-1 gap-4'>
+                                        <span class='text-secondary'>Aylık Ücret:</span>
+                                        <span class='font-weight-bold text-dark'>" . htmlspecialchars($monthly_wage_text, ENT_QUOTES, 'UTF-8') . "</span>
+                                      </div>
+                                      <div class='d-flex justify-content-between py-1 gap-4'>
+                                        <span class='text-secondary'>Günlük Ücret:</span>
+                                        <span class='font-weight-bold text-dark'>" . htmlspecialchars($daily_wage_text, ENT_QUOTES, 'UTF-8') . "</span>
+                                      </div>
+                                    </div>";
+                                    ?>
+                                    <td class="text-end gross-salary-popover" 
+                                        data-bs-toggle="popover" 
+                                        data-bs-trigger="hover" 
+                                        data-bs-html="true" 
+                                        data-bs-placement="top"
+                                        title="Ücret Bilgileri"
+                                        data-bs-content="<?php echo htmlspecialchars($popover_content, ENT_QUOTES, 'UTF-8'); ?>"
+                                        style="cursor: pointer;">
                                         <?php echo Helper::formattedMoney(($gelir) ?? 0) ?>
                                         <i class="ti ti-download icon text-green"></i>
-
                                     </td>
 
 

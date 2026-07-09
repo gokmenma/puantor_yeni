@@ -809,6 +809,7 @@ CREATE TABLE `puantajturu` (
   `ArkaPlanRengi` varchar(7) DEFAULT NULL,
   `isActive` int(1) DEFAULT NULL,
   `IzinRapor` int(1) DEFAULT NULL,
+  `personel_gorsun` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

@@ -40,6 +40,31 @@ class Security
         return password_verify($password, $hash);
     }
 
+private static function encryptionKey(): string
+{
+    $key = getenv('ENCRYPTION_KEY');
+    if ($key === false || $key === '') {
+        $envFile = dirname(__DIR__, 2) . '/.env';
+        if (file_exists($envFile)) {
+            foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+                if (strpos(trim($line), '#') === 0) continue;
+                if (strpos($line, '=') !== false) {
+                    [$k, $v] = explode('=', $line, 2);
+                    if (trim($k) === 'ENCRYPTION_KEY') {
+                        putenv('ENCRYPTION_KEY=' . trim($v));
+                        $key = trim($v);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if ($key === false || $key === '') {
+        throw new \RuntimeException('ENCRYPTION_KEY ortam değişkeni tanımlı değil.');
+    }
+    return hash('sha256', $key, true);
+}
+
 public static function encrypt($data)
 {
     if (empty($data)) {
@@ -47,12 +72,11 @@ public static function encrypt($data)
     }
 
     $method = "AES-256-GCM";
-    $key = hash('sha256', 'mysecretkey', true);
+    $key = self::encryptionKey();
     $iv = openssl_random_pseudo_bytes(12);
     $tag = null;
     $encrypted_data = openssl_encrypt($data, $method, $key, OPENSSL_RAW_DATA, $iv, $tag);
-    
-    // Combine IV, Tag, and Encrypted Data, then encode to URL-safe Base64
+
     $result = base64_encode($iv . $tag . $encrypted_data);
     return strtr($result, '+/=', '-_*');
 }
@@ -62,7 +86,7 @@ public static function decrypt($data)
     if (empty($data)) return '';
     $data = urldecode($data);
     $method = "AES-256-GCM";
-    $key = hash('sha256', 'mysecretkey', true);
+    $key = self::encryptionKey();
     
     // Reverse URL-safe Base64
     $data = strtr($data, '-_*', '+/=');

@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS `kvkk_talepler` (
+    `id`              INT(11)      NOT NULL AUTO_INCREMENT,
+    `firma_id`        INT(11)      NOT NULL,
+    `talep_turu`      ENUM('erisim','duzeltme','silme','itiraz','aktarim') NOT NULL,
+    `basvuran_ad`     VARCHAR(150) NOT NULL,
+    `basvuran_email`  VARCHAR(255) DEFAULT NULL,
+    `basvuran_tc`     VARCHAR(50)  DEFAULT NULL,
+    `aciklama`        TEXT         DEFAULT NULL,
+    `durum`           ENUM('bekliyor','isleniyor','tamamlandi','reddedildi') NOT NULL DEFAULT 'bekliyor',
+    `yanit_notu`      TEXT         DEFAULT NULL,
+    `atanan_kullanici` INT(11)     DEFAULT NULL,
+    `talep_tarihi`    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `son_yanit_tarihi` TIMESTAMP   NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 30 DAY),
+    `yanit_tarihi`    TIMESTAMP    NULL DEFAULT NULL,
+    `olusturan_id`    INT(11)      DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_firma`   (`firma_id`),
+    KEY `idx_durum`   (`durum`),
+    KEY `idx_son_yanit` (`son_yanit_tarihi`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

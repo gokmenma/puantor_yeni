@@ -62,7 +62,18 @@ try {
     } else {
         $saat = $puantaj_turu->PuantajSaati;
     }
-    $tutar = floatval($saat) * $daily_wages;
+    
+    $person_info = $personModel->find($person_id);
+    if (($person_info->wage_type ?? 0) == 1) {
+        $is_extra_pay = $puantaj_turu && in_array($puantaj_turu->Turu, ['Fazla Çalışma', 'Saatlik']);
+        if ($is_extra_pay) {
+            $tutar = floatval($saat) * $daily_wages;
+        } else {
+            $tutar = 0;
+        }
+    } else {
+        $tutar = floatval($saat) * $daily_wages;
+    }
 
     $firm_id = $_SESSION['firm_id'] ?? 0;
 

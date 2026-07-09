@@ -110,11 +110,11 @@ if (isset($person->wage_type) && $person->wage_type == 1) {
                 </div>
                 <div class="col-md-2">
                     <input type="text" class="form-control" placeholder="505 555 55 55" maxlength="15" name="phone"
-                        value="<?php echo $person->phone ?? ''; ?>">
+                        value="<?php echo Security::safeDecrypt($person->phone ?? ''); ?>">
                 </div>
 
                 <div class="col-md-2">
-                    <input type="text" class="form-control" name="email" value="<?php echo $person->email ?? ''; ?>">
+                    <input type="text" class="form-control" name="email" value="<?php echo Security::safeDecrypt($person->email ?? ''); ?>">
                 </div>
 
                 <div class="col-md-2 mt-2">
@@ -190,6 +190,37 @@ if (isset($person->wage_type) && $person->wage_type == 1) {
                 </div>
 
             </div>
+
+            <?php if (!isset($person->id) || !$person->id): ?>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+                        <label class="form-check mb-0">
+                            <input type="checkbox" class="form-check-input" name="kvkk_aydinlatma_onay" value="1" id="kvkkOnayCheck">
+                            <span class="form-check-label">
+                                KVKK kapsamında personele <strong>aydınlatma metni</strong> okundu/bilgi verildi ve onay alındı.
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <?php else: ?>
+            <?php
+                require_once ROOT . '/Model/KvkkAydinlatmaModel.php';
+                $aydinlatmaModel = new KvkkAydinlatmaModel();
+                $onayVar = $aydinlatmaModel->onayVarMi((int)$person->id);
+            ?>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <?php if ($onayVar): ?>
+                    <span class="badge bg-success-lt"><i class="ti ti-shield-check me-1"></i> KVKK Aydınlatma Onayı Mevcut</span>
+                    <?php else: ?>
+                    <span class="badge bg-warning-lt"><i class="ti ti-shield-x me-1"></i> KVKK Aydınlatma Onayı Yok</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
         </div>
 </form>
 

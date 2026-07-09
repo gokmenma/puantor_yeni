@@ -183,8 +183,8 @@ try {
                                 <td <?php echo $wage_type_color; ?>><?php echo $wage_type; ?></td>
                                 <td><?php echo $person->job_start_date ?? '-'; ?></td>
                                 <td><?php echo $person->job_end_date ?? '-'; ?></td>
-                                <td><?php echo $person->phone; ?></td>
-                                <td><?php echo Security::safeDecrypt($person->email ?? '') ?: ($person->email ?: '-'); ?>
+                                <td><?php echo Security::safeDecrypt($person->phone ?? '') ?: '-'; ?></td>
+                                <td><?php echo Security::safeDecrypt($person->email ?? '') ?: '-'; ?>
                                 </td>
                                 <td><?php echo Security::safeDecrypt($person->iban_number ?? '') ?: '-'; ?></td>
                                 <td><?php echo $person->job_group ?? '-'; ?></td>

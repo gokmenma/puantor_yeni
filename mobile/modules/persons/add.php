@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'full_name' => trim($_POST['full_name']),
             'kimlik_no' => Security::encrypt($tc_no),
             'sigorta_no' => 0,
-            'phone' => trim($_POST['phone'] ?? ''),
+            'phone' => !empty($_POST['phone']) ? Security::encrypt(trim($_POST['phone'])) : '',
             'address' => trim($_POST['address'] ?? ''),
             'project_id' => strval($_POST['project_id'] ?? '0'),
             'company_id' => 0,
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'job_end_date' => !empty($_POST['job_end_date']) ? date('d.m.Y', strtotime($_POST['job_end_date'])) : '',
             'job' => trim($_POST['job'] ?? ''),
             'state' => 1,
-            'email' => trim($_POST['email'] ?? ''),
+            'email' => !empty($_POST['email']) ? Security::encrypt(trim($_POST['email'])) : '',
             'job_group' => $job_group,
             'team_id' => $team_id_val,
             'ekip' => $team_val,
@@ -123,10 +123,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $raw_date = $_POST['job_start_date']; // Input için sakla
         
         try {
-            $personsModel->saveWithAttr($data);
+            $encryptedId = $personsModel->saveWithAttr($data);
+            $newPersonId = (int) Security::decrypt($encryptedId);
+
+            if ($newPersonId > 0 && !empty($_POST['kvkk_aydinlatma_onay'])) {
+                require_once ROOT . '/Model/KvkkAydinlatmaModel.php';
+                (new KvkkAydinlatmaModel())->kaydet($newPersonId, $firm_id, (int)($_SESSION['user']->id ?? 0));
+            }
+
             $message = "Personel başarıyla eklendi.";
             $status = "success";
-            // Başarı durumunda form verilerini temizleyelim
             $_POST = [];
         } catch (Exception $e) {
             $message = "Sistem Hatası: " . $e->getMessage() . " (Kod: " . $e->getCode() . ")";
@@ -249,6 +255,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="form-floating mb-4">
         <textarea name="description" id="floatingDescription" class="form-control" placeholder="Açıklama" style="height: 80px;"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
         <label for="floatingDescription">Açıklama</label>
+      </div>
+
+      <div class="alert alert-info d-flex align-items-start gap-2 py-2 mb-3">
+        <label class="form-check mb-0 w-100">
+          <input type="checkbox" class="form-check-input mt-1" name="kvkk_aydinlatma_onay" value="1">
+          <span class="form-check-label text-sm">
+            KVKK kapsamında personele <strong>aydınlatma metni</strong> okundu ve onay alındı.
+          </span>
+        </label>
       </div>
 
       <button type="submit" name="save_person" class="btn btn-primary w-100 py-2" style="border-radius: 12px; font-weight: 600;">

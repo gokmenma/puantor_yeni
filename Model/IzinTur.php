@@ -17,6 +17,19 @@ class IzinTur extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function getPersonelTurler()
+    {
+        $sql = $this->db->prepare("
+            SELECT it.* 
+            FROM {$this->table} it
+            INNER JOIN puantajturu pt ON it.puantaj_turu_id = pt.id
+            WHERE it.aktif = 1 AND pt.personel_gorsun = 1
+            ORDER BY it.ad
+        ");
+        $sql->execute();
+        return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
     public function getByKod($kod)
     {
         $sql = $this->db->prepare("SELECT * FROM {$this->table} WHERE kod = ?");

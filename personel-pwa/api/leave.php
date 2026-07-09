@@ -59,9 +59,7 @@ try {
 
     if ($action === 'turler') {
         $model = new IzinTur();
-        $turler = array_values(array_filter($model->getAktifTurler(), function($t) {
-            return in_array($t->kod, ['yillik', 'ucretsiz']);
-        }));
+        $turler = $model->getPersonelTurler();
         ob_clean();
         echo json_encode(['status' => 'success', 'list' => $turler], JSON_UNESCAPED_UNICODE);
         exit;

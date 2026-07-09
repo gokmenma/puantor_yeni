@@ -11,6 +11,7 @@ require_once "../../App/Helper/helper.php";
 require_once "../../Model/Projects.php";
 require_once ROOT . "/Model/CaseTransactions.php";
 require_once ROOT . "/App/Helper/date.php";
+require_once ROOT . "/Model/KvkkAydinlatmaModel.php";
 
 use App\Helper\Security;
 use App\Helper\Helper;
@@ -56,8 +57,8 @@ if ($_POST["action"] == "savePerson") {
         "id" => $id,
         "full_name" => $_POST["full_name"],
         "kimlik_no" => Security::encrypt($_POST["kimlik_no"]),
-        "email" => filter_var($_POST["email"], FILTER_VALIDATE_EMAIL) ? $_POST["email"] : null,
-        "phone" => $_POST["phone"],
+        "email" => !empty($_POST["email"]) ? Security::encrypt(trim($_POST["email"])) : null,
+        "phone" => !empty($_POST["phone"]) ? Security::encrypt(trim($_POST["phone"])) : null,
         "address" => Security::escape($_POST["address"]),
         "job" => $_POST["job"],
         "job_group" => $job_group,
@@ -111,9 +112,17 @@ if ($_POST["action"] == "savePerson") {
         }
 
 
-        //Personelin çalıştığı projeleri kaydet
         if (isset($_POST["person_project"])) {
             $Projects->savePersonProjects(Security::decrypt($lastInsertId), $_POST["person_project"]);
+        }
+
+        if ($id == 0 && !empty($_POST['kvkk_aydinlatma_onay'])) {
+            $aydinlatmaModel = new KvkkAydinlatmaModel();
+            $aydinlatmaModel->kaydet(
+                $decrypted_person_id,
+                (int) $_SESSION['firm_id'],
+                (int) $_SESSION['user']->id
+            );
         }
 
     } catch (PDOException $e) {

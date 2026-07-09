@@ -2,6 +2,7 @@
 require_once ROOT . '/Model/IzinTalep.php';
 require_once ROOT . '/Model/IzinTur.php';
 require_once ROOT . '/Model/Persons.php';
+require_once ROOT . '/Model/Company.php';
 require_once ROOT . '/App/Helper/security.php';
 
 use App\Helper\Security;
@@ -9,8 +10,19 @@ use App\Helper\Security;
 $Auths->checkFirmReturn();
 
 $firma_id    = (int) ($_SESSION['firm_id'] ?? 0);
-$turler      = (new IzinTur())->getAktifTurler();
+$turler      = (new IzinTur())->getPersonelTurler();
 $personeller = (new Persons())->getPersonsByFirm($firma_id);
+
+$firmaModel  = new Company();
+$firmaData   = $firmaModel->findMyFirm($firma_id);
+$default_firma_unvani = $firmaData ? $firmaData->firm_name : '';
+$default_yetkili_adi = $firmaData ? $firmaData->yetkili_adi : '';
+if ($default_yetkili_adi === '0') {
+    $default_yetkili_adi = '';
+}
+if ($default_firma_unvani === '0') {
+    $default_firma_unvani = '';
+}
 ?>
 
 <div class="page-header d-print-none mb-0">
@@ -138,7 +150,7 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                     <select id="yeni-tur" class="form-select select2-modal">
                         <option value="">Seçiniz</option>
                         <?php foreach ($turler as $t): ?>
-                            <option value="<?= $t->id ?>"><?= htmlspecialchars($t->ad) ?></option>
+                            <option value="<?= $t->id ?>" data-kod="<?= htmlspecialchars($t->kod) ?>"><?= htmlspecialchars($t->ad) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -152,7 +164,7 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                         <input type="text" id="yeni-bitis" class="form-control flatpickr-modal" placeholder="gg.aa.yyyy" autocomplete="off">
                     </div>
                 </div>
-                <div class="mt-2 mb-3 p-2 bg-light rounded">
+                <div class="mt-2 mb-3 p-2 bg-light rounded" id="izin-hesap-container">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <span class="text-muted small">Kullanılacak İzin Günü:</span>
                         <strong id="takvim-gun-sayisi-preview" class="text-secondary">—</strong>
@@ -163,10 +175,10 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Açıklama <span class="text-muted small">(opsiyonel)</span></label>
+                    <label class="form-label" id="yeni-aciklama-label">Açıklama <span class="text-muted small">(opsiyonel)</span></label>
                     <textarea id="yeni-aciklama" class="form-control" rows="6"></textarea>
                 </div>
-                <div class="mb-3">
+                <div class="mb-3" id="yeni-adres-container">
                     <label class="form-label">İznin Geçirileceği Adres</label>
                     <textarea id="yeni-adres" class="form-control" rows="3" placeholder="İzninizi geçireceğiniz adres..."></textarea>
                 </div>
@@ -361,6 +373,43 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
         </div>
     </div>
 </div>
+<!-- Modal: Ücretsiz İzin Dilekçesi Yazdır / İmza Modali -->
+<div class="modal modal-blur fade" id="modalYazdirUcretsiz" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ücretsiz İzin Dilekçesi İmza Bilgileri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="print-ucretsiz-talep-id">
+                <p class="text-muted small mb-3">Dilekçenin altında yer alacak işveren onay bilgilerini doldurunuz.</p>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Onaylayan Adı Soyadı</label>
+                    <input type="text" id="print-ucretsiz-ad-soyad" class="form-control" value="<?= htmlspecialchars($default_yetkili_adi) ?>" placeholder="Örn: Ahmet Yılmaz">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">Firma Ünvanı</label>
+                    <input type="text" id="print-ucretsiz-firma-unvan" class="form-control" value="<?= htmlspecialchars($default_firma_unvani) ?>" placeholder="Örn: Gökmen İnşaat Ltd. Şti.">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="btn-ucretsiz-form-yazdir">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
+                        <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
+                        <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
+                    </svg>
+                    Yazdır
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 const CAN_DELETE_APPROVED = <?= $Auths->Authorize('onayli_izinleri_sil') ? 'true' : 'false' ?>;
@@ -451,7 +500,7 @@ $(document).ready(function() {
 
     function buildActions(row) {
         let html = '';
-        const printBtn = `<button class="btn btn-icon btn-sm rounded-circle btn-outline-primary ms-1" onclick="openPrintModal('${row.id}')" title="Formu Yazdır" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
+        const printBtn = `<button class="btn btn-icon btn-sm rounded-circle btn-outline-primary ms-1" onclick="openPrintModal('${row.id}', '${row.tur_kod}')" title="Formu Yazdır" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                 <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
@@ -560,10 +609,30 @@ $(document).ready(function() {
     }
 
     // ---------- Yeni talep ----------
+    $('#yeni-tur').on('change', function() {
+        const kod = $(this).find('option:selected').data('kod');
+        if (kod === 'ucretsiz') {
+            $('#izin-hesap-container').hide();
+            $('#yeni-adres-container').hide();
+            $('#yeni-aciklama-label').text('Mazeret');
+            if (!$('#yeni-aciklama').val().trim()) {
+                $('#yeni-aciklama').val('Özel sebeplerden dolayı');
+            }
+        } else {
+            $('#izin-hesap-container').show();
+            $('#yeni-adres-container').show();
+            $('#yeni-aciklama-label').html('Açıklama <span class="text-muted small">(opsiyonel)</span>');
+            if ($('#yeni-aciklama').val() === 'Özel sebeplerden dolayı') {
+                $('#yeni-aciklama').val('');
+            }
+        }
+    });
+
     $('#btn-yeni-talep').on('click', function() {
-        $('#yeni-personel, #yeni-tur').val(null).trigger('change');
+        $('#yeni-personel').val(null).trigger('change');
         $('#yeni-aciklama').val('');
         $('#yeni-adres').val('');
+        $('#yeni-tur').val(null).trigger('change');
         $('#gun-sayisi-preview').text('—');
         $('#takvim-gun-sayisi-preview').text('—');
         if (fpBaslangic) fpBaslangic.clear();
@@ -878,11 +947,16 @@ $(document).ready(function() {
         });
     });
 
-    window.openPrintModal = function(encId) {
-        $('#print-talep-id').val(encId);
-        loadSignatureOptions(function() {
-            new bootstrap.Modal('#modalYazdir').show();
-        });
+    window.openPrintModal = function(encId, turKod) {
+        if (turKod === 'ucretsiz') {
+            $('#print-ucretsiz-talep-id').val(encId);
+            new bootstrap.Modal('#modalYazdirUcretsiz').show();
+        } else {
+            $('#print-talep-id').val(encId);
+            loadSignatureOptions(function() {
+                new bootstrap.Modal('#modalYazdir').show();
+            });
+        }
     };
 
     $('#btn-form-yazdir').on('click', function() {
@@ -913,6 +987,20 @@ $(document).ready(function() {
                 Swal.fire('Hata!', 'Tercihler kaydedilemedi: ' + res.message, 'error');
             }
         });
+    });
+
+    $('#btn-ucretsiz-form-yazdir').on('click', function() {
+        const id = $('#print-ucretsiz-talep-id').val();
+        const adSoyad = $('#print-ucretsiz-ad-soyad').val() || '';
+        const unvan = $('#print-ucretsiz-firma-unvan').val() || '';
+        
+        bootstrap.Modal.getInstance('#modalYazdirUcretsiz').hide();
+        const params = new URLSearchParams({
+            id: id,
+            ad_soyad: adSoyad,
+            unvan: unvan
+        });
+        window.open('print_izin.php?' + params.toString(), '_blank');
     });
 
     loadList();

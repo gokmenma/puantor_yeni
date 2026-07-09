@@ -318,8 +318,6 @@ table#puantajTable.table {
 .gun.izin-kilitli {
     cursor: not-allowed !important;
     opacity: 0.85;
-    background: #d4edda !important;
-    color: #155724 !important;
 }
 
 .unclicked {
@@ -1384,21 +1382,17 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                                 $totalDays = 0;
                                 $totalOvertime = 0;
                                 $personProjDays = [];
-                                $countedTalepIds = [];
                                 $deductableCount = 0;
                                 foreach ($dates as $date) {
                                     if ($jobStartDate <= $date && $jobEndDate >= $date) {
                                         $dateYmdCalc = substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
                                         $izinBilgiCalc = $onayliIzinGunleri[$person->id][$dateYmdCalc] ?? null;
                                         if ($izinBilgiCalc) {
-                                            if (!isset($countedTalepIds[$izinBilgiCalc->talep_id])) {
-                                                $countedTalepIds[$izinBilgiCalc->talep_id] = true;
-                                                if (stripos($izinBilgiCalc->turu, 'ücretsiz') === false) {
-                                                    $totalDays += $izinBilgiCalc->gun_sayisi;
-                                                    $personProjDays[0] = ($personProjDays[0] ?? 0) + $izinBilgiCalc->gun_sayisi;
-                                                } else {
-                                                    $deductableCount += $izinBilgiCalc->gun_sayisi;
-                                                }
+                                            if (mb_stripos($izinBilgiCalc->turu, 'ücretsiz', 0, 'UTF-8') === false) {
+                                                $totalDays++;
+                                                $personProjDays[0] = ($personProjDays[0] ?? 0) + 1;
+                                            } else {
+                                                $deductableCount++;
                                             }
                                             continue;
                                         }
@@ -1420,7 +1414,7 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                                                 $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
                                                 if ($puantajTuru) {
                                                     if ($person->wage_type == 1) {
-                                                        if (!empty($puantajTuru->is_deductable)) {
+                                                        if (!empty($puantajTuru->is_deductable) || ($puantajTuru->Turu == 'Ücretsiz' && $puantajTuru->PuantajKod != 'HT')) {
                                                             $deductableCount++;
                                                         } else {
                                                             $totalDays++;
@@ -1450,9 +1444,9 @@ div.dt-container .dt-layout-cell.dt-layout-end {
 
                                 if ($person->wage_type == 1) {
                                     if ($deductableCount == 0) {
-                                        $totalDays = 30;
+                                        $totalDays = $days;
                                     } else {
-                                        $totalDays = max(0, 30 - $deductableCount);
+                                        $totalDays = max(0, $days - $deductableCount);
                                     }
                                 }
 
@@ -1490,8 +1484,25 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                                 ?>
                             <tr data-default-project="<?php echo $default_project_id; ?>">
                                 <td class="text-nowrap" data-id="<?php echo $id ?>">
-                                    <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
-                                        target="_blank"><?php echo $person->full_name ?></a>
+                                    <?php if ($person->wage_type == 1): ?>
+                                        <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                            target="_blank"
+                                            class="d-block"
+                                            data-bs-toggle="popover"
+                                            data-bs-trigger="hover"
+                                            data-bs-placement="top"
+                                            data-bs-content="Aylık usülü çalışan Beyaz Yaka personellerinin maaş hesaplaması, ay gününden ücretsiz izinlerin düşülmesi suretiyle hesaplanır. Fazla Mesai kayıtlarını ayrıca burada girebilirsiniz, normal çalışmalar hesaba dahil edilmeyecektir."><?php echo $person->full_name ?></a>
+                                        <span class="text-secondary small d-block" style="font-size: 10.5px; margin-top: 1px;">
+                                            <i class="ti ti-helmet text-secondary" style="font-size: 11px; vertical-align: middle;"></i> Beyaz Yaka
+                                        </span>
+                                    <?php else: ?>
+                                        <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                            target="_blank"
+                                            class="d-block"><?php echo $person->full_name ?></a>
+                                        <span class="text-blue small d-block" style="font-size: 10.5px; margin-top: 1px;">
+                                            <i class="ti ti-helmet text-blue" style="font-size: 11px; vertical-align: middle;"></i> Mavi Yaka
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
 
                                 <td class="text-nowrap extra-column extra-unvan"
@@ -1604,12 +1615,38 @@ var workHour = <?php echo json_encode( $Settings->getSettings( 'work_hour' )->se
             ?>;
 
 $(document).ready(function() {
+    // Popoverları başlatma ve DataTable yenilendiğinde tekrar tetikleme fonksiyonu
+    function initializePopovers() {
+        $('[data-bs-toggle="popover"]').each(function() {
+            var popoverInstance = bootstrap.Popover.getInstance(this);
+            if (popoverInstance) {
+                popoverInstance.dispose();
+            }
+        });
+        
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        popoverTriggerList.map(function(popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                container: 'body',
+                trigger: 'hover'
+            });
+        });
+    }
+
     // DataTable yüklendikten sonra sütun genişliklerini ayarla
     setTimeout(function() {
         if ($.fn.DataTable.isDataTable('#puantajTable')) {
             $('#puantajTable').DataTable().columns.adjust().draw();
         }
+        initializePopovers();
     }, 500);
+
+    // DataTable çizildiğinde popoverları yeniden başlat
+    if ($.fn.DataTable.isDataTable('#puantajTable')) {
+        $('#puantajTable').DataTable().on('draw', function() {
+            initializePopovers();
+        });
+    }
 
     // Pencere boyutu değiştiğinde de ayarla
     $(window).on('resize', function() {

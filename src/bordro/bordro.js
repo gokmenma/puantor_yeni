@@ -195,3 +195,19 @@ $(document).on("click", ".delete-monthly-payroll", function (e) {
     }
   });
 });
+
+// Dinamik olarak DataTables sayfalama/sıralama işlemlerinde popover'ları doğru şekilde başlatmak için olay delegasyonu
+$(document).on('mouseenter', '[data-bs-toggle="popover"]', function () {
+  if (window.bootstrap && window.bootstrap.Popover) {
+    var popover = window.bootstrap.Popover.getInstance(this);
+    if (!popover) {
+      popover = new window.bootstrap.Popover(this, {
+        trigger: 'hover',
+        placement: 'top',
+        html: true
+      });
+      popover.show();
+    }
+  }
+});
+

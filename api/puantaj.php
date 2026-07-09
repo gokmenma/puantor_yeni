@@ -93,7 +93,17 @@ if ($_POST['action'] == 'savePuantaj') {
                         $saat = $puantaj_turu->PuantajSaati ?? 0;
                     }
                     
-                    $tutar = floatval($saat) * $hourly_wage;
+                    // Beyaz Yaka için sadece Fazla Çalışma ve Saatlik türler için tutar hesaplanır, normal günler için 0'dır
+                    if (($person_info->wage_type ?? 0) == 1) {
+                        $is_extra_pay = $puantaj_turu && in_array($puantaj_turu->Turu, ['Fazla Çalışma', 'Saatlik']);
+                        if ($is_extra_pay) {
+                            $tutar = floatval($saat) * $hourly_wage;
+                        } else {
+                            $tutar = 0;
+                        }
+                    } else {
+                        $tutar = floatval($saat) * $hourly_wage;
+                    }
 
                     $data = [
                         'id' => $id,

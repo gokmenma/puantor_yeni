@@ -168,8 +168,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_person'])) {
         'firm_id' => $firm_id,
         'full_name' => $_POST['full_name'] ?? '',
         'kimlik_no' => Security::encrypt($tc_no),
-        'phone' => $_POST['phone'] ?? '',
-        'email' => $_POST['email'] ?? '',
+        'phone' => !empty($_POST['phone']) ? Security::encrypt(trim($_POST['phone'])) : '',
+        'email' => !empty($_POST['email']) ? Security::encrypt(trim($_POST['email'])) : '',
         'daily_wages' => $_POST['daily_wage'] ?? 0.00,
         'wage_type' => $_POST['wage_type'] ?? ($person->wage_type ?? 2),
         'job_start_date' => !empty($_POST['job_start_date']) ? $_POST['job_start_date'] : null,
@@ -343,11 +343,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
           <div class="col-12">
             <label class="form-label text-muted text-xs text-uppercase font-weight-bold mb-2">İletişim & Erişim</label>
             <div class="form-floating mb-3">
-              <input type="tel" name="phone" class="form-control" id="floatingPhone" placeholder="Telefon" value="<?php echo htmlspecialchars($person->phone ?? ''); ?>">
+              <input type="tel" name="phone" class="form-control" id="floatingPhone" placeholder="Telefon" value="<?php echo htmlspecialchars(Security::safeDecrypt($person->phone ?? '')); ?>">
               <label for="floatingPhone">Telefon</label>
             </div>
             <div class="form-floating mb-3">
-              <input type="email" name="email" class="form-control" id="floatingEmail" placeholder="E-posta" value="<?php echo htmlspecialchars($person->email ?? ''); ?>">
+              <input type="email" name="email" class="form-control" id="floatingEmail" placeholder="E-posta" value="<?php echo htmlspecialchars(Security::safeDecrypt($person->email ?? '')); ?>">
               <label for="floatingEmail">E-posta</label>
             </div>
             <div class="form-floating mb-3">

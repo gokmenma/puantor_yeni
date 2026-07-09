@@ -442,20 +442,29 @@ class IzinTalep extends Model
         $end = new DateTime($talep->bitis_tarihi);
         $excludeDays = $this->getExcludeDays((int) $talep->firma_id);
 
+        // İzin türünün kesinti oluşturup oluşturmadığını öğren
+        $pt_stmt = $this->db->prepare("SELECT is_deductable, beyaz_yaka_kesinti FROM puantajturu WHERE id = ?");
+        $pt_stmt->execute([$puantaj_turu_id]);
+        $pt_info = $pt_stmt->fetch(PDO::FETCH_OBJ);
+        $is_deductable_leave = $pt_info && ($pt_info->is_deductable == 1 || $pt_info->beyaz_yaka_kesinti == 1);
+
         while ($current <= $end) {
             $dayOfWeek = (int) $current->format('N');
             $dateStr = $current->format('Y-m-d');
 
-            if (!in_array($dayOfWeek, $excludeDays) && !in_array($dateStr, $tatiller)) {
-                $mevcut = $this->db->prepare("SELECT id FROM puantaj WHERE person = ? AND (gun = ? OR gun = ?) AND (project_id = 0 OR project_id IS NULL) LIMIT 1");
-                $mevcut->execute([$talep->personel_id, $dateStr, str_replace('-', '', $dateStr)]);
-                if (!$mevcut->fetch()) {
-                    $ins = $this->db->prepare(
-                        "INSERT INTO puantaj (person, gun, puantaj_id, company_id, saat, tutar, project_id)
-                         SELECT ?, ?, ?, firm_id, 0, 0, 0 FROM persons WHERE id = ? LIMIT 1"
-                    );
-                    $ins->execute([$talep->personel_id, $dateStr, $puantaj_turu_id, $talep->personel_id]);
-                }
+            // Kesintili izin ise (devamsız, ücretsiz izin vb.) hafta sonu/resmi tatil ayrımı yapmadan tüm günler puantaja yazılır.
+            // Ücretli izin ise hafta sonları ve resmi tatiller hariç tutulur.
+            if ($is_deductable_leave || (!in_array($dayOfWeek, $excludeDays) && !in_array($dateStr, $tatiller))) {
+                // Mükerrer kayıtları önlemek için o güne ait tüm projelerdeki puantaj kayıtlarını temizle
+                $del = $this->db->prepare("DELETE FROM puantaj WHERE person = ? AND (gun = ? OR gun = ?)");
+                $del->execute([$talep->personel_id, $dateStr, str_replace('-', '', $dateStr)]);
+
+                // Yeni puantaj kaydını ekle
+                $ins = $this->db->prepare(
+                    "INSERT INTO puantaj (person, gun, puantaj_id, company_id, saat, tutar, project_id)
+                      SELECT ?, ?, ?, firm_id, 0, 0, 0 FROM persons WHERE id = ? LIMIT 1"
+                );
+                $ins->execute([$talep->personel_id, $dateStr, $puantaj_turu_id, $talep->personel_id]);
             }
             $current->modify('+1 day');
         }
@@ -463,14 +472,26 @@ class IzinTalep extends Model
 
     private function puantajdanSil(object $talep): void
     {
-        $sql = $this->db->prepare(
-            "DELETE p FROM puantaj p
-             JOIN puantajturu pt ON pt.id = p.puantaj_id
-             WHERE p.person = ?
-               AND p.gun BETWEEN ? AND ?
-               AND pt.Turu = 'Ücretli İzin'"
-        );
-        $sql->execute([$talep->personel_id, $talep->baslangic_tarihi, $talep->bitis_tarihi]);
+        require_once __DIR__ . '/IzinTur.php';
+        $tur = (new \IzinTur())->find((int) $talep->tur_id);
+        if ($tur && $tur->puantaj_turu_id) {
+            $sql = $this->db->prepare(
+                "DELETE FROM puantaj
+                 WHERE person = ?
+                   AND (gun BETWEEN ? AND ? OR REPLACE(gun, '-', '') BETWEEN ? AND ?)
+                   AND puantaj_id = ?"
+            );
+            $start_nodash = str_replace('-', '', $talep->baslangic_tarihi);
+            $end_nodash = str_replace('-', '', $talep->bitis_tarihi);
+            $sql->execute([
+                $talep->personel_id,
+                $talep->baslangic_tarihi,
+                $talep->bitis_tarihi,
+                $start_nodash,
+                $end_nodash,
+                $tur->puantaj_turu_id
+            ]);
+        }
     }
 
     private function bildirimGonder(int $personel_id, int $firma_id, string $baslik, string $icerik, int $olusturan_id): void
@@ -533,7 +554,7 @@ class IzinTalep extends Model
         }
 
         $sql = $this->db->prepare(
-            "SELECT t.*, it.ad AS tur_adi, p.full_name AS personel_adi, u.full_name AS onaylayan_adi,
+            "SELECT t.*, it.ad AS tur_adi, it.kod AS tur_kod, p.full_name AS personel_adi, u.full_name AS onaylayan_adi,
                     (DATEDIFF(t.bitis_tarihi, t.baslangic_tarihi) + 1) AS toplam_gun
              FROM {$this->table} t
              JOIN izin_turler it ON it.id = t.tur_id

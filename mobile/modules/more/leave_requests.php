@@ -17,7 +17,7 @@ $personsModel = new Persons();
 $turModel = new IzinTur();
 
 $personeller = $personsModel->getPersonsByFirm($firm_id);
-$turler = $turModel->getAktifTurler();
+$turler = $turModel->getPersonelTurler();
 ?>
 
 <style>

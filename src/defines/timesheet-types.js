@@ -50,6 +50,7 @@ $(document).on("click", "#btnNewTimesheetType", function () {
   $("#IzinRapor").prop("checked", false);
   $("#is_deductable").prop("checked", false);
   $("#beyaz_yaka_kesinti").prop("checked", false);
+  $("#personel_gorsun").prop("checked", false);
 });
 
 // Güncelle butonuna tıklandığında veriler forma aktarılır ve modal açılır
@@ -78,6 +79,7 @@ $(document).on("click", ".btn-edit-timesheet-type", function (e) {
   $("#IzinRapor").prop("checked", btn.data("izin") == 1);
   $("#is_deductable").prop("checked", btn.data("deductable") == 1);
   $("#beyaz_yaka_kesinti").prop("checked", btn.data("beyaz-yaka-kesinti") == 1);
+  $("#personel_gorsun").prop("checked", btn.data("personel-gorsun") == 1);
   
   $("#timesheetTypeModal").modal("show");
 });
