@@ -9,11 +9,20 @@ $(document).ready(function () {
     });
 
     $('#home-gantt-project').on('change', function () {
-        loadHomeGantt($(this).val());
+        var val = $(this).val();
+        loadHomeGantt(val);
+        if (val) {
+            $('#btn-home-add-task').removeClass('d-none');
+        } else {
+            $('#btn-home-add-task').addClass('d-none');
+        }
     });
 
     var preselected = $('#home-gantt-project').val();
-    if (preselected) loadHomeGantt(preselected);
+    if (preselected) {
+        loadHomeGantt(preselected);
+        $('#btn-home-add-task').removeClass('d-none');
+    }
 });
 
 $(document).on('click', '#home-gantt-view-modes .btn', function () {
@@ -106,4 +115,78 @@ function loadHomeGantt(projectId) {
 
 function hEsc(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Yeni Görev Modali ve Yönetimi
+$(document).on('shown.bs.modal', '#task-modal', function () {
+    if (!$('#task_status').hasClass('select2-hidden-accessible')) {
+        $('#task_status').select2({
+            dropdownParent: $('#task-modal'),
+            minimumResultsForSearch: Infinity,
+        });
+    }
+    if ($('#task_start_date').length && !document.getElementById('task_start_date')._flatpickr) {
+        flatpickr('#task_start_date, #task_end_date', { dateFormat: 'd.m.Y', locale: 'tr' });
+    }
+});
+
+$(document).on('input', '#task_completion_percent', function () {
+    $('#task_percent_label').text($(this).val());
+});
+
+$(document).on('click', '#btn-home-add-task', function (e) {
+    e.preventDefault();
+    var projectId = $('#home-gantt-project').val();
+    if (projectId) {
+        openTaskModal({ project_id: projectId });
+    }
+});
+
+$(document).on('submit', '#task-modal-form', function (e) {
+    e.preventDefault();
+    var formData = $(this).serialize();
+
+    $.post('/api/projects/tasks.php', formData, function (res) {
+        if (res.status === 'success') {
+            $('#task-modal').modal('hide');
+            Swal.fire({ title: 'Başarılı!', text: res.message, icon: 'success', timer: 1500, showConfirmButton: false });
+            var currentProj = $('#home-gantt-project').val();
+            if (currentProj) {
+                loadHomeGantt(currentProj);
+            }
+        } else {
+            Swal.fire('Hata!', res.message, 'error');
+        }
+    }, 'json');
+});
+
+function openTaskModal(data) {
+    var isEdit = !!data.id;
+    $('#task-modal-title').text(isEdit ? 'Görevi Düzenle' : 'Yeni Görev');
+    $('#task_id').val(data.id || 0);
+    $('#task_project_id').val(data.project_id || $('#home-gantt-project').val());
+    $('#task_name').val(data.task_name || '');
+    $('#task_responsible').val(data.responsible_raw || data.responsible || '');
+    $('#task_description').val(data.description || '');
+
+    if ($('#task_status').hasClass('select2-hidden-accessible')) {
+        $('#task_status').val(data.status != null ? data.status : 0).trigger('change');
+    } else {
+        $('#task_status').val(data.status != null ? data.status : 0);
+    }
+
+    var pct = data.percent != null ? data.percent : 0;
+    $('#task_completion_percent').val(pct);
+    $('#task_percent_label').text(pct);
+
+    var startFp = document.getElementById('task_start_date') && document.getElementById('task_start_date')._flatpickr;
+    var endFp   = document.getElementById('task_end_date')   && document.getElementById('task_end_date')._flatpickr;
+
+    if (startFp) startFp.setDate(data.start_date || '');
+    else $('#task_start_date').val(data.start_date || '');
+
+    if (endFp) endFp.setDate(data.end_date || '');
+    else $('#task_end_date').val(data.end_date || '');
+
+    $('#task-modal').modal('show');
 }

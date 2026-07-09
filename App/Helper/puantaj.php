@@ -29,7 +29,7 @@ class puantajHelper extends Db
         $sql->execute(array($turu));
 
         // Başlangıç HTML
-        $output = '<ul class="nav grid">';
+        $output = '<div class="row g-2 w-100 m-0" style="max-width: 580px;">';
 
         // Veritabanından gelen verilerle liste öğeleri oluşturma
         while ($result = $sql->fetch(PDO::FETCH_ASSOC)) {
@@ -42,18 +42,28 @@ class puantajHelper extends Db
             // }
 
             $output .= '
-            <li class="nav-item" style="min-width:200px">
-                <div class="user-block" >
-                    <span class="avatar" data-tooltip="' . $puantaj_saati . ' Saat"  data-id="' . $result["id"] . '" style="background-color:' . htmlspecialchars($result["ArkaPlanRengi"])
-                . ';color:' . $result["FontRengi"] . '">' . htmlspecialchars($result["PuantajKod"]) . '</span>
-                    <span class="head-title">' . htmlspecialchars($result["PuantajAdi"]) . '</span>
-                    <p class="description">' . htmlspecialchars($result["Turu"]) . '</p>
+            <div class="col-6 nav-item cursor-pointer p-1" style="list-style: none;">
+                <div class="user-block d-flex align-items-center justify-content-between w-100 p-2 border rounded" style="background: var(--tblr-bg-surface); min-height: 54px;">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="avatar" data-tooltip="' . $puantaj_saati . ' Saat"  data-id="' . $result["id"] . '" style="background-color:' . htmlspecialchars($result["ArkaPlanRengi"])
+                . ';color:' . $result["FontRengi"] . '; width: 34px; height: 34px; line-height: 34px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">' . htmlspecialchars($result["PuantajKod"]) . '</span>
+                        <div class="ms-2" style="line-height: 1.3;">
+                            <span class="head-title d-block fw-semibold" style="font-size: 12.5px; color: var(--tblr-body-color);">' . htmlspecialchars($result["PuantajAdi"]) . '</span>
+                            <span class="description text-muted" style="font-size: 10.5px;">' . htmlspecialchars($result["Turu"]) . '</span>
+                        </div>
+                    </div>
+                    <span class="favorite-star-btn cursor-pointer p-1 ms-2" data-id="' . $result["id"] . '" style="line-height: 1; display: inline-flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="star-svg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="#ccc" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: fill 0.2s, stroke 0.2s; pointer-events: none;">
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                          <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+                        </svg>
+                    </span>
                 </div>
-            </li>';
+            </div>';
         }
 
         // Kapanış HTML
-        $output .= '</ul>';
+        $output .= '</div>';
 
         return $output;
     }

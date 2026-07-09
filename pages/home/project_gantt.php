@@ -30,6 +30,9 @@ if (empty($ganttProjects)) return;
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <button type="button" class="btn btn-primary btn-sm d-none" id="btn-home-add-task">
+                    <i class="ti ti-plus icon me-1"></i> Yeni Görev
+                </button>
                 <div class="btn-group btn-group-sm" id="home-gantt-view-modes">
                     <button type="button" class="btn btn-outline-secondary" data-mode="Day">Gün</button>
                     <button type="button" class="btn btn-outline-secondary active" data-mode="Week">Hafta</button>

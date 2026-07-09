@@ -434,6 +434,46 @@ $(document).ready(function () {
     updateActiveTypeUI();
   }
 
+  // Yıldız ikonuna tıklandığında favori durumunu değiştir
+  $(document).on("click", ".favorite-star-btn", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const id = $(this).data("id");
+    let favorites = JSON.parse(localStorage.getItem('puantaj_favorites') || '[]');
+    
+    const index = favorites.indexOf(id);
+    if (index > -1) {
+      favorites.splice(index, 1);
+    } else {
+      favorites.push(id);
+    }
+    
+    localStorage.setItem('puantaj_favorites', JSON.stringify(favorites));
+    initializeFavoritesUI();
+  });
+
+  // Favori kısayol butonuna tıklandığında türü seç
+  $(document).on('click', '.favorite-type-shortcut', function() {
+    const id = $(this).data('id');
+    if (typeof allPuantajTurleri !== 'undefined' && allPuantajTurleri[id]) {
+      activePuantajType = allPuantajTurleri[id];
+      isShortcutActive = true;
+      localStorage.setItem('activePuantajTypeId', id);
+      localStorage.setItem('isShortcutActive', 'true');
+      updateActiveTypeUI();
+      applyTypeToClickedCells(allPuantajTurleri[id]);
+    }
+  });
+
+  // Modal açıldığında favorileri yıldız durumlarını güncelle
+  $('#modal-default').on('show.bs.modal', function () {
+    initializeFavoritesUI();
+  });
+
+  // Sayfa yüklendiğinde favorileri güncelle
+  initializeFavoritesUI();
+
   // Bind selected type events
   $(document).on("click", "#clear-selected-type", function(e) {
     e.preventDefault();
@@ -890,5 +930,42 @@ function checkProjectsWarning() {
     $("#project-empty-warning-bar").addClass("d-none");
     $("#project-warning-bar").addClass("d-none");
   }
+}
+
+function initializeFavoritesUI() {
+  let favorites = JSON.parse(localStorage.getItem('puantaj_favorites') || '[]');
+  
+  // Reset all stars first
+  $('.favorite-star-btn svg').attr('fill', 'none').attr('stroke', '#ccc');
+  
+  // Set active stars
+  favorites.forEach(function(id) {
+    let btn = $(`.favorite-star-btn[data-id="${id}"]`);
+    btn.find('svg').attr('fill', '#ffc107').attr('stroke', '#ffc107');
+  });
+
+  // Populate the shortcuts bar
+  renderFavoritesShortcuts();
+}
+
+function renderFavoritesShortcuts() {
+  let favorites = JSON.parse(localStorage.getItem('puantaj_favorites') || '[]');
+  let html = '';
+  
+  favorites.forEach(function(id) {
+    if (typeof allPuantajTurleri !== 'undefined' && allPuantajTurleri[id]) {
+      let type = allPuantajTurleri[id];
+      html += `
+        <div class="favorite-type-shortcut cursor-pointer px-2.5 py-1 rounded d-flex align-items-center justify-content-center fw-bold text-center border shadow-sm btn-active-scale" 
+             data-id="${type.id}"
+             title="${type.PuantajAdi} (${type.Turu}) - Seçmek için tıklayın"
+             style="background-color: ${type.ArkaPlanRengi}; color: ${type.FontRengi}; font-size: 11.5px; min-width: 32px; border-color: rgba(0,0,0,0.1) !important; user-select: none;">
+            ${type.PuantajKod}
+        </div>
+      `;
+    }
+  });
+  
+  $('#favorite-types-shortcuts').html(html);
 }
 

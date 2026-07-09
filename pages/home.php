@@ -561,3 +561,4 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 });
 </script>
+<?php include_once ROOT . "/pages/projects/modals/task-modal.php"; ?>

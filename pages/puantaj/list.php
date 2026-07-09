@@ -1069,25 +1069,18 @@ div.dt-container .dt-layout-cell.dt-layout-end {
         <div class='col-12'>
             <div class='card'>
                 <div class='card-header'>
-                    <div class='accordion-item border-0' style='background: transparent;'>
+                    <div class='accordion-item border-0 w-100' style='background: transparent;'>
                         <h2 class='accordion-header' id='heading-1'>
                             <button class='accordion-button collapsed' type='button' data-bs-toggle='collapse'
                                 data-bs-target='#collapse-1' aria-expanded='false'
-                                style='background: transparent; box-shadow: none;'>
+                                style='background: transparent; box-shadow: none; padding: 0.25rem 0; width: 100%;'>
                                 <div class='d-flex align-items-center'>
-                                    <div class='bg-blue-lt text-blue d-flex align-items-center justify-content-center me-2 animate-pulse'
-                                        style='width: 32px; height: 32px; border-radius: 8px;'>
+                                    <span class='avatar avatar-sm bg-blue-lt text-blue rounded me-2 animate-pulse' style='width: 32px; height: 32px;'>
                                         <i class='ti ti-info-circle fs-2'></i>
-                                    </div>
-                                    <div>
-                                        <h3 class='card-title mb-0 '
-                                            style='font-size: 14px; font-weight: 700; color: #1e293b;'>Puantaj İpuçları
-                                            & Kısayollar</h3>
-                                        <small class='text-muted font-weight-semibold m-0'
-                                            style='font-size: 11px; cursor: pointer;'>
-                                            Kullanım ipuçlarını ve kısayolları görmek
-                                            için tıklayın!
-                                        </small>
+                                    </span>
+                                    <div class='text-start'>
+                                        <div class='font-weight-medium' style='font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.2;'>Puantaj İpuçları & Kısayollar</div>
+                                        <div class='text-muted' style='font-size: 11px; line-height: 1.1; margin-top: 2px;'>Kullanım ipuçlarını ve kısayolları görmek için tıklayın!</div>
                                     </div>
                                 </div>
                             </button>
@@ -1146,6 +1139,8 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                     </div>
 
                     <div class='col-auto ms-auto d-flex gap-2 align-items-center'>
+                        <div id='favorite-types-shortcuts' class='d-flex align-items-center gap-1 me-2'></div>
+
                         <div id='selected-type-container' class='d-none align-items-center gap-2'>
                             <span class='text-secondary' style='font-size: 13px; font-weight: 500;'>Seçili Tür:</span>
                             <div class='selected-type-badge-wrapper cursor-pointer' id='selected-type-toggle'>
@@ -1485,25 +1480,31 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                                 ?>
                             <tr data-default-project="<?php echo $default_project_id; ?>">
                                 <td class="text-nowrap" data-id="<?php echo $id ?>">
-                                    <?php if ($person->wage_type == 1): ?>
-                                        <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
-                                            target="_blank"
-                                            class="d-block"
-                                            data-bs-toggle="popover"
-                                            data-bs-trigger="hover"
-                                            data-bs-placement="top"
-                                            data-bs-content="Aylık usülü çalışan Beyaz Yaka personellerinin maaş hesaplaması, ay gününden ücretsiz izinlerin düşülmesi suretiyle hesaplanır. Fazla Mesai kayıtlarını ayrıca burada girebilirsiniz, normal çalışmalar hesaba dahil edilmeyecektir."><?php echo $person->full_name ?></a>
-                                        <span class="text-secondary small d-block" style="font-size: 10.5px; margin-top: 1px;">
-                                            <i class="ti ti-helmet text-secondary" style="font-size: 11px; vertical-align: middle;"></i> Beyaz Yaka
-                                        </span>
-                                    <?php else: ?>
-                                        <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
-                                            target="_blank"
-                                            class="d-block"><?php echo $person->full_name ?></a>
-                                        <span class="text-blue small d-block" style="font-size: 10.5px; margin-top: 1px;">
-                                            <i class="ti ti-helmet text-blue" style="font-size: 11px; vertical-align: middle;"></i> Mavi Yaka
-                                        </span>
-                                    <?php endif; ?>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <?php if ($person->wage_type == 1): ?>
+                                            <span class="avatar avatar-xs bg-secondary-lt fw-bold" style="width: 20px; height: 20px; font-size: 9px; line-height: 20px; border-radius: 4px;" 
+                                                  data-bs-toggle="popover" 
+                                                  data-bs-trigger="hover" 
+                                                  data-bs-placement="top" 
+                                                  data-bs-content="Beyaz Yaka (Aylık Usul)">BY</span>
+                                            <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                                target="_blank"
+                                                class="fw-semibold"
+                                                data-bs-toggle="popover"
+                                                data-bs-trigger="hover"
+                                                data-bs-placement="top"
+                                                data-bs-content="Aylık usülü çalışan Beyaz Yaka personellerinin maaş hesaplaması, ay gününden ücretsiz izinlerin düşülmesi suretiyle hesaplanır. Fazla Mesai kayıtlarını ayrıca burada girebilirsiniz, normal çalışmalar hesaba dahil edilmeyecektir."><?php echo $person->full_name ?></a>
+                                        <?php else: ?>
+                                            <span class="avatar avatar-xs bg-blue-lt fw-bold" style="width: 20px; height: 20px; font-size: 9px; line-height: 20px; border-radius: 4px;"
+                                                  data-bs-toggle="popover" 
+                                                  data-bs-trigger="hover" 
+                                                  data-bs-placement="top" 
+                                                  data-bs-content="Mavi Yaka (Günlük Usul)">MY</span>
+                                            <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                                target="_blank"
+                                                class="fw-semibold"><?php echo $person->full_name ?></a>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
 
                                 <td class="text-nowrap extra-column extra-unvan"
