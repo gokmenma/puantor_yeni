@@ -64,9 +64,19 @@ $routes = [
         'icon' => 'ti ti-beach'
     ],
     'profile' => [
-        'title' => 'Profil',
+        'title' => 'Profilim',
         'file' => 'modules/profile/index.php',
         'icon' => 'ti ti-user'
+    ],
+    'more' => [
+        'title' => 'Diğer İşlemler',
+        'file' => 'modules/more/index.php',
+        'icon' => 'ti ti-menu-2'
+    ],
+    'icra' => [
+        'title' => 'İcra Kesintilerim',
+        'file' => 'modules/icra/index.php',
+        'icon' => 'ti ti-folder'
     ]
 ];
 

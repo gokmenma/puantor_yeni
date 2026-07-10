@@ -307,6 +307,11 @@ window.app = {
                 setSafeText('profile-phone', this.user.phone || '-');
                 setSafeText('profile-email', this.user.email || '-');
                 setSafeText('profile-iban', this.user.iban_number || '-');
+
+                // Diğer Tab Alanlarını güncelle
+                setSafeText('more-initials', initials);
+                setSafeText('more-name', this.user.full_name);
+                setSafeText('more-id', `ID: EMP-${(this.user.id || 0).toString().padStart(3, '0')}`);
             } catch (e) {
                 console.error('Error updating Profile UI:', e);
             }

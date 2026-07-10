@@ -199,6 +199,13 @@ $personProjectsIds = rtrim($personProjectsIds, ',');
                                         Ücret Tanımları
                                     </a>
                                 </li>
+                                <li class="nav-item" role="presentation">
+                                    <a href="#tabs-icra-3" class="nav-link" data-bs-toggle="tab" aria-selected="false"
+                                        tabindex="-1" role="tab">
+                                        <i class="ti ti-folder icon me-1"></i>
+                                        İcra Dosyaları
+                                    </a>
+                                </li>
                                 <?php endif; ?>
                             </ul>
                         </div>
@@ -223,6 +230,9 @@ $personProjectsIds = rtrim($personProjectsIds, ',');
                                 </div>
                                 <div class="tab-pane" id="tabs-wages-3" role="tabpanel">
                                     <?php include_once 'content/5-wage-defines.php' ?>
+                                </div>
+                                <div class="tab-pane" id="tabs-icra-3" role="tabpanel">
+                                    <?php include_once 'content/6-icra-info.php' ?>
                                 </div>
                                 <?php endif; ?>
                             </div>

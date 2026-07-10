@@ -4,6 +4,7 @@ require_once "App/Helper/company.php";
 require_once "App/Helper/helper.php";
 require_once "App/Helper/financial.php";
 require_once "Model/CaseTransactions.php";
+require_once "App/Helper/users.php";
 
 
 use App\Helper\Helper;
@@ -12,6 +13,7 @@ use App\Helper\Security;
 $Cases = new Cases();
 $CaseTransactions = new CaseTransactions();
 $company = new CompanyHelper();
+$userHelper = new UserHelper();
 
 $Auths->checkFirmReturn();
 $perm->checkAuthorize("cash_register_list");
@@ -43,12 +45,11 @@ $financialHelper = new Financial();
                 <div class="card-header">
                     <h3 class="card-title">Kasa Listesi</h3>
                     <div class="col-auto ms-auto">
-                        <?php
-                        $link = $Auths->Authorize("cash_register_add_update") ? "financial/case/manage" : "authorize";
-                        ?>
-                        <a href="#" class="btn btn-primary route-link" data-page="<?php echo $link; ?>">
-                            <i class="ti ti-plus icon me-2"></i> Yeni
-                        </a>
+                        <?php if ($Auths->Authorize("cash_register_add_update")) { ?>
+                            <button type="button" class="btn btn-primary" id="btn-new-case">
+                                <i class="ti ti-plus icon me-2"></i> Yeni
+                            </button>
+                        <?php } ?>
                     </div>
                 </div>
 
@@ -83,11 +84,16 @@ $financialHelper = new Financial();
                                     <tr>
                                         <td class="text-center"><?php echo $i; ?></td>
                                         <td><?php echo $company->getFirmName($case->company_id ?? ''); ?></td>
-                                        <td> <a class="nav-item route-link" data-tooltip="Detay/Güncelle"
-                                                data-page="financial/case/manage&id=<?php echo $id ?>" href="#">
-                                                <?php echo $case->case_name; ?>
-                                            </a>
-                                        </td>
+                                         <td>
+                                             <?php if ($Auths->hasPermission("cash_register_add_update")) { ?>
+                                                 <a class="nav-item edit-case" data-tooltip="Detay/Güncelle"
+                                                     data-id="<?php echo $id ?>" href="#">
+                                                     <?php echo $case->case_name; ?>
+                                                 </a>
+                                             <?php } else { ?>
+                                                 <?php echo $case->case_name; ?>
+                                             <?php } ?>
+                                         </td>
                                         <td><?php echo $case->bank_name; ?></td>
                                         <td><?php echo $case->branch_name; ?></td>
                                         <td><?php echo Helper::money($case->case_money_unit); ?></td>
@@ -114,12 +120,11 @@ $financialHelper = new Financial();
 
                                                     <?php
                                                     //Ekleme ve güncelleme yetkisi varsa
-                                                    if ($Auths->hasPermission("cash_register_add_update")) { ?>
-                                                        <a class="dropdown-item route-link"
-                                                            data-page="financial/case/manage&id=<?php echo $id ?>" href="#">
-                                                            <i class="ti ti-edit icon me-3"></i> Güncelle/Detay
-                                                        </a>
-                                                    <?php } ?>
+                                                     if ($Auths->hasPermission("cash_register_add_update")) { ?>
+                                                         <a class="dropdown-item edit-case" data-id="<?php echo $id ?>" href="#">
+                                                             <i class="ti ti-edit icon me-3"></i> Güncelle/Detay
+                                                         </a>
+                                                     <?php } ?>
 
                                                     <!-- Kasalararası virman yetkisi varsa -->
                                                     <?php if ($Auths->hasPermission("intercash_transfer")) {
@@ -160,3 +165,4 @@ $financialHelper = new Financial();
 
 <!-- //modali dahil et -->
 <?php require_once "content/intercash_transfer-modal.php"; ?>
+<?php require_once "content/case-modal.php"; ?>

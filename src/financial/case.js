@@ -1,3 +1,74 @@
+$(document).on("click", "#btn-new-case", function () {
+  var form = $("#caseForm");
+  form[0].reset();
+  
+  if (form.data('validator')) {
+    form.data('validator').resetForm();
+  }
+  form.find('.is-invalid').removeClass('is-invalid');
+  form.find('.error').removeClass('error');
+  
+  $("#case_id_input").val("0");
+  $("#case_money_unit").val("1").trigger("change");
+  $('#modal-user-ids-container select[name="user_ids[]"]').val([]).trigger("change");
+  
+  $("#default_case").prop("checked", false).prop("disabled", false);
+  $("#caseModalTitle").text("Yeni Kasa");
+  $("#case-modal").modal("show");
+});
+
+$(document).on("click", ".edit-case", function (e) {
+  e.preventDefault();
+  var case_id = $(this).data("id");
+  var form = $("#caseForm");
+  
+  form[0].reset();
+  if (form.data('validator')) {
+    form.data('validator').resetForm();
+  }
+  form.find('.is-invalid').removeClass('is-invalid');
+  form.find('.error').removeClass('error');
+  
+  var formData = new FormData();
+  formData.append("id", case_id);
+  formData.append("action", "getCase");
+  
+  fetch("/api/financial/case.php", {
+    method: "POST",
+    body: formData
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.status == "success") {
+        var c = data.case;
+        $("#case_id_input").val(case_id);
+        $("#case_name").val(c.case_name);
+        $("#bank_name").val(c.bank_name);
+        $("#branch_name").val(c.branch_name);
+        $("#description").val(c.description);
+        
+        $("#case_money_unit").val(c.case_money_unit).trigger("change");
+        $('#modal-user-ids-container select[name="user_ids[]"]').val(c.user_ids).trigger("change");
+        
+        if (c.isDefault == 1) {
+          $("#default_case").prop("checked", true).prop("disabled", true);
+        } else {
+          $("#default_case").prop("checked", false).prop("disabled", false);
+        }
+        
+        $("#caseModalTitle").text("Kasa Güncelle");
+        $("#case-modal").modal("show");
+      } else {
+        Swal.fire({
+          title: "Hata!",
+          text: data.message,
+          icon: "error",
+          confirmButtonText: "Tamam"
+        });
+      }
+    });
+});
+
 $(document).on("click", "#saveCase", function () {
   var form = $("#caseForm");
 
@@ -25,7 +96,6 @@ $(document).on("click", "#saveCase", function () {
     .then((data) => {
       if (data.status == "success") {
         title = "Başarılı!";
-        $("#id").val(data.lastid);
       } else {
         title = "Hata!";
       }
@@ -34,6 +104,11 @@ $(document).on("click", "#saveCase", function () {
         text: data.message,
         icon: data.status,
         confirmButtonText: "Tamam"
+      }).then((result) => {
+        if (data.status == "success") {
+          $("#case-modal").modal("hide");
+          location.reload();
+        }
       });
     });
 });

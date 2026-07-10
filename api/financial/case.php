@@ -84,6 +84,29 @@ if ($_POST["action"] == "saveCase") {
     echo json_encode($res);
 }
 
+if ($_POST["action"] == "getCase") {
+    $Auths->hasPermission("cash_register_add_update");
+
+    $id = Security::decrypt($_POST["id"]);
+    $case = $caseObj->find($id);
+    if ($case) {
+        $user_ids = !empty($case->user_ids) ? explode(',', $case->user_ids) : [];
+        $case->user_ids = $user_ids;
+
+        $res = [
+            "status" => "success",
+            "case" => $case
+        ];
+    } else {
+        $res = [
+            "status" => "error",
+            "message" => "Kasa bulunamadı."
+        ];
+    }
+    echo json_encode($res);
+    exit;
+}
+
 if ($_POST["action"] == "deleteCase") {
     $id = $_POST["id"];
 

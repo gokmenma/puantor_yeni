@@ -285,63 +285,145 @@ $(document).ready(function () {
     }
   });
 
+  var payToPersonsTable = null;
+  if ($("#payToPersons").length > 0 && window.createDataTable) {
+    payToPersonsTable = window.createDataTable("#payToPersons", {
+      paging: false,
+      scrollY: "350px",
+      scrollCollapse: true,
+      skipSearch: ["Personel", "Ödeme Tutarı"],
+      layout: {
+        bottomStart: "info",
+        bottomEnd: null,
+        topStart: null,
+        topEnd: null
+      },
+      drawCallback: function () {
+        // Tablo çizildikten sonra inputmask'ı tekrar tetikle
+        if ($.fn.inputmask) {
+          $("#payToPersons tbody tr input.money").inputmask("decimal", {
+            radixPoint: ",",
+            groupSeparator: ".",
+            digits: 2,
+            autoGroup: true,
+            rightAlign: false
+          });
+        }
+      }
+    });
+
+    // Özel arama kutusu tetikleyicisi
+    $(document).on("keyup input", "#payToPersonsSearch", function () {
+      if (payToPersonsTable) {
+        payToPersonsTable.search(this.value).draw();
+      }
+    });
+
+    // Dinamik toplam hesaplama fonksiyonu
+    function updatePayToPersonsTotal() {
+      var total = 0;
+      if (payToPersonsTable) {
+        $(payToPersonsTable.rows().nodes()).each(function () {
+          var amountRaw = $(this).find("td:eq(1) input").val();
+          if (amountRaw) {
+            var cleanAmount = parseFloat(amountRaw.replace(/\./g, "").replace(",", ".")) || 0;
+            total += cleanAmount;
+          }
+        });
+      }
+      var formattedTotal = total.toLocaleString("tr-TR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      $("#payToPersonsTotal").text(formattedTotal);
+    }
+
+    // Input girişlerinde anlık toplamı güncelle
+    $(document).on("input change keyup", "#payToPersons tbody tr input.money", function () {
+      updatePayToPersonsTotal();
+    });
+
+    // Modal açıldığında toplamı sıfırla/başlat
+    $("#pay_to_persons-modal").on("shown.bs.modal", function () {
+      // DataTables scroll yüksekliklerini ve kolon hizalamalarını güncelle
+      if (payToPersonsTable) {
+        payToPersonsTable.columns.adjust().draw();
+      }
+      updatePayToPersonsTotal();
+    });
+  }
+
   $("#savePayToPersons").on("click", function () {
     if ($("#payToPersonsForm").valid()) {
-      //tablodaki satırlardaki değerleri al
       var person_ids = [];
       var amounts = [];
-      var person_id = "";
-      var amount = "";
 
       var form = $("#payToPersonsForm");
       var formData = new FormData(form[0]);
-      //preloader göster
+      
+      // Preloader göster
       $(".preloader").fadeIn();
-      //tablodaki satırlardaki değerleri al
-      $("#payToPersons tbody tr").each(function () {
-        //ilk td elemanının data-id attribute'undaki değeri al
-        person_id = $(this).find("td:eq(0)").data("id");
-        amount = $(this).find("td:eq(1) input").val();
-        //eğer amount 0'dan büyükse veya boş değilse veya numeric ise işlem yap
-        if (amount > 0 && amount != "" && $.isNumeric(amount)) {
-          person_ids.push(person_id);
-          amounts.push(amount);
-        }
-      });
 
-      formData.append("person_ids", person_ids);
-      formData.append("amounts", amounts);
-
-      for (var pair of formData.entries()) {
-        console.log(pair[0] + ", " + pair[1]);
+      // Tüm satırları (filtreli/sayfalanmış olsun olmasın) tara
+      if (payToPersonsTable) {
+        $(payToPersonsTable.rows().nodes()).each(function () {
+          var person_id = $(this).find("td:eq(0)").data("id");
+          var amountRaw = $(this).find("td:eq(1) input").val();
+          if (amountRaw && amountRaw !== "") {
+            var cleanAmount = parseFloat(amountRaw.replace(/\./g, "").replace(",", ".")) || 0;
+            if (cleanAmount > 0) {
+              person_ids.push(person_id);
+              amounts.push(amountRaw);
+            }
+          }
+        });
       }
 
+      if (person_ids.length === 0) {
+        $(".preloader").fadeOut();
+        Swal.fire({
+          title: "Uyarı",
+          text: "Lütfen en az bir personel için ödeme tutarı giriniz.",
+          icon: "warning",
+          confirmButtonText: "Tamam"
+        });
+        return;
+      }
+
+      formData.append("person_ids", person_ids.join(","));
+      formData.append("amounts", amounts.join(","));
       formData.append("action", "payToPersons");
+
       fetch("api/financial/transaction.php", {
         method: "POST",
         body: formData
       })
         .then((response) => response.json())
         .then((data) => {
-          if (data.status == "success") {
-            title = "Başarılı!";
-          } else {
-            title = "Hata";
-          }
-          swal
-            .fire({
-              title: title,
-              text: data.message,
-              icon: data.status
-            })
-            .then((result) => {
-              if (result.isConfirmed) {
-                location.reload();
-              }
-            });
+          $(".preloader").fadeOut();
+          var title = data.status == "success" ? "Başarılı!" : "Hata";
+          Swal.fire({
+            title: title,
+            text: data.message,
+            icon: data.status,
+            confirmButtonText: "Tamam"
+          })
+          .then((result) => {
+            if (result.isConfirmed && data.status == "success") {
+              location.reload();
+            }
+          });
+        })
+        .catch((error) => {
+          $(".preloader").fadeOut();
+          console.error("Error:", error);
+          Swal.fire({
+            title: "Hata",
+            text: "Sistemde bir hata oluştu.",
+            icon: "error",
+            confirmButtonText: "Tamam"
+          });
         });
-      //preloader gizle
-      $(".preloader").fadeOut();
     }
   });
 });

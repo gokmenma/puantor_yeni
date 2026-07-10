@@ -17,8 +17,8 @@
         <i class="ti ti-beach"></i>
         <span>İzin</span>
     </a>
-    <a href="?route=profile" class="nav-item <?php echo $route == 'profile' ? 'active' : ''; ?>" data-tab="profile-tab">
-        <i class="ti ti-user"></i>
-        <span>Profil</span>
+    <a href="?route=more" class="nav-item <?php echo in_array($route, ['more', 'profile', 'icra']) ? 'active' : ''; ?>" data-tab="more-tab">
+        <i class="ti ti-menu-2"></i>
+        <span>Diğer</span>
     </a>
 </nav>

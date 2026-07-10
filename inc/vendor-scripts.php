@@ -34,6 +34,7 @@ if (
     $page == 'defines/national-holidays/list' || $page == 'defines/national-holidays/manage' ||
     $page == 'defines/timesheet-types/list' || $page == 'defines/timesheet-types/manage' ||
     $page == 'defines/project-status/list' ||
+    $page == 'defines/icra-daireleri/list' ||
     $page == 'todos/list' ||
     $page == "users/manage" || $page == "cari/list" || $page == "cari/movements" ||
     $page == "raporlar/list" || $page == "avans-talepleri/list" ||
@@ -183,6 +184,10 @@ if ($page == 'defines/national-holidays/list' || $page == 'defines/national-holi
 
 if ($page == 'defines/timesheet-types/list' || $page == 'defines/timesheet-types/manage') {
     echo '<script src="./src/defines/timesheet-types.js"></script>';
+}
+
+if ($page == 'defines/icra-daireleri/list') {
+    echo '<script src="./src/defines/icra-daireleri.js"></script>';
 }
 
 if ($page == 'settings/manage') {

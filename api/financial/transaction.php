@@ -211,6 +211,9 @@ if ($action == "getPaymentFromProject") {
         "amount" => $amount,
         "amount_money" => 1,
         "description" => $description,
+        "person_id" => 0,
+        "company_id" => 0,
+        "users_type_id" => 0,
     ];
 
     try {
@@ -255,6 +258,8 @@ if ($action == "payToPerson") {
         "amount" => $amount,
         "amount_money" => 1,
         "description" => $description,
+        "project_id" => 0,
+        "users_type_id" => 0,
     ];
 
     try {
@@ -310,6 +315,8 @@ if ($action == "payToPersons") {
                 "amount" => Helper::formattedMoneyToNumber($amounts[$i]),
                 "amount_money" => 1,
                 "description" => $full_name . " " . $description,
+                "project_id" => 0,
+                "users_type_id" => 0,
             ];
             $i++;
             $ct->saveWithAttr($data);
@@ -358,6 +365,9 @@ if ($action == "payToCompany") {
         "amount" => $amount,
         "amount_money" => 1,
         "description" => $description,
+        "project_id" => 0,
+        "person_id" => 0,
+        "users_type_id" => 0,
     ];
 
     try {
@@ -403,6 +413,9 @@ if ($action == "addExpenseReceivedProject") {
         "amount" => $amount,
         "amount_money" => 1,
         "description" => $description,
+        "person_id" => 0,
+        "company_id" => 0,
+        "users_type_id" => 0,
     ];
 
     try {

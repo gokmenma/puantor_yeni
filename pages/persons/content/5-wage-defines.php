@@ -116,6 +116,7 @@ if (!$Auths->Authorize("person_page_wage_defines_info")) {
                                 endforeach; ?>
                             </tbody>
                         </table>
+                    </div>
                 </form>
             </div>
         </div>
