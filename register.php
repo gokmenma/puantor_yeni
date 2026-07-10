@@ -1,4 +1,5 @@
 <?php
+ob_start();
 require_once 'Database/require.php';
 require_once 'Model/UserModel.php';
 require_once 'Model/RolesModel.php';

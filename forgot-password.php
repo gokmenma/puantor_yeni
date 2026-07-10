@@ -1,4 +1,5 @@
 <?php
+ob_start();
 define("ROOT", $_SERVER["DOCUMENT_ROOT"]);
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/Model/UserModel.php';
