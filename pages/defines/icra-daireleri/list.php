@@ -159,6 +159,14 @@ $icraDaireleri = $IcraDaireleri->all();
     </div>
 </div>
 
+<style>
+#icra-daireleri-table td,
+#icra-daireleri-table th {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
+</style>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     if (window.createDataTable) {

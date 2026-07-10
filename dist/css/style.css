@@ -1497,8 +1497,6 @@ div.dt-container .dt-layout-row {
     justify-content: space-between !important;
     align-items: center !important;
     flex-wrap: wrap !important;
-    margin: 1.25rem 0 !important;
-    gap: 1rem !important;
 }
 
 div.dt-container .dt-layout-cell.dt-layout-start {

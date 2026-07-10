@@ -3,7 +3,8 @@ $(function() {
   $("<style>")
     .prop("type", "text/css")
     .html(`
-      .dt-layout-row:last-child {
+      .dt-layout-row:last-child,
+      .dt-layout-row:has(.dt-paging) {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
@@ -13,25 +14,29 @@ $(function() {
         background-color: transparent !important;
         border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
       }
-      .dt-layout-row:last-child .dt-layout-start {
+      .dt-layout-row:last-child .dt-layout-start,
+      .dt-layout-row:has(.dt-paging) .dt-layout-start {
         display: flex !important;
         align-items: center !important;
         gap: 1.5rem !important;
         flex-wrap: wrap !important;
         margin: 0 !important;
       }
-      .dt-layout-row:last-child .dt-layout-start > * {
+      .dt-layout-row:last-child .dt-layout-start > *,
+      .dt-layout-row:has(.dt-paging) .dt-layout-start > * {
         margin: 0 !important;
         display: inline-flex !important;
         align-items: center !important;
         gap: 0.25rem !important;
       }
-      .dt-layout-row:last-child .dt-layout-end {
+      .dt-layout-row:last-child .dt-layout-end,
+      .dt-layout-row:has(.dt-paging) .dt-layout-end {
         margin: 0 !important;
         display: flex !important;
         align-items: center !important;
       }
-      .dt-layout-row:last-child .dt-layout-end .dt-paging {
+      .dt-layout-row:last-child .dt-layout-end .dt-paging,
+      .dt-layout-row:has(.dt-paging) .dt-layout-end .dt-paging {
         margin: 0 !important;
       }
       .dt-length select {
@@ -41,6 +46,9 @@ $(function() {
         margin: 0 0.25rem !important;
         display: inline-block !important;
         width: auto !important;
+      }
+      .dt-layout-row.dt-empty-row {
+        display: none !important;
       }
     `)
     .appendTo("head");
@@ -1361,6 +1369,18 @@ window.createDataTable = function (selector, userOptions) {
                     column.search(this.value).draw();
                 }
             });
+        });
+
+        // topStart/topEnd: null gibi tümüyle boş bırakılan layout satırlarını gizle
+        // (DataTables bu satırları içerik olmasa da DOM'da bırakabiliyor, gereksiz boşluğa sebep oluyor)
+        $table.closest('.dt-container').find('.dt-layout-row').not('.dt-layout-table').each(function () {
+            var $row = $(this);
+            var hasContent = $row.find('.dt-layout-cell').toArray().some(function (cell) {
+                return $(cell).children().length > 0 || $.trim($(cell).text()) !== '';
+            });
+            if (!hasContent) {
+                $row.addClass('dt-empty-row');
+            }
         });
 
         if (typeof userInitDone === 'function') {

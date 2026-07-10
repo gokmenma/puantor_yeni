@@ -2,6 +2,8 @@
 
 require_once 'BaseModel.php';
 
+use App\Helper\Security;
+
 class IcraDaireleriModel extends Model
 {
 
