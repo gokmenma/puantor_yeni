@@ -50,4 +50,10 @@ $hasIcra = count($icraFiles) > 0;
         </a>
         <?php endif; ?>
     </div>
+
+    <div class="mt-4">
+        <button onclick="app.logout()" class="btn-logout-premium" style="width: 100%; padding: 12px; border: none; border-radius: 12px; background-color: #fee2e2; color: #dc2626; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.15s ease;">
+            <i class="ti ti-logout fs-2"></i> Oturumu Kapat
+        </button>
+    </div>
 </div>

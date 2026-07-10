@@ -57,9 +57,4 @@
         </div>
     </div>
 
-    <div class="mt-4">
-        <button onclick="app.logout()" class="btn-logout-premium">
-            <i class="ti ti-logout"></i> Oturumu Kapat
-        </button>
-    </div>
 </div>

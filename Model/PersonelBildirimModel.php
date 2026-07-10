@@ -23,7 +23,10 @@ class PersonelBildirimModel
         $stmt = $this->db->prepare(
             "SELECT * FROM personel_bildirimler WHERE personel_id = ? AND firma_id = ? ORDER BY created_at DESC LIMIT ?"
         );
-        $stmt->execute([$personelId, $firmaId, $limit]);
+        $stmt->bindValue(1, $personelId, \PDO::PARAM_INT);
+        $stmt->bindValue(2, $firmaId, \PDO::PARAM_INT);
+        $stmt->bindValue(3, $limit, \PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }
 

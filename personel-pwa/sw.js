@@ -1,4 +1,4 @@
-const CACHE_NAME = 'puantor-personel-v22';
+const CACHE_NAME = 'puantor-personel-v23';
 const ASSETS = [
   './manifest.json',
   './css/app.css',
