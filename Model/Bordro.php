@@ -101,7 +101,7 @@ class Bordro extends Model
                         COALESCE((
                             SELECT SUM(tutar) FROM maas_gelir_kesinti mgkg
                             WHERE mgkg.person_id = :person_id
-                            AND mgkg.kategori IN (1, 16)
+                            AND mgkg.kategori IN (1, 16, 17)
                             AND REPLACE(mgkg.gun, "-", "") < :start_date  -- Maaş veya diğer ödemeler toplamı
                         ), 0) +
                         COALESCE((

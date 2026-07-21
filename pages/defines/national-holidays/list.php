@@ -10,6 +10,11 @@ $perm->checkAuthorize("national_holidays_list");
 
 $NationalHolidays = new NationalHolidaysModel();
 $holidays = $NationalHolidays->all();
+$holidayTypeLabels = [
+    'national' => 'Resmî / Millî Bayram',
+    'religious' => 'Dini Bayram',
+    'other' => 'Diğer',
+];
 ?>
 <div class="container-xl mt-3">
     <div class="alert alert-info bg-white alert-dismissible d-flex">
@@ -26,7 +31,7 @@ $holidays = $NationalHolidays->all();
             </div>
             <div class="ms-3">
                 <h4 class="alert-title">Resmi Tatil Tanımlama!</h4>
-                <div class="text-secondary">Firmanız için resmi tatil günleri tanımlayabilir ve puantaj hesaplamalarında bu günleri otomatik olarak tatil olarak dikkate alabilirsiniz!</div>
+                <div class="text-secondary">Sistem genelinde geçerli resmi tatil günlerini tanımlayabilir ve tüm firmaların puantajlarında otomatik olarak gösterebilirsiniz.</div>
             </div>
         </div>
         <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
@@ -50,6 +55,9 @@ $holidays = $NationalHolidays->all();
                                 <th style="width:7%">Sıra</th>
                                 <th>Tatil Adı</th>
                                 <th>Tatil Tarihi</th>
+                                <th>Tatil Türü</th>
+                                <th>Süre</th>
+                                <th>Durum</th>
                                 <th>Açıklama</th>
                                 <th style="width:7%">İşlem</th>
                             </tr>
@@ -68,11 +76,23 @@ $holidays = $NationalHolidays->all();
                                             data-id="<?php echo $id ?>"
                                             data-name="<?php echo htmlspecialchars($holiday->holiday_name) ?>"
                                             data-date="<?php echo $formatted_date ?>"
+                                            data-type="<?php echo htmlspecialchars($holiday->holiday_type ?? 'national') ?>"
+                                            data-ratio="<?php echo htmlspecialchars($holiday->day_ratio ?? 1) ?>"
+                                            data-active="<?php echo (int) ($holiday->is_active ?? 1) ?>"
                                             data-desc="<?php echo htmlspecialchars($holiday->description) ?>">
                                             <?php echo htmlspecialchars($holiday->holiday_name); ?>
                                         </a>
                                     </td>
                                     <td><?php echo $formatted_date; ?></td>
+                                    <td><span class="badge bg-blue-lt"><?php echo htmlspecialchars($holidayTypeLabels[$holiday->holiday_type] ?? $holidayTypeLabels['other']); ?></span></td>
+                                    <td><?php echo ((float) ($holiday->day_ratio ?? 1) === 0.5) ? 'Yarım Gün' : 'Tam Gün'; ?></td>
+                                    <td>
+                                        <?php if (($holiday->is_active ?? 1) == 1): ?>
+                                            <span class="badge bg-success-lt">Aktif</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary-lt">Pasif</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo htmlspecialchars($holiday->description); ?></td>
                                     <td class="text-end">
                                         <div class="dropdown">
@@ -83,6 +103,9 @@ $holidays = $NationalHolidays->all();
                                                     data-id="<?php echo $id ?>"
                                                     data-name="<?php echo htmlspecialchars($holiday->holiday_name) ?>"
                                                     data-date="<?php echo $formatted_date ?>"
+                                                    data-type="<?php echo htmlspecialchars($holiday->holiday_type ?? 'national') ?>"
+                                                    data-ratio="<?php echo htmlspecialchars($holiday->day_ratio ?? 1) ?>"
+                                                    data-active="<?php echo (int) ($holiday->is_active ?? 1) ?>"
                                                     data-desc="<?php echo htmlspecialchars($holiday->description) ?>">
                                                     <i class="ti ti-edit icon me-3"></i> Güncelle
                                                 </a>
@@ -124,10 +147,31 @@ $holidays = $NationalHolidays->all();
                         <label class="form-label required">Tatil Tarihi</label>
                         <input type="text" name="holiday_date" id="holiday_date" class="form-control flatpickr" placeholder="Tarih seçin">
                     </div>
+                    <div class="row mb-3">
+                        <div class="col-md-7">
+                            <label class="form-label required">Tatil Türü</label>
+                            <select name="holiday_type" id="holiday_type" class="form-select">
+                                <?php foreach ($holidayTypeLabels as $value => $label): ?>
+                                    <option value="<?php echo $value; ?>"><?php echo htmlspecialchars($label); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label required">Süre</label>
+                            <select name="day_ratio" id="day_ratio" class="form-select">
+                                <option value="1.00">Tam Gün</option>
+                                <option value="0.50">Yarım Gün</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Açıklama</label>
                         <input type="text" name="description" id="description" class="form-control" placeholder="Açıklama giriniz...">
                     </div>
+                    <label class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="holiday_is_active" checked>
+                        <span class="form-check-label">Aktif</span>
+                    </label>
                 </form>
             </div>
             <div class="modal-footer">

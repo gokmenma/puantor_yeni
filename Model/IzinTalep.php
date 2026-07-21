@@ -64,7 +64,9 @@ class IzinTalep extends Model
     private function getResmiTatilDates(string $baslangic, string $bitis): array
     {
         $sql = $this->db->prepare(
-            "SELECT tarih FROM resmi_tatiller WHERE tarih BETWEEN ? AND ?"
+            "SELECT holiday_date AS tarih
+             FROM national_holidays
+             WHERE is_active = 1 AND holiday_date BETWEEN ? AND ?"
         );
         $sql->execute([$baslangic, $bitis]);
         return array_column($sql->fetchAll(PDO::FETCH_OBJ), 'tarih');

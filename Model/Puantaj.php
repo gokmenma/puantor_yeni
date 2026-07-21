@@ -112,7 +112,7 @@ class Puantaj extends Model
         $end_nodash = str_replace('-', '', $end_date);
 
         // Hem tireli aralığı hem de tiresiz aralığı kapsayacak şekilde OR şartı ekle
-        $sql = $this->db->prepare("SELECT p.*, pt.PuantajAdi, pt.PuantajKod, pt.Turu as attendance_type, pt.ArkaPlanRengi, pt.FontRengi, pt.EklenecekSaat, pt.is_deductable
+        $sql = $this->db->prepare("SELECT p.*, pt.PuantajAdi, pt.PuantajKod, pt.Turu as attendance_type, pt.ArkaPlanRengi, pt.FontRengi, pt.EklenecekSaat, pt.is_deductable, pt.counts_as_work
                                    FROM $this->table p
                                    LEFT JOIN puantajturu pt ON p.puantaj_id = pt.id
                                    WHERE p.person = ? AND ((p.gun >= ? AND p.gun <= ?) OR (p.gun >= ? AND p.gun <= ?))");

@@ -4,6 +4,9 @@ $(document).on("click", "#btnNewHoliday", function () {
   $("#id").val("");
   $("#holiday_name").val("");
   $("#description").val("");
+  $("#holiday_type").val("national");
+  $("#day_ratio").val("1.00");
+  $("#holiday_is_active").prop("checked", true);
   
   const fp = document.querySelector('#holiday_date')._flatpickr;
   if (fp) {
@@ -22,6 +25,9 @@ $(document).on("click", ".btn-edit-holiday", function (e) {
   $("#id").val(btn.data("id"));
   $("#holiday_name").val(btn.data("name"));
   $("#description").val(btn.data("desc"));
+  $("#holiday_type").val(btn.data("type") || "national");
+  $("#day_ratio").val(parseFloat(btn.data("ratio")) === 0.5 ? "0.50" : "1.00");
+  $("#holiday_is_active").prop("checked", btn.data("active") == 1);
   
   const dateVal = btn.data("date");
   const fp = document.querySelector('#holiday_date')._flatpickr;

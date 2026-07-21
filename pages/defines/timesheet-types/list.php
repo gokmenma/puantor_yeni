@@ -75,6 +75,7 @@ $turOptions = [
                                 <th>P. Görsün?</th>
                                 <th>Kesinti?</th>
                                 <th>BY Kesinti?</th>
+                                <th>Çalışma?</th>
                                 <th>Durum</th>
                                 <th style="width:7%">İşlem</th>
                             </tr>
@@ -107,7 +108,8 @@ $turOptions = [
                                             data-izin="<?php echo htmlspecialchars($type->IzinRapor) ?>"
                                             data-personel-gorsun="<?php echo htmlspecialchars($type->personel_gorsun ?? 0) ?>"
                                             data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>"
-                                            data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>">
+                                            data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>"
+                                            data-counts-as-work="<?php echo htmlspecialchars($type->counts_as_work ?? 0) ?>">
                                             <?php echo htmlspecialchars($type->PuantajAdi); ?>
                                         </a>
                                     </td>
@@ -144,6 +146,13 @@ $turOptions = [
                                         <?php endif; ?>
                                     </td>
                                     <td>
+                                        <?php if (($type->counts_as_work ?? 0) == 1): ?>
+                                            <span class="badge bg-green-lt">Evet</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary-lt">Hayır</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
                                         <?php if ($type->isActive == 1): ?>
                                             <span class="badge bg-success">Aktif</span>
                                         <?php else: ?>
@@ -169,7 +178,8 @@ $turOptions = [
                                                     data-izin="<?php echo htmlspecialchars($type->IzinRapor) ?>"
                                                     data-personel-gorsun="<?php echo htmlspecialchars($type->personel_gorsun ?? 0) ?>"
                                                     data-deductable="<?php echo htmlspecialchars($type->is_deductable ?? 0) ?>"
-                                                    data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>">
+                                                    data-beyaz-yaka-kesinti="<?php echo htmlspecialchars($type->beyaz_yaka_kesinti ?? 0) ?>"
+                                                    data-counts-as-work="<?php echo htmlspecialchars($type->counts_as_work ?? 0) ?>">
                                                     <i class="ti ti-edit icon me-3"></i> Güncelle
                                                 </a>
                                                 <a class="dropdown-item delete-timesheet-type" href="#"
@@ -293,6 +303,13 @@ $turOptions = [
                                 <span class="form-check-label">Personel Görsün</span>
                             </label>
                             <div class="text-muted" style="font-size:0.75rem">İzin talebi oluştururken gösterilsin</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="counts_as_work" id="counts_as_work">
+                                <span class="form-check-label">Çalışma Sayılsın</span>
+                            </label>
+                            <div class="text-muted" style="font-size:0.75rem">Resmi tatil çalışması ilave hakedişine dahil edilir</div>
                         </div>
                     </div>
                 </form>

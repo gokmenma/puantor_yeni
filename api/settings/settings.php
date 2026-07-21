@@ -4,6 +4,7 @@ require_once ROOT . "/Database/require.php";
 require_once ROOT . "/Model/UserModel.php";
 require_once ROOT . "/App/Helper/date.php";
 require_once ROOT . "/Model/SettingsModel.php";
+require_once ROOT . "/Model/HolidayWorkPolicyModel.php";
 require_once ROOT . "/App/Helper/helper.php";
 
 
@@ -14,6 +15,7 @@ use App\Helper\Security;
 
 $User = new UserModel();
 $Settings = new SettingsModel();
+$HolidayWorkPolicies = new HolidayWorkPolicyModel();
 
 if ($_POST["action"] == "userSave") {
     $id = $_SESSION["user"]->id;
@@ -148,6 +150,17 @@ if ($_POST["action"] == "homeSettings") {
         $Settings->upsertSetting("overtime_rate", $overtime_rate);
         $Settings->upsertSetting("show_white_collar_in_puantaj", $show_white_collar);
         $Settings->upsertSetting("yillik_izin_dusmeyecek_gunler", $yillik_izin_dusmeyecek_gunler);
+
+        $holidayPolicies = $_POST['holiday_policy'] ?? [];
+        foreach (['national', 'religious', 'other'] as $holidayType) {
+            $policy = $holidayPolicies[$holidayType] ?? [];
+            $HolidayWorkPolicies->upsertForFirm(
+                $_SESSION['firm_id'],
+                $holidayType,
+                $policy['additional_day_rate'] ?? 0,
+                $policy['calculation_basis'] ?? 'pro_rata'
+            );
+        }
         
         require_once ROOT . "/Model/ActivityLogModel.php";
         ActivityLogModel::log("program_settings", "update_general", "Program genel ayarları güncellendi.");

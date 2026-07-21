@@ -84,6 +84,9 @@ class DefinesModel extends Model
             if (!in_array(14, $ids)) {
                 $ids[] = 14; // Always include Puantaj Hakediş category
             }
+            if (!in_array(17, $ids)) {
+                $ids[] = 17; // Resmi tatil çalışma ilave hakedişi
+            }
         }
 
         if (!empty($ids)) {

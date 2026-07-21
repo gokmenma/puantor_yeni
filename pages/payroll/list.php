@@ -11,6 +11,7 @@ require_once "Model/Cases.php";
 require_once 'Model/Puantaj.php';
 require_once 'Model/Wages.php';
 require_once 'Model/SettingsModel.php';
+require_once 'Model/HolidayWorkService.php';
 require_once 'App/Helper/teams.php';
 
 use App\Helper\Security;
@@ -27,6 +28,7 @@ $FinancialHelper = new Financial();
 $puantajObj = new Puantaj();
 $wages = new Wages();
 $Settings = new SettingsModel();
+$HolidayWorkService = new HolidayWorkService();
 
 $year = isset($_POST['year']) ? $_POST['year'] : date('Y');
 $month = isset($_POST['months']) ? $_POST['months'] : date('m');
@@ -108,7 +110,7 @@ foreach ($persons as $item) {
     if (isset($_POST["action"]) && ($_POST["action"] == 'payroll_calculate' || $_POST["action"] == 'update_personnel')) {
         if ($firstDay <= Date::Ymd(date('Y-m-d'))) {
             if (Date::isBetween($person->job_start_date, $firstDay, $lastDay) || Date::isBefore($person->job_start_date, $firstDay)) {
-                $bordro->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 16")->execute([$person->id, $month, $year]);
+                $bordro->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori IN (16, 17)")->execute([$person->id, $month, $year]);
                 $bordro->connect()->prepare("UPDATE puantaj SET tutar = 0 WHERE person = ? AND REPLACE(gun, '-', '') >= ? AND REPLACE(gun, '-', '') <= ?")->execute([$person->id, $firstDay, $lastDay]);
                 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
                 if ($person->wage_type == 1 && $show_white_collar != 1) {
@@ -229,6 +231,55 @@ foreach ($persons as $item) {
                             $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
                         }
                     }
+                }
+
+                // Resmi tatilde çalışılan günler için firma politikasına göre ayrı ilave gelir oluştur.
+                $holidayWorkHour = (float) str_replace(',', '.', $Settings->getSettings("work_hour")->set_value ?? 8);
+                $holidayAttendanceRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
+                foreach ($holidayAttendanceRecords as $holidayAttendance) {
+                    $definedWage = $wages->getWageByPersonIdAndDate($person->id, $holidayAttendance->gun)->amount ?? 0;
+                    $baseWage = $definedWage > 0 ? (float) $definedWage : (float) ($person->daily_wages ?? 0);
+                    $holidayDailyRate = ($person->wage_type == 1) ? ($baseWage / 30) : $baseWage;
+                    $holidayWork = $HolidayWorkService->calculate(
+                        $firm_id,
+                        $holidayAttendance,
+                        $holidayDailyRate,
+                        $holidayWorkHour
+                    );
+
+                    if (!$holidayWork || $holidayWork->amount <= 0) {
+                        continue;
+                    }
+
+                    $typeLabel = [
+                        'national' => 'Resmî / Millî',
+                        'religious' => 'Dini',
+                        'other' => 'Diğer',
+                    ][$holidayWork->holiday_type] ?? 'Diğer';
+                    $basisLabel = $holidayWork->calculation_basis === 'full_day' ? 'tam gün' : 'saatle orantılı';
+                    $description = sprintf(
+                        '%s | %s | +%s gün | %s | %.2f gün',
+                        $holidayWork->holiday_name,
+                        $typeLabel,
+                        rtrim(rtrim(number_format($holidayWork->additional_day_rate, 2, '.', ''), '0'), '.'),
+                        $basisLabel,
+                        $holidayWork->worked_day_fraction
+                    );
+                    $holidayDate = str_replace('-', '', $holidayWork->date);
+                    $bordro->connect()->prepare(
+                        "INSERT INTO maas_gelir_kesinti
+                            (person_id, project_id, gun, ay, yil, tutar, kategori, turu, aciklama)
+                         VALUES (?, ?, ?, ?, ?, ?, 17, ?, ?)"
+                    )->execute([
+                        $person->id,
+                        (int) ($holidayAttendance->project_id ?? 0),
+                        $holidayDate,
+                        $month,
+                        $year,
+                        $holidayWork->amount,
+                        'Resmi Tatil Çalışması - ' . $holidayWork->holiday_name,
+                        $description,
+                    ]);
                 }
             }
         }

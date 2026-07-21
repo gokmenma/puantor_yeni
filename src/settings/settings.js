@@ -158,6 +158,22 @@ $(document).on("click", "#home_save", function () {
     });
     return false;
   }
+  let invalidHolidayRate = false;
+  $(".holiday-additional-day").each(function () {
+    const value = parseFloat($(this).val());
+    if (Number.isNaN(value) || value < 0 || value > 10) {
+      invalidHolidayRate = true;
+    }
+  });
+  if (invalidHolidayRate) {
+    Swal.fire({
+      title: "Hata!",
+      text: "Tatil çalışması ilave gün değeri 0 ile 10 arasında olmalıdır.",
+      icon: "error",
+      confirmButtonText: "Tamam"
+    });
+    return false;
+  }
   let formData = new FormData(form[0]);
   formData.append("action", "homeSettings");
 

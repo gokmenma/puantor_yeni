@@ -1,9 +1,18 @@
 <?php
+require_once ROOT . '/Model/HolidayWorkPolicyModel.php';
+
 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
 $overtime_rate = $Settings->getSettings("overtime_rate")->set_value ?? 50;
 if (floatval($overtime_rate) < 50) { $overtime_rate = 50; }
 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
 $yillik_izin_dusmeyecek_gunler = $Settings->getSettings("yillik_izin_dusmeyecek_gunler")->set_value ?? "6,7";
+$holidayPolicyModel = new HolidayWorkPolicyModel();
+$holidayPolicies = $holidayPolicyModel->getForFirm($_SESSION['firm_id'] ?? 0);
+$holidayPolicyLabels = [
+    'national' => 'Resmî / Millî Bayram',
+    'religious' => 'Dini Bayram',
+    'other' => 'Diğer Tatiller',
+];
 ?>
 <div class="card">
     <div class="card-body p-4">
@@ -49,6 +58,49 @@ $yillik_izin_dusmeyecek_gunler = $Settings->getSettings("yillik_izin_dusmeyecek_
                 </div>
             </div>
 
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small mb-2">Resmi Tatilde Çalışma Kuralları</label>
+                <div class="table-responsive border rounded">
+                    <table class="table table-vcenter mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tatil Türü</th>
+                                <th style="width: 180px;">İlave Gün</th>
+                                <th style="width: 260px;">Hesaplama Yöntemi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($holidayPolicyLabels as $policyType => $policyLabel):
+                                $policy = $holidayPolicies[$policyType]; ?>
+                                <tr>
+                                    <td class="fw-medium"><?php echo htmlspecialchars($policyLabel); ?></td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">+</span>
+                                            <input type="number" class="form-control holiday-additional-day"
+                                                name="holiday_policy[<?php echo $policyType; ?>][additional_day_rate]"
+                                                min="0" max="10" step="0.5"
+                                                value="<?php echo htmlspecialchars($policy['additional_day_rate']); ?>">
+                                            <span class="input-group-text">gün</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm"
+                                            name="holiday_policy[<?php echo $policyType; ?>][calculation_basis]">
+                                            <option value="pro_rata" <?php echo $policy['calculation_basis'] === 'pro_rata' ? 'selected' : ''; ?>>Çalışılan saate orantılı</option>
+                                            <option value="full_day" <?php echo $policy['calculation_basis'] === 'full_day' ? 'selected' : ''; ?>>Çalışma varsa tam gün</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-secondary d-block mt-2" style="font-size: 0.8rem;">
+                    İlave gün, normal çalışma ücretine eklenir. Örneğin +1 gün toplamda 2 günlük, +2 gün toplamda 3 günlük hakediş oluşturur.
+                </small>
+            </div>
+
             <div class="row">
                 <div class="col-12">
                     <label class="form-label fw-bold text-dark small mb-2">Puantaj Görünürlük Ayarları</label>
@@ -81,4 +133,4 @@ $(document).ready(function() {
         });
     }
 });
-</script>
+</script>

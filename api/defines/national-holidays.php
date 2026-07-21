@@ -39,9 +39,15 @@ try {
 
         $data = [
             'id' => $decrypted_id,
-            'firm_id' => $_SESSION['firm_id'] ?? 0,
             'holiday_name' => $_POST['holiday_name'] ?? '',
             'holiday_date' => $date_formatted,
+            'holiday_type' => in_array($_POST['holiday_type'] ?? '', ['national', 'religious', 'other'], true)
+                ? $_POST['holiday_type']
+                : 'national',
+            'day_ratio' => in_array((string) ($_POST['day_ratio'] ?? '1.00'), ['1', '1.00', '0.5', '0.50'], true)
+                ? (float) $_POST['day_ratio']
+                : 1.00,
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'description' => $_POST['description'] ?? ''
         ];
 
