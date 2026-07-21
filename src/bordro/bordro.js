@@ -162,7 +162,15 @@ $(document).on("click", "#print-detailed-payroll", function () {
 
 // Bordro sütun görünürlüğü
 $(function () {
-  var table = $('#bordroTable').DataTable();
+  if (!$('#bordroTable').length) return;
+
+  var table = $.fn.DataTable.isDataTable('#bordroTable')
+    ? $('#bordroTable').DataTable()
+    : (typeof window.createDataTable === 'function'
+        ? window.createDataTable('#bordroTable')
+        : $('#bordroTable').DataTable());
+
+  if (!table) return;
 
   // Sütun indeksleri (thead sırasına göre: 0=Sıra, 1=Personel, 2=ÜcretTürü, 3=Görevi, 4=Ekip, 5=Proje, 6=IBAN, 7=İşeBaşlama, 8=Brüt, 9=Ödenen, 10=Ödenecek, 11=İşlem)
   var columnConfig = {
@@ -193,7 +201,7 @@ $(function () {
   $('#bordroColvisMenu').html(menuHtml);
   table.columns.adjust().draw(false);
 
-  $(document).on('change', '.bordro-col-trigger', function () {
+  $(document).off('change.bordroCol').on('change.bordroCol', '.bordro-col-trigger', function () {
     var colIdx = parseInt($(this).data('column'));
     var isChecked = this.checked;
     table.column(colIdx).visible(isChecked);
@@ -201,7 +209,7 @@ $(function () {
     localStorage.setItem('bordro_column_visibility', JSON.stringify(visibilityState));
   });
 
-  $(document).on('click', '#bordroColvisMenu', function (e) {
+  $(document).off('click.bordroCol').on('click.bordroCol', '#bordroColvisMenu', function (e) {
     e.stopPropagation();
   });
 });
