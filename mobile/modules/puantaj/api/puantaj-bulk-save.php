@@ -47,6 +47,10 @@ try {
     $work_hour = floatval(str_replace(',', '.', $work_hour));
     if ($work_hour <= 0) $work_hour = 8;
 
+    $overtime_rate = floatval($settingsModel->getSettings("overtime_rate")->set_value ?? 50);
+    if ($overtime_rate < 50) { $overtime_rate = 50; }
+    $overtime_multiplier = 1 + ($overtime_rate / 100);
+
     $save_count = 0;
     $firm_id = $_SESSION['firm_id'] ?? 0;
 
@@ -88,15 +92,42 @@ try {
                 $saat = $puantaj_turu->PuantajSaati;
             }
             
+            $is_overtime = $puantaj_turu && $puantaj_turu->Turu == 'Fazla Çalışma';
+            if ($is_overtime) {
+                if (!empty($puantaj_turu->EklenecekSaat)) {
+                    if (($puantaj_turu->operant ?? '+') == '+') {
+                        $extra_hours = floatval($puantaj_turu->EklenecekSaat);
+                    } elseif (($puantaj_turu->operant ?? '+') == '*') {
+                        $extra_hours = max(0, (floatval($puantaj_turu->EklenecekSaat) - 1) * floatval($work_hour));
+                    } else {
+                        $extra_hours = floatval($puantaj_turu->EklenecekSaat);
+                    }
+                } else {
+                    $extra_hours = max(0, floatval($saat) - floatval($work_hour));
+                }
+            } else {
+                $extra_hours = 0;
+            }
+
             if (($person_info->wage_type ?? 0) == 1) {
                 $is_extra_pay = $puantaj_turu && in_array($puantaj_turu->Turu, ['Fazla Çalışma', 'Saatlik']);
                 if ($is_extra_pay) {
-                    $tutar = floatval($saat) * $hourly_wage;
+                    if ($is_overtime) {
+                        $tutar = round($extra_hours * $hourly_wage * $overtime_multiplier, 2);
+                    } else {
+                        $tutar = round(floatval($saat) * $hourly_wage, 2);
+                    }
                 } else {
                     $tutar = 0;
                 }
             } else {
-                $tutar = floatval($saat) * $hourly_wage;
+                if ($is_overtime) {
+                    $normal_pay = floatval($work_hour) * $hourly_wage;
+                    $overtime_pay = $extra_hours * $hourly_wage * $overtime_multiplier;
+                    $tutar = round($normal_pay + $overtime_pay, 2);
+                } else {
+                    $tutar = round(floatval($saat) * $hourly_wage, 2);
+                }
             }
 
             $data = [

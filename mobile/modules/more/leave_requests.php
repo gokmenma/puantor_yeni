@@ -10,6 +10,11 @@ use App\Helper\Helper;
 use App\Helper\Date;
 use App\Helper\Security;
 
+if (!$Auths->hasPermission('izin_talepler')) {
+    header("Location: dashboard");
+    exit();
+}
+
 $firm_id = $_SESSION['firm_id'] ?? 0;
 $can_delete_approved = $Auths->Authorize('onayli_izinleri_sil') ? 'true' : 'false';
 

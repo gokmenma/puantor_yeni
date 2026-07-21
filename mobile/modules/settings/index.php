@@ -19,6 +19,8 @@ $firmId = $_SESSION['firm_id'];
 
 // Get settings
 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
+$overtime_rate = $Settings->getSettings("overtime_rate")->set_value ?? 50;
+if (floatval($overtime_rate) < 50) { $overtime_rate = 50; }
 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
 $personnel_advance_request_visible = $Settings->getSettings("personnel_advance_request_visible")->set_value ?? 1;
 
@@ -93,6 +95,11 @@ if ($view_mode == 'system' && !$can_view_settings) {
                             <div class="form-floating mb-3">
                                 <input type="number" class="form-control" name="work_hour" id="work_hour" placeholder="8" value="<?php echo htmlspecialchars($work_hour); ?>">
                                 <label for="work_hour">Günlük Çalışma Saati</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input type="number" class="form-control" name="overtime_rate" id="overtime_rate" placeholder="50" min="50" step="1" value="<?php echo htmlspecialchars($overtime_rate); ?>">
+                                <label for="overtime_rate">Fazla Mesai Oranı (%)</label>
                             </div>
 
                             <div class="form-check form-switch mobile-switch p-0">

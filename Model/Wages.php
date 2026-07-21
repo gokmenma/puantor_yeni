@@ -68,25 +68,30 @@ class Wages extends Model
 
     public function getWageByPersonIdAndDate($person_id, $date)
     {
+        require_once __DIR__ . '/../App/Helper/date.php';
+        $targetDate = $date ? \App\Helper\Date::Ymd($date, 'Ymd') : date('Ymd');
         $sql = $this->db->prepare("SELECT * FROM $this->table
                 WHERE person_id = :person_id
-                AND start_date <= :date AND end_date >= :date
-                ORDER BY amount DESC LIMIT 1");
+                AND REPLACE(start_date, '-', '') <= :date 
+                AND (end_date IS NULL OR end_date = '' OR REPLACE(end_date, '-', '') >= :date)
+                ORDER BY REPLACE(start_date, '-', '') DESC, id DESC LIMIT 1");
         $sql->execute([
             'person_id' => $person_id,
-            'date' => $date
+            'date' => $targetDate
         ]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 
-    public function getCurrentWage($person_id)
+    public function getCurrentWage($person_id, $date = null)
     {
-        $today = date('Ymd');
+        require_once __DIR__ . '/../App/Helper/date.php';
+        $targetDate = $date ? \App\Helper\Date::Ymd($date, 'Ymd') : date('Ymd');
         $sql = $this->db->prepare("SELECT * FROM $this->table
                 WHERE person_id = :person_id
-                AND start_date <= :today AND end_date >= :today
-                ORDER BY id DESC LIMIT 1");
-        $sql->execute(['person_id' => $person_id, 'today' => $today]);
+                AND REPLACE(start_date, '-', '') <= :today 
+                AND (end_date IS NULL OR end_date = '' OR REPLACE(end_date, '-', '') >= :today)
+                ORDER BY REPLACE(start_date, '-', '') DESC, id DESC LIMIT 1");
+        $sql->execute(['person_id' => $person_id, 'today' => $targetDate]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 

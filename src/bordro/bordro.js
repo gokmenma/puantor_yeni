@@ -52,15 +52,39 @@ $(document).on("click", "#update_personnel", function () {
   form.submit();
 });
 
-// Bordro detayı göster
+let payrollDetailRequest = null;
+
+function payrollDetailLoading() {
+  return `
+    <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 320px;">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Yükleniyor</span></div>
+      <div class="fw-medium mt-3">Bordro detayları hazırlanıyor</div>
+      <div class="text-muted small mt-1">Lütfen kısa bir süre bekleyin...</div>
+    </div>`;
+}
+
+$(document).on("keydown", ".view-payroll-detail", function (event) {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    $(this).trigger("click");
+  }
+});
+
 $(document).on("click", ".view-payroll-detail", function () {
   let id = $(this).data("id");
   let month = $(this).data("month");
   let year = $(this).data("year");
+  $("#payroll-detail-modal").data("detail-trigger", this);
 
-  $("#payroll-detail-content").html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>');
+  if (payrollDetailRequest) {
+    payrollDetailRequest.abort();
+  }
 
-  $.ajax({
+  $("#payroll-detail-period").text("Gelir, kesinti ve puantaj dökümü");
+  $("#payroll-detail-content").html(payrollDetailLoading());
+  $("#print-detailed-payroll").prop("disabled", true);
+
+  payrollDetailRequest = $.ajax({
     url: "api/bordro/detail.php",
     type: "POST",
     data: {
@@ -70,23 +94,67 @@ $(document).on("click", ".view-payroll-detail", function () {
     },
     success: function (data) {
       $("#payroll-detail-content").html(data);
+      $("#print-detailed-payroll").prop("disabled", false);
     },
-    error: function () {
-      $("#payroll-detail-content").html('<div class="alert alert-danger">Bordro detayları yüklenirken bir hata oluştu.</div>');
+    error: function (_xhr, status) {
+      if (status === "abort") return;
+
+      $("#payroll-detail-content").html(`
+        <div class="d-flex flex-column align-items-center justify-content-center text-center py-5" style="min-height: 280px;">
+          <span class="avatar avatar-lg bg-danger-lt text-danger mb-3"><i class="ti ti-alert-triangle fs-1"></i></span>
+          <h3 class="mb-1">Detaylar yüklenemedi</h3>
+          <p class="text-muted mb-3">Bağlantınızı kontrol edip yeniden deneyin.</p>
+          <button type="button" class="btn btn-outline-primary" id="retry-payroll-detail"><i class="ti ti-refresh me-2"></i>Yeniden Dene</button>
+        </div>`);
+    },
+    complete: function () {
+      payrollDetailRequest = null;
     }
   });
 });
 
+$(document).on("click", "#retry-payroll-detail", function () {
+  const trigger = $("#payroll-detail-modal").data("detail-trigger");
+  if (trigger) $(trigger).trigger("click");
+});
+
+$("#payroll-detail-modal").on("hidden.bs.modal", function () {
+  if (payrollDetailRequest) {
+    payrollDetailRequest.abort();
+    payrollDetailRequest = null;
+  }
+
+  $("#payroll-detail-content [data-bs-toggle='popover']").each(function () {
+    const popover = bootstrap.Popover.getInstance(this);
+    if (popover) popover.dispose();
+  });
+  $("#print-detailed-payroll").prop("disabled", true);
+});
+
 // Bordro detayını yazdır
 $(document).on("click", "#print-detailed-payroll", function () {
-  let content = $("#payroll-detail-content").html();
+  let $content = $("#payroll-detail-content").clone();
+  $content.find("script, .no-print").remove();
+  $content.find("#puantaj-list-view").show();
+  $content.find("#puantaj-calendar-view").hide();
+  $content.find(".empty-puantaj-record").show();
+  let content = $content.html();
   let printWindow = window.open('', '', 'height=600,width=800');
+
+  if (!printWindow) {
+    Swal.fire({ icon: 'warning', title: 'Yazdırma penceresi açılamadı', text: 'Tarayıcınızın açılır pencere iznini kontrol edin.' });
+    return;
+  }
+
   printWindow.document.write('<html><head><title>Bordro Detayı</title>');
-  printWindow.document.write('<link rel="stylesheet" href="dist/css/tabler.min.css">');
+  printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css">');
+  printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">');
+  printWindow.document.write('<style>@page{size:A4;margin:12mm}body{font-size:11px}.payroll-attendance-scroll{max-height:none!important;overflow:visible!important}.card{break-inside:avoid}.row{--tblr-gutter-x:.75rem;--tblr-gutter-y:.75rem}</style>');
   printWindow.document.write('</head><body class="p-4">');
   printWindow.document.write(content);
   printWindow.document.write('</body></html>');
   printWindow.document.close();
+  printWindow.focus();
   setTimeout(() => {
     printWindow.print();
   }, 500);

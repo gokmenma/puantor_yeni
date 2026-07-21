@@ -69,6 +69,10 @@ if ($view == 'personnel' && ($action == 'update_personnel' || $action == 'payrol
                 $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDayYmd, $lastDayYmd);
                 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
                 $work_hour = str_replace(',', '.', $work_hour);
+                $overtime_rate = floatval($Settings->getSettings("overtime_rate")->set_value ?? 50);
+                if ($overtime_rate < 50) { $overtime_rate = 50; }
+                $overtime_multiplier = 1 + ($overtime_rate / 100);
+
                 if ($person->wage_type == 1) {
                     $bordroModel->connect()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id=? AND ay=? AND yil=? AND kategori=16")->execute([$person->id, $month, $year]);
                     $bordroModel->connect()->prepare("UPDATE puantaj SET tutar=0 WHERE person=? AND REPLACE(gun, '-', '') >= ? AND REPLACE(gun, '-', '') <= ?")->execute([$person->id, $firstDayYmd, $lastDayYmd]);
@@ -101,6 +105,7 @@ if ($view == 'personnel' && ($action == 'update_personnel' || $action == 'payrol
                             if ($puantaj_turu->Turu == 'Saatlik') {
                                 $saat = floatval($puantaj_turu->PuantajSaati);
                                 $pay_saat = $saat;
+                                $mult = 1;
                             } else {
                                 $raw_saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
                                 $saat = is_numeric($raw_saat) ? floatval($raw_saat) : 0;
@@ -111,10 +116,11 @@ if ($view == 'personnel' && ($action == 'update_personnel' || $action == 'payrol
                                 } else {
                                     $pay_saat = $saat;
                                 }
+                                $mult = $overtime_multiplier;
                             }
                             $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
                             $eff_hourly = $defined_wage > 0 ? (($defined_wage / 30) / floatval($work_hour)) : $hourly_rate;
-                            $tutar = round($pay_saat * $eff_hourly, 2);
+                            $tutar = round($pay_saat * $eff_hourly * $mult, 2);
                         } else {
                             if ($puantaj_turu && $puantaj_turu->Turu != 'Saatlik') {
                                 $raw_saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
@@ -136,12 +142,30 @@ if ($view == 'personnel' && ($action == 'update_personnel' || $action == 'payrol
                         $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
                         $hourly_wages = $defined_wage > 0 ? ($defined_wage / $work_hour) : $ucret;
                         $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
+                        $is_overtime = $puantaj_turu && $puantaj_turu->Turu == 'Fazla Çalışma';
                         if ($puantaj_turu->Turu != 'Saatlik') {
                             $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
-                            $tutar = floatval($saat) * $hourly_wages;
+                            if ($is_overtime) {
+                                if (!empty($puantaj_turu->EklenecekSaat)) {
+                                    if (($puantaj_turu->operant ?? '+') == '+') {
+                                        $extra_hours = floatval($puantaj_turu->EklenecekSaat);
+                                    } elseif (($puantaj_turu->operant ?? '+') == '*') {
+                                        $extra_hours = max(0, (floatval($puantaj_turu->EklenecekSaat) - 1) * floatval($work_hour));
+                                    } else {
+                                        $extra_hours = floatval($puantaj_turu->EklenecekSaat);
+                                    }
+                                } else {
+                                    $extra_hours = max(0, floatval($saat) - floatval($work_hour));
+                                }
+                                $normal_pay = floatval($work_hour) * $hourly_wages;
+                                $overtime_pay = $extra_hours * $hourly_wages * $overtime_multiplier;
+                                $tutar = round($normal_pay + $overtime_pay, 2);
+                            } else {
+                                $tutar = round(floatval($saat) * $hourly_wages, 2);
+                            }
                         } else {
                             $saat = $puantaj_turu->PuantajSaati;
-                            $tutar = floatval($saat) * $hourly_wages;
+                            $tutar = round(floatval($saat) * $hourly_wages, 2);
                         }
                         $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
                     }

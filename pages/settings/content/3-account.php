@@ -210,8 +210,9 @@ if (count($loginLogs) > 1) {
             <div class="modal-body" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
                 <div class="row g-3">
                     <?php 
-                    foreach ($availablePackages as $pkg): 
+                    foreach ($availablePackages as $pkg):
                         if ($pkg->aktif_mi != 1) continue;
+                        if (($pkg->kullaniciya_goster_mi ?? 1) != 1) continue;
                         $pkg_id_encrypted = Security::encrypt($pkg->id);
                         
                         // Split features

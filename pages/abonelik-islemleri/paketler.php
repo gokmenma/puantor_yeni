@@ -1,6 +1,7 @@
 <?php
 require_once "App/Helper/helper.php";
 require_once "Model/AbonelikPaketleriModel.php";
+require_once "Model/Auths.php";
 require_once "App/Helper/security.php";
 
 use App\Helper\Security;
@@ -10,6 +11,16 @@ $perm->checkAuthorize("aboneler_paketleri");
 
 $paketModel = new AbonelikPaketleriModel();
 $packages = $paketModel->getPackages();
+
+$authsModel = new Auths();
+$topLevelModules = $authsModel->auths();
+$moduleTitlesById = [];
+foreach ($topLevelModules as $module) {
+    $moduleTitlesById[$module->id] = $module->title;
+    foreach ($authsModel->subAuths($module->id) as $sub) {
+        $moduleTitlesById[$sub->id] = $sub->title;
+    }
+}
 ?>
 <div class="container-xl">
     <!-- Alert component'i dahil et -->
@@ -41,7 +52,9 @@ $packages = $paketModel->getPackages();
                                 <th>Süre (Gün)</th>
                                 <th>Firma Limiti</th>
                                 <th>Alt Kullanıcı Limiti</th>
+                                <th>Modüller</th>
                                 <th>Özellikler</th>
+                                <th>Görünürlük</th>
                                 <th>Durum</th>
                                 <th style="width:10%" class="text-end">İşlem</th>
                             </tr>
@@ -66,9 +79,29 @@ $packages = $paketModel->getPackages();
                                     <td><?php echo (int)$pkg->firma_hakki; ?> Firma</td>
                                     <td><?php echo (int)$pkg->alt_kullanici_hakki; ?> Kullanıcı</td>
                                     <td>
+                                        <?php if (empty($pkg->modul_auth_ids)): ?>
+                                            <span class="badge bg-blue-lt">Tüm Modüller</span>
+                                        <?php else:
+                                            $pkgModuleIds = array_filter(array_map('intval', explode(',', $pkg->modul_auth_ids)));
+                                            $pkgModuleTitles = array_map(function ($mid) use ($moduleTitlesById) {
+                                                return $moduleTitlesById[$mid] ?? null;
+                                            }, $pkgModuleIds);
+                                            $pkgModuleTitles = array_filter($pkgModuleTitles);
+                                            ?>
+                                            <span class="text-muted text-truncate d-inline-block" style="max-width: 200px;" title="<?php echo htmlspecialchars(implode(', ', $pkgModuleTitles)); ?>">
+                                                <?php echo htmlspecialchars(implode(', ', $pkgModuleTitles)); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
                                         <span class="text-muted text-truncate d-inline-block" style="max-width: 250px;" title="<?php echo htmlspecialchars($pkg->ozellikler ?? ''); ?>">
                                             <?php echo htmlspecialchars($pkg->ozellikler ?? '-'); ?>
                                         </span>
+                                    </td>
+                                    <td>
+                                        <?php echo ($pkg->kullaniciya_goster_mi ?? 1) == 1
+                                            ? '<span class="badge bg-blue-lt">Görünür</span>'
+                                            : '<span class="badge bg-secondary text-secondary-fg">Gizli (Sadece Yönetici)</span>'; ?>
                                     </td>
                                     <td><?php echo $status_badge; ?></td>
                                     <td class="text-end">
@@ -83,8 +116,13 @@ $packages = $paketModel->getPackages();
                                                    data-firma_hakki="<?php echo (int)$pkg->firma_hakki; ?>"
                                                    data-alt_kullanici_hakki="<?php echo (int)$pkg->alt_kullanici_hakki; ?>"
                                                    data-ozellikler="<?php echo htmlspecialchars($pkg->ozellikler ?? ''); ?>"
-                                                   data-aktif_mi="<?php echo (int)$pkg->aktif_mi; ?>">
+                                                   data-aktif_mi="<?php echo (int)$pkg->aktif_mi; ?>"
+                                                   data-kullaniciya_goster_mi="<?php echo (int)($pkg->kullaniciya_goster_mi ?? 1); ?>">
                                                     <i class="ti ti-edit icon me-3"></i> Güncelle
+                                                </a>
+                                                <a class="dropdown-item route-link" href="#"
+                                                   data-page="abonelik-islemleri/paket-moduller&id=<?php echo $id; ?>">
+                                                    <i class="ti ti-apps icon me-3"></i> Modülleri Düzenle
                                                 </a>
                                                 <a class="dropdown-item delete-paket" href="#" data-id="<?php echo $id; ?>">
                                                     <i class="ti ti-trash icon me-3"></i> Sil
@@ -151,6 +189,14 @@ $packages = $paketModel->getPackages();
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="paket_kullaniciya_goster_mi" name="kullaniciya_goster_mi" value="1" checked>
+                            <span class="form-check-label font-weight-semibold">Kullanıcılara Göster</span>
+                        </label>
+                        <div class="form-text">Kapatılırsa bu paket, müşterinin kendi satın alma ekranında listelenmez; sadece yönetici tarafından manuel atanabilir.</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label font-weight-semibold">Özellikler (Açıklama)</label>
                         <textarea name="ozellikler" id="paket_ozellikler" rows="3" class="form-control" style="border-radius: 8px; padding: 0.6rem 0.8rem;" placeholder="Paket özelliklerini buraya yazabilirsiniz."></textarea>
                     </div>
@@ -199,7 +245,7 @@ $(document).ready(function() {
     $(document).on('click', '.btn-edit-paket', function(e) {
         e.preventDefault();
         $('#paketForm')[0].reset();
-        
+
         let id = $(this).data('id');
         let ad = $(this).data('ad');
         let fiyat = $(this).data('fiyat');
@@ -208,6 +254,7 @@ $(document).ready(function() {
         let alt_kullanici_hakki = $(this).data('alt_kullanici_hakki');
         let ozellikler = $(this).data('ozellikler');
         let aktif_mi = $(this).data('aktif_mi');
+        let kullaniciya_goster_mi = $(this).data('kullaniciya_goster_mi');
 
         $('#paket_id').val(id);
         $('#paket_ad').val(ad);
@@ -217,6 +264,7 @@ $(document).ready(function() {
         $('#paket_alt_kullanici_hakki').val(alt_kullanici_hakki);
         $('#paket_ozellikler').val(ozellikler);
         $('#paket_aktif_mi').val(aktif_mi);
+        $('#paket_kullaniciya_goster_mi').prop('checked', String(kullaniciya_goster_mi) === '1');
 
         $('#paketModalTitle span').text('Abonelik Paketi Güncelle');
         $('#paketModal').modal('show');

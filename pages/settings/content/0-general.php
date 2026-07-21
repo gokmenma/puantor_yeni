@@ -1,5 +1,7 @@
 <?php
 $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
+$overtime_rate = $Settings->getSettings("overtime_rate")->set_value ?? 50;
+if (floatval($overtime_rate) < 50) { $overtime_rate = 50; }
 $show_white_collar = $Settings->getSettings("show_white_collar_in_puantaj")->set_value ?? 0;
 $yillik_izin_dusmeyecek_gunler = $Settings->getSettings("yillik_izin_dusmeyecek_gunler")->set_value ?? "6,7";
 ?>
@@ -25,6 +27,14 @@ $yillik_izin_dusmeyecek_gunler = $Settings->getSettings("yillik_izin_dusmeyecek_
                 <div class="col-md-6">
                     <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">Günlük Çalışma Saati</label>
                     <input type="number" class="form-control" name="work_hour" placeholder="Örn: 8" value="<?php echo htmlspecialchars($work_hour); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">Fazla Mesai Oranı (%)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="overtime_rate" id="overtime_rate" placeholder="Örn: 50" min="50" step="1" value="<?php echo htmlspecialchars($overtime_rate); ?>">
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <small class="text-secondary d-block mt-1" style="font-size: 0.8rem;">Kanunen varsayılan oran %50'dir (Minimum %50). Fazla mesai saat ücreti bu oran artırımı ile hesaplanır (Örn: %50 için 1.5 katı).</small>
                 </div>
             </div>
 

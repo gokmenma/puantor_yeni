@@ -54,13 +54,33 @@ $Auths = new Auths();
 
 
 
+                    // Paket/rol kısıtlamasında üst modülün kendisi değil de sadece alt yetkilerinden
+                    // biri verilmiş olabilir (bkz. Model/Auths.php paket-modül kesişimi). Bu yüzden üst
+                    // menünün kendi yetkisi yoksa bile, gösterilebilecek en az bir alt menüsü varsa
+                    // üst menü yine de listelenir; alt menüler kendi yetkileriyle ayrıca filtrelenir.
+                    $has_authorized_submenu = false;
+                    foreach ($menus->getSubMenus($menu->id) as $candidate_sub_menu) {
+                        if ($candidate_sub_menu->isMenu <= 0) {
+                            continue;
+                        }
+                        if ($candidate_sub_menu->is_authorize != 1) {
+                            $has_authorized_submenu = true;
+                            break;
+                        }
+                        $candidate_auth_id = $Auths->getAuthIdByTitle($candidate_sub_menu->page_name)?->id ?? 0;
+                        if ($Auths->AuthorizeByAuthId($candidate_auth_id)) {
+                            $has_authorized_submenu = true;
+                            break;
+                        }
+                    }
+
                     //Eğer menü yetkiye tabi ise yetki kontrolü yapılır
                     if ($menu->is_authorize == 1) {
                         //Sayfa Adından Auths tablosundaki title alanı ile sorgulanarak yetki id alınır
                         $auth_id = $Auths->getAuthIdByTitle($menu->page_name)?->id ?? 0;
 
                         //Yetki id'si gelen sayfa için yetki kontrolü yapılır
-                        if (!$Auths->AuthorizeByAuthId($auth_id)) {
+                        if (!$Auths->AuthorizeByAuthId($auth_id) && !$has_authorized_submenu) {
                             continue;
                         }
                     }

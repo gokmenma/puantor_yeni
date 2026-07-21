@@ -1,11 +1,13 @@
 <?php
 require_once "../../Database/require.php";
 require_once "../../Model/AbonelikPaketleriModel.php";
+require_once "../../Model/Auths.php";
 require_once "../../App/Helper/security.php";
 
 use App\Helper\Security;
 
 $paketModel = new AbonelikPaketleriModel();
+$Auths = new Auths();
 
 if (isset($_POST["action"]) && $_POST["action"] == "savePackage") {
     $encryptedId = $_POST["id"] ?? "";
@@ -22,7 +24,8 @@ if (isset($_POST["action"]) && $_POST["action"] == "savePackage") {
             "firma_hakki" => $_POST["firma_hakki"],
             "alt_kullanici_hakki" => $_POST["alt_kullanici_hakki"],
             "ozellikler" => $_POST["ozellikler"] ?? "",
-            "aktif_mi" => $_POST["aktif_mi"]
+            "aktif_mi" => $_POST["aktif_mi"],
+            "kullaniciya_goster_mi" => isset($_POST["kullaniciya_goster_mi"]) && $_POST["kullaniciya_goster_mi"] == "1" ? 1 : 0
         ];
 
         if ($id > 0) {
@@ -43,6 +46,38 @@ if (isset($_POST["action"]) && $_POST["action"] == "savePackage") {
         "message" => $message
     ];
     echo json_encode($res);
+    exit();
+}
+
+if (isset($_POST["action"]) && $_POST["action"] == "saveModules") {
+    $Auths->hasPermissionReturn("aboneler_paketleri");
+
+    $id = Security::safeDecrypt($_POST["paket_id"] ?? "");
+    if (!$id) {
+        echo json_encode(["status" => "error", "message" => "Geçersiz paket."]);
+        exit();
+    }
+
+    try {
+        if (isset($_POST["unlimited_modules"]) && $_POST["unlimited_modules"] == "1") {
+            $modul_auth_ids = null;
+        } else {
+            $modules = array_map('intval', $_POST["modules"] ?? []);
+            $modul_auth_ids = implode(",", array_filter($modules));
+        }
+
+        $paketModel->saveWithAttr([
+            "id" => $id,
+            "modul_auth_ids" => $modul_auth_ids
+        ]);
+
+        $status = "success";
+        $message = "Paket modülleri başarıyla güncellendi.";
+    } catch (Exception $ex) {
+        $status = "error";
+        $message = $ex->getMessage();
+    }
+    echo json_encode(["status" => $status, "message" => $message]);
     exit();
 }
 

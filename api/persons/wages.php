@@ -1,6 +1,7 @@
 <?php
 require_once "../../Database/require.php";
 require_once "../../Model/Wages.php";
+require_once "../../Model/Persons.php";
 require_once "../../App/Helper/helper.php";
 require_once "../../App/Helper/date.php";
 require_once '../../Model/Bordro.php';
@@ -11,6 +12,7 @@ use App\Helper\Security;
 
 $wages = new Wages();
 $bordro = new Bordro();
+$personModel = new Persons();
 
 if ($_POST["action"] == "saveWage") {
     $id =$_POST["wage_id"] != 0 ? Security::decrypt($_POST["wage_id"]) : 0;
@@ -31,7 +33,7 @@ if ($_POST["action"] == "saveWage") {
 
     try {
         $lastInsertId = $wages->saveWithAttr($data)  ?? $id;
-      
+        $personModel->syncDailyWage($person_id);
 
         $last_wage = $wages->find( Security::decrypt($lastInsertId) ) ;
         $last_wage->id =$lastInsertId;
@@ -66,7 +68,11 @@ if ($_POST["action"] == "saveWage") {
 if ($_POST["action"] == "deleteWage") {
     $id = $_POST["id"];
     try {
+        $wageRec = $wages->find($id);
         $wages->delete($id);
+        if ($wageRec && isset($wageRec->person_id)) {
+            $personModel->syncDailyWage($wageRec->person_id);
+        }
         $status = "success";
         $message = "Ücret tanımı başarıyla silindi." ;
     } catch (PDOException $e) {

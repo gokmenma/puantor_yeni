@@ -14,7 +14,7 @@ require_once ROOT . '/Model/DefinesModel.php';
 require_once ROOT . '/Model/Puantaj.php';
 require_once ROOT . '/App/Helper/security.php';
 require_once ROOT . '/App/Helper/helper.php';
-require_once ROOT . '/App/Helper/date.php';
+require_once ROOT . '/Model/SettingsModel.php';
 
 use App\Helper\Security;
 use App\Helper\Helper;
@@ -26,6 +26,11 @@ try {
     $MyFirm = new MyFirmModel();
     $Defines = new DefinesModel();
     $PuantajModel = new Puantaj();
+    $SettingsModel = new SettingsModel();
+
+    $overtime_rate = floatval($SettingsModel->getSettings("overtime_rate")->set_value ?? 50);
+    if ($overtime_rate < 50) { $overtime_rate = 50; }
+    $overtime_multiplier = 1 + ($overtime_rate / 100);
 
     $firm_id = $_SESSION['firm_id'] ?? 0;
     
@@ -33,9 +38,6 @@ try {
     $personel_id = Security::decrypt($id_raw);
     $ay = $_POST['month'] ?? date('m');
     $yil = $_POST['year'] ?? date('Y');
-
-    // Debug info (will be visible in modal if something is wrong)
-    // echo "<!-- Debug: ID: $personel_id, Ay: $ay, Yil: $yil, Firm: $firm_id -->";
 
     if (!$personel_id) {
         throw new Exception("Geçersiz personel kimliği.");
@@ -45,6 +47,49 @@ try {
     if (!$person) {
         throw new Exception("Personel bulunamadı.");
     }
+
+    $buildPopoverContent = function($pt, $saatVal) use ($person, $SettingsModel, $overtime_rate, $overtime_multiplier) {
+        if (!$pt || floatval($pt['tutar']) <= 0) return '';
+
+        $wh = floatval($SettingsModel->getSettings("work_hour")->set_value ?? 8);
+        $saatNum = floatval($saatVal);
+        $tutarNum = floatval($pt['tutar']);
+
+        $isOvertime = ($pt['pt_turu'] == 'Fazla Çalışma');
+        if ($isOvertime) {
+            $extraHours = max(0, $saatNum - $wh);
+            if ($extraHours <= 0 && !empty($pt['EklenecekSaat'])) {
+                $extraHours = floatval($pt['EklenecekSaat']);
+            }
+
+            $effectiveMultiplierHours = $wh + ($extraHours * $overtime_multiplier);
+            $baseHourly = ($effectiveMultiplierHours > 0) ? ($tutarNum / $effectiveMultiplierHours) : 0;
+
+            $whDisp = (floor($wh) == $wh) ? number_format($wh, 0, '.', '') : number_format($wh, 1, '.', '');
+            $baseHourlyDisp = number_format($baseHourly, 2, '.', '');
+            $normalPay = $baseHourly * $wh;
+            $normalPayDisp = number_format($normalPay, 2, '.', '');
+
+            $otPay = $extraHours * $baseHourly * $overtime_multiplier;
+            $otPayDisp = number_format($otPay, 2, '.', '');
+            $extraHoursDisp = (floor($extraHours) == $extraHours) ? number_format($extraHours, 0, '.', '') : number_format($extraHours, 1, '.', '');
+            $otRateDisp = number_format($overtime_rate, 0, '.', '');
+
+            if (($person->wage_type ?? 0) == 1) { // Beyaz Yaka
+                return "{$baseHourlyDisp} * %{$otRateDisp} * {$extraHoursDisp} = {$otPayDisp} TL";
+            } else { // Mavi Yaka
+                return "{$baseHourlyDisp} * {$whDisp} = {$normalPayDisp}<br>" .
+                       "{$baseHourlyDisp} * %{$otRateDisp} * {$extraHoursDisp} = {$otPayDisp}";
+            }
+        } else {
+            $unitRate = $saatNum > 0 ? ($tutarNum / $saatNum) : 0;
+            $saatDisp = (floor($saatNum) == $saatNum) ? number_format($saatNum, 0, '.', '') : number_format($saatNum, 1, '.', '');
+            $unitRateDisp = number_format($unitRate, 2, '.', '');
+            $tutarDisp = number_format($tutarNum, 2, '.', '');
+            $isFullDay = ($saatNum == $wh);
+            return "{$unitRateDisp} * {$saatDisp} = {$tutarDisp} TL" . ($isFullDay ? " (1 Günlük Ücret)" : "");
+        }
+    };
 
     // Personel Gelir Bilgileri
     $incomes = $Bordro->getPersonIncome($personel_id, $ay, $yil);
@@ -78,6 +123,91 @@ try {
 ?>
 
 <style>
+.payroll-detail-modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+}
+.payroll-detail-hero {
+    border: 1px solid rgba(var(--tblr-primary-rgb), 0.16);
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(var(--tblr-primary-rgb), 0.1), rgba(var(--tblr-primary-rgb), 0.025));
+}
+.payroll-detail-summary {
+    height: 100%;
+    border: 1px solid var(--tblr-border-color-translucent);
+    border-radius: 12px;
+    box-shadow: none;
+}
+.payroll-detail-summary .summary-icon {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.15rem;
+}
+.payroll-detail-card {
+    border: 1px solid var(--tblr-border-color-translucent) !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+}
+.payroll-detail-card .card-header {
+    min-height: 58px;
+    background: var(--tblr-bg-surface);
+}
+.payroll-finance-table th,
+.payroll-attendance-table th {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+    color: var(--tblr-secondary);
+    font-size: 0.7rem;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.payroll-finance-table td,
+.payroll-attendance-table td {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+.payroll-finance-table {
+    min-width: 440px;
+}
+.payroll-attendance-table {
+    min-width: 620px;
+}
+.payroll-finance-table tbody tr:hover,
+.payroll-attendance-table tbody tr:hover {
+    background: rgba(var(--tblr-primary-rgb), 0.035);
+}
+.payroll-attendance-scroll {
+    max-height: 360px;
+    overflow: auto;
+}
+.payroll-attendance-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--tblr-bg-surface-secondary, var(--tblr-bg-surface));
+    box-shadow: inset 0 -1px var(--tblr-border-color);
+}
+.payroll-day-number {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: var(--tblr-bg-surface-secondary);
+    color: var(--tblr-body-color);
+    font-weight: 700;
+}
+.payroll-weekend-row .payroll-day-number {
+    background: rgba(var(--tblr-secondary-rgb), 0.1);
+    color: var(--tblr-secondary);
+}
 .puantaj-calendar {
     display: table;
     width: 100%;
@@ -111,62 +241,99 @@ try {
     .no-print {
         display: none !important;
     }
+    .payroll-attendance-scroll {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .payroll-detail-card {
+        break-inside: avoid;
+    }
+}
+@media (max-width: 575.98px) {
+    .payroll-detail-hero .avatar {
+        width: 42px !important;
+        height: 42px !important;
+    }
+    .payroll-detail-card .card-header {
+        align-items: flex-start !important;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .payroll-detail-card .card-header .btn-group {
+        width: 100%;
+    }
+    .payroll-detail-card .card-header .btn-group .btn {
+        flex: 1;
+    }
 }
 </style>
 
 <div class="row g-3">
     <!-- Personel Bilgi Başlığı -->
     <div class="col-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, rgba(var(--tblr-primary-rgb), 0.05), rgba(var(--tblr-primary-rgb), 0.01));">
-            <div class="card-body p-3 d-flex align-items-center">
+        <div class="payroll-detail-hero">
+            <div class="p-3 p-md-4 d-flex align-items-center">
                 <span class="avatar avatar-md bg-primary-lt me-3 fw-bold" style="border-radius: 8px; width: 45px; height: 45px;">
-                    <?= mb_substr($person->full_name, 0, 2, 'UTF-8') ?>
+                    <?= htmlspecialchars(mb_substr($person->full_name, 0, 2, 'UTF-8')) ?>
                 </span>
-                <div>
+                <div class="min-w-0">
                     <h3 class="mb-0 fw-bold text-dark"><?= htmlspecialchars($person->full_name) ?></h3>
-                    <div class="text-muted small mt-0.5">
-                        <i class="ti ti-briefcase me-1"></i> <?= htmlspecialchars($person->job ?: 'Personel') ?> • 
-                        <i class="ti ti-id me-1"></i> <?= $person->wage_type == 1 ? 'Aylık (Beyaz Yaka)' : 'Günlük (Mavi Yaka)' ?>
+                    <div class="text-muted small mt-1 d-flex flex-wrap gap-2 gap-md-3">
+                        <span><i class="ti ti-briefcase me-1"></i><?= htmlspecialchars($person->job ?: 'Personel') ?></span>
+                        <span><i class="ti ti-wallet me-1"></i><?= $person->wage_type == 1 ? 'Aylık ücret' : 'Günlük ücret' ?></span>
                     </div>
                 </div>
+                <span class="badge bg-primary-lt text-primary border border-primary-subtle ms-auto d-none d-sm-inline-flex align-items-center fs-6 px-3 py-2">
+                    <i class="ti ti-calendar-month me-2"></i><?= htmlspecialchars(Date::monthName((int) $ay) . ' ' . $yil) ?>
+                </span>
             </div>
         </div>
     </div>
 
     <!-- Özet Kartları -->
-    <div class="col-4">
-        <div class="card card-sm bg-primary-lt border-0 shadow-sm" style="border-radius: 10px;">
-            <div class="card-body p-3 text-center">
-                <div class="text-uppercase font-weight-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em; opacity: 0.8;">TOPLAM GELİR</div>
-                <div class="h2 mb-0 text-primary fw-bold" id="modal-total-income">...</div>
+    <div class="col-12 col-sm-4">
+        <div class="card payroll-detail-summary">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="summary-icon bg-primary-lt text-primary"><i class="ti ti-trending-up"></i></span>
+                <div><div class="text-muted small mb-1">Toplam gelir</div><div class="h2 mb-0 text-primary fw-bold" id="modal-total-income">...</div></div>
             </div>
         </div>
     </div>
-    <div class="col-4">
-        <div class="card card-sm bg-danger-lt border-0 shadow-sm" style="border-radius: 10px;">
-            <div class="card-body p-3 text-center">
-                <div class="text-uppercase font-weight-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em; opacity: 0.8;">TOPLAM KESİNTİ</div>
-                <div class="h2 mb-0 text-danger fw-bold" id="modal-total-expense">...</div>
+    <div class="col-12 col-sm-4">
+        <div class="card payroll-detail-summary">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="summary-icon bg-danger-lt text-danger"><i class="ti ti-trending-down"></i></span>
+                <div><div class="text-muted small mb-1">Toplam kesinti</div><div class="h2 mb-0 text-danger fw-bold" id="modal-total-expense">...</div></div>
             </div>
         </div>
     </div>
-    <div class="col-4">
-        <div class="card card-sm bg-success-lt border-0 shadow-sm" style="border-radius: 10px;">
-            <div class="card-body p-3 text-center">
-                <div class="text-uppercase font-weight-bold mb-1" style="font-size: 0.65rem; letter-spacing: 0.05em; opacity: 0.8;">NET ÖDENECEK</div>
-                <div class="h2 mb-0 text-success fw-bold" id="modal-net-payment">...</div>
+    <div class="col-12 col-sm-4">
+        <div class="card payroll-detail-summary">
+            <div class="card-body p-3 d-flex align-items-center gap-3">
+                <span class="summary-icon bg-success-lt text-success"><i class="ti ti-cash"></i></span>
+                <div><div class="text-muted small mb-1">Net ödenecek</div><div class="h2 mb-0 text-success fw-bold" id="modal-net-payment">...</div></div>
             </div>
         </div>
     </div>
 
     <!-- Gelir & Gider Listesi -->
     <div class="col-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 14px; overflow: hidden;">
-            <div class="card-header bg-light py-2">
-                <h4 class="card-title text-sm">Finansal Özet</h4>
+        <div class="card payroll-detail-card overflow-hidden">
+            <div class="card-header px-3 px-md-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="card-title mb-1"><i class="ti ti-receipt-2 text-primary me-2"></i>Gelir ve Kesintiler</h4>
+                    <div class="text-muted small">Döneme ait bordro hareketleri</div>
+                </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-vcenter table-sm mb-0" style="font-size: 0.85rem;">
+                <table class="table table-vcenter payroll-finance-table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">İşlem</th>
+                            <th>Kalem</th>
+                            <th class="text-end">Tutar</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <?php
                         $total_income = 0;
@@ -176,9 +343,11 @@ try {
                         if (!empty($incomes)) {
                             foreach ($incomes as $income) {
                                 $total_income += $income->tutar;
+                                $income_name = htmlspecialchars((string) ($income->turu ?: 'Gelir'), ENT_QUOTES, 'UTF-8');
                                 echo "<tr>
-                                    <td><i class='ti ti-circle-plus text-success me-1'></i> {$income->turu}</td>
-                                    <td class='text-end fw-bold'>₺" . Helper::formattedMoneyWithoutCurrency($income->tutar) . "</td>
+                                    <td><span class='badge bg-success-lt text-success'><i class='ti ti-plus me-1'></i>Gelir</span></td>
+                                    <td class='fw-medium'>{$income_name}</td>
+                                    <td class='text-end fw-bold text-success'>+₺" . Helper::formattedMoneyWithoutCurrency($income->tutar) . "</td>
                                 </tr>";
                             }
                         }
@@ -188,18 +357,28 @@ try {
                             foreach ($expenses as $expense) {
                                 $total_expense += $expense->tutar;
                                 $name = $Defines->getTypeNameById($expense->kategori ?? 0) ?: $expense->turu;
+                                $name = htmlspecialchars((string) ($name ?: 'Kesinti'), ENT_QUOTES, 'UTF-8');
                                 echo "<tr>
-                                    <td><i class='ti ti-circle-minus text-danger me-1'></i> {$name}</td>
+                                    <td><span class='badge bg-danger-lt text-danger'><i class='ti ti-minus me-1'></i>Kesinti</span></td>
+                                    <td class='fw-medium'>{$name}</td>
                                     <td class='text-end fw-bold text-danger'>-₺" . Helper::formattedMoneyWithoutCurrency($expense->tutar) . "</td>
                                 </tr>";
                             }
                         }
                         
                         if (empty($incomes) && empty($expenses)) {
-                            echo "<tr><td colspan='2' class='text-center py-3 text-muted'>Kayıt bulunamadı</td></tr>";
+                            echo "<tr><td colspan='3' class='text-center py-5 text-muted'><i class='ti ti-receipt-off d-block fs-1 mb-2'></i>Bu döneme ait hareket bulunamadı.</td></tr>";
                         }
                         ?>
                     </tbody>
+                    <?php if (!empty($incomes) || !empty($expenses)): ?>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <td colspan="2" class="text-end fw-semibold">Net tutar</td>
+                                <td class="text-end fw-bold text-success">₺<?= Helper::formattedMoneyWithoutCurrency(max(0, $total_income - $total_expense)) ?></td>
+                            </tr>
+                        </tfoot>
+                    <?php endif; ?>
                 </table>
             </div>
         </div>
@@ -207,10 +386,13 @@ try {
 
     <!-- Günlük Puantaj Detayları -->
     <div class="col-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 14px; overflow: hidden;">
-            <div class="card-header bg-primary-lt py-2 d-flex justify-content-between align-items-center">
-                <h4 class="card-title text-sm text-primary mb-0">Günlük Puantaj Detayları</h4>
-                <div class="btn-group btn-group-sm no-print" role="group">
+        <div class="card payroll-detail-card overflow-hidden">
+            <div class="card-header px-3 px-md-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="card-title mb-1"><i class="ti ti-calendar-stats text-primary me-2"></i>Günlük Puantaj</h4>
+                    <div class="text-muted small">Ayın gün bazındaki çalışma ve hakediş dökümü</div>
+                </div>
+                <div class="btn-group btn-group-sm no-print" role="group" aria-label="Puantaj görünümü">
                     <button type="button" class="btn btn-outline-primary active" id="btn-view-list" onclick="togglePuantajView('list')">
                         <i class="ti ti-list me-1"></i> Liste
                     </button>
@@ -239,27 +421,42 @@ try {
             ?>
             
             <!-- LIST VIEW -->
-            <div class="table-responsive" id="puantaj-list-view" style="max-height: 250px;">
-                <table class="table table-vcenter table-sm mb-0" style="font-size: 0.8rem;">
-                    <thead class="bg-light sticky-top">
+            <div id="puantaj-list-view">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 px-md-4 py-2 border-bottom no-print">
+                    <span class="text-muted small"><i class="ti ti-info-circle me-1"></i>Tutarın üzerine gelerek hesaplamayı görebilirsiniz.</span>
+                    <label class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="show-recorded-days-only">
+                        <span class="form-check-label small">Yalnızca kayıtlı günler</span>
+                    </label>
+                </div>
+                <div class="table-responsive payroll-attendance-scroll">
+                <table class="table table-vcenter payroll-attendance-table mb-0">
+                    <thead>
                         <tr>
+                            <th style="width: 64px;" class="text-center">Gün</th>
                             <th>Tarih</th>
-                            <th>Tür</th>
+                            <th>Durum</th>
                             <th class="text-end">Saat</th>
                             <th class="text-end">Tutar</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($dates as $dateStr): ?>
-                            <?php 
+                            <?php
                             $pt = $puantaj_by_date[$dateStr] ?? null; 
                             $isWeekend = (date('N', strtotime($dateStr)) >= 6);
+                            $dayNames = [1 => 'Pazartesi', 2 => 'Salı', 3 => 'Çarşamba', 4 => 'Perşembe', 5 => 'Cuma', 6 => 'Cumartesi', 7 => 'Pazar'];
+                            $dayName = $dayNames[(int) date('N', strtotime($dateStr))];
                             ?>
-                            <tr class="<?php echo $isWeekend ? 'table-light' : ''; ?>">
-                                <td class="text-muted"><?php echo date('d.m.Y', strtotime($dateStr)); ?></td>
+                            <tr class="<?= $isWeekend ? 'payroll-weekend-row' : '' ?> <?= $pt ? 'has-puantaj-record' : 'empty-puantaj-record' ?>">
+                                <td class="text-center"><span class="payroll-day-number"><?= date('d', strtotime($dateStr)) ?></span></td>
+                                <td>
+                                    <div class="fw-medium"><?= htmlspecialchars($dayName) ?></div>
+                                    <div class="text-muted small"><?= date('d.m.Y', strtotime($dateStr)) ?></div>
+                                </td>
                                 <td>
                                     <?php if ($pt): ?>
-                                        <?php 
+                                        <?php
                                         $bgColor = $pt['ArkaPlanRengi'] ?: '#d4edda';
                                         $fontColor = $pt['FontRengi'] ?: '#155724';
                                         ?>
@@ -267,13 +464,13 @@ try {
                                             <?php echo htmlspecialchars($pt['PuantajKod'] ?: $pt['puantaj_adi']); ?>
                                         </span>
                                     <?php elseif ($isWeekend): ?>
-                                        <span class="badge bg-light text-muted">HT</span>
+                                        <span class="badge bg-secondary-lt text-secondary">Hafta tatili</span>
                                     <?php else: ?>
-                                        <span class="text-muted">—</span>
+                                        <span class="text-muted small">Kayıt yok</span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <?php 
+                                    <?php
                                     if ($pt) {
                                         $saatVal = ($pt['pt_turu'] != 'Saatlik') ? $PuantajModel->getPuantajSaatiByfirm($pt['puantaj_id']) : $pt['saat'];
                                         echo number_format($saatVal, 1, ',', '.');
@@ -283,12 +480,23 @@ try {
                                     ?>
                                 </td>
                                 <td class="text-end fw-bold">
-                                    <?php echo $pt && floatval($pt['tutar']) > 0 ? '₺' . Helper::formattedMoneyWithoutCurrency($pt['tutar']) : '₺0,00'; ?>
+                                    <?php
+                                    if ($pt && floatval($pt['tutar']) > 0) {
+                                        $popoverContent = $buildPopoverContent($pt, $saatVal);
+                                        echo '<span class="text-primary cursor-pointer text-decoration-underline" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-html="true" data-bs-title="Tutar Hesaplaması" data-bs-content="' . htmlspecialchars($popoverContent) . '">₺' . Helper::formattedMoneyWithoutCurrency($pt['tutar']) . ' <i class="ti ti-info-circle ms-0.5 text-muted" style="font-size: 0.75rem;"></i></span>';
+                                    } else {
+                                        echo '₺0,00';
+                                    }
+                                    ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+                </div>
+                <div class="d-none text-center py-5 text-muted" id="puantaj-filter-empty">
+                    <i class="ti ti-calendar-off d-block fs-1 mb-2"></i>Kayıtlı puantaj günü bulunamadı.
+                </div>
             </div>
 
             <!-- CALENDAR VIEW -->
@@ -362,7 +570,8 @@ try {
                                     }
                                 }
                                 if ($pt && floatval($pt['tutar']) > 0) {
-                                    echo '<span class="fw-bold text-success d-block" style="font-size: 0.65rem;">₺' . Helper::formattedMoneyWithoutCurrency($pt['tutar']) . '</span>';
+                                    $popoverContent = $buildPopoverContent($pt, $saatVal);
+                                    echo '<span class="fw-bold text-success d-block cursor-pointer" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-html="true" data-bs-title="Tutar Hesaplaması" data-bs-content="' . htmlspecialchars($popoverContent) . '" style="font-size: 0.65rem;">₺' . Helper::formattedMoneyWithoutCurrency($pt['tutar']) . '</span>';
                                 }
                                 
                                 echo '</div>';
@@ -385,6 +594,7 @@ try {
     $('#modal-total-income').text('₺<?php echo Helper::formattedMoneyWithoutCurrency($total_income); ?>');
     $('#modal-total-expense').text('₺<?php echo Helper::formattedMoneyWithoutCurrency($total_expense); ?>');
     $('#modal-net-payment').text('₺<?php echo Helper::formattedMoneyWithoutCurrency(max(0, $total_income - $total_expense)); ?>');
+    $('#payroll-detail-period').text(<?= json_encode(Date::monthName((int) $ay) . ' ' . $yil . ' dönemi', JSON_UNESCAPED_UNICODE) ?>);
     
     window.togglePuantajView = function(view) {
         if (view === 'list') {
@@ -398,5 +608,26 @@ try {
             $('#btn-view-list').removeClass('active');
             $('#btn-view-calendar').addClass('active');
         }
-    }
+    };
+
+    $('#show-recorded-days-only').on('change', function() {
+        var recordedOnly = this.checked;
+        var $rows = $('.payroll-attendance-table tbody tr');
+        $rows.toggle(!recordedOnly);
+
+        if (recordedOnly) {
+            $rows.filter('.has-puantaj-record').show();
+        }
+
+        var hasVisibleRow = $rows.filter(':visible').length > 0;
+        $('.payroll-attendance-scroll').toggle(hasVisibleRow);
+        $('#puantaj-filter-empty').toggleClass('d-none', hasVisibleRow);
+    });
+
+    $('#payroll-detail-content [data-bs-toggle="popover"]').each(function() {
+        bootstrap.Popover.getOrCreateInstance(this, {
+            trigger: 'hover focus',
+            container: 'body'
+        });
+    });
 </script>

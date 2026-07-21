@@ -1,9 +1,12 @@
 <?php
 require_once "App/Helper/jobs.php";
 require_once "App/Helper/teams.php";
+require_once "Model/Wages.php";
 
 $jobGroups = new Jobs();
 $teamsHelper = new Teams();
+$WagesModel = new Wages();
+
 use App\Helper\Helper;
 use App\Helper\Date;
 use App\Helper\Security;
@@ -14,6 +17,11 @@ if (isset($person->wage_type) && $person->wage_type == 1) {
 } else {
     $wage_type_label = 'Günlük Ücret';
     $blue_checked = 'checked';
+}
+
+$active_custom_wage = null;
+if (!empty($person->id)) {
+    $active_custom_wage = $WagesModel->getCurrentWage($person->id);
 }
 ?>
 <div class="row mb-3">
@@ -83,8 +91,15 @@ if (isset($person->wage_type) && $person->wage_type == 1) {
                     <label id="wage_type_label" for=""><?php echo $wage_type_label; ?></label>
                 </div>
                 <div class="col-md-2">
-                    <input type="text" class="form-control fw-bold money" name="daily_wages"
-                        value="<?php echo Helper::moneyToNumber($person->daily_wages ?? 0) ?? ''; ?>">
+                    <input type="text" class="form-control fw-bold money <?php echo $active_custom_wage ? 'border-warning bg-warning-lt' : ''; ?>" name="daily_wages"
+                        value="<?php echo Helper::moneyToNumber($person->daily_wages ?? 0) ?? ''; ?>"
+                        <?php echo $active_custom_wage ? 'title="Ücret Tanımları sekmesinde aktif özel ücret mevcuttur."' : ''; ?>>
+                    <?php if ($active_custom_wage): ?>
+                        <div class="form-text text-warning fw-semibold mt-1" style="font-size: 10.5px; line-height: 1.2;">
+                            <i class="ti ti-alert-triangle me-1"></i> Aktif Özel Ücret: <strong>₺<?php echo Helper::formattedMoneyWithoutCurrency($active_custom_wage->amount); ?></strong>
+                            <div class="text-muted fw-normal" style="font-size: 9.5px;">(Ücret Tanımları geçerlidir)</div>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-2 mt-2">
 

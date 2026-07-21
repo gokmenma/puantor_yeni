@@ -148,6 +148,16 @@ $(document).on("change", "#send_email_on_login", function () {
 // Original Home page settings save (retained for backward compatibility)
 $(document).on("click", "#home_save", function () {
   var form = $("#settingsHomeForm");
+  var overtimeRate = parseFloat($("#overtime_rate").val() || 0);
+  if (overtimeRate < 50) {
+    Swal.fire({
+      title: "Hata!",
+      text: "Fazla mesai oranı en az %50 olmalıdır.",
+      icon: "error",
+      confirmButtonText: "Tamam"
+    });
+    return false;
+  }
   let formData = new FormData(form[0]);
   formData.append("action", "homeSettings");
 
@@ -162,7 +172,7 @@ $(document).on("click", "#home_save", function () {
         title: title,
         text: data.message,
         icon: data.status,
-        confirmButtonText: "Ok"
+        confirmButtonText: "Tamam"
       });
     });
 });

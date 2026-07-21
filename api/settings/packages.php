@@ -53,11 +53,11 @@ if (isset($_POST['action']) && $_POST['action'] == 'buyPackage') {
     $AbonelikPaketleri = new AbonelikPaketleriModel();
     $pkg = $AbonelikPaketleri->find($package_id);
     
-    if (!$pkg) {
+    if (!$pkg || $pkg->aktif_mi != 1 || ($pkg->kullaniciya_goster_mi ?? 1) != 1) {
         echo json_encode(['status' => 'error', 'message' => 'Geçersiz paket seçimi.']);
         exit();
     }
-    
+
     // Calculate price and days
     $price = (float)$pkg->fiyat;
     if ($duration_type === 'yearly') {

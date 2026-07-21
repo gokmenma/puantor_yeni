@@ -1,5 +1,8 @@
 <?php
 ob_start();
+if (!defined('ROOT')) {
+    define('ROOT', __DIR__);
+}
 require_once 'Database/require.php';
 require_once 'Model/UserModel.php';
 require_once 'Model/RolesModel.php';
@@ -37,6 +40,43 @@ function alertdanger($message, $type = "danger", $title = "Hata!")
             </div>
         </div>';
 
+}
+
+function notifySuperadmins($userDb, $subject, $bodyHtml)
+{
+    try {
+        $stmt = $userDb->prepare("SELECT email, full_name FROM users WHERE superadmin = 1 AND deleted_at IS NULL");
+        $stmt->execute();
+        $superadmins = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+        if (empty($superadmins)) {
+            return;
+        }
+
+        require "mail-settings.php";
+
+        foreach ($superadmins as $admin) {
+            try {
+                $mail->clearAddresses();
+                $mail->clearReplyTos();
+                $mail->clearAttachments();
+
+                $mail->setFrom('bilgi@puantor.com.tr', 'Puantor');
+                $mail->addAddress($admin->email, $admin->full_name);
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body = $bodyHtml;
+                $mail->AltBody = strip_tags($bodyHtml);
+                $mail->CharSet = 'UTF-8';
+
+                $mail->send();
+            } catch (Exception $e) {
+                error_log('Yönetici e-posta gönderim hatası (' . $admin->email . '): ' . $e->getMessage());
+            }
+        }
+    } catch (Exception $e) {
+        error_log('Yönetici bildirimi hazırlanırken hata: ' . $e->getMessage());
+    }
 }
 ?>
 <html lang="tr">
@@ -491,16 +531,51 @@ function alertdanger($message, $type = "danger", $title = "Hata!")
                         } catch (Exception $e) {
                             error_log($e->getMessage());
                             echo alertdanger('E-posta gönderilemedi, lütfen daha sonra tekrar deneyiniz.');
+                            notifySuperadmins(
+                                $User->getDb(),
+                                'Kayıt Sırasında E-posta Gönderim Hatası',
+                                '<p>Yeni kullanıcı kaydı sırasında aktivasyon e-postası gönderilemedi.</p>
+                                 <p><strong>Ad Soyad:</strong> ' . htmlspecialchars($full_name, ENT_QUOTES, 'UTF-8') . '<br>
+                                 <strong>Firma:</strong> ' . htmlspecialchars($company_name, ENT_QUOTES, 'UTF-8') . '<br>
+                                 <strong>E-posta:</strong> ' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '<br>
+                                 <strong>Hata:</strong> ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '<br>
+                                 <strong>Tarih:</strong> ' . date('d.m.Y H:i:s') . '</p>'
+                            );
                         }
                         //**********EPOSTA GÖNDERME ALANI */
 
                         $db->commit();
+
+                        //Yeni kayıt bildirimi - yöneticilere mail gönderilir
+                        notifySuperadmins(
+                            $User->getDb(),
+                            'Yeni Kullanıcı Kaydı: ' . $full_name,
+                            '<p>Sisteme yeni bir kullanıcı kaydı yapıldı.</p>
+                             <p><strong>Ad Soyad:</strong> ' . htmlspecialchars($full_name, ENT_QUOTES, 'UTF-8') . '<br>
+                             <strong>Firma:</strong> ' . htmlspecialchars($company_name, ENT_QUOTES, 'UTF-8') . '<br>
+                             <strong>E-posta:</strong> ' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '<br>
+                             <strong>Tarih:</strong> ' . date('d.m.Y H:i:s') . '</p>'
+                        );
+
                         header('Location: register-success.php');
                     } catch (PDOException $exh) {
-                        if ($exh->errorInfo[1] == 1062) {
-                            $db->rollBack();
+                        $db->rollBack();
+                        error_log($exh->getMessage());
+                        if (($exh->errorInfo[1] ?? null) == 1062) {
                             echo alertdanger('Bu email adresi ile daha önce kayıt olunmuş.');
+                        } else {
+                            echo alertdanger('Kayıt sırasında beklenmeyen bir hata oluştu, lütfen daha sonra tekrar deneyiniz.');
                         }
+                        notifySuperadmins(
+                            $User->getDb(),
+                            'Kayıt Sırasında Veritabanı Hatası',
+                            '<p>Yeni kullanıcı kaydı sırasında veritabanı hatası oluştu.</p>
+                             <p><strong>Ad Soyad:</strong> ' . htmlspecialchars($full_name, ENT_QUOTES, 'UTF-8') . '<br>
+                             <strong>Firma:</strong> ' . htmlspecialchars($company_name, ENT_QUOTES, 'UTF-8') . '<br>
+                             <strong>E-posta:</strong> ' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '<br>
+                             <strong>Hata:</strong> ' . htmlspecialchars($exh->getMessage(), ENT_QUOTES, 'UTF-8') . '<br>
+                             <strong>Tarih:</strong> ' . date('d.m.Y H:i:s') . '</p>'
+                        );
                     }
                 }
             }

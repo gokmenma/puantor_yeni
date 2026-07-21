@@ -32,12 +32,97 @@ class Persons extends Model
         return parent::delete($id);
     }
 
+    public function find($id)
+    {
+        $person = parent::find($id);
+        if ($person) {
+            $this->attachCurrentWageToPerson($person);
+        }
+        return $person;
+    }
+
+    public function attachCurrentWages($persons, $date = null)
+    {
+        if (empty($persons) || !is_array($persons)) {
+            return $persons;
+        }
+
+        $person_ids = [];
+        foreach ($persons as $p) {
+            if (is_object($p) && isset($p->id)) {
+                $person_ids[] = (int)$p->id;
+            }
+        }
+        $person_ids = array_unique(array_filter($person_ids));
+
+        if (empty($person_ids)) {
+            return $persons;
+        }
+
+        $targetDate = $date ? date('Ymd', strtotime($date)) : date('Ymd');
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+
+        $sql = "SELECT person_id, amount, start_date, id 
+                FROM person_daily_wages 
+                WHERE person_id IN ($placeholders)
+                  AND REPLACE(start_date, '-', '') <= ? 
+                  AND (end_date IS NULL OR end_date = '' OR REPLACE(end_date, '-', '') >= ?)
+                ORDER BY REPLACE(start_date, '-', '') DESC, id DESC";
+
+        $params = array_merge($person_ids, [$targetDate, $targetDate]);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $activeWages = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+        $wageMap = [];
+        foreach ($activeWages as $w) {
+            if (!isset($wageMap[$w->person_id])) {
+                $wageMap[$w->person_id] = $w->amount;
+            }
+        }
+
+        foreach ($persons as &$p) {
+            if (is_object($p) && isset($p->id) && isset($wageMap[$p->id])) {
+                $p->daily_wages = $wageMap[$p->id];
+            }
+        }
+
+        return $persons;
+    }
+
+    public function attachCurrentWageToPerson($person, $date = null)
+    {
+        if (!$person || !is_object($person) || !isset($person->id)) {
+            return $person;
+        }
+        $arr = [$person];
+        $arr = $this->attachCurrentWages($arr, $date);
+        return $arr[0];
+    }
+
+    public function syncDailyWage($person_id)
+    {
+        if (empty($person_id)) {
+            return;
+        }
+        require_once __DIR__ . '/Wages.php';
+        $wagesModel = new Wages();
+        $activeWage = $wagesModel->getCurrentWage($person_id);
+        if ($activeWage && isset($activeWage->amount)) {
+            $stmt = $this->db->prepare("UPDATE persons SET daily_wages = ? WHERE id = ?");
+            $stmt->execute([$activeWage->amount, $person_id]);
+        }
+    }
+
     public function getPersonsByFirm($firm_id)
     {
         $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and deleted_at IS NULL');
         $query->execute([$firm_id]);
-        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
+        $results = $query->fetchAll(PDO::FETCH_OBJ);
+        $results = $this->attachCurrentWages($results);
+        return $this->filterPersons($results);
     }
+
 //Personelin ad soyadını getir
     public function getPersonName($person_id)
     {
@@ -51,7 +136,9 @@ class Persons extends Model
     {
         $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and job_end_date IS NOT NULL');
         $query->execute([$_SESSION['firm_id']]);
-        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
+        $results = $query->fetchAll(PDO::FETCH_OBJ);
+        $results = $this->attachCurrentWages($results);
+        return $this->filterPersons($results);
     }
 
     public function getPersonIdByFirm($firm_id)
@@ -120,7 +207,9 @@ class Persons extends Model
 
         $query = $this->db->prepare($sql);
         $query->execute($params);
-        return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
+        $results = $query->fetchAll(PDO::FETCH_OBJ);
+        $results = $this->attachCurrentWages($results);
+        return $this->filterPersons($results);
     }
 
 
@@ -133,10 +222,19 @@ class Persons extends Model
         if (!$person) {
             return "Personel Silinmiş";
         }
+        if ($field === 'daily_wages') {
+            $this->attachCurrentWageToPerson($person);
+        }
         return $person->$field;
     }
-    public function getDailyWages($person_id)
+    public function getDailyWages($person_id, $date = null)
     {
+        require_once __DIR__ . '/Wages.php';
+        $wagesModel = new Wages();
+        $activeWage = $wagesModel->getCurrentWage($person_id, $date);
+        if ($activeWage && isset($activeWage->amount)) {
+            return (object)['daily_wages' => $activeWage->amount];
+        }
         $query = $this->db->prepare('SELECT daily_wages FROM persons WHERE id = ?');
         $query->execute([$person_id]);
         return $query->fetch(PDO::FETCH_OBJ);

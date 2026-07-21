@@ -1,4 +1,7 @@
 <?php
+if (!defined('ROOT')) {
+    define('ROOT', __DIR__);
+}
 require_once "Database/require.php";
 require_once "Model/UserModel.php";
 require_once "App/Helper/security.php";

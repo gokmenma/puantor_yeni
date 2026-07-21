@@ -5,6 +5,7 @@ require_once ROOT . '/App/Helper/security.php';
 
 use App\Helper\Security;
 
+$perm->checkAuthorize('izin_hakedisler');
 $Auths->checkFirmReturn();
 
 $firma_id    = (int) ($_SESSION['firm_id'] ?? 0);

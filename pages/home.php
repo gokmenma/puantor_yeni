@@ -146,6 +146,7 @@ use App\Helper\Helper;
         <div class="container-xl">
             <!-- Stats Cards Row -->
             <div class="row row-deck row-cards" id="stats-sortable">
+                <?php if ($perm->hasPermission('personnel_page')): ?>
                 <div class="col-md-6 col-xl-3" data-id="stat-personel">
                     <div class="card card-sm">
                         <div class="mac-titlebar">
@@ -172,6 +173,8 @@ use App\Helper\Helper;
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
+                <?php if ($perm->hasPermission('project_add_update')): ?>
                 <div class="col-md-6 col-xl-3" data-id="stat-proje">
                     <div class="card card-sm">
                         <div class="mac-titlebar">
@@ -198,6 +201,8 @@ use App\Helper\Helper;
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
+                <?php if ($perm->hasPermission('income_expense_operations')): ?>
                 <div class="col-md-6 col-xl-3" data-id="stat-gelir">
                     <div class="card card-sm">
                         <div class="mac-titlebar">
@@ -224,6 +229,8 @@ use App\Helper\Helper;
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
+                <?php if ($perm->hasPermission('income_expense_operations')): ?>
                 <div class="col-md-6 col-xl-3" data-id="stat-gider">
                     <div class="card card-sm">
                         <div class="mac-titlebar">
@@ -250,6 +257,7 @@ use App\Helper\Helper;
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
 
             <!-- Quick Actions Header -->
@@ -276,18 +284,25 @@ use App\Helper\Helper;
                         </div>
                         <div class="card-body">
                             <div class="btn-list">
+                                <?php if ($perm->hasPermission('personnel_add_update')): ?>
                                 <a href="index.php?p=persons/manage" class="btn btn-outline-primary p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
                                     <i class="ti ti-user-plus mb-1" style="font-size: 20px;"></i>
                                     <span>Personel Ekle</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($perm->hasPermission('project_add_update')): ?>
                                 <a href="index.php?p=projects/manage" class="btn btn-outline-primary p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
                                     <i class="ti ti-building-plus mb-1" style="font-size: 20px;"></i>
                                     <span>Proje Ekle</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($perm->hasPermission('company_page')): ?>
                                 <a href="index.php?p=companies/list#new" class="btn btn-outline-primary p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
                                     <i class="ti ti-building-store mb-1" style="font-size: 20px;"></i>
                                     <span>Firma Ekle</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($perm->hasPermission('income_expense_operations')): ?>
                                 <a href="index.php?p=financial/transactions/list" class="btn btn-outline-success p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
                                     <i class="ti ti-trending-up mb-1" style="font-size: 20px;"></i>
                                     <span>Gelir Ekle</span>
@@ -296,10 +311,13 @@ use App\Helper\Helper;
                                     <i class="ti ti-trending-down mb-1" style="font-size: 20px;"></i>
                                     <span>Gider Ekle</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($perm->hasPermission('gorevler')): ?>
                                 <a href="index.php?p=gorevler/list" class="btn btn-outline-primary p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
                                     <i class="ti ti-plus mb-1" style="font-size: 20px;"></i>
                                     <span>Görev Ekle</span>
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

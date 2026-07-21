@@ -130,6 +130,10 @@ foreach ($persons as $item) {
                     $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
                     $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
                     $work_hour = str_replace(',', '.', $work_hour);
+                    $overtime_rate = floatval($Settings->getSettings("overtime_rate")->set_value ?? 50);
+                    if ($overtime_rate < 50) { $overtime_rate = 50; }
+                    $overtime_multiplier = 1 + ($overtime_rate / 100);
+
                     if ($person->wage_type == 1) {
                         $puantajObj->insertDefaultWeekendRecords($person->id, $firstDay, $lastDay, $project_id, $firm_id);
                         $puantajRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
@@ -160,6 +164,7 @@ foreach ($persons as $item) {
                                 if ($puantaj_turu->Turu == 'Saatlik') {
                                     $saat = floatval($puantaj_turu->PuantajSaati);
                                     $pay_saat = $saat;
+                                    $mult = 1;
                                 } else {
                                     $raw_saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
                                     $saat = is_numeric($raw_saat) ? floatval($raw_saat) : 0;
@@ -170,10 +175,11 @@ foreach ($persons as $item) {
                                     } else {
                                         $pay_saat = $saat;
                                     }
+                                    $mult = $overtime_multiplier;
                                 }
                                 $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
                                 $eff_hourly = $defined_wage > 0 ? (($defined_wage / 30) / floatval($work_hour)) : $hourly_rate;
-                                $tutar = round($pay_saat * $eff_hourly, 2);
+                                $tutar = round($pay_saat * $eff_hourly * $mult, 2);
                             } else {
                                 if ($puantaj_turu && $puantaj_turu->Turu != 'Saatlik') {
                                     $raw_saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
@@ -193,14 +199,32 @@ foreach ($persons as $item) {
                         $ucret = $person->daily_wages / floatval($work_hour);
                         foreach ($puantajRecords as $p_record) {
                             $defined_wage = $wages->getWageByPersonIdAndDate($person->id, $p_record->gun)->amount ?? 0;
-                            $current_daily_wage = $defined_wage > 0 ? ($defined_wage / floatval($work_hour)) : $ucret;
+                            $current_hourly_wage = $defined_wage > 0 ? ($defined_wage / floatval($work_hour)) : $ucret;
                             $puantaj_turu = $puantajObj->getPuantajTuruById($p_record->puantaj_id);
+                            $is_overtime = $puantaj_turu && $puantaj_turu->Turu == 'Fazla Çalışma';
                             if ($puantaj_turu->Turu != 'Saatlik') {
                                 $saat = $puantajObj->getPuantajSaatiByfirm($p_record->puantaj_id);
-                                $tutar = floatval($saat) * $current_daily_wage;
+                                if ($is_overtime) {
+                                    if (!empty($puantaj_turu->EklenecekSaat)) {
+                                        if (($puantaj_turu->operant ?? '+') == '+') {
+                                            $extra_hours = floatval($puantaj_turu->EklenecekSaat);
+                                        } elseif (($puantaj_turu->operant ?? '+') == '*') {
+                                            $extra_hours = max(0, (floatval($puantaj_turu->EklenecekSaat) - 1) * floatval($work_hour));
+                                        } else {
+                                            $extra_hours = floatval($puantaj_turu->EklenecekSaat);
+                                        }
+                                    } else {
+                                        $extra_hours = max(0, floatval($saat) - floatval($work_hour));
+                                    }
+                                    $normal_pay = floatval($work_hour) * $current_hourly_wage;
+                                    $overtime_pay = $extra_hours * $current_hourly_wage * $overtime_multiplier;
+                                    $tutar = round($normal_pay + $overtime_pay, 2);
+                                } else {
+                                    $tutar = round(floatval($saat) * $current_hourly_wage, 2);
+                                }
                             } else {
                                 $saat = $puantaj_turu->PuantajSaati;
-                                $tutar = floatval($saat) * $current_daily_wage;
+                                $tutar = round(floatval($saat) * $current_hourly_wage, 2);
                             }
                             $puantajObj->saveWithAttr(['id' => $p_record->id, 'tutar' => $tutar, 'saat' => $saat]);
                         }
@@ -528,10 +552,11 @@ $total_kalan = $total_gelir - $total_odeme;
                                     </td>
 
 
-                                    <td class="text-end view-payroll-detail" 
-                                        data-id="<?php echo $id ?>" 
-                                        data-month="<?php echo $month ?>" 
+                                    <td class="text-end view-payroll-detail"
+                                        data-id="<?php echo $id ?>"
+                                        data-month="<?php echo $month ?>"
                                         data-year="<?php echo $year ?>"
+                                        role="button" tabindex="0" title="Bordro detayını görüntüle"
                                         style="cursor: pointer;"
                                         data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
                                         <?php echo Helper::formattedMoney($odeme ?? 0); ?>
@@ -542,10 +567,11 @@ $total_kalan = $total_gelir - $total_odeme;
 
 
                                     <!-- Bakiye rengini belirle ve göster -->
-                                    <td class="text-end <?php echo Helper::balanceColor($kalan) ?> view-payroll-detail" 
-                                        data-id="<?php echo $id ?>" 
-                                        data-month="<?php echo $month ?>" 
+                                    <td class="text-end <?php echo Helper::balanceColor($kalan) ?> view-payroll-detail"
+                                        data-id="<?php echo $id ?>"
+                                        data-month="<?php echo $month ?>"
                                         data-year="<?php echo $year ?>"
+                                        role="button" tabindex="0" title="Bordro detayını görüntüle"
                                         style="cursor: pointer;"
                                         data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
                                         <!-- //Bakiyesini yazdır -->

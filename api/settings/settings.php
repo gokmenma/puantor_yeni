@@ -131,11 +131,21 @@ if ($_POST["action"] == "send_email_on_login") {
 if ($_POST["action"] == "homeSettings") {
 
     $work_hour = $_POST["work_hour"];
+    $overtime_rate = isset($_POST["overtime_rate"]) ? floatval($_POST["overtime_rate"]) : 50;
+    if ($overtime_rate < 50) {
+        $res = [
+            "status" => "error",
+            "message" => "Fazla mesai oranı en az %50 olmalıdır."
+        ];
+        echo json_encode($res);
+        exit();
+    }
     $show_white_collar = isset($_POST["show_white_collar_in_puantaj"]) ? 1 : 0;
     $yillik_izin_dusmeyecek_gunler = $_POST["yillik_izin_dusmeyecek_gunler"] ?? "6,7";
 
     try {
         $Settings->upsertSetting("work_hour", $work_hour);
+        $Settings->upsertSetting("overtime_rate", $overtime_rate);
         $Settings->upsertSetting("show_white_collar_in_puantaj", $show_white_collar);
         $Settings->upsertSetting("yillik_izin_dusmeyecek_gunler", $yillik_izin_dusmeyecek_gunler);
         

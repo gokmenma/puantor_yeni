@@ -15,6 +15,8 @@ class Auths extends Model
     private static $cachedAuthsById = [];
     private static $userAuthIds = null;
     private static $authsLoaded = false;
+    private static $packageAllowedAuthIds = null;
+    private static $packageRestrictionLoaded = false;
 
     public function __construct()
     {
@@ -24,7 +26,7 @@ class Auths extends Model
     private function loadAuths()
     {
         if (!self::$authsLoaded) {
-            $sql = $this->db->prepare("SELECT id, auth_name, superadmin FROM $this->table WHERE is_active = 1");
+            $sql = $this->db->prepare("SELECT id, auth_name, superadmin, parent_id FROM $this->table WHERE is_active = 1");
             $sql->execute();
             $rows = $sql->fetchAll(PDO::FETCH_OBJ);
             foreach ($rows as $row) {
@@ -62,7 +64,61 @@ class Auths extends Model
                 }
             }
             self::$userAuthIds = array_keys($allAuthIds);
+
+            $packageAllowedAuthIds = $this->loadPackageModuleRestriction();
+            if ($packageAllowedAuthIds !== null) {
+                self::$userAuthIds = array_values(array_intersect(self::$userAuthIds, $packageAllowedAuthIds));
+            }
         }
+    }
+
+    // Abonenin paketi modül kısıtlıyorsa izin verilen auth id'lerini (alt yetkiler dahil) döner, kısıtlama yoksa null döner
+    private function loadPackageModuleRestriction()
+    {
+        if (self::$packageRestrictionLoaded) {
+            return self::$packageAllowedAuthIds;
+        }
+        self::$packageRestrictionLoaded = true;
+
+        $currentUser = $_SESSION['user'] ?? null;
+        if (!$currentUser) {
+            return self::$packageAllowedAuthIds;
+        }
+
+        $owner_id = $currentUser->id;
+        if (!empty($currentUser->parent_id) && $currentUser->parent_id != $currentUser->id) {
+            $owner_id = $currentUser->parent_id;
+        }
+
+        $sql = $this->db->prepare("
+            SELECT ap.modul_auth_ids
+            FROM kullanici_abonelikleri ka
+            JOIN abonelik_paketleri ap ON ap.id = ka.paket_id
+            WHERE ka.kullanici_id = ? AND ka.durum = 'aktif' AND ka.bitis_tarihi >= CURDATE()
+            ORDER BY ka.id DESC LIMIT 1
+        ");
+        $sql->execute([$owner_id]);
+        $modul_auth_ids = $sql->fetchColumn();
+
+        if (empty($modul_auth_ids)) {
+            return self::$packageAllowedAuthIds;
+        }
+
+        $this->loadAuths();
+
+        $allowed = array_fill_keys(array_filter(array_map('intval', explode(',', $modul_auth_ids))), true);
+        do {
+            $changed = false;
+            foreach (self::$cachedAuthsById as $id => $auth) {
+                if (isset($allowed[$auth->parent_id]) && !isset($allowed[$id])) {
+                    $allowed[$id] = true;
+                    $changed = true;
+                }
+            }
+        } while ($changed);
+
+        self::$packageAllowedAuthIds = array_keys($allowed);
+        return self::$packageAllowedAuthIds;
     }
 
 
