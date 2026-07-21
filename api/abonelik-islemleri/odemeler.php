@@ -3,6 +3,7 @@ require_once "../../Database/require.php";
 require_once "../../Model/OdemelerModel.php";
 require_once "../../Model/AbonelikPaketleriModel.php";
 require_once "../../Model/KullaniciAbonelikleriModel.php";
+require_once "../../Model/Auths.php";
 require_once "../../App/Helper/security.php";
 
 use App\Helper\Security;
@@ -10,6 +11,8 @@ use App\Helper\Security;
 $odemelerModel = new OdemelerModel();
 $paketModel = new AbonelikPaketleriModel();
 $abonelikModel = new KullaniciAbonelikleriModel();
+$Auths = new Auths();
+$Auths->hasPermissionReturn("abonelik_satin_alimlari");
 
 if (isset($_POST["action"]) && $_POST["action"] == "updatePaymentStatus") {
     $encryptedId = $_POST["id"] ?? "";

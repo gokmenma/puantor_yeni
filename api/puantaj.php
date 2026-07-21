@@ -29,14 +29,31 @@ if ($_POST['action'] == 'savePuantaj') {
     $save_count = 0;
     $error_count = 0;
 
-    //Günlük calisma saatini getir
-    $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
-    $work_hour = floatval(str_replace(',', '.', $work_hour));
-    $overtime_rate = floatval($Settings->getSettings("overtime_rate")->set_value ?? 50);
-    if ($overtime_rate < 50) { $overtime_rate = 50; }
-    $overtime_multiplier = 1 + ($overtime_rate / 100);
+    require_once ROOT . '/Model/Bordro.php';
+    $bordro_check = new Bordro();
+    $firm_id = (int)($_SESSION['firm_id'] ?? 0);
 
     $json_data = json_decode($_POST['data'], true);
+    if (!empty($json_data)) {
+        // Dönem kilit denetimi
+        foreach ($json_data as $pk => $pi) {
+            foreach ($pi as $day_key => $pval) {
+                $d_time = strtotime($day_key);
+                if ($d_time) {
+                    $chk_year = date('Y', $d_time);
+                    $chk_month = date('m', $d_time);
+                    if ($bordro_check->getPeriodVisibility($firm_id, $chk_year, $chk_month) == 1) {
+                        echo json_encode([
+                            'status' => 'error',
+                            'message' => "{$chk_month}/{$chk_year} döneminin bordrosu kapatıldığı için puantaj verisi değiştirilemez!"
+                        ]);
+                        exit;
+                    }
+                }
+                break 2;
+            }
+        }
+    }
     $error_wages = [];
 
     if (!empty($json_data)) {

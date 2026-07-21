@@ -30,6 +30,15 @@ if ($id == null && isset($_GET["id"])) {
 $personObj = new Persons();
 $person = $personObj->find($id);
 
+$firm_id = $_SESSION['firm_id'] ?? ($person->firm_id ?? 0);
+$header_persons = [];
+if ($firm_id > 0) {
+    $header_persons = $personObj->getPersonsByFirm($firm_id);
+    usort($header_persons, function($a, $b) {
+        return strcmp(mb_strtolower($a->full_name, 'UTF-8'), mb_strtolower($b->full_name, 'UTF-8'));
+    });
+}
+
 $pageTitle = $id > 0 ? 'Personel Güncelle' : 'Yeni Personel';
 
 //Varsayılan kasayı getir
@@ -113,13 +122,20 @@ $personProjectsIds = rtrim($personProjectsIds, ',');
                                     <?php echo $person->full_name ?? ''; ?>
                                 </div>
                             </div>
-                            <div class="col-auto d-flex">
-                                <!-- Page title actions -->
-                                <!-- <div class="col-auto ms-auto d-print-none me-2">
-                                    <a href="#" class="btn btn-teal route-link" data-page="persons/manage">
-                                        <i class="ti ti-plus icon me-2"></i> Yeni
-                                    </a>
-                                </div> -->
+                            <div class="col-auto d-flex align-items-center">
+                                <?php if (!empty($header_persons)): ?>
+                                <div class="d-print-none me-2" style="min-width: 230px;">
+                                    <select class="form-select select2" id="headerPersonSelect">
+                                        <option value="">Personel Hızlı Seç...</option>
+                                        <?php foreach ($header_persons as $hp): ?>
+                                            <?php $hp_encrypted = Security::encrypt($hp->id); ?>
+                                            <option value="<?php echo $hp_encrypted; ?>" <?php echo ($hp->id == $id) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($hp->full_name, ENT_QUOTES, 'UTF-8'); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <?php endif; ?>
                                 <div class="col-auto ms-auto d-print-none me-2">
                                     <button type="button" class="btn btn-outline-secondary route-link"
                                         data-page="persons/list">
@@ -127,12 +143,6 @@ $personProjectsIds = rtrim($personProjectsIds, ',');
                                         Listeye Dön
                                     </button>
                                 </div>
-                                <!-- <div class="col-auto ms-auto d-print-none">
-                                    <button type="button" class="btn btn-primary" id="savePerson">
-                                        <i class="ti ti-device-floppy icon me-2"></i>
-                                        Kaydet
-                                    </button>
-                                </div> -->
                             </div>
                         </div>
                     </div>
@@ -269,6 +279,20 @@ $(document).ready(function() {
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
         var target = $(e.target).attr("href");
         localStorage.setItem('active_personel_tab', target);
+    });
+
+    if ($.fn.select2) {
+        $('#headerPersonSelect').select2({
+            width: '100%',
+            placeholder: 'Personel Hızlı Seç...'
+        });
+    }
+
+    $('#headerPersonSelect').on('change', function() {
+        var selectedId = $(this).val();
+        if (selectedId && selectedId !== '<?php echo $new_id; ?>') {
+            window.location = 'index.php?p=persons/manage&id=' + selectedId;
+        }
     });
 });
 </script>

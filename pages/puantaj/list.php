@@ -1023,11 +1023,42 @@ div.dt-container .dt-layout-cell.dt-layout-end {
 #puantajTable td[data-tooltip]:hover {
     z-index: 1050 !important;
 }
+
+.period-closed-table {
+    opacity: 0.68 !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+.period-closed-table td, 
+.period-closed-table th, 
+.period-closed-table input, 
+.period-closed-table button {
+    cursor: not-allowed !important;
+}
+
 </style>
 
 <?php include_once 'content/puantaj-turleri-modal.php' ?>
 <?php include_once 'content/puantaj-istatistik-modal.php' ?>
-<?php include_once 'content/puantaj-excel-modal.php' ?>
+<?php
+require_once ROOT . '/Model/Bordro.php';
+$bordro_model = new Bordro();
+$is_period_closed = ($bordro_model->getPeriodVisibility($firm_id, $year, $month) == 1);
+?>
+<script>
+window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
+</script>
+
+<?php if ($is_period_closed): ?>
+<div class="container-xl mt-3">
+    <div class="alert alert-important alert-danger d-flex align-items-center mb-0 shadow-sm" role="alert">
+        <i class="ti ti-lock icon me-2 fs-2"></i>
+        <div>
+            <strong>Dönem Kapatılmıştır!</strong> <?php echo Date::monthName($month) . ' ' . $year; ?> döneminin bordrosu kapatıldığı için bu ayın puantaj verileri kilitlenmiştir, değişiklik yapılamaz.
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class='container-xl mt-3'>
     <form action='' method='post' id='puantajInfoForm'>
@@ -1206,7 +1237,7 @@ div.dt-container .dt-layout-cell.dt-layout-end {
 
                         <?php if ( $Auths->hasPermission( 'puantaj_data_entry' ) ) {
             ?>
-                        <button type='button' class='btn btn-primary float-end' onclick='puantaj_olustur()'>
+                        <button type='button' class='btn btn-primary float-end' onclick='puantaj_olustur()' <?php echo $is_period_closed ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : ''; ?>>
                             <i class='ti ti-device-floppy icon me-2'></i> Kaydet
                         </button>
                         <?php }
@@ -1326,7 +1357,7 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                     </div>
                 </div>
 
-                <div class='table-responsive'>
+                <div class='table-responsive <?php echo $is_period_closed ? "period-closed-table" : ""; ?>'>
                     <table id='puantajTable' class='table card-table text-nowrap datatable'>
                         <thead class='sticky'>
                             <tr>
@@ -1349,10 +1380,11 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                     : '';
                 $style = 'width: 40px !important; min-width: 40px !important;';
                 $isSunday = ( date( 'N', strtotime( $date ) ) == 7 );
+                $isSaturday = ( date( 'N', strtotime( $date ) ) == 6 );
                 if ( !$nationalHoliday && $isSunday ) {
                     $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
-                } else if ( !$nationalHoliday && Date::isWeekend( $date ) ) {
-                    $style .= 'background-color:#99A98F;color:white;';
+                } else if ( !$nationalHoliday && $isSaturday ) {
+                    $style .= 'background-color:#f1f5f9 !important;color:#334155 !important;font-weight:700 !important;';
                 }
                 echo ' <th class="gunadi' . $holidayClass . '"' . $holidayTitle . ' style="' . $style . '">' . Date::gunadi( $date ) . '</th>';
                 ?>
@@ -1397,8 +1429,11 @@ div.dt-container .dt-layout-cell.dt-layout-end {
                     : '';
                 $style = 'width: 40px !important; min-width: 40px !important;';
                 $isSunday = ( date( 'N', strtotime( $date ) ) == 7 );
+                $isSaturday = ( date( 'N', strtotime( $date ) ) == 6 );
                 if ( !$nationalHoliday && $isSunday ) {
                     $style .= 'background-color:#fee2e2 !important;color:#b91c1c !important;';
+                } else if ( !$nationalHoliday && $isSaturday ) {
+                    $style .= 'background-color:#f1f5f9 !important;color:#334155 !important;font-weight:700 !important;';
                 }
                 echo '<th class="head-date' . $holidayClass . '"' . $holidayTitle . ' style="' . $style . '"><span>' . date( 'd', strtotime( $date ) ) . '</span></th>';
                 ?>

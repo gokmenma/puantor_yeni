@@ -47,6 +47,17 @@ $Auths = new Auths();
                 //Gelen menü isimlerinde döngüye girilir
                 foreach ($top_menus as $menu) {
 
+                    $menu_auth = $Auths->getAuthIdByTitle($menu->page_name);
+
+                    // Alt menü yetkisi üst menüyü görünür kılsa bile, auths tablosunda
+                    // superadmin olarak işaretli bir yönetim menüsü normal kullanıcıya
+                    // hiçbir koşulda gösterilmez.
+                    if (($_SESSION['user']->superadmin ?? 0) != 1
+                        && (($menu_auth && (int) ($menu_auth->superadmin ?? 0) === 1)
+                            || (!$menu_auth && $Auths->isSuperadminOnlyPage($menu->page_link)))) {
+                        continue;
+                    }
+
                     // Superadmin menü kontrolü
                     if ($menu->page_link == 'supports/admin-tickets' && ($_SESSION['user']->superadmin ?? 0) != 1) {
                         continue;
@@ -77,7 +88,7 @@ $Auths = new Auths();
                     //Eğer menü yetkiye tabi ise yetki kontrolü yapılır
                     if ($menu->is_authorize == 1) {
                         //Sayfa Adından Auths tablosundaki title alanı ile sorgulanarak yetki id alınır
-                        $auth_id = $Auths->getAuthIdByTitle($menu->page_name)?->id ?? 0;
+                        $auth_id = $menu_auth?->id ?? 0;
 
                         //Yetki id'si gelen sayfa için yetki kontrolü yapılır
                         if (!$Auths->AuthorizeByAuthId($auth_id) && !$has_authorized_submenu) {

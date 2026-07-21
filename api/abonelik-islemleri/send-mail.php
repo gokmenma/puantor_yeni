@@ -2,6 +2,7 @@
 define("ROOT", $_SERVER["DOCUMENT_ROOT"]);
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/vendor/autoload.php';
+require_once ROOT . '/Model/Auths.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -12,10 +13,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user'])) {
     echo json_encode(['success' => false, 'message' => 'Oturum açmanız gerekmektedir.']);
     exit;
 }
+
+$Auths = new Auths();
+$Auths->hasPermissionReturn('aboneler_sayfasi');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Geçersiz istek yöntemi.']);

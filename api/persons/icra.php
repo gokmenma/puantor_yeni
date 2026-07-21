@@ -161,6 +161,10 @@ if ($action == 'list') {
             'kalan_borc' => Helper::formattedMoney($kalan_borc),
             'kalan_borc_raw' => $kalan_borc,
             'durum' => $f->durum,
+            'baslama_tarihi' => $f->baslama_tarihi,
+            'baslama_tarihi_formatted' => !empty($f->baslama_tarihi) ? Date::dmY($f->baslama_tarihi) : '',
+            'bitis_tarihi' => $f->bitis_tarihi,
+            'bitis_tarihi_formatted' => !empty($f->bitis_tarihi) ? Date::dmY($f->bitis_tarihi) : '',
             'aciklama' => htmlspecialchars($f->aciklama ?? '', ENT_QUOTES, 'UTF-8'),
             'gelen_evrak' => htmlspecialchars($f->gelen_evrak ?? '', ENT_QUOTES, 'UTF-8'),
             'giden_evrak' => htmlspecialchars($f->giden_evrak ?? '', ENT_QUOTES, 'UTF-8'),
@@ -223,6 +227,8 @@ if ($action == 'save') {
     $kesinti_orani = ($kesinti_yontemi == 'oran') ? trim($_POST['kesinti_orani'] ?? '') : null;
     $kesinti_tutari = ($kesinti_yontemi == 'sabit') ? Helper::formattedMoneyToNumber($_POST['kesinti_tutari'] ?? '0') : null;
     $durum = $_POST['durum'] ?? 'Bekliyor';
+    $baslama_tarihi = !empty($_POST['baslama_tarihi']) ? Date::ymd($_POST['baslama_tarihi']) : null;
+    $bitis_tarihi = !empty($_POST['bitis_tarihi']) ? Date::ymd($_POST['bitis_tarihi']) : null;
     $aciklama = trim($_POST['aciklama'] ?? '');
     $gelen_evrak = trim($_POST['gelen_evrak'] ?? '');
     $giden_evrak = trim($_POST['giden_evrak'] ?? '');
@@ -317,6 +323,8 @@ if ($action == 'save') {
         'dosya_no' => $dosya_no,
         'alacakli' => $alacakli,
         'toplam_borc' => $toplam_borc,
+        'baslama_tarihi' => $baslama_tarihi,
+        'bitis_tarihi' => $bitis_tarihi,
         'kesinti_yontemi' => $kesinti_yontemi,
         'kesinti_orani' => $kesinti_orani,
         'kesinti_tutari' => $kesinti_tutari,

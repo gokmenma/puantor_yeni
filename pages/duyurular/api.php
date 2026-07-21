@@ -23,6 +23,7 @@ $is_main_user  = !$is_superadmin && (($_SESSION['user']->parent_id ?? 1) == 0);
 
 require_once ROOT . '/Model/Auths.php';
 $_api_auths = new Auths();
+$_api_auths->hasPermissionReturn('duyurular');
 $can_add = $is_superadmin || $_api_auths->hasPermission('duyuru_ekle');
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';

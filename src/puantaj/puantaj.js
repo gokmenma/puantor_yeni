@@ -36,6 +36,12 @@ function updateActiveTypeUI() {
 }
 
 function applyTypeToClickedCells(typeInfo) {
+  if (window.isPeriodClosed) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire('Dönem Kapatılmıştır', 'Bu dönemin bordrosu kapatıldığı için puantaj verisi değiştirilemez.', 'warning');
+    }
+    return;
+  }
   const clickedCells = $("table td.clicked");
   if (clickedCells.length === 0) return;
 
@@ -235,6 +241,12 @@ $(document).keydown(function (event) {
 });
 
 function puantaj_olustur() {
+  if (window.isPeriodClosed) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire('Dönem Kapatılmıştır', 'Bu dönemin bordrosu kapatıldığı için puantaj verisi kaydedilemez.', 'warning');
+    }
+    return;
+  }
   var project_ids = $("#projects").val() || [];
   var project_id = project_ids.length === 1 ? project_ids[0] : "0";
   var year = $("#year").val();

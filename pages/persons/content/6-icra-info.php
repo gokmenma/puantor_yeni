@@ -119,6 +119,7 @@ $person_id_encrypted = Security::encrypt($person->id);
                         <th>Gelen Evrak</th>
                         <th>Giden Evrak</th>
                         <th class="text-center" style="width: 70px;">Belge</th>
+                        <th>Kesinti Tarihleri</th>
                         <th class="text-end">Borç Tutarı</th>
                         <th class="text-end">Yapılan Kesinti</th>
                         <th class="text-end">Kalan Borç</th>
@@ -184,6 +185,18 @@ $person_id_encrypted = Security::encrypt($person->id);
                     <div class="mb-3">
                         <label class="form-label required fw-bold">Alacaklı</label>
                         <input type="text" class="form-control" name="alacakli" id="icra-alacakli" placeholder="Örn: Türkiye İş Bankası A.Ş." required>
+                    </div>
+
+                    <!-- Kesinti Tarihleri -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Kesintiye Başlama Tarihi</label>
+                            <input type="text" class="form-control flatpickr-date" name="baslama_tarihi" id="icra-baslama-tarihi" placeholder="Örn: 01.07.2026" autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Kesinti Bitiş Tarihi</label>
+                            <input type="text" class="form-control flatpickr-date" name="bitis_tarihi" id="icra-bitis-tarihi" placeholder="Örn: 31.12.2026" autocomplete="off">
+                        </div>
                     </div>
 
                     <!-- Dördüncü Satır: Kesinti Yöntemi & Oran/Tutar Girişi -->
@@ -382,11 +395,9 @@ $(document).ready(function() {
                                 belgeLink = '<span class="text-muted fs-6">-</span>';
                             }
 
-                            let kesintiDetay = '';
-                            if (f.kesinti_yontemi === 'oran') {
-                                kesintiDetay = `<span class="badge bg-light text-dark">% ${f.kesinti_orani}</span>`;
-                            } else {
-                                kesintiDetay = `<span class="badge bg-light text-dark">${f.kesinti_tutari}</span>`;
+                            let dateRange = '-';
+                            if (f.baslama_tarihi_formatted || f.bitis_tarihi_formatted) {
+                                dateRange = `${f.baslama_tarihi_formatted || '...'} - ${f.bitis_tarihi_formatted || '...'}`;
                             }
 
                             rowsHtml += `
@@ -397,6 +408,7 @@ $(document).ready(function() {
                                     <td><small class="text-secondary">${f.gelen_evrak || '-'}</small></td>
                                     <td><small class="text-secondary">${f.giden_evrak || '-'}</small></td>
                                     <td class="text-center">${belgeLink}</td>
+                                    <td><small class="text-secondary fw-semibold">${dateRange}</small></td>
                                     <td class="text-end fw-bold text-dark">${f.toplam_borc}</td>
                                     <td class="text-end text-success">${f.yapilan_kesinti}</td>
                                     <td class="text-end fw-bold text-danger">${f.kalan_borc}</td>
@@ -438,7 +450,7 @@ $(document).ready(function() {
                         
                         let statusVal = $('#icra-status-filter').val();
                         if (statusVal) {
-                            datatableObj.column(9).search(statusVal).draw();
+                            datatableObj.column(10).search(statusVal).draw();
                         }
                     }
                 } else {
@@ -450,6 +462,10 @@ $(document).ready(function() {
             }
         });
     }
+
+    // Tarih seçicileri flatpickr ile başlat
+    let fpBaslama = flatpickr('#icra-baslama-tarihi', { dateFormat: 'd.m.Y', locale: 'tr', allowInput: true });
+    let fpBitis = flatpickr('#icra-bitis-tarihi', { dateFormat: 'd.m.Y', locale: 'tr', allowInput: true });
 
     // Verileri yükle
     loadIcraModuleData();
@@ -482,6 +498,10 @@ $(document).ready(function() {
         // Oran varsayılan yap
         $('#yontem-oran').prop('checked', true).trigger('change');
         
+        // Tarih seçicileri temizle
+        fpBaslama.clear();
+        fpBitis.clear();
+        
         // Evrak bilgileri
         $('#edit-has-file-info').addClass('d-none');
         $('#icra-belge-dosyasi').removeAttr('required');
@@ -501,10 +521,22 @@ $(document).ready(function() {
         $('#icra-dosya-no').val(f.dosya_no);
         $('#icra-toplam-borc').val(f.toplam_borc_raw);
         $('#icra-alacakli').val(f.alacakli);
-        $('#icra-durum').val(f.durum);
+        $('#icra-durum').val(f.durum).trigger('change');
         $('#icra-aciklama').val(f.aciklama);
         $('#icra-gelen-evrak').val(f.gelen_evrak);
         $('#icra-giden-evrak').val(f.giden_evrak);
+
+        // Tarihleri doldur
+        if (f.baslama_tarihi_formatted) {
+            fpBaslama.setDate(f.baslama_tarihi_formatted);
+        } else {
+            fpBaslama.clear();
+        }
+        if (f.bitis_tarihi_formatted) {
+            fpBitis.setDate(f.bitis_tarihi_formatted);
+        } else {
+            fpBitis.clear();
+        }
 
         // Select2 dairesini ayarla. Listede yoksa ekle ve seç
         let checkOption = $('#icra-dairesi option[value="' + f.icra_dairesi + '"]');

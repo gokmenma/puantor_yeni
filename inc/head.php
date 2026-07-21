@@ -40,6 +40,7 @@
 
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"> -->
   <link href="./dist/css/flatpickr.min.css?v=<?php echo filemtime("./dist/css/flatpickr.min.css"); ?>" rel="stylesheet" />
+  <link href="./dist/css/flatpickr.monthSelect.css?v=<?php echo filemtime("./dist/css/flatpickr.monthSelect.css"); ?>" rel="stylesheet" />
 
 
   <!-- jQuery UI CSS -->

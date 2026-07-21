@@ -10,8 +10,8 @@ require_once __DIR__ . '/../../App/Helper/helper.php';
 use App\Helper\Helper;
 
 $person_id = $_GET['person_id'] ?? 0;
-$month = $_GET['month'] ?? date('m');
-$year = $_GET['year'] ?? date('Y');
+$req_month = (int)($_GET['month'] ?? date('m'));
+$req_year = (int)($_GET['year'] ?? date('Y'));
 
 if (!$person_id) {
     echo json_encode(['status' => 'error', 'message' => 'Geçersiz personel.']);
@@ -23,50 +23,80 @@ $Persons = new Persons();
 require_once __DIR__ . '/../../Model/Puantaj.php';
 $PuantajModel = new Puantaj();
 
+$person = $Persons->find($person_id);
+$firm_id = $person ? (int)$person->firm_id : 0;
+
+// Görünürlük kontrolü (Personeller Görsün)
+$is_visible = $Bordro->getPeriodVisibility($firm_id, $req_year, $req_month);
+$month = $req_month;
+$year = $req_year;
+$notice = null;
+$latest = null;
+
+if ($is_visible !== 1) {
+    // İstenen ay kapalı, en son açık dönemi bul
+    $latest = $Bordro->getLatestVisiblePeriod($firm_id);
+    if ($latest) {
+        $year = (int)$latest['yil'];
+        $month = (int)$latest['ay'];
+        $notice = "Seçilen dönemin ({$req_month}/{$req_year}) bordrosu henüz personellere açık değildir. En son onaylı açık dönem ({$month}/{$year}) gösterilmektedir.";
+    } else {
+        // Hiç açık dönem yok
+        $notice = "Bordro henüz personellerin erişimine açılmamıştır.";
+    }
+}
+
 $balance = $Bordro->sumAllIncomeExpenseFormatted($person_id);
 $recent_work = $Bordro->getPersonWorkTransactions($person_id);
 
-// Get monthly detailed attendance
-$start_day = $year . str_pad($month, 2, "0", STR_PAD_LEFT) . "01";
-$end_day = $year . str_pad($month, 2, "0", STR_PAD_LEFT) . "31";
+if ($is_visible !== 1 && !$latest) {
+    // Hiç açık dönem yoksa aylık verileri boş dön
+    $financial_data = [];
+    $attendance_data = [];
+    $total_hours = 0;
+    $overtime = 0;
+    $total_work_days = 0;
+    $monthly_advance = 0;
+} else {
+    // Get monthly detailed attendance
+    $start_day = $year . str_pad($month, 2, "0", STR_PAD_LEFT) . "01";
+    $end_day = $year . str_pad($month, 2, "0", STR_PAD_LEFT) . "31";
 
-// From maas_gelir_kesinti (Advances, extra income etc)
-$query = $Bordro->getDb()->prepare("SELECT * FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? ORDER BY gun ASC");
-$query->execute([$person_id, (int)$month, (int)$year]);
-$financial_data = $query->fetchAll(PDO::FETCH_OBJ);
+    // From maas_gelir_kesinti (Advances, extra income etc)
+    $query = $Bordro->getDb()->prepare("SELECT * FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? ORDER BY gun ASC");
+    $query->execute([$person_id, (int)$month, (int)$year]);
+    $financial_data = $query->fetchAll(PDO::FETCH_OBJ);
 
-// From puantaj (Working hours)
-$attendance_data = $PuantajModel->getPuantajByPersonAndDate($person_id, $start_day, $end_day);
+    // From puantaj (Working hours)
+    $attendance_data = $PuantajModel->getPuantajByPersonAndDate($person_id, $start_day, $end_day);
 
-// Calculate monthly totals
-$total_hours = 0;
-$overtime = 0;
-$total_work_days = 0;
-foreach ($attendance_data as $record) {
-    if (isset($record->saat)) {
-        $total_hours += (float)$record->saat;
-    }
-    if (isset($record->attendance_type)) {
-        if ($record->attendance_type !== 'Ücretsiz') {
-            $total_work_days++;
+    // Calculate monthly totals
+    $total_hours = 0;
+    $overtime = 0;
+    $total_work_days = 0;
+    foreach ($attendance_data as $record) {
+        if (isset($record->saat)) {
+            $total_hours += (float)$record->saat;
         }
-        if ($record->attendance_type === 'Fazla Çalışma') {
-            $overtime += (float)($record->EklenecekSaat ?? 0);
+        if (isset($record->attendance_type)) {
+            if ($record->attendance_type !== 'Ücretsiz') {
+                $total_work_days++;
+            }
+            if ($record->attendance_type === 'Fazla Çalışma') {
+                $overtime += (float)($record->EklenecekSaat ?? 0);
+            }
+        }
+    }
+
+    // Calculate monthly financial totals
+    $monthly_advance = 0;
+    foreach ($financial_data as $item) {
+        if (in_array($item->kategori, [2, 7])) {
+            $monthly_advance += (float)$item->tutar;
         }
     }
 }
 
-// Calculate monthly financial totals
-$monthly_advance = 0;
-foreach ($financial_data as $item) {
-    // Categories like 7 (Payment/Advance) or others based on business logic
-    if (in_array($item->kategori, [2, 7])) { // 2: Kesinti, 7: Ödeme/Advance
-        $monthly_advance += (float)$item->tutar;
-    }
-}
-
-// Calculate remaining leave
-$person = $Persons->find($person_id);
 $kalan_izin = $person->remaining_leave ?? 0;
 
 if (isset($balance)) {
@@ -77,7 +107,6 @@ if (isset($balance)) {
     $balance->advance = $monthly_advance;
 }
 
-// Merge them for the calendar
 $merged_data = array_merge($financial_data, $attendance_data);
 
 echo json_encode([
@@ -86,5 +115,9 @@ echo json_encode([
     'recent' => array_slice($recent_work, 0, 10),
     'monthly' => $merged_data,
     'current_month' => (int)$month,
-    'current_year' => (int)$year
+    'current_year' => (int)$year,
+    'requested_month' => (int)$req_month,
+    'requested_year' => (int)$req_year,
+    'is_open' => ($is_visible === 1),
+    'notice' => $notice
 ]);

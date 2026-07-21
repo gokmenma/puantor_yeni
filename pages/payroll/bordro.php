@@ -426,8 +426,13 @@ $net_pay = $total_income - $total_expense;
                     <div class="details-header expense">KESİNTİLER</div>
                     <table class="inner-table">
                         <?php foreach($expenses as $exp): ?>
+                            <?php
+                            $exp_name = (!empty($exp->turu) && strpos($exp->turu, 'İcra') !== false)
+                                ? $exp->turu
+                                : ($Defines->getTypeNameById($exp->kategori ?? 0) . ($exp->turu ? " - " . $exp->turu : ''));
+                            ?>
                         <tr>
-                            <td><?= htmlspecialchars($Defines->getTypeNameById($exp->kategori ?? 0) . " - " . $exp->turu) ?></td>
+                            <td><?= htmlspecialchars($exp_name) ?></td>
                             <td class="val-col"><?= Helper::formattedMoneyWithoutCurrency($exp->tutar) ?></td>
                         </tr>
                         <?php endforeach; ?>

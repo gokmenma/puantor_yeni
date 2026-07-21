@@ -147,6 +147,13 @@ if ($_SESSION["user"]->parent_id != 0) {
 
 $active_page = isset($_GET["p"]) ? $_GET["p"] : "";
 
+// auths.superadmin = 1 olan yönetim sayfalarını yalnızca menüde gizlemek
+// yeterli değildir. Doğrudan URL ve AJAX sayfa yüklemelerini de burada kes.
+if (($user->superadmin ?? 0) != 1 && $Auths->isSuperadminOnlyPage($active_page)) {
+    header("Location: index.php?p=authorize");
+    exit();
+}
+
 // Bakım Modu (Maintenance Mode) Kontrolü
 $maintenance_mode = $Settings->getSystemSetting("maintenance_mode") ?? "0";
 if ($maintenance_mode == "1" && ($user->superadmin ?? 0) != 1 && $active_page !== 'logout') {

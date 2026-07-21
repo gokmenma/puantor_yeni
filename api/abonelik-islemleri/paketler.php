@@ -8,6 +8,7 @@ use App\Helper\Security;
 
 $paketModel = new AbonelikPaketleriModel();
 $Auths = new Auths();
+$Auths->hasPermissionReturn("aboneler_paketleri");
 
 if (isset($_POST["action"]) && $_POST["action"] == "savePackage") {
     $encryptedId = $_POST["id"] ?? "";
@@ -50,8 +51,6 @@ if (isset($_POST["action"]) && $_POST["action"] == "savePackage") {
 }
 
 if (isset($_POST["action"]) && $_POST["action"] == "saveModules") {
-    $Auths->hasPermissionReturn("aboneler_paketleri");
-
     $id = Security::safeDecrypt($_POST["paket_id"] ?? "");
     if (!$id) {
         echo json_encode(["status" => "error", "message" => "Geçersiz paket."]);

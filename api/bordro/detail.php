@@ -356,10 +356,17 @@ try {
                         if (!empty($expenses)) {
                             foreach ($expenses as $expense) {
                                 $total_expense += $expense->tutar;
-                                $name = $Defines->getTypeNameById($expense->kategori ?? 0) ?: $expense->turu;
+                                $is_icra = (!empty($expense->turu) && strpos($expense->turu, 'İcra') !== false);
+                                if ($is_icra) {
+                                    $name = $expense->turu;
+                                    $badge = "<span class='badge bg-purple-lt text-purple'><i class='ti ti-scale me-1'></i>İcra Kesintisi</span>";
+                                } else {
+                                    $name = $Defines->getTypeNameById($expense->kategori ?? 0) ?: $expense->turu;
+                                    $badge = "<span class='badge bg-danger-lt text-danger'><i class='ti ti-minus me-1'></i>Kesinti</span>";
+                                }
                                 $name = htmlspecialchars((string) ($name ?: 'Kesinti'), ENT_QUOTES, 'UTF-8');
                                 echo "<tr>
-                                    <td><span class='badge bg-danger-lt text-danger'><i class='ti ti-minus me-1'></i>Kesinti</span></td>
+                                    <td>{$badge}</td>
                                     <td class='fw-medium'>{$name}</td>
                                     <td class='text-end fw-bold text-danger'>-₺" . Helper::formattedMoneyWithoutCurrency($expense->tutar) . "</td>
                                 </tr>";

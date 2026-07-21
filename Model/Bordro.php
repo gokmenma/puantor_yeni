@@ -397,4 +397,35 @@ class Bordro extends Model
 
         return true;
     }
+
+    /**
+     * Dönemsel personel görünürlüğünü getirir (1: Açık, 0: Kapalı)
+     */
+    public function getPeriodVisibility($firm_id, $year, $month)
+    {
+        $sql = $this->db->prepare("SELECT is_visible FROM bordro_period_visibility WHERE firm_id = ? AND yil = ? AND ay = ?");
+        $sql->execute([$firm_id, (int)$year, (int)$month]);
+        $val = $sql->fetchColumn();
+        return $val !== false ? (int)$val : 0;
+    }
+
+    /**
+     * Dönemsel personel görünürlüğünü günceller veya ekler
+     */
+    public function setPeriodVisibility($firm_id, $year, $month, $is_visible)
+    {
+        $sql = $this->db->prepare("INSERT INTO bordro_period_visibility (firm_id, yil, ay, is_visible) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE is_visible = VALUES(is_visible)");
+        return $sql->execute([(int)$firm_id, (int)$year, (int)$month, (int)$is_visible]);
+    }
+
+    /**
+     * Firmaya ait görünürlüğü açık olan en son dönemi getirir (yil, ay)
+     */
+    public function getLatestVisiblePeriod($firm_id)
+    {
+        $sql = $this->db->prepare("SELECT yil, ay FROM bordro_period_visibility WHERE firm_id = ? AND is_visible = 1 ORDER BY yil DESC, ay DESC LIMIT 1");
+        $sql->execute([(int)$firm_id]);
+        $row = $sql->fetch(PDO::FETCH_OBJ);
+        return $row ? ['yil' => (int)$row->yil, 'ay' => (int)$row->ay] : null;
+    }
 }

@@ -12,6 +12,7 @@ require_once 'Model/Puantaj.php';
 require_once 'Model/Wages.php';
 require_once 'Model/SettingsModel.php';
 require_once 'Model/HolidayWorkService.php';
+require_once 'Model/PersonIcra.php';
 require_once 'App/Helper/teams.php';
 
 use App\Helper\Security;
@@ -29,9 +30,11 @@ $puantajObj = new Puantaj();
 $wages = new Wages();
 $Settings = new SettingsModel();
 $HolidayWorkService = new HolidayWorkService();
+$personIcra = new PersonIcra();
 
 $year = isset($_POST['year']) ? $_POST['year'] : date('Y');
 $month = isset($_POST['months']) ? $_POST['months'] : date('m');
+$period_is_visible = $bordro->getPeriodVisibility($firm_id, $year, $month);
 // Ayın ilk gününü bulma (20240901) şeklinde döner
 $firstDay = Date::firstDay($month, $year);
 $last_day = Date::Ymd(Date::lastDay($month, $year));
@@ -285,12 +288,31 @@ foreach ($persons as $item) {
         }
     }
 
+    if (!empty($person->icra_kesintisi_aktif)) {
+        $stmt_check_icra = $bordro->connect()->prepare("SELECT COUNT(id) FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
+        $stmt_check_icra->execute([$person->id, $month, $year]);
+        $icra_count = (int)$stmt_check_icra->fetchColumn();
+        if (isset($_POST["action"]) || $icra_count === 0) {
+            $stmt_calc_inc = $bordro->connect()->prepare("SELECT SUM(tutar) FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori IN (1, 16, 17)");
+            $stmt_calc_inc->execute([$person->id, $month, $year]);
+            $earned_inc = (float)($stmt_calc_inc->fetchColumn() ?? 0);
+            if ($earned_inc > 0) {
+                $personIcra->calculateAndApplyIcraDeduction($person->id, $month, $year, $earned_inc);
+            }
+        }
+    }
+
     $res = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay);
+    $stmt_icra_calc = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
+    $stmt_icra_calc->execute([$person->id, $month, $year]);
+    $p_icra = (float)($stmt_icra_calc->fetchColumn() ?? 0);
+
     $total_gelir += ($res->gelir ?? 0);
-    $total_odeme += ($res->odeme ?? 0);
+    $total_odeme += (($res->odeme ?? 0) - $p_icra);
+    $total_icra = ($total_icra ?? 0) + $p_icra;
     $total_persons++;
 }
-$total_kalan = $total_gelir - $total_odeme;
+$total_kalan = $total_gelir - ($total_odeme + $total_icra);
 ?>
 
 <div class="page-header d-print-none mb-3">
@@ -315,15 +337,31 @@ $total_kalan = $total_gelir - $total_odeme;
                 <?php echo $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler'); ?>
             </div>
             <div class="col-2">
-                <label for="months" class="form-label">Ay:</label>
-                <?php echo Date::getMonthsSelect('months', $month); ?>
-            </div>
-            <div class="col-2">
-                <label for="year" class="form-label">Yıl:</label>
-                <?php echo Date::getYearsSelect('year', $year); ?>
+                <label for="period_picker" class="form-label">Dönem:</label>
+                <div class="input-group input-group-flat border rounded shadow-none bg-white">
+                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0" id="prevPeriodBtn" title="Önceki Ay">
+                        <i class="ti ti-chevron-left icon m-0"></i>
+                    </button>
+                    <input type="text" class="form-control text-center fw-bold bg-transparent border-0 px-0 cursor-pointer" id="period_picker" style="cursor: pointer; font-size: 0.88rem;" readonly placeholder="Dönem">
+                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0" id="nextPeriodBtn" title="Sonraki Ay">
+                        <i class="ti ti-chevron-right icon m-0"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
+                <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
             </div>
 
-            <div class="col-auto ms-auto mt-auto d-flex">
+            <div class="col-auto ms-auto mt-auto d-flex align-items-center">
+                <?php if ($Auths->hasPermission('toggle_payroll_period_status')): ?>
+                <div class="d-flex align-items-center me-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Dönem Durumu: <?php echo Date::monthName($month) . ' ' . $year; ?> dönemi <?php echo $period_is_visible == 1 ? 'KAPALI (PWA Personellere Açık, Puantaj Kilitli)' : 'AÇIK (PWA Personellere Kapalı, Puantaj Düzenlenebilir)'; ?>">
+                    <div class="form-check form-switch mb-0 p-0 d-flex align-items-center cursor-pointer">
+                        <input class="form-check-input cursor-pointer m-0 me-1" type="checkbox" id="pwa-visibility-toggle" data-year="<?php echo $year; ?>" data-month="<?php echo $month; ?>" <?php echo $period_is_visible == 1 ? 'checked' : ''; ?>>
+                        <span id="pwa-visibility-status" class="badge <?php echo $period_is_visible == 1 ? 'bg-danger-lt text-danger' : 'bg-success-lt text-success'; ?> cursor-pointer">
+                            <i class="ti <?php echo $period_is_visible == 1 ? 'ti-lock' : 'ti-lock-open'; ?> icon me-1" id="pwa-visibility-icon"></i><span id="pwa-visibility-text"><?php echo $period_is_visible == 1 ? 'Dönem Kapalı' : 'Dönem Açık'; ?></span>
+                        </span>
+                    </div>
+                </div>
+                <?php endif; ?>
                 <div class="dropdown me-2">
                     <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" title="Sütunları Seç" id="colvisDropdownBtn">
                         <i class="ti ti-columns icon"></i>
@@ -511,6 +549,7 @@ $total_kalan = $total_gelir - $total_odeme;
                                 <th>IBAN</th>
                                 <th>İşe Başlama Tarihi</th>
                                 <th style="width:10%" class="text-center">Brüt Ücret</th>
+                                <th style="width:10%" class="text-center">İcra Kesintisi</th>
                                 <th style="width:10%" class="text-center">Ödenen/Kesinti</th>
                                 <th style="width:10%" class="text-center">Ödenecek</th>
                                 <th style="width:1%" class="text-center no-export">İşlem</th>
@@ -602,7 +641,18 @@ $total_kalan = $total_gelir - $total_odeme;
                                         <i class="ti ti-download icon text-green"></i>
                                     </td>
 
+                                    <!-- İcra Kesintisi -->
+                                    <?php
+                                    $stmt_icra_month = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
+                                    $stmt_icra_month->execute([$person->id, $month, $year]);
+                                    $icra_month_amount = (float)($stmt_icra_month->fetchColumn() ?? 0);
+                                    $odeme_haric_icra = max(0, $odeme - $icra_month_amount);
+                                    ?>
+                                    <td class="text-end text-purple fw-semibold">
+                                        <?php echo $icra_month_amount > 0 ? Helper::formattedMoney($icra_month_amount) : '0,00 ₺'; ?>
+                                    </td>
 
+                                    <!-- Ödenen / Kesinti (İcra Hariç) -->
                                     <td class="text-end view-payroll-detail"
                                         data-id="<?php echo $id ?>"
                                         data-month="<?php echo $month ?>"
@@ -610,9 +660,8 @@ $total_kalan = $total_gelir - $total_odeme;
                                         role="button" tabindex="0" title="Bordro detayını görüntüle"
                                         style="cursor: pointer;"
                                         data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
-                                        <?php echo Helper::formattedMoney($odeme ?? 0); ?>
+                                        <?php echo Helper::formattedMoney($odeme_haric_icra ?? 0); ?>
                                         <i class="ti ti-cash-register icon color-green"></i>
-
                                     </td>
 
 
@@ -702,3 +751,129 @@ $total_kalan = $total_gelir - $total_odeme;
 <?php include_once 'content/bulk-income-modal.php'; ?>
 <?php include_once 'content/bulk-wage-cut-modal.php'; ?>
 <?php include_once 'content/bulk-wages-modal.php'; ?>
+
+
+<script>
+$(document).ready(function() {
+    $(document).off('change.pwaVis').on('change.pwaVis', '#pwa-visibility-toggle', function() {
+        var isChecked = $(this).is(':checked') ? 1 : 0;
+        var year = $(this).data('year');
+        var month = $(this).data('month');
+        var $statusBadge = $('#pwa-visibility-status');
+        var $icon = $('#pwa-visibility-icon');
+        
+        $.ajax({
+            url: 'api/bordro/toggle_visibility.php',
+            type: 'POST',
+            data: { year: year, month: month, is_closed: isChecked },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    if (isChecked === 1) {
+                        $statusBadge.removeClass('bg-success-lt text-success').addClass('bg-danger-lt text-danger');
+                        $icon.removeClass('ti-lock-open').addClass('ti-lock');
+                        $('#pwa-visibility-text').text('Dönem Kapalı');
+                    } else {
+                        $statusBadge.removeClass('bg-danger-lt text-danger').addClass('bg-success-lt text-success');
+                        $icon.removeClass('ti-lock').addClass('ti-lock-open');
+                        $('#pwa-visibility-text').text('Dönem Açık');
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: res.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                    }
+                } else {
+                    $('#pwa-visibility-toggle').prop('checked', !isChecked);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Yetkisiz Erişim', res.message || 'Bir hata oluştu.', 'error');
+                    }
+                }
+            },
+            error: function() {
+                $('#pwa-visibility-toggle').prop('checked', !isChecked);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error');
+                }
+            }
+        });
+    });
+});
+</script>
+
+<script>
+$(document).ready(function() {
+    var currentMonth = parseInt($('#months').val()) || (new Date().getMonth() + 1);
+    var currentYear = parseInt($('#year').val()) || new Date().getFullYear();
+
+    var fp = flatpickr('#period_picker', {
+        locale: typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.tr ? flatpickr.l10ns.tr : 'tr',
+        defaultDate: new Date(currentYear, currentMonth - 1, 1),
+        dateFormat: "F Y",
+        plugins: [
+            typeof monthSelectPlugin === 'function' ? monthSelectPlugin({
+                shorthand: false,
+                dateFormat: "F Y",
+                altFormat: "F Y"
+            }) : null
+        ].filter(Boolean),
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length > 0) {
+                var date = selectedDates[0];
+                var m = (date.getMonth() + 1).toString().padStart(2, '0');
+                var y = date.getFullYear();
+                $('#months').val(m);
+                $('#year').val(y);
+                if (typeof Route === 'function') {
+                    Route();
+                } else {
+                    $('#bordroInfoForm').submit();
+                }
+            }
+        }
+    });
+
+    $(document).off('click.prevP').on('click.prevP', '#prevPeriodBtn', function(e) {
+        e.preventDefault();
+        var m = parseInt($('#months').val());
+        var y = parseInt($('#year').val());
+        if (m === 1) {
+            m = 12;
+            y = y - 1;
+        } else {
+            m = m - 1;
+        }
+        $('#months').val(m.toString().padStart(2, '0'));
+        $('#year').val(y);
+        if (typeof Route === 'function') {
+            Route();
+        } else {
+            $('#bordroInfoForm').submit();
+        }
+    });
+
+    $(document).off('click.nextP').on('click.nextP', '#nextPeriodBtn', function(e) {
+        e.preventDefault();
+        var m = parseInt($('#months').val());
+        var y = parseInt($('#year').val());
+        if (m === 12) {
+            m = 1;
+            y = y + 1;
+        } else {
+            m = m + 1;
+        }
+        $('#months').val(m.toString().padStart(2, '0'));
+        $('#year').val(y);
+        if (typeof Route === 'function') {
+            Route();
+        } else {
+            $('#bordroInfoForm').submit();
+        }
+    });
+});
+</script>

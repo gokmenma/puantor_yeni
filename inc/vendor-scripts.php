@@ -245,6 +245,7 @@ if ($page == 'activities/index') {
 
 <script src="./dist/js/flatpickr.min.js"></script>
 <script src="./dist/js/flatpickr.tr.min.js"></script>
+<script src="./dist/js/flatpickr.monthSelect.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 <!-- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> -->
 <script src="https://npmcdn.com/flatpickr/dist/l10n/tr.js"></script>

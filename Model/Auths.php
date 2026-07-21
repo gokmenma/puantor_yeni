@@ -166,9 +166,48 @@ class Auths extends Model
     //Yetki title'dan yetki id getirilir
     public function getAuthIdByTitle($auth_title)
     {
-        $sql = $this->db->prepare("SELECT id FROM $this->table WHERE title = ?");
+        $sql = $this->db->prepare("SELECT id, auth_name, superadmin FROM $this->table WHERE title = ? AND is_active = 1 LIMIT 1");
         $sql->execute([$auth_title]);
         return $sql->fetch(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Menü bağlantısının yalnızca superadmin kullanıcılarına ait olup olmadığını
+     * auths tablosundaki işarete göre belirler.
+     *
+     * Bazı eski menü başlıkları auths.title ile birebir aynı olmadığı için bu
+     * bağlantılar auth_name ile eşleştirilir. Yeni ve birebir eşleşen menüler
+     * için ayrıca kod değişikliği gerekmez.
+     */
+    public function isSuperadminOnlyPage($page_link)
+    {
+        $sql = $this->db->prepare("
+            SELECT MAX(a.superadmin)
+            FROM menu m
+            INNER JOIN auths a ON a.title = m.page_name AND a.is_active = 1
+            WHERE m.page_link = ?
+            LIMIT 1
+        ");
+        $sql->execute([$page_link]);
+        $superadmin = $sql->fetchColumn();
+
+        if ($superadmin !== false && $superadmin !== null) {
+            return (int) $superadmin === 1;
+        }
+
+        $legacyPageAuthMap = [
+            'kvkk/index' => 'kvkk_talepler_yonet',
+            'kvkk/talepler' => 'kvkk_talepler_yonet',
+            'kvkk/ihlaller' => 'kvkk_ihlal_yonet',
+        ];
+
+        if (!isset($legacyPageAuthMap[$page_link])) {
+            return false;
+        }
+
+        $this->loadAuths();
+        $auth = self::$cachedAuthsByName[$legacyPageAuthMap[$page_link]] ?? null;
+        return $auth && (int) ($auth->superadmin ?? 0) === 1;
     }
 
 

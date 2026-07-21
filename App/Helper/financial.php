@@ -30,6 +30,7 @@ class Financial extends Db
         14 => "Puantaj Çalışma",
         15 => "Kesinti",
         16 => "Maaş",
+        17 => "Resmi Tatil Çalışması",
     ];
     protected $caseObj;
     protected $Defines;
@@ -125,7 +126,7 @@ class Financial extends Db
                 return (object)[
                     'id' => $id,
                     'name' => $name,
-                    'type_id' => ($id == 1 || $id == 14 || $id == 16) ? 1 : 2 // 1: Income, 2: Expense
+                    'type_id' => ($id == 1 || $id == 14 || $id == 16 || $id == 17) ? 1 : 2 // 1: Income, 2: Expense
                 ];
             }
             return null;
@@ -146,6 +147,7 @@ class Financial extends Db
             // Default icons for core types
             if ($id == 14) return "<i class='ti ti-calendar-event icon text-azure me-1'></i>";
             if ($id == 16) return "<i class='ti ti-cash icon text-green me-1'></i>";
+            if ($id == 17) return "<i class='ti ti-calendar-star icon text-yellow me-1'></i>";
             if ($id == 7) return "<i class='ti ti-user-check icon text-orange me-1'></i>";
             return "<i class='ti ti-help icon text-muted me-1'></i>";
         }
