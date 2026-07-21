@@ -122,10 +122,6 @@ try {
     ];
 
     $puantajObj->saveWithAttr($data);
-    
-    // Log kaydı
-    $person_name = $personModel->getPersonByField($person_id, 'full_name');
-    ActivityLogModel::log($firm_id, $_SESSION['user']->id, 'Puantaj', 'Mobil Giriş', "$person_name için $date tarihli puantaj kaydedildi.");
 
     echo json_encode(['status' => 'success', 'message' => 'Puantaj başarıyla kaydedildi']);
 } catch (Exception $e) {

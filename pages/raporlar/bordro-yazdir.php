@@ -252,6 +252,86 @@ $ids = explode(',', $ids_str);
     $incomes = $bordroObj->getPersonIncome($p_id, $ay, $yil);
     $expenses = $bordroObj->getPersonExpense($p_id, $ay, $yil);
 
+    require_once 'Model/SettingsModel.php';
+    $SettingsModel = new SettingsModel();
+    $overtime_rate = floatval($SettingsModel->getSettings("overtime_rate")->set_value ?? 50);
+    if ($overtime_rate < 50) { $overtime_rate = 50; }
+    $overtime_multiplier = 1 + ($overtime_rate / 100);
+    $work_hour = floatval($SettingsModel->getSettings("work_hour")->set_value ?? 8);
+
+    $first_day = Date::firstDay($ay, $yil);
+    $last_day = Date::lastDay($ay, $yil);
+
+    $db = $bordroObj->connect();
+    $stmt = $db->prepare("SELECT p.*, pt.PuantajAdi, pt.PuantajKod, pt.Turu, pt.EklenecekSaat, pt.operant 
+                          FROM puantaj p 
+                          LEFT JOIN puantajturu pt ON p.puantaj_id = pt.id 
+                          WHERE p.person = :person_id 
+                            AND p.gun >= :first_day AND p.gun <= :last_day 
+                            AND p.tutar > 0");
+    $stmt->execute([':person_id' => $p_id, ':first_day' => $first_day, ':last_day' => $last_day]);
+    $puantaj_rows = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+    $normal_days_count = 0;
+    $normal_hours_sum = 0;
+    $normal_tutar_sum = 0;
+
+    $overtime_hours_sum = 0;
+    $overtime_tutar_sum = 0;
+
+    $saatlik_hours_sum = 0;
+    $saatlik_tutar_sum = 0;
+
+    foreach ($puantaj_rows as $row) {
+        $saat = floatval($row->saat);
+        $tutar = floatval($row->tutar);
+        $is_overtime = ($row->Turu == 'Fazla Çalışma');
+        
+        if ($is_overtime) {
+            $extra_hours = max(0, $saat - $work_hour);
+            if ($extra_hours <= 0 && !empty($row->EklenecekSaat)) {
+                $extra_hours = floatval($row->EklenecekSaat);
+            }
+            
+            $eff_mult = $work_hour + ($extra_hours * $overtime_multiplier);
+            $base_hourly = ($eff_mult > 0) ? ($tutar / $eff_mult) : 0;
+            
+            $normal_pay = $base_hourly * $work_hour;
+            $ot_pay = $extra_hours * $base_hourly * $overtime_multiplier;
+            
+            if (($person->wage_type ?? 0) != 1) { // Mavi Yaka
+                $normal_days_count += 1;
+                $normal_hours_sum += $work_hour;
+                $normal_tutar_sum += $normal_pay;
+            }
+            
+            $overtime_hours_sum += $extra_hours;
+            $overtime_tutar_sum += $ot_pay;
+        } elseif ($row->Turu == 'Saatlik') {
+            $saatlik_hours_sum += $saat;
+            $saatlik_tutar_sum += $tutar;
+        } else {
+            if (($person->wage_type ?? 0) != 1) { // Mavi Yaka
+                $normal_days_count += 1;
+                $normal_hours_sum += $saat;
+                $normal_tutar_sum += $tutar;
+            }
+        }
+    }
+
+    require_once 'Model/Wages.php';
+    $wagesObj = new Wages();
+    $defined_wage = $wagesObj->getWageByPersonIdAndDate($p_id, $first_day)->amount ?? 0;
+    $effective_wage = ($defined_wage > 0) ? floatval($defined_wage) : floatval($person->daily_wages ?? 0);
+
+    if (($person->wage_type ?? 0) == 1) { // Beyaz Yaka
+        $effective_daily = $effective_wage / 30;
+        $effective_hourly = ($work_hour > 0) ? ($effective_daily / $work_hour) : 0;
+    } else { // Mavi Yaka
+        $effective_daily = $effective_wage;
+        $effective_hourly = ($work_hour > 0) ? ($effective_wage / $work_hour) : 0;
+    }
+
     $total_income = 0;
     foreach($incomes as $inc) $total_income += $inc->tutar;
 
@@ -304,8 +384,12 @@ $ids = explode(',', $ids_str);
                     <span class="info-value"><?= $person->wage_type == 1 ? 'Aylık (Beyaz Yaka)' : 'Günlük (Mavi Yaka)' ?></span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Banka:</span>
-                    <span class="info-value"><?= htmlspecialchars($person->bank_name ?? '-') ?></span>
+                    <span class="info-label"><?= $person->wage_type == 1 ? 'Aylık Maaş:' : 'Günlük Ücret:' ?></span>
+                    <span class="info-value">₺<?= Helper::formattedMoneyWithoutCurrency($effective_wage) ?></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Saatlik Ücret:</span>
+                    <span class="info-value">₺<?= Helper::formattedMoneyWithoutCurrency($effective_hourly) ?></span>
                 </div>
             </div>
         </div>
@@ -314,15 +398,55 @@ $ids = explode(',', $ids_str);
             <div class="details-column">
                 <div class="details-header">KAZANÇLAR</div>
                 <table class="details-table">
-                    <?php foreach($incomes as $inc): ?>
+                    <?php if (($person->wage_type ?? 0) != 1 && $normal_tutar_sum > 0): ?>
                     <tr>
-                        <td><?= htmlspecialchars($inc->turu) ?></td>
-                        <td class="val-col"><?= Helper::formattedMoneyWithoutCurrency($inc->tutar) ?></td>
+                        <td>
+                            Normal Çalışma
+                            <div style="font-size: 8.5px; color: #64748b; margin-top: 1px;">
+                                <?= $normal_days_count ?> Gün / <?= number_format($normal_hours_sum, 1, ',', '.') ?> Sa
+                            </div>
+                        </td>
+                        <td class="val-col"><?= Helper::formattedMoneyWithoutCurrency($normal_tutar_sum) ?></td>
                     </tr>
+                    <?php endif; ?>
+
+                    <?php if ($overtime_tutar_sum > 0): ?>
+                    <tr>
+                        <td>
+                            Fazla Mesai (%<?= number_format($overtime_rate, 0) ?>)
+                            <div style="font-size: 8.5px; color: #0284c7; margin-top: 1px; font-weight: bold;">
+                                <?= number_format($overtime_hours_sum, 1, ',', '.') ?> Sa Fazla Mesai
+                            </div>
+                        </td>
+                        <td class="val-col"><?= Helper::formattedMoneyWithoutCurrency($overtime_tutar_sum) ?></td>
+                    </tr>
+                    <?php endif; ?>
+
+                    <?php if ($saatlik_tutar_sum > 0): ?>
+                    <tr>
+                        <td>
+                            Saatlik Çalışma
+                            <div style="font-size: 8.5px; color: #64748b; margin-top: 1px;">
+                                <?= number_format($saatlik_hours_sum, 1, ',', '.') ?> Sa
+                            </div>
+                        </td>
+                        <td class="val-col"><?= Helper::formattedMoneyWithoutCurrency($saatlik_tutar_sum) ?></td>
+                    </tr>
+                    <?php endif; ?>
+
+                    <?php foreach($incomes as $inc): ?>
+                        <?php if (!in_array($inc->kategori ?? 0, [5, 14])): // Puantaj dışındaki ek gelirler ?>
+                        <tr>
+                            <td><?= htmlspecialchars($inc->turu) ?></td>
+                            <td class="val-col"><?= Helper::formattedMoneyWithoutCurrency($inc->tutar) ?></td>
+                        </tr>
+                        <?php endif; ?>
                     <?php endforeach; ?>
-                    <?php if(empty($incomes)): ?>
+
+                    <?php if(empty($incomes) && $normal_tutar_sum <= 0 && $overtime_tutar_sum <= 0 && $saatlik_tutar_sum <= 0): ?>
                         <tr><td colspan="2" style="text-align: center; color: #94a3b8;">Kayıt yok</td></tr>
                     <?php endif; ?>
+
                     <tr style="background: #f1f5f9; font-weight: bold;">
                         <td>TOPLAM KAZANÇ</td>
                         <td class="val-col"><?= Helper::formattedMoneyWithoutCurrency($total_income) ?></td>

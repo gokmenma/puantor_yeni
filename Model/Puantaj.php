@@ -40,9 +40,25 @@ class Puantaj extends Model
             $personObj = new Persons();
             $person_name = $personObj->getPersonByField($data['person'], 'full_name');
             $log_date = date('d.m.Y', strtotime($data['gun']));
-            $action = isset($data['id']) ? 'update' : 'add';
+            $action = (!empty($data['id']) && $data['id'] > 0) ? 'update' : 'add';
             $msg = $action == 'add' ? "eklendi" : "güncellendi";
-            ActivityLogModel::log('puantaj', $action, "{$person_name} için {$log_date} tarihine puantaj {$msg}.");
+
+            $puantaj_turu_info = '';
+            $puantaj_id = $data['puantaj_id'] ?? null;
+            if (empty($puantaj_id) && $id > 0) {
+                $saved = $this->find($id);
+                $puantaj_id = $saved->puantaj_id ?? null;
+            }
+
+            if (!empty($puantaj_id)) {
+                $puantajTuru = $this->getPuantajTuruById($puantaj_id);
+                if ($puantajTuru && !empty($puantajTuru->PuantajAdi)) {
+                    $kod_str = (!empty($puantajTuru->PuantajKod) && $puantajTuru->PuantajKod !== $puantajTuru->PuantajAdi) ? " [{$puantajTuru->PuantajKod}]" : "";
+                    $puantaj_turu_info = " (Tür: {$puantajTuru->PuantajAdi}{$kod_str})";
+                }
+            }
+
+            ActivityLogModel::log('puantaj', $action, "{$person_name} için {$log_date} tarihine puantaj {$msg}{$puantaj_turu_info}.");
         }
         
         return $id;
@@ -196,7 +212,17 @@ class Puantaj extends Model
             $personObj = new Persons();
             $person_name = $personObj->getPersonByField($puantaj->person, 'full_name');
             $log_date = date('d.m.Y', strtotime($puantaj->gun));
-            ActivityLogModel::log('puantaj', 'delete', "{$person_name} için {$log_date} tarihli puantaj silindi.");
+
+            $puantaj_turu_info = '';
+            if (!empty($puantaj->puantaj_id)) {
+                $puantajTuru = $this->getPuantajTuruById($puantaj->puantaj_id);
+                if ($puantajTuru && !empty($puantajTuru->PuantajAdi)) {
+                    $kod_str = (!empty($puantajTuru->PuantajKod) && $puantajTuru->PuantajKod !== $puantajTuru->PuantajAdi) ? " [{$puantajTuru->PuantajKod}]" : "";
+                    $puantaj_turu_info = " (Tür: {$puantajTuru->PuantajAdi}{$kod_str})";
+                }
+            }
+
+            ActivityLogModel::log('puantaj', 'delete', "{$person_name} için {$log_date} tarihli puantaj silindi{$puantaj_turu_info}.");
         }
         $sql = $this->db->prepare("DELETE FROM $this->table WHERE id = ?");
         $sql->execute([$id]);
