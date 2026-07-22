@@ -212,6 +212,59 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
     font-weight: 600;
 }
 
+#inboxTable .inbox-action-cell {
+    position: relative;
+    min-width: 148px;
+}
+
+#inboxTable .inbox-row-actions {
+    position: absolute;
+    top: 50%;
+    right: .75rem;
+    display: flex;
+    gap: .25rem;
+    padding: .2rem;
+    background: var(--tblr-bg-surface, #fff);
+    border-radius: .375rem;
+    box-shadow: 0 1px 5px rgba(24, 36, 51, .12);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transition: opacity .15s ease;
+}
+
+#inboxTable .inbox-message-row:hover .inbox-row-actions,
+#inboxTable .inbox-message-row:focus-within .inbox-row-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#inboxTable .inbox-message-row:hover .inbox-message-size,
+#inboxTable .inbox-message-row:focus-within .inbox-message-size {
+    visibility: hidden;
+}
+
+@media (hover: none) {
+    #inboxTable .inbox-action-cell {
+        min-width: 128px;
+    }
+
+    #inboxTable .inbox-row-actions {
+        position: static;
+        justify-content: flex-end;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+    }
+
+    #inboxTable .inbox-message-size {
+        display: none;
+    }
+}
+
 #inboxMessageFrame {
     width: 100%;
     min-height: 46vh;
@@ -496,12 +549,22 @@ document.addEventListener('DOMContentLoaded', function () {
             rows.innerHTML = data.rows.map(function (message) {
                 const sender = message.from_name || message.from_email || 'Bilinmeyen gönderen';
                 const answered = message.answered ? '<i class="ti ti-arrow-back-up text-primary ms-1" title="Yanıtlandı"></i>' : '';
-                return `<tr class="inbox-message-row ${message.seen ? '' : 'is-unread'}" data-uid="${Number(message.uid)}" data-seen="${message.seen ? '1' : '0'}">
+                const seenLabel = message.seen ? 'Okunmadı yap' : 'Okundu yap';
+                const seenIcon = message.seen ? 'ti-mail' : 'ti-mail-opened';
+                const replyDisabled = message.from_email ? '' : ' disabled';
+                return `<tr class="inbox-message-row ${message.seen ? '' : 'is-unread'}" data-uid="${Number(message.uid)}" data-seen="${message.seen ? '1' : '0'}" data-from-email="${escapeHtml(message.from_email || '')}" data-subject="${escapeHtml(message.subject || '(Konu yok)')}">
                     <td>${message.seen ? '<i class="ti ti-mail-opened text-secondary"></i>' : '<i class="ti ti-mail text-primary"></i>'}</td>
                     <td><div>${escapeHtml(sender)}${answered}</div><div class="text-secondary small">${escapeHtml(message.from_email || '')}</div></td>
                     <td>${escapeHtml(message.subject || '(Konu yok)')}</td>
                     <td class="text-nowrap">${formatDate(message.date)}</td>
-                    <td class="text-end text-nowrap">${formatBytes(message.size)}</td>
+                    <td class="text-end text-nowrap inbox-action-cell">
+                        <span class="inbox-message-size">${formatBytes(message.size)}</span>
+                        <div class="inbox-row-actions">
+                            <button type="button" class="btn btn-sm btn-icon btn-outline-secondary inbox-row-action" data-action="seen" title="${seenLabel}" aria-label="${seenLabel}"><i class="ti ${seenIcon}"></i></button>
+                            <button type="button" class="btn btn-sm btn-icon btn-outline-primary inbox-row-action" data-action="reply" title="Yanıtla" aria-label="Yanıtla"${replyDisabled}><i class="ti ti-arrow-back-up"></i></button>
+                            <button type="button" class="btn btn-sm btn-icon btn-outline-danger inbox-row-action" data-action="delete" title="Sil" aria-label="Sil"><i class="ti ti-trash"></i></button>
+                        </div>
+                    </td>
                 </tr>`;
             }).join('') || '<tr><td colspan="5" class="text-center text-secondary py-5">Bu gelen kutusunda mail bulunamadı.</td></tr>';
             inboxLoaded = true;
@@ -564,28 +627,111 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function updateInboxSeen(seen) {
-        if (!currentInboxMessage) return;
+    async function updateInboxSeen(seen, targetMessage) {
+        const message = targetMessage || currentInboxMessage;
+        if (!message) return;
         const formData = new FormData();
         formData.append('action', 'seen');
         formData.append('csrf_token', csrfToken);
-        formData.append('account', currentInboxMessage.account);
-        formData.append('uid', currentInboxMessage.uid);
+        formData.append('account', message.account);
+        formData.append('uid', message.uid);
         formData.append('seen', seen ? '1' : '0');
         const response = await fetch(apiUrl, { method: 'POST', body: formData });
         const data = await response.json();
         if (data.status !== 'success') throw new Error(data.message || 'Mail durumu güncellenemedi.');
-        currentInboxMessage.seen = seen;
-        document.getElementById('inboxToggleSeen').innerHTML = seen
-            ? '<i class="ti ti-mail me-1"></i>Okunmadı Yap'
-            : '<i class="ti ti-mail-opened me-1"></i>Okundu Yap';
-        const row = document.querySelector(`#inboxRows tr[data-uid="${currentInboxMessage.uid}"]`);
+        message.seen = seen;
+        if (currentInboxMessage && currentInboxMessage.account === message.account && currentInboxMessage.uid === message.uid) {
+            currentInboxMessage.seen = seen;
+            document.getElementById('inboxToggleSeen').innerHTML = seen
+                ? '<i class="ti ti-mail me-1"></i>Okunmadı Yap'
+                : '<i class="ti ti-mail-opened me-1"></i>Okundu Yap';
+        }
+        const row = document.querySelector(`#inboxRows tr[data-uid="${message.uid}"]`);
         row?.classList.toggle('is-unread', !seen);
         if (row) {
             row.dataset.seen = seen ? '1' : '0';
             row.querySelector('td:first-child').innerHTML = seen
                 ? '<i class="ti ti-mail-opened text-secondary"></i>'
                 : '<i class="ti ti-mail text-primary"></i>';
+            const action = row.querySelector('[data-action="seen"]');
+            const label = seen ? 'Okunmadı yap' : 'Okundu yap';
+            action.title = label;
+            action.setAttribute('aria-label', label);
+            action.innerHTML = seen ? '<i class="ti ti-mail"></i>' : '<i class="ti ti-mail-opened"></i>';
+        }
+    }
+
+    function getInboxRowMessage(row) {
+        return {
+            account: document.getElementById('inboxAccount').value,
+            uid: Number(row.dataset.uid),
+            from_email: row.dataset.fromEmail || '',
+            subject: row.dataset.subject || '(Konu yok)',
+            seen: row.dataset.seen === '1'
+        };
+    }
+
+    async function deleteInboxMessage(message, deleteButton, closeDetail) {
+        const confirmation = await Swal.fire({
+            icon: 'warning',
+            title: 'Mail silinsin mi?',
+            text: 'Bu işlem maili sunucudan kalıcı olarak silecek ve geri alınamayacaktır.',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, sil',
+            cancelButtonText: 'Vazgeç',
+            confirmButtonColor: '#d63939'
+        });
+        if (!confirmation.isConfirmed) return;
+
+        deleteButton.disabled = true;
+        const originalContent = deleteButton.innerHTML;
+        deleteButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        try {
+            const formData = new FormData();
+            formData.append('action', 'delete_message');
+            formData.append('csrf_token', csrfToken);
+            formData.append('account', message.account);
+            formData.append('uid', message.uid);
+            const response = await fetch(apiUrl, { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.status !== 'success') throw new Error(data.message || 'Mail silinemedi.');
+
+            if (currentInboxMessage && currentInboxMessage.account === message.account && currentInboxMessage.uid === message.uid) {
+                currentInboxMessage = null;
+            }
+            if (closeDetail) {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('inboxMessageModal')).hide();
+            }
+            await loadInbox(false);
+            Swal.fire({ icon: 'success', title: 'Mail silindi', timer: 1400, showConfirmButton: false });
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Mail silinemedi', text: error.message || 'İşlem sırasında bir hata oluştu.' });
+        } finally {
+            deleteButton.disabled = false;
+            deleteButton.innerHTML = originalContent;
+        }
+    }
+
+    function replyToInboxMessage(message, closeDetail) {
+        if (!message || !message.from_email) return;
+        composeForm.reset();
+        $('#mailSystemUsers').val(null).trigger('change');
+        document.getElementById('mailSenderAccount').value = message.account;
+        const externalRadio = composeForm.querySelector('input[name="alici_turu"][value="harici"]');
+        externalRadio.checked = true;
+        externalRadio.dispatchEvent(new Event('change'));
+        composeForm.querySelector('[name="harici_emailler"]').value = message.from_email;
+        const subject = /^(re|ynt):/i.test(message.subject) ? message.subject : `Ynt: ${message.subject}`;
+        composeForm.querySelector('[name="konu"]').value = subject;
+        $('#mailBody').summernote('code', '<p><br></p>');
+        if (closeDetail) {
+            const inboxModalElement = document.getElementById('inboxMessageModal');
+            inboxModalElement.addEventListener('hidden.bs.modal', function () {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('mailComposeModal')).show();
+            }, { once: true });
+            bootstrap.Modal.getOrCreateInstance(inboxModalElement).hide();
+        } else {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('mailComposeModal')).show();
         }
     }
 
@@ -621,9 +767,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    document.getElementById('inboxRows').addEventListener('click', function (event) {
+    document.getElementById('inboxRows').addEventListener('click', async function (event) {
         const row = event.target.closest('.inbox-message-row');
-        if (row) openInboxMessage(Number(row.dataset.uid), row.dataset.seen === '1');
+        if (!row) return;
+        const actionButton = event.target.closest('.inbox-row-action');
+        if (!actionButton) {
+            openInboxMessage(Number(row.dataset.uid), row.dataset.seen === '1');
+            return;
+        }
+
+        event.stopPropagation();
+        const message = getInboxRowMessage(row);
+        try {
+            if (actionButton.dataset.action === 'seen') {
+                actionButton.disabled = true;
+                await updateInboxSeen(!message.seen, message);
+                actionButton.disabled = false;
+            } else if (actionButton.dataset.action === 'reply') {
+                replyToInboxMessage(message, false);
+            } else if (actionButton.dataset.action === 'delete') {
+                await deleteInboxMessage(message, actionButton, false);
+            }
+        } catch (error) {
+            actionButton.disabled = false;
+            Swal.fire({ icon: 'error', title: 'İşlem başarısız', text: error.message || 'İşlem sırasında bir hata oluştu.' });
+        }
     });
 
     document.getElementById('inboxToggleSeen').addEventListener('click', async function () {
@@ -637,59 +805,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('inboxDelete').addEventListener('click', async function () {
         if (!currentInboxMessage) return;
-        const confirmation = await Swal.fire({
-            icon: 'warning',
-            title: 'Mail silinsin mi?',
-            text: 'Bu işlem maili sunucudan kalıcı olarak silecek ve geri alınamayacaktır.',
-            showCancelButton: true,
-            confirmButtonText: 'Evet, sil',
-            cancelButtonText: 'Vazgeç',
-            confirmButtonColor: '#d63939'
-        });
-        if (!confirmation.isConfirmed) return;
-
         const deleteButton = document.getElementById('inboxDelete');
-        deleteButton.disabled = true;
-        deleteButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Siliniyor...';
-        try {
-            const formData = new FormData();
-            formData.append('action', 'delete_message');
-            formData.append('csrf_token', csrfToken);
-            formData.append('account', currentInboxMessage.account);
-            formData.append('uid', currentInboxMessage.uid);
-            const response = await fetch(apiUrl, { method: 'POST', body: formData });
-            const data = await response.json();
-            if (data.status !== 'success') throw new Error(data.message || 'Mail silinemedi.');
-
-            currentInboxMessage = null;
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('inboxMessageModal')).hide();
-            await loadInbox(false);
-            Swal.fire({ icon: 'success', title: 'Mail silindi', timer: 1400, showConfirmButton: false });
-        } catch (error) {
-            Swal.fire({ icon: 'error', title: 'Mail silinemedi', text: error.message || 'İşlem sırasında bir hata oluştu.' });
-        } finally {
-            deleteButton.disabled = false;
-            deleteButton.innerHTML = '<i class="ti ti-trash me-1"></i>Sil';
-        }
+        await deleteInboxMessage(currentInboxMessage, deleteButton, true);
     });
 
     document.getElementById('inboxReply').addEventListener('click', function () {
-        if (!currentInboxMessage || !currentInboxMessage.from_email) return;
-        composeForm.reset();
-        $('#mailSystemUsers').val(null).trigger('change');
-        document.getElementById('mailSenderAccount').value = currentInboxMessage.account;
-        const externalRadio = composeForm.querySelector('input[name="alici_turu"][value="harici"]');
-        externalRadio.checked = true;
-        externalRadio.dispatchEvent(new Event('change'));
-        composeForm.querySelector('[name="harici_emailler"]').value = currentInboxMessage.from_email;
-        const subject = /^(re|ynt):/i.test(currentInboxMessage.subject) ? currentInboxMessage.subject : `Ynt: ${currentInboxMessage.subject}`;
-        composeForm.querySelector('[name="konu"]').value = subject;
-        $('#mailBody').summernote('code', '<p><br></p>');
-        const inboxModalElement = document.getElementById('inboxMessageModal');
-        inboxModalElement.addEventListener('hidden.bs.modal', function () {
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('mailComposeModal')).show();
-        }, { once: true });
-        bootstrap.Modal.getOrCreateInstance(inboxModalElement).hide();
+        replyToInboxMessage(currentInboxMessage, true);
     });
 
     document.querySelectorAll('input[name="alici_turu"]').forEach(function (radio) {
