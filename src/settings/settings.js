@@ -7,6 +7,8 @@ $(document).ready(function () {
     $('#settings-tabs a[href="#tabs-profile"]').tab('show');
   } else if (myParam == "edit-account") {
     $('#settings-tabs a[href="#tabs-account"]').tab('show');
+  } else if (myParam == "smtp") {
+    $('#system-settings-tabs a[href="#tabs-system-smtp"]').tab('show');
   }
 
   // Profile Form submit validation and handler
@@ -354,7 +356,7 @@ $(document).on("click", "#btn-test-smtp", function () {
       var title = data.status == "success" ? "Başarılı!" : "Hata!";
       Swal.fire({
         title: title,
-        text: data.message,
+        text: data.status == "success" ? data.message + " Bu ayarları mail modüllerinde kullanmak için Değişiklikleri Kaydet butonuna da basın." : data.message,
         icon: data.status,
         confirmButtonText: "Tamam"
       });

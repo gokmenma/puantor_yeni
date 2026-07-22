@@ -6,18 +6,21 @@ $smtp_from_name = $Settings->getSystemSetting("smtp_from_name") ?? 'İşçi Maa�
 
 // Account 1: Şifre Sıfırlama (sifre@...)
 $smtp_username = $Settings->getSystemSetting("smtp_username") ?? 'sifre@puantor.com.tr';
-$smtp_password = $Settings->getSystemSetting("smtp_password") ?? 'Us(@ixgfPDwt';
-$masked_password = !empty($smtp_password) ? '********' : '';
+$stored_smtp_password = $Settings->getSystemSetting("smtp_password");
+$smtp_password = $stored_smtp_password ?? 'Us(@ixgfPDwt';
+$masked_password = !empty($stored_smtp_password) ? '********' : '';
 
 // Account 2: Bilgilendirme (bilgi@...)
 $smtp_info_username = $Settings->getSystemSetting("smtp_info_username") ?? 'bilgi@puantor.com.tr';
-$smtp_info_password = $Settings->getSystemSetting("smtp_info_password") ?? 'Us(@ixgfPDwt';
-$masked_info_password = !empty($smtp_info_password) ? '********' : '';
+$stored_smtp_info_password = $Settings->getSystemSetting("smtp_info_password");
+$smtp_info_password = $stored_smtp_info_password ?? 'Us(@ixgfPDwt';
+$masked_info_password = !empty($stored_smtp_info_password) ? '********' : '';
 
 // Account 3: Destek (destek@...)
 $smtp_support_username = $Settings->getSystemSetting("smtp_support_username") ?? 'destek@puantor.com.tr';
-$smtp_support_password = $Settings->getSystemSetting("smtp_support_password") ?? 'Us(@ixgfPDwt';
-$masked_support_password = !empty($smtp_support_password) ? '********' : '';
+$stored_smtp_support_password = $Settings->getSystemSetting("smtp_support_password");
+$smtp_support_password = $stored_smtp_support_password ?? 'Us(@ixgfPDwt';
+$masked_support_password = !empty($stored_smtp_support_password) ? '********' : '';
 ?>
 <div class="card mb-3">
     <div class="card-body p-4">
@@ -122,7 +125,7 @@ $masked_support_password = !empty($smtp_support_password) ? '********' : '';
                     <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">Test Edilecek Hesap</label>
                     <select class="form-select" id="smtp_test_account" name="test_account">
                         <option value="default">1. Şifre Sıfırlama (<?php echo htmlspecialchars($smtp_username); ?>)</option>
-                        <option value="info">2. Bilgilendirme (<?php echo htmlspecialchars($smtp_info_username); ?>)</option>
+                        <option value="info" selected>2. Bilgilendirme (<?php echo htmlspecialchars($smtp_info_username); ?>)</option>
                         <option value="support">3. Destek (<?php echo htmlspecialchars($smtp_support_username); ?>)</option>
                     </select>
                 </div>

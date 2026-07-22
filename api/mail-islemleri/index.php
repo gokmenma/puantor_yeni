@@ -123,7 +123,11 @@ try {
         mailJson(['status' => 'error', 'message' => 'Seçilen gönderen hesabı yapılandırılmamış.'], 422);
     }
 
-    $mailer = $service->createMailer($account);
+    try {
+        $mailer = $service->createMailer($account);
+    } catch (RuntimeException $e) {
+        mailJson(['status' => 'error', 'message' => 'SMTP sunucu ayarları eksik. Sistem Ayarları > SMTP E-Posta ekranından ayarları kaydedin.'], 422);
+    }
 
     $sendId = $model->createSend(
         (int) $_SESSION['user']->id,

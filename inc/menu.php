@@ -31,7 +31,7 @@ $Auths = new Auths();
                     <span class="input-icon-addon">
                         <i class="ti ti-search text-secondary"></i>
                     </span>
-                    <input type="search" id="menu-search-input" autocomplete="off" class="form-control text-white" placeholder="Menüde ara..." aria-label="Menü ara">
+                    <input type="search" id="menu-search-input" name="navigation_menu_filter" autocomplete="new-password" autocapitalize="none" spellcheck="false" readonly data-lpignore="true" data-1p-ignore="true" data-bwignore="true" class="form-control text-white" placeholder="Menüde ara..." aria-label="Menü ara">
                 </div>
             </div>
             <ul class="navbar-nav 1" id="sortable-menu">
@@ -205,6 +205,20 @@ $Auths = new Auths();
 $(document).ready(function() {
     var $searchInput = $('#menu-search-input');
     var $menuItems = $('#sidebar-menu .navbar-nav > li.nav-item');
+
+    $searchInput.one('pointerdown focus', function() {
+        this.removeAttribute('readonly');
+    });
+
+    function clearAutofilledMenuSearch() {
+        if ($searchInput.val().indexOf('@') !== -1) {
+            $searchInput.val('').trigger('search');
+        }
+    }
+
+    clearAutofilledMenuSearch();
+    setTimeout(clearAutofilledMenuSearch, 150);
+    setTimeout(clearAutofilledMenuSearch, 800);
 
     // Store original dropdown menu show states
     $menuItems.each(function() {

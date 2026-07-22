@@ -11,10 +11,15 @@ if ((int) ($_SESSION['user']->superadmin ?? 0) !== 1) {
 $mailModel = new MailIslemleriModel();
 $systemUsers = $mailModel->getSystemUsers();
 $settingsModel = new SettingsModel();
+$smtpHost = (string) $settingsModel->getSystemSetting('smtp_host');
+$smtpPort = (int) $settingsModel->getSystemSetting('smtp_port');
 $infoEmail = (string) $settingsModel->getSystemSetting('smtp_info_username');
 $supportEmail = (string) $settingsModel->getSystemSetting('smtp_support_username');
-$infoReady = filter_var($infoEmail, FILTER_VALIDATE_EMAIL) !== false;
-$supportReady = filter_var($supportEmail, FILTER_VALIDATE_EMAIL) !== false;
+$infoPassword = (string) $settingsModel->getSystemSetting('smtp_info_password');
+$supportPassword = (string) $settingsModel->getSystemSetting('smtp_support_password');
+$serverReady = $smtpHost !== '' && $smtpPort > 0;
+$infoReady = $serverReady && $infoPassword !== '' && filter_var($infoEmail, FILTER_VALIDATE_EMAIL) !== false;
+$supportReady = $serverReady && $supportPassword !== '' && filter_var($supportEmail, FILTER_VALIDATE_EMAIL) !== false;
 $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
 ?>
 
@@ -39,7 +44,7 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
         <?php if (!$infoReady && !$supportReady): ?>
             <div class="alert alert-warning d-flex align-items-center" role="alert">
                 <i class="ti ti-alert-triangle fs-2 me-2"></i>
-                <div class="flex-fill">Mail hesapları henüz yapılandırılmamış. Gönderimden önce sistem SMTP ayarlarını kaydedin.</div>
+                <div class="flex-fill">Mail sunucusu, hesaplar veya parolalar henüz kaydedilmemiş. SMTP testinin başarılı olması ayarları kaydetmez; SMTP ekranında parolaları girip Değişiklikleri Kaydet butonuna da basın.</div>
                 <a href="index.php?p=settings/manage&view=system&tab=smtp" class="btn btn-warning btn-sm">SMTP Ayarları</a>
             </div>
         <?php endif; ?>
@@ -206,13 +211,13 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
 
                     <div class="mb-3 d-none" id="externalEmailsArea">
                         <label class="form-label required">Harici E-posta Adresleri</label>
-                        <textarea class="form-control" name="harici_emailler" rows="3" placeholder="ornek@firma.com, ikinci@firma.com"></textarea>
+                        <textarea class="form-control" name="harici_emailler" rows="3" autocomplete="off" data-lpignore="true" data-1p-ignore="true" placeholder="ornek@firma.com, ikinci@firma.com"></textarea>
                         <div class="form-hint">Adresleri virgül, noktalı virgül, boşluk veya yeni satırla ayırabilirsiniz.</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label required">Konu</label>
-                        <input type="text" class="form-control" name="konu" maxlength="255" required placeholder="Mail konusu">
+                        <input type="text" class="form-control" name="konu" maxlength="255" autocomplete="off" data-lpignore="true" data-1p-ignore="true" required placeholder="Mail konusu">
                     </div>
 
                     <div>
