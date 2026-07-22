@@ -11,15 +11,13 @@ if ((int) ($_SESSION['user']->superadmin ?? 0) !== 1) {
 $mailModel = new MailIslemleriModel();
 $systemUsers = $mailModel->getSystemUsers();
 $settingsModel = new SettingsModel();
-$smtpHost = (string) $settingsModel->getSystemSetting('smtp_host');
-$smtpPort = (int) $settingsModel->getSystemSetting('smtp_port');
-$infoEmail = (string) $settingsModel->getSystemSetting('smtp_info_username');
-$supportEmail = (string) $settingsModel->getSystemSetting('smtp_support_username');
-$infoPassword = (string) $settingsModel->getSystemSetting('smtp_info_password');
-$supportPassword = (string) $settingsModel->getSystemSetting('smtp_support_password');
+$smtpHost = (string) ($settingsModel->getSystemSetting('smtp_host') ?? 'mail.puantor.com.tr');
+$smtpPort = (int) ($settingsModel->getSystemSetting('smtp_port') ?? 465);
+$infoEmail = (string) ($settingsModel->getSystemSetting('smtp_info_username') ?? 'bilgi@puantor.com.tr');
+$supportEmail = (string) ($settingsModel->getSystemSetting('smtp_support_username') ?? 'destek@puantor.com.tr');
 $serverReady = $smtpHost !== '' && $smtpPort > 0;
-$infoReady = $serverReady && $infoPassword !== '' && filter_var($infoEmail, FILTER_VALIDATE_EMAIL) !== false;
-$supportReady = $serverReady && $supportPassword !== '' && filter_var($supportEmail, FILTER_VALIDATE_EMAIL) !== false;
+$infoReady = $serverReady && filter_var($infoEmail, FILTER_VALIDATE_EMAIL) !== false;
+$supportReady = $serverReady && filter_var($supportEmail, FILTER_VALIDATE_EMAIL) !== false;
 $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
 ?>
 
@@ -44,7 +42,7 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
         <?php if (!$infoReady && !$supportReady): ?>
             <div class="alert alert-warning d-flex align-items-center" role="alert">
                 <i class="ti ti-alert-triangle fs-2 me-2"></i>
-                <div class="flex-fill">Mail sunucusu, hesaplar veya parolalar henüz kaydedilmemiş. SMTP testinin başarılı olması ayarları kaydetmez; SMTP ekranında parolaları girip Değişiklikleri Kaydet butonuna da basın.</div>
+                <div class="flex-fill">Mail sunucusu veya gönderen hesapları henüz kaydedilmemiş. SMTP ekranında Değişiklikleri Kaydet butonuna basın.</div>
                 <a href="index.php?p=settings/manage&view=system&tab=smtp" class="btn btn-warning btn-sm">SMTP Ayarları</a>
             </div>
         <?php endif; ?>

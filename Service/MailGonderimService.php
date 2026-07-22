@@ -21,21 +21,23 @@ class MailGonderimService
     public function getAccountEmail(string $account): string
     {
         $key = $account === 'support' ? 'smtp_support_username' : 'smtp_info_username';
-        return trim((string) $this->settings->getSystemSetting($key));
+        $default = $account === 'support' ? 'destek@puantor.com.tr' : 'bilgi@puantor.com.tr';
+        return trim((string) ($this->settings->getSystemSetting($key) ?? $default));
     }
 
     public function createMailer(string $account): PHPMailer
     {
-        $host = trim((string) $this->settings->getSystemSetting('smtp_host'));
-        $port = (int) $this->settings->getSystemSetting('smtp_port');
-        $encryption = trim((string) $this->settings->getSystemSetting('smtp_encryption'));
-        $fromName = trim((string) $this->settings->getSystemSetting('smtp_from_name'));
+        $host = trim((string) ($this->settings->getSystemSetting('smtp_host') ?? 'mail.puantor.com.tr'));
+        $port = (int) ($this->settings->getSystemSetting('smtp_port') ?? 465);
+        $encryption = trim((string) ($this->settings->getSystemSetting('smtp_encryption') ?? 'ssl'));
+        $fromName = trim((string) ($this->settings->getSystemSetting('smtp_from_name') ?? 'Puantor | Puantaj Takip Programı'));
         $usernameKey = $account === 'support' ? 'smtp_support_username' : 'smtp_info_username';
         $passwordKey = $account === 'support' ? 'smtp_support_password' : 'smtp_info_password';
-        $username = trim((string) $this->settings->getSystemSetting($usernameKey));
+        $defaultUsername = $account === 'support' ? 'destek@puantor.com.tr' : 'bilgi@puantor.com.tr';
+        $username = trim((string) ($this->settings->getSystemSetting($usernameKey) ?? $defaultUsername));
         $password = (string) $this->settings->getSystemSetting($passwordKey);
 
-        if ($host === '' || $port < 1 || $username === '' || $password === '') {
+        if ($host === '' || $port < 1 || $username === '') {
             throw new RuntimeException('SMTP ayarları eksik.');
         }
 
@@ -43,7 +45,7 @@ class MailGonderimService
         $mail->isSMTP();
         $mail->Host = $host;
         $mail->Port = $port;
-        $mail->SMTPAuth = true;
+        $mail->SMTPAuth = $password !== '';
         $mail->Username = $username;
         $mail->Password = $password;
         $mail->CharSet = 'UTF-8';
