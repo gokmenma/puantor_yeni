@@ -214,7 +214,7 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
 
 #inboxTable .inbox-action-cell {
     position: relative;
-    min-width: 148px;
+    min-width: 132px;
 }
 
 #inboxTable .inbox-row-actions {
@@ -222,11 +222,10 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
     top: 50%;
     right: .75rem;
     display: flex;
-    gap: .25rem;
-    padding: .2rem;
+    gap: .125rem;
+    padding: .125rem;
     background: var(--tblr-bg-surface, #fff);
     border-radius: .375rem;
-    box-shadow: 0 1px 5px rgba(24, 36, 51, .12);
     opacity: 0;
     pointer-events: none;
     transform: translateY(-50%);
@@ -242,6 +241,29 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
 #inboxTable .inbox-message-row:hover .inbox-message-size,
 #inboxTable .inbox-message-row:focus-within .inbox-message-size {
     visibility: hidden;
+}
+
+#inboxTable .inbox-row-action {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+    color: #182433;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+#inboxTable .inbox-row-action .ti {
+    font-size: 1.35rem;
+    stroke-width: 1.8;
+}
+
+#inboxTable .inbox-row-action:hover,
+#inboxTable .inbox-row-action:focus-visible {
+    color: #182433;
+    background: #e9ecef;
+    box-shadow: none;
 }
 
 @media (hover: none) {
@@ -560,9 +582,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="text-end text-nowrap inbox-action-cell">
                         <span class="inbox-message-size">${formatBytes(message.size)}</span>
                         <div class="inbox-row-actions">
-                            <button type="button" class="btn btn-sm btn-icon btn-outline-secondary inbox-row-action" data-action="seen" title="${seenLabel}" aria-label="${seenLabel}"><i class="ti ${seenIcon}"></i></button>
-                            <button type="button" class="btn btn-sm btn-icon btn-outline-primary inbox-row-action" data-action="reply" title="Yanıtla" aria-label="Yanıtla"${replyDisabled}><i class="ti ti-arrow-back-up"></i></button>
-                            <button type="button" class="btn btn-sm btn-icon btn-outline-danger inbox-row-action" data-action="delete" title="Sil" aria-label="Sil"><i class="ti ti-trash"></i></button>
+                            <button type="button" class="btn btn-icon inbox-row-action" data-action="seen" title="${seenLabel}" aria-label="${seenLabel}"><i class="ti ${seenIcon}"></i></button>
+                            <button type="button" class="btn btn-icon inbox-row-action" data-action="reply" title="Yanıtla" aria-label="Yanıtla"${replyDisabled}><i class="ti ti-arrow-back-up"></i></button>
+                            <button type="button" class="btn btn-icon inbox-row-action" data-action="delete" title="Sil" aria-label="Sil"><i class="ti ti-trash"></i></button>
                         </div>
                     </td>
                 </tr>`;
