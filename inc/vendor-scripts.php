@@ -44,6 +44,7 @@ if (
     $page == 'izin/list' ||
     $page == 'izin/hakedis' ||
     $page == 'bildirimler/push' ||
+    $page == 'mail-islemleri/index' ||
     $page == 'supports/tickets' || $page == 'supports/ticket-view' ||
     $page == 'supports/admin-tickets' || $page == 'supports/admin-ticket-view'
 ) {
@@ -60,6 +61,7 @@ if (
     || $page == "supports/admin-tickets" || $page == "supports/admin-ticket-view"
     || $page == "abonelik-islemleri/list"
     || $page == "duyurular/list"
+    || $page == "mail-islemleri/index"
 ) {
     echo '<script src="./dist/libs/summernote/summernote-lite.min.js?1692870487"></script>';
     echo '<script src="./dist/libs/summernote/lang/summernote-tr-TR.min.js"></script>';
