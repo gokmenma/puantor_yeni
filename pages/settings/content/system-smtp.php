@@ -3,6 +3,9 @@ $smtp_host = $Settings->getSystemSetting("smtp_host") ?? 'mail.puantor.com.tr';
 $smtp_port = $Settings->getSystemSetting("smtp_port") ?? '465';
 $smtp_encryption = $Settings->getSystemSetting("smtp_encryption") ?? 'ssl';
 $smtp_from_name = $Settings->getSystemSetting("smtp_from_name") ?? 'İşçi Maaş';
+$imap_host = $Settings->getSystemSetting("imap_host") ?? $smtp_host;
+$imap_port = $Settings->getSystemSetting("imap_port") ?? '993';
+$imap_encryption = $Settings->getSystemSetting("imap_encryption") ?? 'ssl';
 
 // Account 1: Şifre Sıfırlama (sifre@...)
 $smtp_username = $Settings->getSystemSetting("smtp_username") ?? 'sifre@puantor.com.tr';
@@ -59,6 +62,27 @@ $masked_support_password = !empty($stored_smtp_support_password) ? '********' : 
                 <div class="col-md-6">
                     <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">Gönderen Adı (From Name)</label>
                     <input type="text" class="form-control" name="smtp_from_name" value="<?php echo htmlspecialchars($smtp_from_name); ?>" placeholder="İşçi Maaş Programı" required>
+                </div>
+            </div>
+
+            <div class="hr-text text-start text-dark fw-bold mb-4" style="font-size: 0.95rem;">Gelen Kutu Sunucusu</div>
+
+            <div class="row mb-4">
+                <div class="col-md-5 mb-3 mb-md-0">
+                    <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">IMAP Sunucu Adresi</label>
+                    <input type="text" class="form-control" name="imap_host" value="<?php echo htmlspecialchars($imap_host); ?>" placeholder="mail.site.com" required>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">IMAP Portu</label>
+                    <input type="number" class="form-control" name="imap_port" value="<?php echo htmlspecialchars($imap_port); ?>" min="1" max="65535" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-dark small" style="margin-bottom: 0.5rem;">IMAP Şifreleme</label>
+                    <select class="form-select" name="imap_encryption">
+                        <option value="ssl" <?php echo $imap_encryption === 'ssl' ? 'selected' : ''; ?>>SSL/TLS (Port 993)</option>
+                        <option value="tls" <?php echo $imap_encryption === 'tls' ? 'selected' : ''; ?>>STARTTLS (Port 143)</option>
+                        <option value="none" <?php echo $imap_encryption === 'none' ? 'selected' : ''; ?>>Yok</option>
+                    </select>
                 </div>
             </div>
 

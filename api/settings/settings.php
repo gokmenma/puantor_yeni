@@ -281,15 +281,25 @@ if ($_POST["action"] == "systemSmtpSave") {
         $smtp_port = trim($_POST["smtp_port"] ?? '');
         $smtp_encryption = trim($_POST["smtp_encryption"] ?? 'ssl');
         $smtp_from_name = trim($_POST["smtp_from_name"] ?? '');
+        $imap_host = trim($_POST["imap_host"] ?? $smtp_host);
+        $imap_port = (int) ($_POST["imap_port"] ?? 993);
+        $imap_encryption = trim($_POST["imap_encryption"] ?? 'ssl');
 
-        if (empty($smtp_host) || empty($smtp_port)) {
-            throw new Exception("Sunucu adresi ve port numarası alanları zorunludur.");
+        if (empty($smtp_host) || empty($smtp_port) || empty($imap_host) || $imap_port < 1 || $imap_port > 65535) {
+            throw new Exception("SMTP ve IMAP sunucu adresleri ile port numaraları zorunludur.");
+        }
+
+        if (!in_array($imap_encryption, ['ssl', 'tls', 'none'], true)) {
+            throw new Exception("Geçersiz IMAP şifreleme türü.");
         }
 
         $Settings->upsertSystemSetting("smtp_host", $smtp_host);
         $Settings->upsertSystemSetting("smtp_port", $smtp_port);
         $Settings->upsertSystemSetting("smtp_encryption", $smtp_encryption);
         $Settings->upsertSystemSetting("smtp_from_name", $smtp_from_name);
+        $Settings->upsertSystemSetting("imap_host", $imap_host);
+        $Settings->upsertSystemSetting("imap_port", (string) $imap_port);
+        $Settings->upsertSystemSetting("imap_encryption", $imap_encryption);
 
         // Account 1: sifre@...
         $smtp_username = trim($_POST["smtp_username"] ?? '');

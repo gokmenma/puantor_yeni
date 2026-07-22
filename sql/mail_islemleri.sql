@@ -43,3 +43,15 @@ INSERT INTO `auths` (`title`, `auth_name`, `description`, `parent_id`, `is_activ
 SELECT 'Mail İşlemleri', 'mail_islemleri', 'Sistem ve harici kullanıcılara e-posta gönderme ve gönderimleri izleme.', 0, 1, 1
 FROM dual
 WHERE NOT EXISTS (SELECT 1 FROM `auths` WHERE `auth_name` = 'mail_islemleri');
+
+INSERT INTO `settings` (`firm_id`, `user_id`, `set_name`, `set_value`)
+SELECT 0, 0, 'imap_host', 'mail.puantor.com.tr' FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM `settings` WHERE `firm_id` = 0 AND `user_id` = 0 AND `set_name` = 'imap_host');
+
+INSERT INTO `settings` (`firm_id`, `user_id`, `set_name`, `set_value`)
+SELECT 0, 0, 'imap_port', '993' FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM `settings` WHERE `firm_id` = 0 AND `user_id` = 0 AND `set_name` = 'imap_port');
+
+INSERT INTO `settings` (`firm_id`, `user_id`, `set_name`, `set_value`)
+SELECT 0, 0, 'imap_encryption', 'ssl' FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM `settings` WHERE `firm_id` = 0 AND `user_id` = 0 AND `set_name` = 'imap_encryption');

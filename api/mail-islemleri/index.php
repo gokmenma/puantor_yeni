@@ -15,8 +15,10 @@ require_once ROOT . '/Model/MailIslemleriModel.php';
 require_once ROOT . '/Model/SettingsModel.php';
 require_once ROOT . '/Model/ActivityLogModel.php';
 require_once ROOT . '/Service/MailGonderimService.php';
+require_once ROOT . '/Service/MailGelenKutuService.php';
 
 use Service\MailGonderimService;
+use Service\MailGelenKutuService;
 
 function mailJson(array $data, int $status = 200): void
 {
@@ -26,6 +28,15 @@ function mailJson(array $data, int $status = 200): void
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
+}
+
+function validateMailCsrf(): void
+{
+    $sessionToken = (string) ($_SESSION['csrf_token'] ?? '');
+    $requestToken = (string) ($_POST['csrf_token'] ?? '');
+    if ($sessionToken === '' || $requestToken === '' || !hash_equals($sessionToken, $requestToken)) {
+        mailJson(['status' => 'error', 'message' => 'Güvenlik doğrulaması başarısız. Sayfayı yenileyin.'], 419);
+    }
 }
 
 if (!isset($_SESSION['user'])) {
@@ -67,15 +78,60 @@ try {
         mailJson(['status' => 'success', 'send' => $send, 'recipients' => $model->getRecipients($sendId)]);
     }
 
-    if ($action !== 'send' || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    if ($action === 'inbox') {
+        $account = (string) ($_GET['account'] ?? 'info');
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = min(100, max(10, (int) ($_GET['per_page'] ?? 25)));
+        $search = trim((string) ($_GET['search'] ?? ''));
+        try {
+            $inboxService = new MailGelenKutuService(new SettingsModel());
+            $result = $inboxService->getInbox($account, $page, $perPage, $search);
+            mailJson(['status' => 'success', 'account_email' => $inboxService->getAccountEmail($account)] + $result);
+        } catch (RuntimeException $e) {
+            error_log('Mail inbox list error: ' . $e->getMessage());
+            mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    if ($action === 'message') {
+        $account = (string) ($_GET['account'] ?? 'info');
+        $uid = (int) ($_GET['uid'] ?? 0);
+        if ($uid < 1) {
+            mailJson(['status' => 'error', 'message' => 'Geçersiz mail kaydı.'], 422);
+        }
+        try {
+            $inboxService = new MailGelenKutuService(new SettingsModel());
+            mailJson(['status' => 'success', 'message_data' => $inboxService->getMessage($account, $uid)]);
+        } catch (RuntimeException $e) {
+            error_log('Mail inbox message error: ' . $e->getMessage());
+            mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    if ($action === 'seen' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        validateMailCsrf();
+        $account = (string) ($_POST['account'] ?? 'info');
+        $uid = (int) ($_POST['uid'] ?? 0);
+        $seen = (int) ($_POST['seen'] ?? 1) === 1;
+        if ($uid < 1) {
+            mailJson(['status' => 'error', 'message' => 'Geçersiz mail kaydı.'], 422);
+        }
+        try {
+            $inboxService = new MailGelenKutuService(new SettingsModel());
+            $inboxService->setSeen($account, $uid, $seen);
+            ActivityLogModel::log('mail_islemleri', $seen ? 'mark_read' : 'mark_unread', "Gelen mail durumu güncellendi. Hesap: {$account}, UID: {$uid}.");
+            mailJson(['status' => 'success']);
+        } catch (RuntimeException $e) {
+            error_log('Mail inbox flag error: ' . $e->getMessage());
+            mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    if ($action !== 'send' || ($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
         mailJson(['status' => 'error', 'message' => 'Geçersiz istek.'], 400);
     }
 
-    $sessionToken = (string) ($_SESSION['csrf_token'] ?? '');
-    $requestToken = (string) ($_POST['csrf_token'] ?? '');
-    if ($sessionToken === '' || $requestToken === '' || !hash_equals($sessionToken, $requestToken)) {
-        mailJson(['status' => 'error', 'message' => 'Güvenlik doğrulaması başarısız. Sayfayı yenileyin.'], 419);
-    }
+    validateMailCsrf();
 
     $recipientType = (string) ($_POST['alici_turu'] ?? 'secili');
     $account = (string) ($_POST['gonderen_hesabi'] ?? 'info');

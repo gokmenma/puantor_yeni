@@ -81,28 +81,94 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <div>
-                    <h3 class="card-title">Gönderim Geçmişi</h3>
-                    <p class="card-subtitle">Gönderilen mailleri ve alıcı bazındaki sonuçları izleyin.</p>
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <ul class="nav nav-pills" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="sent-mails-tab" data-bs-toggle="tab" data-bs-target="#sent-mails-pane" type="button" role="tab">
+                            <i class="ti ti-send me-2"></i>Gönderilenler
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="inbox-mails-tab" data-bs-toggle="tab" data-bs-target="#inbox-mails-pane" type="button" role="tab">
+                            <i class="ti ti-inbox me-2"></i>Gelen Kutusu
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="sent-mails-pane" role="tabpanel" aria-labelledby="sent-mails-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Gönderim Geçmişi</h3>
+                            <p class="card-subtitle">Gönderilen mailleri ve alıcı bazındaki sonuçları izleyin.</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table card-table table-vcenter w-100" id="mailHistoryTable">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Gönderen</th>
+                                    <th>Alıcı Türü</th>
+                                    <th>Konu</th>
+                                    <th>Sonuç</th>
+                                    <th>Durum</th>
+                                    <th class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table card-table table-vcenter w-100" id="mailHistoryTable">
-                    <thead>
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Gönderen</th>
-                            <th>Alıcı Türü</th>
-                            <th>Konu</th>
-                            <th>Sonuç</th>
-                            <th>Durum</th>
-                            <th class="text-end">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+
+            <div class="tab-pane fade" id="inbox-mails-pane" role="tabpanel" aria-labelledby="inbox-mails-tab">
+                <div class="card">
+                    <div class="card-header d-flex flex-wrap gap-3 align-items-center">
+                        <div class="me-auto">
+                            <h3 class="card-title">Gelen Kutusu</h3>
+                            <p class="card-subtitle" id="inboxAccountLabel">IMAP üzerinden gelen mailler</p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <select class="form-select" id="inboxAccount" aria-label="Gelen kutusu hesabı">
+                                <option value="info">Bilgilendirme — <?php echo htmlspecialchars($infoEmail, ENT_QUOTES, 'UTF-8'); ?></option>
+                                <option value="support">Destek — <?php echo htmlspecialchars($supportEmail, ENT_QUOTES, 'UTF-8'); ?></option>
+                            </select>
+                            <div class="input-icon">
+                                <span class="input-icon-addon"><i class="ti ti-search"></i></span>
+                                <input type="search" class="form-control" id="inboxSearch" autocomplete="off" data-lpignore="true" placeholder="Gelen kutusunda ara">
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="inboxRefresh"><i class="ti ti-refresh"></i></button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table card-table table-vcenter table-hover mb-0" id="inboxTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:42px"></th>
+                                    <th>Gönderen</th>
+                                    <th>Konu</th>
+                                    <th>Tarih</th>
+                                    <th class="text-end">Boyut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inboxRows">
+                                <tr><td colspan="5" class="text-center text-secondary py-5">Gelen Kutusu sekmesini açtığınızda mailler yüklenecek.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer d-flex flex-wrap align-items-center gap-2">
+                        <div class="text-secondary" id="inboxPaginationInfo">—</div>
+                        <div class="ms-auto btn-list">
+                            <button type="button" class="btn btn-sm" id="inboxPrevious" disabled><i class="ti ti-chevron-left me-1"></i>Önceki</button>
+                            <button type="button" class="btn btn-sm" id="inboxNext" disabled>Sonraki<i class="ti ti-chevron-right ms-1"></i></button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -135,6 +201,22 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
 
 #mailComposeForm .modal-footer {
     flex: 0 0 auto;
+}
+
+#inboxTable .inbox-message-row {
+    cursor: pointer;
+}
+
+#inboxTable .inbox-message-row.is-unread td {
+    background: rgba(32, 107, 196, .06);
+    font-weight: 600;
+}
+
+#inboxMessageFrame {
+    width: 100%;
+    min-height: 46vh;
+    border: 0;
+    background: #fff;
 }
 
 @media (max-height: 700px) {
@@ -257,11 +339,50 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
     </div>
 </div>
 
+<div class="modal modal-blur fade" id="inboxMessageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="min-w-0">
+                    <h5 class="modal-title text-truncate" id="inboxMessageSubject">Mail detayı</h5>
+                    <div class="text-secondary small text-truncate" id="inboxMessageMeta"></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="inboxMessageLoading" class="text-center py-5">
+                    <span class="spinner-border spinner-border-sm me-2"></span>Mail yükleniyor...
+                </div>
+                <div id="inboxMessageContent" class="d-none">
+                    <div class="border-bottom px-4 py-3">
+                        <div><span class="text-secondary">Kimden:</span> <span id="inboxMessageFrom"></span></div>
+                        <div><span class="text-secondary">Kime:</span> <span id="inboxMessageTo"></span></div>
+                        <div><span class="text-secondary">Tarih:</span> <span id="inboxMessageDate"></span></div>
+                    </div>
+                    <iframe id="inboxMessageFrame" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Mail içeriği"></iframe>
+                    <div class="border-top px-4 py-3 d-none" id="inboxAttachments"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary me-auto" id="inboxToggleSeen"><i class="ti ti-mail me-1"></i>Okunmadı Yap</button>
+                <button type="button" class="btn btn-outline-primary" id="inboxReply"><i class="ti ti-arrow-back-up me-1"></i>Yanıtla</button>
+                <button type="button" class="btn" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const apiUrl = '/api/mail-islemleri/index.php';
     const composeForm = document.getElementById('mailComposeForm');
     const sendButton = document.getElementById('mailSendButton');
+    const csrfToken = composeForm.querySelector('input[name="csrf_token"]').value;
+    let inboxPage = 1;
+    let inboxPageCount = 1;
+    let inboxLoaded = false;
+    let inboxSearchTimer = null;
+    let currentInboxMessage = null;
 
     $('#mailSystemUsers').select2({
         dropdownParent: $('#mailComposeModal'),
@@ -341,6 +462,196 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('mailStatToday').textContent = data.stats.bugun_alici;
             });
     }
+
+    function formatBytes(bytes) {
+        const value = Number(bytes) || 0;
+        if (value < 1024) return `${value} B`;
+        if (value < 1048576) return `${(value / 1024).toFixed(1)} KB`;
+        return `${(value / 1048576).toFixed(1)} MB`;
+    }
+
+    async function loadInbox(resetPage) {
+        if (resetPage) inboxPage = 1;
+        const account = document.getElementById('inboxAccount').value;
+        const search = document.getElementById('inboxSearch').value.trim();
+        const rows = document.getElementById('inboxRows');
+        rows.innerHTML = '<tr><td colspan="5" class="text-center py-5"><span class="spinner-border spinner-border-sm me-2"></span>Gelen kutusu yükleniyor...</td></tr>';
+        document.getElementById('inboxPrevious').disabled = true;
+        document.getElementById('inboxNext').disabled = true;
+
+        try {
+            const query = new URLSearchParams({ action: 'inbox', account: account, page: inboxPage, per_page: 25, search: search });
+            const response = await fetch(`${apiUrl}?${query.toString()}`);
+            const data = await response.json();
+            if (data.status !== 'success') throw new Error(data.message || 'Gelen kutusu yüklenemedi.');
+
+            inboxPage = Number(data.page) || 1;
+            inboxPageCount = Number(data.page_count) || 1;
+            document.getElementById('inboxAccountLabel').textContent = `${data.account_email} · ${Number(data.total)} mail`;
+            document.getElementById('inboxPaginationInfo').textContent = `${Number(data.total)} mail · Sayfa ${inboxPage} / ${inboxPageCount}`;
+            document.getElementById('inboxPrevious').disabled = inboxPage <= 1;
+            document.getElementById('inboxNext').disabled = inboxPage >= inboxPageCount;
+
+            rows.innerHTML = data.rows.map(function (message) {
+                const sender = message.from_name || message.from_email || 'Bilinmeyen gönderen';
+                const answered = message.answered ? '<i class="ti ti-arrow-back-up text-primary ms-1" title="Yanıtlandı"></i>' : '';
+                return `<tr class="inbox-message-row ${message.seen ? '' : 'is-unread'}" data-uid="${Number(message.uid)}" data-seen="${message.seen ? '1' : '0'}">
+                    <td>${message.seen ? '<i class="ti ti-mail-opened text-secondary"></i>' : '<i class="ti ti-mail text-primary"></i>'}</td>
+                    <td><div>${escapeHtml(sender)}${answered}</div><div class="text-secondary small">${escapeHtml(message.from_email || '')}</div></td>
+                    <td>${escapeHtml(message.subject || '(Konu yok)')}</td>
+                    <td class="text-nowrap">${formatDate(message.date)}</td>
+                    <td class="text-end text-nowrap">${formatBytes(message.size)}</td>
+                </tr>`;
+            }).join('') || '<tr><td colspan="5" class="text-center text-secondary py-5">Bu gelen kutusunda mail bulunamadı.</td></tr>';
+            inboxLoaded = true;
+        } catch (error) {
+            rows.innerHTML = `<tr><td colspan="5" class="text-center py-5"><div class="text-danger mb-2"><i class="ti ti-alert-circle me-1"></i>${escapeHtml(error.message || 'Gelen kutusu yüklenemedi.')}</div><a class="btn btn-sm btn-outline-primary" href="index.php?p=settings/manage&view=system&tab=smtp">IMAP Ayarları</a></td></tr>`;
+            document.getElementById('inboxPaginationInfo').textContent = 'Bağlantı kurulamadı';
+        }
+    }
+
+    async function openInboxMessage(uid, wasSeen) {
+        const account = document.getElementById('inboxAccount').value;
+        const modalElement = document.getElementById('inboxMessageModal');
+        document.getElementById('inboxMessageLoading').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mail yükleniyor...';
+        document.getElementById('inboxMessageLoading').classList.remove('d-none');
+        document.getElementById('inboxMessageContent').classList.add('d-none');
+        document.getElementById('inboxMessageSubject').textContent = 'Mail yükleniyor...';
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+
+        try {
+            const query = new URLSearchParams({ action: 'message', account: account, uid: uid });
+            const response = await fetch(`${apiUrl}?${query.toString()}`);
+            const data = await response.json();
+            if (data.status !== 'success') throw new Error(data.message || 'Mail yüklenemedi.');
+
+            const message = data.message_data;
+            currentInboxMessage = { account: account, uid: Number(message.uid), from_email: message.from_email, subject: message.subject, seen: wasSeen };
+            document.getElementById('inboxMessageSubject').textContent = message.subject || '(Konu yok)';
+            document.getElementById('inboxMessageMeta').textContent = `${message.from_name || message.from_email} · ${formatDate(message.date)}`;
+            document.getElementById('inboxMessageFrom').textContent = message.from_name && message.from_name !== message.from_email ? `${message.from_name} <${message.from_email}>` : message.from_email;
+            document.getElementById('inboxMessageTo').textContent = (message.to || []).map(function (item) { return item.name && item.name !== item.email ? `${item.name} <${item.email}>` : item.email; }).join(', ') || '—';
+            document.getElementById('inboxMessageDate').textContent = formatDate(message.date);
+            document.getElementById('inboxMessageFrame').srcdoc = message.body || '<p>İçerik yok.</p>';
+
+            const attachments = document.getElementById('inboxAttachments');
+            if (message.attachments && message.attachments.length) {
+                attachments.classList.remove('d-none');
+                attachments.innerHTML = `<div class="fw-semibold mb-2"><i class="ti ti-paperclip me-1"></i>Ekler</div><div class="btn-list">${message.attachments.map(function (attachment) {
+                    const query = new URLSearchParams({ account: account, uid: message.uid, part: attachment.part });
+                    return `<a class="btn btn-sm btn-outline-secondary" href="/api/mail-islemleri/attachment.php?${query.toString()}"><i class="ti ti-download me-1"></i>${escapeHtml(attachment.filename)} <span class="text-secondary ms-1">${formatBytes(attachment.size)}</span></a>`;
+                }).join('')}</div>`;
+            } else {
+                attachments.classList.add('d-none');
+                attachments.innerHTML = '';
+            }
+
+            document.getElementById('inboxMessageLoading').classList.add('d-none');
+            document.getElementById('inboxMessageContent').classList.remove('d-none');
+            if (wasSeen) {
+                document.getElementById('inboxToggleSeen').innerHTML = '<i class="ti ti-mail me-1"></i>Okunmadı Yap';
+            } else {
+                try {
+                    await updateInboxSeen(true);
+                } catch (error) {
+                    document.getElementById('inboxToggleSeen').innerHTML = '<i class="ti ti-mail-opened me-1"></i>Okundu Yap';
+                }
+            }
+        } catch (error) {
+            document.getElementById('inboxMessageSubject').textContent = 'Mail yüklenemedi';
+            document.getElementById('inboxMessageLoading').innerHTML = `<div class="text-danger"><i class="ti ti-alert-circle me-1"></i>${escapeHtml(error.message || 'Mail yüklenemedi.')}</div>`;
+        }
+    }
+
+    async function updateInboxSeen(seen) {
+        if (!currentInboxMessage) return;
+        const formData = new FormData();
+        formData.append('action', 'seen');
+        formData.append('csrf_token', csrfToken);
+        formData.append('account', currentInboxMessage.account);
+        formData.append('uid', currentInboxMessage.uid);
+        formData.append('seen', seen ? '1' : '0');
+        const response = await fetch(apiUrl, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.status !== 'success') throw new Error(data.message || 'Mail durumu güncellenemedi.');
+        currentInboxMessage.seen = seen;
+        document.getElementById('inboxToggleSeen').innerHTML = seen
+            ? '<i class="ti ti-mail me-1"></i>Okunmadı Yap'
+            : '<i class="ti ti-mail-opened me-1"></i>Okundu Yap';
+        const row = document.querySelector(`#inboxRows tr[data-uid="${currentInboxMessage.uid}"]`);
+        row?.classList.toggle('is-unread', !seen);
+        if (row) {
+            row.dataset.seen = seen ? '1' : '0';
+            row.querySelector('td:first-child').innerHTML = seen
+                ? '<i class="ti ti-mail-opened text-secondary"></i>'
+                : '<i class="ti ti-mail text-primary"></i>';
+        }
+    }
+
+    document.getElementById('inbox-mails-tab').addEventListener('shown.bs.tab', function () {
+        if (!inboxLoaded) loadInbox(true);
+    });
+
+    document.getElementById('inboxAccount').addEventListener('change', function () {
+        inboxLoaded = false;
+        loadInbox(true);
+    });
+
+    document.getElementById('inboxRefresh').addEventListener('click', function () {
+        loadInbox(false);
+    });
+
+    document.getElementById('inboxSearch').addEventListener('input', function () {
+        clearTimeout(inboxSearchTimer);
+        inboxSearchTimer = setTimeout(function () { loadInbox(true); }, 450);
+    });
+
+    document.getElementById('inboxPrevious').addEventListener('click', function () {
+        if (inboxPage > 1) {
+            inboxPage--;
+            loadInbox(false);
+        }
+    });
+
+    document.getElementById('inboxNext').addEventListener('click', function () {
+        if (inboxPage < inboxPageCount) {
+            inboxPage++;
+            loadInbox(false);
+        }
+    });
+
+    document.getElementById('inboxRows').addEventListener('click', function (event) {
+        const row = event.target.closest('.inbox-message-row');
+        if (row) openInboxMessage(Number(row.dataset.uid), row.dataset.seen === '1');
+    });
+
+    document.getElementById('inboxToggleSeen').addEventListener('click', async function () {
+        if (!currentInboxMessage) return;
+        try {
+            await updateInboxSeen(!currentInboxMessage.seen);
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'İşlem başarısız', text: error.message });
+        }
+    });
+
+    document.getElementById('inboxReply').addEventListener('click', function () {
+        if (!currentInboxMessage || !currentInboxMessage.from_email) return;
+        composeForm.reset();
+        $('#mailSystemUsers').val(null).trigger('change');
+        document.getElementById('mailSenderAccount').value = currentInboxMessage.account;
+        const externalRadio = composeForm.querySelector('input[name="alici_turu"][value="harici"]');
+        externalRadio.checked = true;
+        externalRadio.dispatchEvent(new Event('change'));
+        composeForm.querySelector('[name="harici_emailler"]').value = currentInboxMessage.from_email;
+        const subject = /^(re|ynt):/i.test(currentInboxMessage.subject) ? currentInboxMessage.subject : `Ynt: ${currentInboxMessage.subject}`;
+        composeForm.querySelector('[name="konu"]').value = subject;
+        $('#mailBody').summernote('code', '<p><br></p>');
+        const inboxModalElement = document.getElementById('inboxMessageModal');
+        inboxModalElement.addEventListener('hidden.bs.modal', function () {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('mailComposeModal')).show();
+        }, { once: true });
+        bootstrap.Modal.getOrCreateInstance(inboxModalElement).hide();
+    });
 
     document.querySelectorAll('input[name="alici_turu"]').forEach(function (radio) {
         radio.addEventListener('change', function () {
