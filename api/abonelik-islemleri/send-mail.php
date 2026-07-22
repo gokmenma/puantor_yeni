@@ -3,6 +3,8 @@ define("ROOT", $_SERVER["DOCUMENT_ROOT"]);
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/vendor/autoload.php';
 require_once ROOT . '/Model/Auths.php';
+require_once ROOT . '/Model/ActivityLogModel.php';
+require_once ROOT . '/mail-settings.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -54,6 +56,7 @@ try {
     $stmt->execute($user_ids);
     $recipients = $stmt->fetchAll(PDO::FETCH_OBJ);
 } catch (\Exception $e) {
+    error_log("Mail send database error: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Veritabanı hatası.']);
     exit;
 }
@@ -63,22 +66,10 @@ if (empty($recipients)) {
     exit;
 }
 
-$mail = new PHPMailer(true);
 $errors = [];
 $sent = 0;
 
 try {
-    $mail->isSMTP();
-    $mail->Host       = 'mail.puantor.com.tr';
-    $mail->SMTPAuth   = true;
-    $mail->Username   = 'sifre@puantor.com.tr';
-    $mail->Password   = 'Us(@ixgfPDwt';
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    $mail->Port       = 465;
-    $mail->CharSet    = 'UTF-8';
-    $mail->isHTML(true);
-    $mail->setFrom('sifre@puantor.com.tr', 'Puantor.com.tr');
-
     foreach ($recipients as $recipient) {
         try {
             $mail->clearAddresses();
@@ -88,19 +79,23 @@ try {
             $mail->AltBody = strip_tags($body);
             $mail->send();
             $sent++;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
+            error_log("Mail send error to {$recipient->email}: " . $e->getMessage());
             $errors[] = $recipient->email;
         }
     }
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'SMTP bağlantı hatası: ' . $e->getMessage()]);
+} catch (\Exception $e) {
+    error_log("SMTP error: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'SMTP hatası oluştu.']);
     exit;
 }
 
 if ($sent === 0) {
-    echo json_encode(['success' => false, 'message' => 'Hiçbir mail gönderilemedi.']);
+    echo json_encode(['success' => false, 'message' => 'Hiçbir mail gönderilemedi. Lütfen SMTP ayarlarını kontrol ediniz.']);
     exit;
 }
+
+ActivityLogModel::log("abonelik", "send_mail", "Abonelere mail gönderildi. Gönderilen: {$sent}, Başarısız: " . count($errors));
 
 $message = $sent . ' kişiye mail başarıyla gönderildi.';
 if (!empty($errors)) {
@@ -108,3 +103,4 @@ if (!empty($errors)) {
 }
 
 echo json_encode(['success' => true, 'message' => $message]);
+
