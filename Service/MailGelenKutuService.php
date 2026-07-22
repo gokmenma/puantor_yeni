@@ -141,6 +141,17 @@ class MailGelenKutuService
         }
     }
 
+    public function deleteMessage(string $account, int $uid): void
+    {
+        $mailbox = $this->connect($account);
+        if (imap_msgno($mailbox, $uid) < 1) {
+            throw new RuntimeException('Silinecek mail bulunamadı.');
+        }
+        if (!imap_delete($mailbox, (string) $uid, FT_UID) || !imap_expunge($mailbox)) {
+            throw new RuntimeException('Mail silinemedi.');
+        }
+    }
+
     public function getAttachment(string $account, int $uid, string $partNumber): array
     {
         if (!preg_match('/^\d+(\.\d+)*$/', $partNumber)) {

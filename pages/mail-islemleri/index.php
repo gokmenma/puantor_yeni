@@ -365,6 +365,7 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary me-auto" id="inboxToggleSeen"><i class="ti ti-mail me-1"></i>Okunmadı Yap</button>
+                <button type="button" class="btn btn-outline-danger" id="inboxDelete"><i class="ti ti-trash me-1"></i>Sil</button>
                 <button type="button" class="btn btn-outline-primary" id="inboxReply"><i class="ti ti-arrow-back-up me-1"></i>Yanıtla</button>
                 <button type="button" class="btn" data-bs-dismiss="modal">Kapat</button>
             </div>
@@ -631,6 +632,44 @@ document.addEventListener('DOMContentLoaded', function () {
             await updateInboxSeen(!currentInboxMessage.seen);
         } catch (error) {
             Swal.fire({ icon: 'error', title: 'İşlem başarısız', text: error.message });
+        }
+    });
+
+    document.getElementById('inboxDelete').addEventListener('click', async function () {
+        if (!currentInboxMessage) return;
+        const confirmation = await Swal.fire({
+            icon: 'warning',
+            title: 'Mail silinsin mi?',
+            text: 'Bu işlem maili sunucudan kalıcı olarak silecek ve geri alınamayacaktır.',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, sil',
+            cancelButtonText: 'Vazgeç',
+            confirmButtonColor: '#d63939'
+        });
+        if (!confirmation.isConfirmed) return;
+
+        const deleteButton = document.getElementById('inboxDelete');
+        deleteButton.disabled = true;
+        deleteButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Siliniyor...';
+        try {
+            const formData = new FormData();
+            formData.append('action', 'delete_message');
+            formData.append('csrf_token', csrfToken);
+            formData.append('account', currentInboxMessage.account);
+            formData.append('uid', currentInboxMessage.uid);
+            const response = await fetch(apiUrl, { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.status !== 'success') throw new Error(data.message || 'Mail silinemedi.');
+
+            currentInboxMessage = null;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('inboxMessageModal')).hide();
+            await loadInbox(false);
+            Swal.fire({ icon: 'success', title: 'Mail silindi', timer: 1400, showConfirmButton: false });
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Mail silinemedi', text: error.message || 'İşlem sırasında bir hata oluştu.' });
+        } finally {
+            deleteButton.disabled = false;
+            deleteButton.innerHTML = '<i class="ti ti-trash me-1"></i>Sil';
         }
     });
 

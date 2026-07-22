@@ -127,6 +127,24 @@ try {
         }
     }
 
+    if ($action === 'delete_message' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+        validateMailCsrf();
+        $account = (string) ($_POST['account'] ?? 'info');
+        $uid = (int) ($_POST['uid'] ?? 0);
+        if ($uid < 1) {
+            mailJson(['status' => 'error', 'message' => 'Geçersiz mail kaydı.'], 422);
+        }
+        try {
+            $inboxService = new MailGelenKutuService(new SettingsModel());
+            $inboxService->deleteMessage($account, $uid);
+            ActivityLogModel::log('mail_islemleri', 'delete_inbox_message', "Gelen mail kalıcı olarak silindi. Hesap: {$account}, UID: {$uid}.");
+            mailJson(['status' => 'success', 'message' => 'Mail silindi.']);
+        } catch (RuntimeException $e) {
+            error_log('Mail inbox delete error: ' . $e->getMessage());
+            mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
+        }
+    }
+
     if ($action !== 'send' || ($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
         mailJson(['status' => 'error', 'message' => 'Geçersiz istek.'], 400);
     }
