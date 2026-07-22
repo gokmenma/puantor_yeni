@@ -112,6 +112,9 @@ $masked_support_password = !empty($stored_smtp_support_password) ? '********' : 
                 <div class="col-md-6">
                     <label class="form-label text-dark small">SMTP Şifresi</label>
                     <input type="password" class="form-control bg-white" name="smtp_info_password" value="<?php echo htmlspecialchars($masked_info_password); ?>" placeholder="••••••••">
+                    <div class="form-hint <?php echo empty($stored_smtp_info_password) ? 'text-danger' : 'text-success'; ?>">
+                        <?php echo empty($stored_smtp_info_password) ? 'Parola veritabanında kayıtlı değil.' : 'SMTP/IMAP parolası kayıtlı.'; ?>
+                    </div>
                 </div>
             </div>
 
@@ -125,6 +128,9 @@ $masked_support_password = !empty($stored_smtp_support_password) ? '********' : 
                 <div class="col-md-6">
                     <label class="form-label text-dark small">SMTP Şifresi</label>
                     <input type="password" class="form-control bg-white" name="smtp_support_password" value="<?php echo htmlspecialchars($masked_support_password); ?>" placeholder="••••••••">
+                    <div class="form-hint <?php echo empty($stored_smtp_support_password) ? 'text-danger' : 'text-success'; ?>">
+                        <?php echo empty($stored_smtp_support_password) ? 'Parola veritabanında kayıtlı değil.' : 'SMTP/IMAP parolası kayıtlı.'; ?>
+                    </div>
                 </div>
             </div>
         </form>

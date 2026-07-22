@@ -209,8 +209,21 @@ class MailGelenKutuService
         $username = trim((string) ($this->settings->getSystemSetting($usernameKey) ?? $defaultUsername));
         $password = (string) $this->settings->getSystemSetting($passwordKey);
 
-        if ($host === '' || $port < 1 || $username === '' || $password === '') {
-            throw new RuntimeException('IMAP ayarları eksik.');
+        $missing = [];
+        if ($host === '') {
+            $missing[] = 'IMAP sunucu adresi';
+        }
+        if ($port < 1) {
+            $missing[] = 'IMAP portu';
+        }
+        if ($username === '') {
+            $missing[] = $account === 'support' ? 'Destek hesabı adresi' : 'Bilgilendirme hesabı adresi';
+        }
+        if ($password === '') {
+            $missing[] = $account === 'support' ? 'Destek hesabı parolası' : 'Bilgilendirme hesabı parolası';
+        }
+        if ($missing) {
+            throw new RuntimeException('Eksik IMAP bilgileri: ' . implode(', ', $missing) . '.');
         }
 
         $flags = '/imap';

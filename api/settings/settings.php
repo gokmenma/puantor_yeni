@@ -312,6 +312,10 @@ if ($_POST["action"] == "systemSmtpSave") {
         // Account 2: bilgi@...
         $smtp_info_username = trim($_POST["smtp_info_username"] ?? '');
         $smtp_info_password = trim($_POST["smtp_info_password"] ?? '');
+        $stored_smtp_info_password = (string) $Settings->getSystemSetting("smtp_info_password");
+        if ($smtp_info_username !== '' && ($smtp_info_password === '' || $smtp_info_password === '********') && $stored_smtp_info_password === '') {
+            throw new Exception("Bilgilendirme hesabının SMTP/IMAP parolasını giriniz.");
+        }
         $Settings->upsertSystemSetting("smtp_info_username", $smtp_info_username);
         if (!empty($smtp_info_password) && $smtp_info_password !== '********') {
             $Settings->upsertSystemSetting("smtp_info_password", $smtp_info_password);
@@ -320,6 +324,10 @@ if ($_POST["action"] == "systemSmtpSave") {
         // Account 3: destek@...
         $smtp_support_username = trim($_POST["smtp_support_username"] ?? '');
         $smtp_support_password = trim($_POST["smtp_support_password"] ?? '');
+        $stored_smtp_support_password = (string) $Settings->getSystemSetting("smtp_support_password");
+        if ($smtp_support_username !== '' && ($smtp_support_password === '' || $smtp_support_password === '********') && $stored_smtp_support_password === '') {
+            throw new Exception("Destek hesabının SMTP/IMAP parolasını giriniz.");
+        }
         $Settings->upsertSystemSetting("smtp_support_username", $smtp_support_username);
         if (!empty($smtp_support_password) && $smtp_support_password !== '********') {
             $Settings->upsertSystemSetting("smtp_support_password", $smtp_support_password);
