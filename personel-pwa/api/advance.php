@@ -3,12 +3,28 @@ ini_set('display_errors', 0);
 error_reporting(0);
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../Database/require.php';
+require_once __DIR__ . '/../../Model/SettingsModel.php';
+
+if (!isset($_SESSION['personel_id'], $_SESSION['firm_id'])) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Oturum süreniz dolmuş.']);
+    exit;
+}
+
+$person_id = (int)$_SESSION['personel_id'];
+$firm_id = (int)$_SESSION['firm_id'];
+$advance_visible = (new SettingsModel())->getSettings('personnel_advance_request_visible')->set_value ?? 1;
+
+if ((int)$advance_visible !== 1) {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'message' => 'Avans talebi özelliği kullanıma kapalıdır.']);
+    exit;
+}
 
 $action = $_REQUEST['action'] ?? '';
 
 if ($action == 'list') {
     try {
-        $person_id = $_GET['person_id'] ?? 0;
         $query = $db->prepare("SELECT *, DATE_FORMAT(created_at, '%d.%m.%Y %H:%i') as created_at FROM personel_avans_talepleri WHERE person_id = ? ORDER BY id DESC");
         $query->execute([$person_id]);
         $list = $query->fetchAll(PDO::FETCH_OBJ);
@@ -17,12 +33,15 @@ if ($action == 'list') {
         echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }
 } elseif ($action == 'create') {
-    $person_id = $_POST['person_id'] ?? 0;
-    $firm_id = $_POST['firm_id'] ?? 0;
-    $tutar = $_POST['tutar'] ?? 0;
-    $aciklama = $_POST['aciklama'] ?? '';
-    $hedef_ay = $_POST['hedef_ay'] ?? null;
-    $hedef_yil = $_POST['hedef_yil'] ?? null;
+    $tutar = (float)($_POST['tutar'] ?? 0);
+    $aciklama = trim((string)($_POST['aciklama'] ?? ''));
+    $hedef_ay = (int)($_POST['hedef_ay'] ?? 0);
+    $hedef_yil = (int)($_POST['hedef_yil'] ?? 0);
+
+    if ($tutar <= 0 || $hedef_ay < 1 || $hedef_ay > 12 || $hedef_yil < 2000 || $hedef_yil > 2100) {
+        echo json_encode(['status' => 'error', 'message' => 'Lütfen tutar ve hedef dönemi kontrol edin.']);
+        exit;
+    }
 
     // Check for existing pending request
     $check = $db->prepare("SELECT id FROM personel_avans_talepleri WHERE person_id = ? AND durum = 0");
@@ -103,9 +122,15 @@ if ($action == 'list') {
     }
 } elseif ($action == 'update') {
     $id = $_POST['id'] ?? 0;
-    $person_id = $_POST['person_id'] ?? 0;
-    $tutar = $_POST['tutar'] ?? 0;
-    $aciklama = $_POST['aciklama'] ?? '';
+    $tutar = (float)($_POST['tutar'] ?? 0);
+    $aciklama = trim((string)($_POST['aciklama'] ?? ''));
+    $hedef_ay = (int)($_POST['hedef_ay'] ?? 0);
+    $hedef_yil = (int)($_POST['hedef_yil'] ?? 0);
+
+    if ($tutar <= 0 || $hedef_ay < 1 || $hedef_ay > 12 || $hedef_yil < 2000 || $hedef_yil > 2100) {
+        echo json_encode(['status' => 'error', 'message' => 'Lütfen tutar ve hedef dönemi kontrol edin.']);
+        exit;
+    }
 
     // Check if the advance exists and is still pending (durum == 0)
     $check = $db->prepare("SELECT * FROM personel_avans_talepleri WHERE id = ? AND person_id = ?");
@@ -122,17 +147,15 @@ if ($action == 'list') {
         exit;
     }
 
-    $query = $db->prepare("UPDATE personel_avans_talepleri SET tutar = ?, aciklama = ? WHERE id = ? AND person_id = ?");
+    $query = $db->prepare("UPDATE personel_avans_talepleri SET tutar = ?, aciklama = ?, hedef_ay = ?, hedef_yil = ? WHERE id = ? AND person_id = ?");
     try {
-        $query->execute([$tutar, $aciklama, $id, $person_id]);
+        $query->execute([$tutar, $aciklama, $hedef_ay, $hedef_yil, $id, $person_id]);
         echo json_encode(['status' => 'success', 'message' => 'Talep başarıyla güncellendi.']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'message' => 'Hata: ' . $e->getMessage()]);
     }
 } elseif ($action == 'delete') {
     $id = $_POST['id'] ?? 0;
-    $person_id = $_POST['person_id'] ?? 0;
-
     // Only pending advances can be deleted
     $check = $db->prepare("SELECT durum FROM personel_avans_talepleri WHERE id = ? AND person_id = ?");
     $check->execute([$id, $person_id]);

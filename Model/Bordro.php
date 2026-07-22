@@ -428,4 +428,63 @@ class Bordro extends Model
         $row = $sql->fetch(PDO::FETCH_OBJ);
         return $row ? ['yil' => (int)$row->yil, 'ay' => (int)$row->ay] : null;
     }
+
+    public function getVisiblePayrollPeriodsForPerson($firm_id, $person_id)
+    {
+        $sql = $this->db->prepare("SELECT bpv.yil, bpv.ay
+            FROM bordro_period_visibility bpv
+            WHERE bpv.firm_id = :firm_id
+              AND bpv.is_visible = 1
+              AND (
+                EXISTS (
+                    SELECT 1 FROM maas_gelir_kesinti mgk
+                    WHERE mgk.person_id = :person_id_income
+                      AND mgk.yil = bpv.yil
+                      AND mgk.ay = bpv.ay
+                )
+                OR EXISTS (
+                    SELECT 1 FROM puantaj pt
+                    WHERE pt.person = :person_id_attendance
+                      AND LEFT(REPLACE(pt.gun, '-', ''), 6) = CONCAT(bpv.yil, LPAD(bpv.ay, 2, '0'))
+                )
+              )
+            ORDER BY bpv.yil DESC, bpv.ay DESC");
+        $sql->execute([
+            ':firm_id' => (int)$firm_id,
+            ':person_id_income' => (int)$person_id,
+            ':person_id_attendance' => (int)$person_id
+        ]);
+        return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function getPersonPayrollSummary($person_id, $month, $year)
+    {
+        $first_day = Date::firstDay($month, $year);
+        $last_day = Date::lastDay($month, $year);
+        $totals = $this->getPersonSalaryAndWageCut($person_id, $first_day, $last_day);
+
+        $sql = $this->db->prepare("SELECT
+                COUNT(DISTINCT REPLACE(gun, '-', '')) AS work_days,
+                COALESCE(SUM(saat), 0) AS total_hours
+            FROM puantaj
+            WHERE person = :person_id
+              AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) BETWEEN :first_day AND :last_day");
+        $sql->execute([
+            ':person_id' => (int)$person_id,
+            ':first_day' => $first_day,
+            ':last_day' => $last_day
+        ]);
+        $attendance = $sql->fetch(PDO::FETCH_OBJ);
+
+        $gross = (float)($totals->gelir ?? 0);
+        $deductions = (float)($totals->odeme ?? 0);
+
+        return (object)[
+            'gross' => $gross,
+            'deductions' => $deductions,
+            'net' => $gross - $deductions,
+            'work_days' => (int)($attendance->work_days ?? 0),
+            'total_hours' => (float)($attendance->total_hours ?? 0)
+        ];
+    }
 }

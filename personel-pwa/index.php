@@ -54,9 +54,14 @@ $routes = [
         'icon' => 'ti ti-calendar-event'
     ],
     'advance' => [
-        'title' => 'Avans Talepleri',
+        'title' => 'Bordro',
         'file' => 'modules/advance/index.php',
-        'icon' => 'ti ti-wallet'
+        'icon' => 'ti ti-file-invoice'
+    ],
+    'payroll' => [
+        'title' => 'Bordro',
+        'file' => 'modules/advance/index.php',
+        'icon' => 'ti ti-file-invoice'
     ],
     'leave' => [
         'title' => 'Yıllık İzin',
@@ -81,11 +86,6 @@ $routes = [
 ];
 
 if (!isset($routes[$route])) {
-    $route = 'dashboard';
-}
-
-// Check if advance requests are disabled
-if ($route == 'advance' && $personnel_advance_request_visible == 0) {
     $route = 'dashboard';
 }
 
@@ -162,7 +162,7 @@ $title = $current_route['title'];
         document.addEventListener('DOMContentLoaded', () => {
             app.updateProfileUI();
             if ('<?php echo $route; ?>' === 'dashboard') app.loadSummary();
-            if ('<?php echo $route; ?>' === 'advance') app.loadAdvances();
+            if (['advance', 'payroll'].includes('<?php echo $route; ?>')) app.loadFinanceHub();
             if ('<?php echo $route; ?>' === 'attendance') app.loadAttendance();
             // leave modülü kendi içinde başlatılır
         });

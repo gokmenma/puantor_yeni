@@ -7,12 +7,10 @@
         <i class="ti ti-calendar-event"></i>
         <span>Puantaj</span>
     </a>
-    <?php if ($personnel_advance_request_visible == 1): ?>
-    <a href="?route=advance" class="nav-item <?php echo $route == 'advance' ? 'active' : ''; ?>" data-tab="advance-tab">
-        <i class="ti ti-wallet"></i>
-        <span>Avans</span>
+    <a href="?route=payroll" class="nav-item <?php echo in_array($route, ['advance', 'payroll']) ? 'active' : ''; ?>" data-tab="payroll-tab">
+        <i class="ti ti-file-invoice"></i>
+        <span>Bordro</span>
     </a>
-    <?php endif; ?>
     <a href="?route=leave" class="nav-item <?php echo $route == 'leave' ? 'active' : ''; ?>" data-tab="leave-tab">
         <i class="ti ti-beach"></i>
         <span>İzin</span>

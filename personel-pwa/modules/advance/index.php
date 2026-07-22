@@ -1,43 +1,91 @@
-<div id="advance-tab" class="tab-content active">
-    <!-- Header Title -->
-    <div class="page-header mb-4">
-        <h2 class="h1 mb-0 fw-bold text-dark" style="letter-spacing: -1px;">Avans & Finans</h2>
-        <p class="text-muted small mb-0">Avans talepleriniz ve güncel bakiyeniz.</p>
+<div id="payroll-tab" class="tab-content active">
+    <div class="page-header mb-3">
+        <h2 class="h1 mb-0 fw-bold text-dark payroll-page-title">Bordrolarım</h2>
+        <p class="text-muted small mb-0">Kesinleşen bordrolarınız ve avans işlemleriniz.</p>
     </div>
 
-    <!-- Blue Summary Card -->
-    <div class="summary-card mb-4" style="background: linear-gradient(135deg, #206bc4 0%, #115099 100%); position: relative; overflow: hidden; border-radius: 24px; min-height: 160px; display: flex; flex-direction: column; justify-content: center; padding: 1.5rem;">
-        <p class="text-white-50 extra-small text-uppercase mb-1 fw-bold" style="letter-spacing: 1px;">KULLANILABİLİR AVANS LİMİTİ</p>
-        <div class="d-flex align-items-baseline gap-1 text-white">
-            <span class="fs-1 fw-bold opacity-75">₺</span>
-            <h2 id="available-advance-limit-large" class="display-5 mb-0 fw-bold" style="letter-spacing: -1px;">0,00</h2>
+    <div class="finance-switch mb-4" role="tablist" aria-label="Bordro ve avans bölümleri">
+        <button type="button" class="finance-switch-button active" data-finance-view="payroll" role="tab" aria-selected="true">
+            <i class="ti ti-file-invoice"></i>
+            Bordrolarım
+        </button>
+        <?php if ($personnel_advance_request_visible == 1): ?>
+        <button type="button" class="finance-switch-button" data-finance-view="advance" role="tab" aria-selected="false">
+            <i class="ti ti-wallet"></i>
+            Avans
+            <span id="advance-count-badge" class="finance-count-badge">0</span>
+        </button>
+        <?php endif; ?>
+    </div>
+
+    <section id="payroll-view" class="finance-view active">
+        <div id="payroll-highlight" class="payroll-highlight mb-4">
+            <div class="d-flex justify-content-between align-items-start position-relative">
+                <div>
+                    <p class="payroll-highlight-label mb-1">SON KESİNLEŞEN BORDRO</p>
+                    <p id="latest-payroll-period" class="mb-3 fw-semibold text-white-80">Yükleniyor...</p>
+                </div>
+                <span class="payroll-final-badge"><i class="ti ti-lock-check"></i> Kesinleşti</span>
+            </div>
+            <p class="text-white-80 small mb-1">Net ödenecek</p>
+            <div class="d-flex align-items-baseline gap-1">
+                <span class="fs-2 fw-bold opacity-75">₺</span>
+                <span id="latest-payroll-net" class="payroll-highlight-amount">—</span>
+            </div>
+            <div id="latest-payroll-meta" class="payroll-highlight-meta mt-3"></div>
+            <i class="ti ti-file-invoice payroll-highlight-icon"></i>
         </div>
-        <div class="mt-3">
-            <span class="badge rounded-pill px-3 py-2 extra-small border-0 shadow-none" style="background: rgba(255,255,255,0.15); color: #fff;">
-                <i class="ti ti-trending-up me-1"></i> + ₺ 0,00 Bugün
+
+        <?php if ($personnel_advance_request_visible == 1): ?>
+        <button type="button" class="advance-shortcut mb-4" data-open-advance>
+            <span class="advance-shortcut-icon"><i class="ti ti-wallet"></i></span>
+            <span class="text-start flex-fill">
+                <strong class="d-block text-dark">Avans işlemleri</strong>
+                <small class="text-muted">Talep oluşturun veya durumunu takip edin</small>
             </span>
-        </div>
-        <!-- Wallet Icon Illustration (Decorative) -->
-        <i class="ti ti-wallet text-white-50 position-absolute" style="font-size: 9rem; right: -1.5rem; bottom: -2rem; opacity: 0.12; transform: rotate(-10deg);"></i>
-    </div>
+            <i class="ti ti-chevron-right text-primary fs-2"></i>
+        </button>
+        <?php endif; ?>
 
-    <!-- List Section Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-        <h3 class="h3 mb-0 fw-bold text-dark">Son İşlemler</h3>
-        <div class="btn-group btn-group-sm p-1 bg-light rounded-pill">
-            <button class="btn btn-white border-0 rounded-pill px-3 py-1 shadow-none active extra-small fw-bold">Tümü</button>
-            <button class="btn btn-light border-0 rounded-pill px-3 py-1 shadow-none extra-small fw-bold opacity-50">Onaylı</button>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3 class="h3 mb-0 fw-bold text-dark">Geçmiş Bordrolar</h3>
+                <p class="text-muted extra-small mb-0">Yalnızca kesinleşen dönemler gösterilir.</p>
+            </div>
+            <i class="ti ti-shield-check text-success fs-1"></i>
         </div>
-    </div>
 
-    <div class="mobile-card p-0 border-0 shadow-sm overflow-hidden mb-5" style="border-radius: 20px; background: #fff;">
-        <div id="advance-list" class="divide-y">
-            <!-- Dynamic -->
+        <div id="payroll-list" class="payroll-list mb-5"></div>
+    </section>
+
+    <?php if ($personnel_advance_request_visible == 1): ?>
+    <section id="advance-view" class="finance-view">
+        <div class="advance-summary-card mb-4">
+            <div class="d-flex justify-content-between align-items-start position-relative">
+                <div>
+                    <p class="extra-small text-uppercase mb-2 fw-bold text-primary">KULLANILABİLİR AVANS LİMİTİ</p>
+                    <div class="d-flex align-items-baseline gap-1 text-dark">
+                        <span class="fs-2 fw-bold text-primary">₺</span>
+                        <h2 id="available-advance-limit-large" class="display-5 mb-0 fw-bold">0,00</h2>
+                    </div>
+                </div>
+                <span class="advance-summary-icon"><i class="ti ti-wallet"></i></span>
+            </div>
+            <button id="btn-new-advance" type="button" class="btn btn-primary w-100 mt-4 py-3 fw-bold rounded-3">
+                <i class="ti ti-plus me-2"></i> Yeni Avans Talebi
+            </button>
         </div>
-    </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h3 class="h3 mb-0 fw-bold text-dark">Avans Taleplerim</h3>
+                <p class="text-muted extra-small mb-0">Taleplerinizi buradan takip edebilirsiniz.</p>
+            </div>
+        </div>
+
+        <div class="mobile-card p-0 border-0 shadow-sm overflow-hidden mb-5 advance-list-card">
+            <div id="advance-list" class="divide-y"></div>
+        </div>
+    </section>
+    <?php endif; ?>
 </div>
-
-<!-- FAB -->
-<button id="btn-new-advance" class="mobile-fab">
-    <i class="ti ti-plus fs-1"></i>
-</button>

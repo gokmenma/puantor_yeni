@@ -12,10 +12,12 @@ require_once "../../Model/Projects.php";
 require_once ROOT . "/Model/CaseTransactions.php";
 require_once ROOT . "/App/Helper/date.php";
 require_once ROOT . "/Model/KvkkAydinlatmaModel.php";
+require_once ROOT . "/App/Helper/ErrorMail.php";
 
 use App\Helper\Security;
 use App\Helper\Helper;
 use App\Helper\Date;
+use App\Helper\ErrorMail;
 
 // Silently log or ignore if log fails
 @file_put_contents(ROOT . "/debug_api.log", date("Y-m-d H:i:s") . " - Action: " . ($_POST["action"] ?? "none") . " - User: " . ($_SESSION["user"]->id ?? "none") . "\n", FILE_APPEND);
@@ -188,10 +190,11 @@ if ($_POST["action"] == "deletePerson") {
         
         $status = "success";
         $message = "Personel başarıyla silindi.";
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
         $status = "error";
         $message = $e->getMessage();
         @file_put_contents($log_file, date("Y-m-d H:i:s") . " - Error: " . $message . "\n", FILE_APPEND);
+        ErrorMail::notifySuperadmins('Personel İşlemleri (Silme)', $message, $e);
     }
     
     echo json_encode([

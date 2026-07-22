@@ -1,9 +1,10 @@
 <?php
+ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
-ob_start();
+header('Content-Type: application/json; charset=utf-8');
 
-!defined('ROOT') ? define('ROOT', $_SERVER["DOCUMENT_ROOT"]) : '';
+!defined('ROOT') ? define('ROOT', dirname(__DIR__)) : '';
 require_once ROOT . '/Database/require.php';
 require_once ROOT . '/Model/Puantaj.php';
 require_once ROOT . '/Model/Persons.php';
@@ -13,17 +14,21 @@ require_once ROOT . '/App/Helper/date.php';
 require_once ROOT . '/Model/SettingsModel.php';
 require_once ROOT . '/App/Helper/helper.php';
 require_once ROOT . '/Model/ActivityLogModel.php';
+require_once ROOT . '/App/Helper/ErrorMail.php';
 
 use App\Helper\Date;
 use App\Helper\Security;
 use App\Helper\Helper;
+use App\Helper\ErrorMail;
 
 $Settings = new SettingsModel();
 $puantajObj = new Puantaj();
 $person = new Persons();
 $wages = new Wages();
 
-if ($_POST['action'] == 'savePuantaj') {
+$action = $_POST['action'] ?? ($_REQUEST['action'] ?? '');
+
+if ($action == 'savePuantaj') {
     $status = 'info';
     $message = '';
     $save_count = 0;
@@ -33,7 +38,7 @@ if ($_POST['action'] == 'savePuantaj') {
     $bordro_check = new Bordro();
     $firm_id = (int)($_SESSION['firm_id'] ?? 0);
 
-    $json_data = json_decode($_POST['data'], true);
+    $json_data = json_decode($_POST['data'] ?? '[]', true);
     if (!empty($json_data)) {
         // Dönem kilit denetimi
         foreach ($json_data as $pk => $pi) {
@@ -43,6 +48,7 @@ if ($_POST['action'] == 'savePuantaj') {
                     $chk_year = date('Y', $d_time);
                     $chk_month = date('m', $d_time);
                     if ($bordro_check->getPeriodVisibility($firm_id, $chk_year, $chk_month) == 1) {
+                        if (ob_get_length()) ob_clean();
                         echo json_encode([
                             'status' => 'error',
                             'message' => "{$chk_month}/{$chk_year} döneminin bordrosu kapatıldığı için puantaj verisi değiştirilemez!"
@@ -57,10 +63,22 @@ if ($_POST['action'] == 'savePuantaj') {
     $error_wages = [];
 
     if (!empty($json_data)) {
+        //Günlük calisma saatini getir
+        $work_hour = $Settings->getSettings("work_hour")->set_value ?? 8;
+        $work_hour = floatval(str_replace(',', '.', $work_hour));
+        $overtime_rate = floatval($Settings->getSettings("overtime_rate")->set_value ?? 50);
+        if ($overtime_rate < 50) { $overtime_rate = 50; }
+        $overtime_multiplier = 1 + ($overtime_rate / 100);
+
         foreach ($json_data as $person_key => $person_item) {
             $person_id = Security::decrypt($person_key);
+            if (!$person_id) {
+                // Eğer şifre çözülemediyse düz integer dene
+                $person_id = is_numeric($person_key) ? (int)$person_key : 0;
+            }
+            if (!$person_id) continue;
+
             $person_data = $person->getDailyWages($person_id);
-            
             if (!$person_data) {
                 $error_wages[] = $person->getPersonByField($person_id, 'full_name') ?: "Bilinmeyen Personel";
                 continue;
@@ -71,7 +89,7 @@ if ($_POST['action'] == 'savePuantaj') {
             $end_date_ymd = ($person_info && !empty($person_info->job_end_date)) ? Date::Ymd($person_info->job_end_date) : '';
 
             $effective_daily = (($person_info->wage_type ?? 0) == 1) ? (floatval($person_data->daily_wages ?? 0) / 30) : floatval($person_data->daily_wages ?? 0);
-            $ucret_base = $effective_daily / $work_hour;
+            $ucret_base = $effective_daily / ($work_hour > 0 ? $work_hour : 8);
 
             foreach ($person_item as $puantaj_key => $puantaj_item) {
                 // Arka plan kontrolü: İşe giriş tarihinden önce veya işten ayrılış tarihinden sonra ise işlem yapma
@@ -86,10 +104,8 @@ if ($_POST['action'] == 'savePuantaj') {
                 $current_p_id = ($puantaj_item['project_id'] !== "" && $puantaj_item['project_id'] !== null) ? $puantaj_item['project_id'] : null;
                 $id = $puantajObj->getPuantajId($person_id, $puantaj_key, $current_p_id);
 
-                if ($puantaj_item['puantajId'] == 0) {
+                if (isset($puantaj_item['puantajId']) && $puantaj_item['puantajId'] == 0) {
                     if ($id == 0) {
-                        // Fallback: If not found with the specific project (e.g. project mismatch or cleared on client),
-                        // query with -1 to find and delete ANY puantaj entry on that day for that person.
                         $id = $puantajObj->getPuantajId($person_id, $puantaj_key, -1);
                     }
                     if ($id > 0) {
@@ -98,10 +114,11 @@ if ($_POST['action'] == 'savePuantaj') {
                     }
                 } else if (!empty($puantaj_item['puantajId'])) {
                     // Özel ücret kontrolü
-                    $defined_wage = $wages->getWageByPersonIdAndDate($person_id, $puantaj_key)->amount ?? 0;
+                    $wage_obj = $wages->getWageByPersonIdAndDate($person_id, $puantaj_key);
+                    $defined_wage = $wage_obj->amount ?? 0;
                     if ($defined_wage > 0) {
                         $effective_defined = (($person_info->wage_type ?? 0) == 1) ? (floatval($defined_wage) / 30) : floatval($defined_wage);
-                        $hourly_wage = $effective_defined / $work_hour;
+                        $hourly_wage = $effective_defined / ($work_hour > 0 ? $work_hour : 8);
                     } else {
                         $hourly_wage = $ucret_base;
                     }
@@ -168,9 +185,10 @@ if ($_POST['action'] == 'savePuantaj') {
                     try {
                         $puantajObj->saveWithAttr($data);
                         $save_count++;
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
                         $error_count++;
                         $message .= "<br>Hata: " . $e->getMessage();
+                        ErrorMail::notifySuperadmins('Puantaj Kaydı', $e->getMessage(), $e);
                     }
                 }
             }
@@ -188,7 +206,9 @@ if ($_POST['action'] == 'savePuantaj') {
         $message = "Herhangi bir değişiklik yapılmadı veya kaydedilecek veri bulunamadı.";
     }
 
+    if (ob_get_length()) ob_clean();
     echo json_encode(['status' => $status, 'message' => $message]);
 } else {
+    if (ob_get_length()) ob_clean();
     echo json_encode(['status' => 'error', 'message' => 'Geçersiz işlem talebi.']);
 }

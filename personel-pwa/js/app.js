@@ -140,14 +140,20 @@ window.app = {
             });
         }
 
-        // New advance button
         const btnNewAdvance = document.getElementById('btn-new-advance');
         if (btnNewAdvance) {
-            document.body.appendChild(btnNewAdvance);
             btnNewAdvance.addEventListener('click', () => {
                 this.showNewAdvanceModal();
             });
         }
+
+        document.querySelectorAll('[data-finance-view]').forEach(button => {
+            button.addEventListener('click', () => this.switchFinanceView(button.dataset.financeView));
+        });
+
+        document.querySelectorAll('[data-open-advance]').forEach(button => {
+            button.addEventListener('click', () => this.switchFinanceView('advance'));
+        });
 
         // Password toggle
         const toggleBtn = document.getElementById('togglePasswordBtn');
@@ -273,16 +279,11 @@ window.app = {
         // This is only for SPA mode or post-login initial state.
         // In modular mode, PHP handles the 'active' classes.
         // But we keep it for FAB visibility if needed on current page.
-        const btnNewAdvance = document.getElementById('btn-new-advance');
-        if (btnNewAdvance) {
-            btnNewAdvance.style.display = (tabId === 'advance-tab' || window.location.search.includes('route=advance')) ? 'flex' : 'none';
-        }
-
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         // Load data if on correct route
-        if (tabId === 'advance-tab' || window.location.search.includes('route=advance')) this.loadAdvances();
+        if (tabId === 'payroll-tab' || window.location.search.includes('route=advance') || window.location.search.includes('route=payroll')) this.loadFinanceHub();
         if (tabId === 'attendance-tab' || window.location.search.includes('route=attendance')) this.loadAttendance();
     },
 
@@ -350,8 +351,8 @@ window.app = {
                 setSafeText('total-days', result.summary.total_work_days || 0);
                 setSafeText('dashboard-overtime', parseFloat(result.summary.overtime || 0).toFixed(1).replace('.0', ''));
                 
-                const balanceFormatted = parseFloat(result.summary.balance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2});
-                const usedFormatted = parseFloat(result.summary.advance || 0).toLocaleString('tr-TR', {minimumFractionDigits: 2});
+                const balanceFormatted = this.formatMoney(this.parseMoney(result.summary.balance));
+                const usedFormatted = this.formatMoney(this.parseMoney(result.summary.advance));
                 
                 setSafeText('available-advance-limit', balanceFormatted);
                 setSafeText('available-advance-limit-large', balanceFormatted);
@@ -393,6 +394,157 @@ window.app = {
         }
     },
 
+    loadFinanceHub() {
+        this.loadPayrolls();
+        if (document.getElementById('advance-view')) {
+            this.loadAdvances();
+            this.loadSummary();
+        }
+    },
+
+    switchFinanceView(view) {
+        const target = document.getElementById(`${view}-view`);
+        if (!target) return;
+
+        document.querySelectorAll('.finance-view').forEach(section => section.classList.remove('active'));
+        document.querySelectorAll('[data-finance-view]').forEach(button => {
+            const isActive = button.dataset.financeView === view;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        target.classList.add('active');
+        document.querySelector('.app-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    formatMoney(value) {
+        return Number(value || 0).toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    },
+
+    parseMoney(value) {
+        if (typeof value === 'number') return value;
+        const normalized = String(value || '0').replace(/[^0-9,.-]/g, '');
+        return Number(normalized.includes(',') ? normalized.replace(/\./g, '').replace(',', '.') : normalized) || 0;
+    },
+
+    escapeHtml(value) {
+        const element = document.createElement('div');
+        element.textContent = value ?? '';
+        return element.innerHTML;
+    },
+
+    async loadPayrolls() {
+        const container = document.getElementById('payroll-list');
+        if (!container) return;
+
+        container.innerHTML = Array(3).fill(`
+            <div class="payroll-period-card opacity-50">
+                <div class="shimmer rounded-3" style="width:46px;height:46px"></div>
+                <div class="flex-fill">
+                    <div class="shimmer w-50 mb-2" style="height:14px"></div>
+                    <div class="shimmer w-75" style="height:9px"></div>
+                </div>
+                <div class="shimmer" style="width:72px;height:18px"></div>
+            </div>
+        `).join('');
+
+        try {
+            const response = await fetch('api/payroll.php?action=list');
+            const result = await response.json();
+            if (result.status !== 'success') throw new Error(result.message || 'Bordrolar alınamadı.');
+
+            const periods = result.periods || [];
+            const latest = periods[0];
+            const highlight = document.getElementById('payroll-highlight');
+
+            if (latest) {
+                highlight.classList.remove('empty');
+                document.getElementById('latest-payroll-period').textContent = latest.label;
+                document.getElementById('latest-payroll-net').textContent = this.formatMoney(latest.net);
+                document.getElementById('latest-payroll-meta').innerHTML = `
+                    <span><i class="ti ti-briefcase me-1"></i>${latest.work_days} çalışma günü</span>
+                    <button type="button" onclick="app.showPayrollDetail(${latest.month}, ${latest.year})">Detayı gör <i class="ti ti-chevron-right"></i></button>
+                `;
+            } else {
+                highlight.classList.add('empty');
+                document.getElementById('latest-payroll-period').textContent = 'Henüz kesinleşen dönem yok';
+                document.getElementById('latest-payroll-net').textContent = '—';
+                document.getElementById('latest-payroll-meta').innerHTML = '<span>Açık dönemler hesaplama sürdüğü için burada gösterilmez.</span>';
+            }
+
+            container.innerHTML = periods.map(period => `
+                <button type="button" class="payroll-period-card" onclick="app.showPayrollDetail(${period.month}, ${period.year})">
+                    <span class="payroll-period-icon"><i class="ti ti-file-invoice"></i></span>
+                    <span class="flex-fill text-start">
+                        <strong class="d-block text-dark">${this.escapeHtml(period.label)}</strong>
+                        <small class="text-muted">Brüt ₺${this.formatMoney(period.gross)} · Kesinti ₺${this.formatMoney(period.deductions)}</small>
+                    </span>
+                    <span class="text-end flex-shrink-0">
+                        <small class="d-block text-muted">Net</small>
+                        <strong class="text-success">₺${this.formatMoney(period.net)}</strong>
+                    </span>
+                    <i class="ti ti-chevron-right text-muted"></i>
+                </button>
+            `).join('') || `
+                <div class="payroll-empty-state">
+                    <span><i class="ti ti-lock"></i></span>
+                    <h3>Henüz kesinleşen bordro yok</h3>
+                    <p>Maaş hesaplaması tamamlanıp dönem kapatıldığında bordronuz burada görünecek.</p>
+                </div>
+            `;
+        } catch (error) {
+            container.innerHTML = '<div class="alert alert-danger">Bordrolarınız şu anda alınamadı. Lütfen tekrar deneyin.</div>';
+        }
+    },
+
+    async showPayrollDetail(month, year) {
+        this.showModal('Bordro Detayı', `
+            <div class="text-center py-5">
+                <span class="spinner-border text-primary" role="status"></span>
+                <p class="text-muted mt-3 mb-0">Kesinleşmiş bordronuz hazırlanıyor...</p>
+            </div>
+        `);
+
+        try {
+            const response = await fetch(`api/payroll.php?action=detail&month=${month}&year=${year}`);
+            const result = await response.json();
+            if (result.status !== 'success') throw new Error(result.message || 'Bordro detayı alınamadı.');
+
+            const payroll = result.payroll;
+            const renderRows = (items, emptyText) => items.length ? items.map(item => `
+                <div class="payroll-detail-row">
+                    <span>${this.escapeHtml(item.name)}</span>
+                    <strong>₺${this.formatMoney(item.amount)}</strong>
+                </div>
+            `).join('') : `<p class="text-muted small mb-0 py-2">${emptyText}</p>`;
+
+            document.getElementById('app-modal-title').textContent = `${payroll.label} Bordrosu`;
+            document.getElementById('app-modal-body').innerHTML = `
+                <div class="payroll-detail-net">
+                    <span>Net Ödenecek</span>
+                    <strong>₺${this.formatMoney(payroll.net)}</strong>
+                    <small><i class="ti ti-lock-check"></i> Kesinleşmiş bordro</small>
+                </div>
+                <div class="payroll-detail-totals">
+                    <div><span>Brüt Kazanç</span><strong>₺${this.formatMoney(payroll.gross)}</strong></div>
+                    <div><span>Toplam Kesinti</span><strong>₺${this.formatMoney(payroll.deductions)}</strong></div>
+                </div>
+                <div class="payroll-detail-work mb-4">
+                    <span><i class="ti ti-calendar-check"></i> ${payroll.work_days} çalışma günü</span>
+                    <span><i class="ti ti-clock"></i> ${Number(payroll.total_hours).toLocaleString('tr-TR')} saat</span>
+                </div>
+                <h4 class="mb-2">Kazançlar</h4>
+                <div class="payroll-detail-list mb-4">${renderRows(payroll.incomes, 'Bu dönemde kazanç kalemi bulunmuyor.')}</div>
+                <h4 class="mb-2">Kesintiler</h4>
+                <div class="payroll-detail-list">${renderRows(payroll.expenses, 'Bu dönemde kesinti bulunmuyor.')}</div>
+            `;
+        } catch (error) {
+            document.getElementById('app-modal-body').innerHTML = `<div class="alert alert-danger mb-0">${this.escapeHtml(error.message)}</div>`;
+        }
+    },
+
     async loadAdvances() {
         const container = document.getElementById('advance-list');
         if (container) {
@@ -418,7 +570,7 @@ window.app = {
         }
 
         try {
-            const response = await fetch(`api/advance.php?action=list&person_id=${this.user.id}`);
+            const response = await fetch('api/advance.php?action=list');
             const result = await response.json();
             if (result.status === 'success') {
                 // Track pending status
@@ -456,7 +608,7 @@ window.app = {
                     ` : '';
 
                     const editAction = isPending 
-                        ? `onclick="if(!this.dataset.swiping) app.editAdvance('${item.id}', '${item.tutar}', '${(item.aciklama || '').replace(/'/g, "\\\\'")}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')"`
+                        ? `onclick="if(!this.dataset.swiping) app.editAdvance('${item.id}', '${item.tutar}', '${encodeURIComponent(item.aciklama || '')}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')"`
                         : 'onclick="app.toast(\'Sadece bekleyen talepler düzenlenebilir.\', \'warning\')"';
 
                     return `
@@ -470,8 +622,8 @@ window.app = {
                                         </div>
                                         <div>
                                             <h4 class="mb-0 fw-bold text-dark">Avans Talebi</h4>
-                                            <p class="text-muted extra-small mb-0">${item.created_at}</p>
-                                            ${item.aciklama ? `<p class="text-secondary extra-small mb-0 mt-1 italic opacity-75">"${item.aciklama}"</p>` : ''}
+                                            <p class="text-muted extra-small mb-0">${this.escapeHtml(item.created_at)}</p>
+                                            ${item.aciklama ? `<p class="text-secondary extra-small mb-0 mt-1 italic opacity-75">"${this.escapeHtml(item.aciklama)}"</p>` : ''}
                                         </div>
                                     </div>
                                     <div class="text-end flex-shrink-0 ms-2">
@@ -665,6 +817,7 @@ window.app = {
 
     editAdvance(id, tutar, aciklama, durum, ay, yil) {
         if (durum !== 0) return;
+        aciklama = this.escapeHtml(decodeURIComponent(aciklama || ''));
 
         const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
         const monthOptions = monthNames.map((name, i) => `

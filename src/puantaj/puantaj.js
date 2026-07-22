@@ -309,9 +309,17 @@ function puantaj_olustur() {
     method: "POST",
     body: formData
   })
-    .then((response) => response.json())
-    .then((data) => {
-      // Butonu eski haline getir
+    .then((response) => response.text())
+    .then((text) => {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Sunucu Yanıtı:", text);
+        var cleanMsg = text.replace(/<[^>]*>?/gm, '').trim();
+        throw new Error(cleanMsg ? cleanMsg.substring(0, 150) : "Sunucudan geçersiz yanıt alındı.");
+      }
+
       saveBtn.prop('disabled', false).html(originalBtnHtml);
 
       if (data.status == "success") {
@@ -329,7 +337,7 @@ function puantaj_olustur() {
     })
     .catch((error) => {
       saveBtn.prop('disabled', false).html(originalBtnHtml);
-      Swal.fire("Hata", "Sistem hatası oluştu: " + error, "error");
+      Swal.fire("Hata", "Sistem hatası oluştu: " + (error.message || error), "error");
     });
 }
 
