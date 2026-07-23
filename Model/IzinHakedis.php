@@ -87,13 +87,31 @@ class IzinHakedis extends Model
             "SELECT h.*,
                     COALESCE((SELECT SUM(k.kullanilan_gun) FROM izin_kullanim k
                               JOIN izin_talepler t ON t.id = k.talep_id
-                              WHERE k.hakedis_id = h.id AND t.durum = 'onaylandi'), 0) AS kullanilan_gun
+                              WHERE k.hakedis_id = h.id AND t.durum = 'onaylandi'), 0) AS talep_kullanilan
              FROM {$this->table} h
              WHERE h.personel_id = ?
              ORDER BY h.yil ASC"
         );
         $sql->execute([$personel_id]);
-        return $sql->fetchAll(PDO::FETCH_OBJ);
+        $list = $sql->fetchAll(PDO::FETCH_OBJ);
+
+        require_once __DIR__ . '/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+        $firma_id = (int) ($list[0]->firma_id ?? 0);
+        $rem_devir = $devirModel->getTotalDevirByPersonel($personel_id, $firma_id);
+
+        foreach ($list as $h) {
+            $talep_kullanilan = (int) ($h->talep_kullanilan ?? 0);
+            $rem_cap = max(0, (int) $h->gun_sayisi - $talep_kullanilan);
+            $devir_kullanilan = min($rem_devir, $rem_cap);
+            $rem_devir -= $devir_kullanilan;
+
+            $h->devir_kullanilan = $devir_kullanilan;
+            $h->kullanilan_gun = $talep_kullanilan + $devir_kullanilan;
+            $h->kalan_gun = max(0, (int) $h->gun_sayisi - $h->kullanilan_gun);
+        }
+
+        return $list;
     }
 
     public function getByPersonelVeYil(int $personel_id, int $yil): ?object
@@ -112,17 +130,37 @@ class IzinHakedis extends Model
             "SELECT h.*,
                     COALESCE((SELECT SUM(k.kullanilan_gun) FROM izin_kullanim k
                               JOIN izin_talepler t ON t.id = k.talep_id
-                              WHERE k.hakedis_id = h.id AND t.durum = 'onaylandi'), 0) AS kullanilan_gun,
-                    h.gun_sayisi - COALESCE((SELECT SUM(k.kullanilan_gun) FROM izin_kullanim k
-                              JOIN izin_talepler t ON t.id = k.talep_id
-                              WHERE k.hakedis_id = h.id AND t.durum = 'onaylandi'), 0) AS kalan_gun
+                              WHERE k.hakedis_id = h.id AND t.durum = 'onaylandi'), 0) AS talep_kullanilan
              FROM {$this->table} h
              WHERE h.personel_id = ?
-             HAVING kalan_gun > 0
              ORDER BY h.yil ASC"
         );
         $sql->execute([$personel_id]);
-        return $sql->fetchAll(PDO::FETCH_OBJ);
+        $hakedisler = $sql->fetchAll(PDO::FETCH_OBJ);
+
+        if (empty($hakedisler)) return [];
+
+        require_once __DIR__ . '/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+        $firma_id = (int) ($hakedisler[0]->firma_id ?? 0);
+        $rem_devir = $devirModel->getTotalDevirByPersonel($personel_id, $firma_id);
+
+        $fifoAvailable = [];
+        foreach ($hakedisler as $h) {
+            $talep_kullanilan = (int) ($h->talep_kullanilan ?? 0);
+            $rem_cap = max(0, (int) $h->gun_sayisi - $talep_kullanilan);
+            $devir_kullanilan = min($rem_devir, $rem_cap);
+            $rem_devir -= $devir_kullanilan;
+
+            $h->kullanilan_gun = $talep_kullanilan + $devir_kullanilan;
+            $h->kalan_gun = (int) $h->gun_sayisi - $h->kullanilan_gun;
+
+            if ($h->kalan_gun > 0) {
+                $fifoAvailable[] = $h;
+            }
+        }
+
+        return $fifoAvailable;
     }
 
     /**
@@ -139,7 +177,17 @@ class IzinHakedis extends Model
              FROM {$this->table} h WHERE h.personel_id = ?"
         );
         $sql->execute([$personel_id, $personel_id]);
-        return (int) ($sql->fetch(PDO::FETCH_OBJ)->kalan ?? 0);
+        $kalan = (int) ($sql->fetch(PDO::FETCH_OBJ)->kalan ?? 0);
+
+        require_once __DIR__ . '/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+        $sqlFirma = $this->db->prepare("SELECT firma_id FROM {$this->table} WHERE personel_id = ? LIMIT 1");
+        $sqlFirma->execute([$personel_id]);
+        $firma_id = (int) ($sqlFirma->fetch(PDO::FETCH_OBJ)->firma_id ?? 0);
+
+        $totalDevir = $devirModel->getTotalDevirByPersonel($personel_id, $firma_id);
+
+        return max(0, $kalan - $totalDevir);
     }
 
     /**
@@ -171,14 +219,39 @@ class IzinHakedis extends Model
             "SELECT h.*, p.full_name AS personel_adi,
                     COALESCE((SELECT SUM(k.kullanilan_gun) FROM izin_kullanim k
                               JOIN izin_talepler t ON t.id = k.talep_id
-                              WHERE k.hakedis_id = h.id AND t.durum = 'onaylandi'), 0) AS kullanilan_gun
+                              WHERE k.hakedis_id = h.id AND t.durum = 'onaylandi'), 0) AS talep_kullanilan
              FROM {$this->table} h
              JOIN persons p ON p.id = h.personel_id
              WHERE h.firma_id = :fid $where
              ORDER BY p.full_name ASC, h.yil ASC"
         );
         $sql->execute($params);
-        return $sql->fetchAll(PDO::FETCH_OBJ);
+        $list = $sql->fetchAll(PDO::FETCH_OBJ);
+
+        require_once __DIR__ . '/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+        $devirTotals = $devirModel->getTotalsByFirma($firma_id);
+
+        $grouped = [];
+        foreach ($list as $item) {
+            $grouped[$item->personel_id][] = $item;
+        }
+
+        foreach ($grouped as $pid => $hakedisler) {
+            $rem_devir = $devirTotals[$pid] ?? 0;
+            foreach ($hakedisler as $h) {
+                $talep_kullanilan = (int) ($h->talep_kullanilan ?? 0);
+                $rem_cap = max(0, (int) $h->gun_sayisi - $talep_kullanilan);
+                $devir_kullanilan = min($rem_devir, $rem_cap);
+                $rem_devir -= $devir_kullanilan;
+
+                $h->devir_kullanilan = $devir_kullanilan;
+                $h->kullanilan_gun = $talep_kullanilan + $devir_kullanilan;
+                $h->kalan_gun = max(0, (int) $h->gun_sayisi - $h->kullanilan_gun);
+            }
+        }
+
+        return $list;
     }
 
     public function saveWithAttr($data)

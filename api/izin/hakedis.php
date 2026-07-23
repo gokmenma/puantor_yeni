@@ -37,6 +37,9 @@ try {
         }
 
         $liste = $model->getByFirma($firma_id, $personel_id);
+        foreach ($liste as $item) {
+            $item->personel_enc_id = Security::encrypt($item->personel_id);
+        }
 
         ob_clean();
         echo json_encode(['status' => 'success', 'list' => $liste], JSON_UNESCAPED_UNICODE);
@@ -210,6 +213,149 @@ try {
 
         ob_clean();
         echo json_encode(['status' => 'success', 'sonuclar' => $sonuclar], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($action === 'add_devir') {
+        require_once ROOT . '/Model/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+
+        $enc_pid     = $_POST['personel_id'] ?? '';
+        $personel_id = (int) Security::safeDecrypt($enc_pid);
+        $kullanilan_gun = (int) ($_POST['kullanilan_gun'] ?? 0);
+        $aciklama    = trim($_POST['aciklama'] ?? '');
+
+        if (!$personel_id || $kullanilan_gun <= 0) {
+            throw new Exception('Personel seçimi ve geçerli gün sayısı zorunludur.');
+        }
+
+        $persons = new Persons();
+        $p = $persons->find($personel_id);
+        if (!$p || (int) $p->firm_id !== $firma_id) {
+            throw new Exception('Personel bulunamadı.');
+        }
+
+        $id = $devirModel->saveWithAttr([
+            'firma_id'       => $firma_id,
+            'personel_id'    => $personel_id,
+            'kullanilan_gun' => $kullanilan_gun,
+            'aciklama'       => $aciklama,
+            'olusturan_id'   => $user_id,
+        ]);
+
+        ob_clean();
+        echo json_encode(['status' => 'success', 'message' => 'Devir kullanımı eklendi.', 'id' => $id], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($action === 'bulk_add_devir') {
+        require_once ROOT . '/Model/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+
+        $records = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($records) || empty($records)) throw new Exception('Veri bulunamadı.');
+
+        $persons = new Persons();
+        $tumPersonel = $persons->getPersonsByFirm($firma_id);
+        $adMap = [];
+        $tcMap = [];
+        foreach ($tumPersonel as $pr) {
+            $adMap[mb_strtolower(trim($pr->full_name))] = $pr;
+            $tcDecrypted = \App\Helper\Security::safeDecrypt($pr->kimlik_no ?? '');
+            if ($tcDecrypted) $tcMap[trim($tcDecrypted)] = $pr;
+        }
+
+        $sonuclar = [];
+        foreach ($records as $i => $row) {
+            $satir    = $i + 2;
+            $ad       = trim($row['personel_adi'] ?? '');
+            $tc       = trim($row['tc_no'] ?? '');
+            $gun      = (int) ($row['kullanilan_gun'] ?? 0);
+            $aciklama = trim($row['aciklama'] ?? '');
+
+            if ((!$ad && !$tc) || $gun <= 0) {
+                $sonuclar[] = ['satir' => $satir, 'status' => 'error', 'message' => "Satır {$satir}: Eksik veya geçersiz veri."];
+                continue;
+            }
+
+            $p = ($tc && isset($tcMap[$tc])) ? $tcMap[$tc] : ($adMap[mb_strtolower($ad)] ?? null);
+            if (!$p) {
+                $sonuclar[] = ['satir' => $satir, 'status' => 'error', 'message' => "Satır {$satir}: '{$ad}' isimli personel bulunamadı."];
+                continue;
+            }
+
+            $devirModel->saveWithAttr([
+                'firma_id'       => $firma_id,
+                'personel_id'    => (int) $p->id,
+                'kullanilan_gun' => $gun,
+                'aciklama'       => $aciklama,
+                'olusturan_id'   => $user_id,
+            ]);
+
+            $sonuclar[] = ['satir' => $satir, 'status' => 'success', 'message' => "Satır {$satir}: {$ad} – {$gun} gün devir kullanımı eklendi."];
+        }
+
+        ob_clean();
+        echo json_encode(['status' => 'success', 'sonuclar' => $sonuclar], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($action === 'list_devir') {
+        require_once ROOT . '/Model/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+
+        $enc_pid     = $_REQUEST['personel_id'] ?? '';
+        $personel_id = (int) Security::safeDecrypt($enc_pid);
+
+        if (!$personel_id) throw new Exception('Geçersiz personel ID.');
+
+        $liste = $devirModel->getByPersonel($personel_id, $firma_id);
+
+        ob_clean();
+        echo json_encode(['status' => 'success', 'list' => $liste], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($action === 'update_devir') {
+        require_once ROOT . '/Model/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+
+        $id             = (int) Security::safeDecrypt($_POST['id'] ?? '');
+        if (!$id) $id   = (int) ($_POST['id'] ?? 0);
+        $kullanilan_gun = (int) ($_POST['kullanilan_gun'] ?? 0);
+        $aciklama       = trim($_POST['aciklama'] ?? '');
+
+        if (!$id || $kullanilan_gun <= 0) throw new Exception('Geçersiz veri.');
+
+        $kayit = $devirModel->find($id);
+        if (!$kayit || (int) $kayit->firma_id !== $firma_id) throw new Exception('Kayıt bulunamadı.');
+
+        $devirModel->saveWithAttr([
+            'id'             => $id,
+            'personel_id'    => $kayit->personel_id,
+            'kullanilan_gun' => $kullanilan_gun,
+            'aciklama'       => $aciklama,
+            'olusturan_id'   => $user_id,
+        ]);
+
+        ob_clean();
+        echo json_encode(['status' => 'success', 'message' => 'Devir kullanımı güncellendi.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($action === 'delete_devir') {
+        require_once ROOT . '/Model/IzinDevirKullanim.php';
+        $devirModel = new IzinDevirKullanim();
+
+        $id           = (int) Security::safeDecrypt($_POST['id'] ?? '');
+        if (!$id) $id = (int) ($_POST['id'] ?? 0);
+        if (!$id) throw new Exception('Geçersiz ID.');
+
+        $ok = $devirModel->deleteById($id, $firma_id);
+        if (!$ok) throw new Exception('Kayıt silinemedi veya bulunamadı.');
+
+        ob_clean();
+        echo json_encode(['status' => 'success', 'message' => 'Devir kullanımı silindi.'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 

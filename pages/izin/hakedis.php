@@ -22,26 +22,6 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                 </div>
             </div>
             <div class="col-auto ms-auto d-flex gap-2">
-                <button class="btn btn-primary" id="btn-hesapla-hepsi">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-                        <path d="M9 10h6" />
-                        <path d="M9 14h6" />
-                    </svg>
-                    Hakedişleri Hesapla
-                </button>
-                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalExcel">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
-                        <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4"></path>
-                        <path d="M2 17l4 4.25"></path>
-                        <path d="M6 17l-4 4.25"></path>
-                        <path d="M22 18h-12"></path>
-                        <path d="M14 14l-4 4l4 4"></path>
-                    </svg>
-                    Excel'den Aktar
-                </button>
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalManuel">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
                         <path d="M12 5l0 14"></path>
@@ -49,6 +29,29 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                     </svg>
                     Yeni Ekle
                 </button>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-dots-vertical me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>
+                            <path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>
+                            <path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>
+                        </svg>
+                        İşlemler
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius:12px; min-width:200px;">
+                        <a class="dropdown-item py-2" href="#" id="btn-devir-kullanim-modal-top">
+                            <i class="ti ti-history me-2 text-purple fs-3"></i> Devir Kullanım Ekle
+                        </a>
+                        <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#modalExcel">
+                            <i class="ti ti-file-import me-2 text-primary fs-3"></i> Excel'den Aktar
+                        </a>
+                        <div class="dropdown-divider my-1"></div>
+                        <a class="dropdown-item py-2" href="#" id="btn-hesapla-hepsi">
+                            <i class="ti ti-calculator me-2 text-info fs-3"></i> Hakedişleri Hesapla
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -103,6 +106,7 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
                                 <th class="text-center">Toplam Hakedilen</th>
                                 <th class="text-center">Toplam Kullanılan</th>
                                 <th class="text-center">Toplam Kalan</th>
+                                <th class="text-center" style="width: 60px;">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -111,6 +115,138 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- Modal: Devir Kullanım Ekle -->
+<div class="modal modal-blur fade" id="modalDevirKullanim" tabindex="-1">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header bg-white py-3 border-bottom">
+                <h5 class="modal-title d-flex align-items-center fw-bold text-dark fs-3">
+                    <i class="ti ti-history me-2 text-purple fs-2"></i>
+                    Devir Kullanım Ekle
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-0">
+                <!-- Nav Tabs -->
+                <ul class="nav nav-tabs nav-fill bg-light border-bottom mb-0" id="devirTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold py-3" id="devir-tekil-tab" data-bs-toggle="tab" data-bs-target="#devir-tekil-pane" type="button" role="tab">Tekil Ekle</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold py-3" id="devir-excel-tab" data-bs-toggle="tab" data-bs-target="#devir-excel-pane" type="button" role="tab">Excel ile Toplu Yükle</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="devirTabContent">
+                    <!-- Tab 1: Tekil Ekle -->
+                    <div class="tab-pane fade show active p-4" id="devir-tekil-pane" role="tabpanel">
+                        <!-- Personel İzin Özet Kartı -->
+                        <div id="devir-personel-summary-card" class="card card-sm border bg-white shadow-sm p-2 mb-4 rounded-3" style="display:none;">
+                            <div class="card-body p-2">
+                                <div class="row text-center g-1 align-items-center">
+                                    <div class="col-4 border-end">
+                                        <div class="text-muted small fw-medium" style="font-size:0.75rem;">Hakedilen İzin</div>
+                                        <div class="fw-bold fs-3 text-primary" id="summary-hakedilen">0 Gün</div>
+                                    </div>
+                                    <div class="col-4 border-end">
+                                        <div class="text-muted small fw-medium" style="font-size:0.75rem;">Kullanılan İzin</div>
+                                        <div class="fw-bold fs-3 text-danger" id="summary-kullanilan">0 Gün</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-muted small fw-medium" style="font-size:0.75rem;">Kalan İzin</div>
+                                        <div class="fw-bold fs-3 text-success" id="summary-kalan">0 Gün</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="form-devir-tekil">
+                            <div class="mb-3">
+                                <label class="form-label required">Personel <span class="text-danger">*</span></label>
+                                <select id="devir-personel" class="form-select select2-devir-modal">
+                                    <option value="">Seçiniz</option>
+                                    <?php foreach ($personeller as $p): ?>
+                                        <option value="<?= Security::encrypt($p->id) ?>" data-personel-id="<?= (int)$p->id ?>"><?= htmlspecialchars($p->full_name) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label required">Kullanılan Gün Sayısı <span class="text-danger">*</span></label>
+                                <input type="number" id="devir-gun" class="form-control" min="1" placeholder="Örn: 10">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Açıklama</label>
+                                <textarea id="devir-aciklama" class="form-control" rows="3" placeholder="Örn: 2022-2023 döneminde kullanılan izin"></textarea>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Excel ile Toplu Yükle -->
+                    <div class="tab-pane fade p-4" id="devir-excel-pane" role="tabpanel">
+                        <div class="mb-4 text-center">
+                            <p class="text-secondary small mb-3">Aşağıdaki butona tıklayarak personel listesini içeren Excel şablonunu indirin, devir kullanım bilgilerini doldurun ve dosyayı buraya yükleyin.</p>
+                            <button type="button" id="btn-devir-sablon-indir" class="btn btn-outline-purple btn-pill w-100 py-2 d-flex align-items-center justify-content-center" style="gap:8px;border-width:2px;">
+                                <i class="ti ti-file-download" style="font-size:1.2rem;"></i>
+                                <strong>Devir Kullanım Şablonu İndir (.xlsx)</strong>
+                            </button>
+                        </div>
+
+                        <div class="dropzone-area" id="devir-dropzone">
+                            <div class="dropzone-icon">
+                                <i class="ti ti-cloud-upload text-purple" style="font-size:3rem;transition:transform .2s;"></i>
+                            </div>
+                            <div class="dropzone-text">
+                                <span class="dropzone-title">Excel dosyasını buraya sürükleyin veya tıklayın</span>
+                                <span class="dropzone-sub">Sadece .xls ve .xlsx dosyaları desteklenir (Max 5MB)</span>
+                            </div>
+                        </div>
+                        <input type="file" id="devir-excel-dosya" accept=".xlsx,.xls" style="display:none;">
+
+                        <div class="dropzone-preview" id="devir-dropzone-preview">
+                            <div class="preview-icon">
+                                <i class="ti ti-file-spreadsheet text-purple"></i>
+                            </div>
+                            <div class="preview-details">
+                                <span class="preview-name" id="devir-preview-name">dosya.xlsx</span>
+                                <span class="preview-size" id="devir-preview-size">0 KB</span>
+                            </div>
+                            <div class="preview-remove" id="devir-preview-remove" title="Dosyayı Kaldır">
+                                <i class="ti ti-trash"></i>
+                            </div>
+                        </div>
+
+                        <div id="devir-excel-onizleme" style="display:none;" class="mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold small text-secondary" id="devir-excel-satir-sayisi"></span>
+                            </div>
+                            <div class="table-responsive" style="max-height:200px;overflow-y:auto;">
+                                <table class="table table-sm table-bordered table-vcenter mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-center">#</th>
+                                            <th>Personel Adı</th>
+                                            <th>TC Kimlik</th>
+                                            <th class="text-center">Gün</th>
+                                            <th>Açıklama</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="devir-excel-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light border-0 p-3">
+                <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-dark px-4" id="btn-devir-kaydet">Kaydet</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -340,6 +476,20 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
     </div>
 </div>
 
+<!-- Custom Context Menu for Table Rows -->
+<div id="hakedis-context-menu" class="dropdown-menu shadow-lg border rounded-3 p-1" style="display:none; position:fixed; z-index:9999; min-width:200px;">
+    <a class="dropdown-item py-2" href="#" id="ctx-personel-karti">
+        <i class="ti ti-user me-2 text-primary"></i> Personel Kartına Git
+    </a>
+    <a class="dropdown-item py-2" href="#" id="ctx-devir-ekle">
+        <i class="ti ti-history me-2 text-purple"></i> Devir Kullanım Ekle
+    </a>
+    <div class="dropdown-divider my-1"></div>
+    <a class="dropdown-item py-2" href="#" id="ctx-detay-toggle">
+        <i class="ti ti-layout-list me-2 text-secondary"></i> Hakediş Detayları
+    </a>
+</div>
+
 <style>
 #hakedis-table tbody tr { cursor: pointer; }
 #hakedis-table tbody tr.shown { background-color: rgba(var(--tblr-primary-rgb), 0.02); }
@@ -357,6 +507,8 @@ $personeller = (new Persons())->getPersonsByFirm($firma_id);
 .dropzone-preview .preview-size { font-size:.75rem; color:#64748b; }
 .dropzone-preview .preview-remove { cursor:pointer; color:#ef4444; font-size:1.25rem; transition:color .2s; display:flex; align-items:center; }
 .dropzone-preview .preview-remove:hover { color:#b91c1c; }
+#hakedis-context-menu { box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); border-color: rgba(0,0,0,0.08) !important; background: #ffffff; }
+#hakedis-context-menu .dropdown-item:hover { background-color: #f1f5f9; color: #0f172a; }
 </style>
 
 <script>
@@ -426,7 +578,13 @@ $(document).ready(function() {
     });
 
     function swalSuccess(msg) {
-        Swal.fire({ icon: 'success', title: 'Başarılı!', text: msg, timer: 2000, showConfirmButton: false, toast: true, position: 'top-end' });
+        Swal.fire({
+            icon: 'success',
+            title: 'Başarılı!',
+            text: msg,
+            confirmButtonText: 'Tamam',
+            confirmButtonColor: '#2fb344'
+        });
     }
     function swalError(msg) {
         Swal.fire({ icon: 'error', title: 'Hata!', text: msg });
@@ -437,6 +595,7 @@ $(document).ready(function() {
 
     $('.select2-filter').select2({ width: '100%', allowClear: true, placeholder: 'Seçiniz' });
     $('.select2-modal').select2({ width: '100%', allowClear: true, placeholder: 'Seçiniz', dropdownParent: $('#modalManuel') });
+    $('.select2-devir-modal').select2({ width: '100%', allowClear: true, placeholder: 'Seçiniz', dropdownParent: $('#modalDevirKullanim') });
 
     function fmtDate(d) {
         if (!d) return '—';
@@ -490,10 +649,17 @@ $(document).ready(function() {
             `;
         });
 
+        setTimeout(() => loadDevirListChildRow(d.personel_id, d.personel_enc_id), 50);
+
         return `
             <div class="p-3 bg-light rounded-3 border border-dashed border-2">
-                <h4 class="mb-2 font-weight-bold text-secondary">Hakediş Detayları</h4>
-                <div class="table-responsive">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0 font-weight-bold text-secondary">Hakediş Detayları</h4>
+                    <button class="btn btn-sm btn-outline-purple" onclick="event.stopPropagation(); openDevirModal('${d.personel_enc_id}')">
+                        <i class="ti ti-plus me-1"></i> Devir Kullanım Ekle
+                    </button>
+                </div>
+                <div class="table-responsive mb-3">
                     <table class="table table-sm table-bordered table-vcenter bg-white mb-0">
                         <thead class="table-light">
                             <tr>
@@ -512,8 +678,67 @@ $(document).ready(function() {
                         </tbody>
                     </table>
                 </div>
+
+                <div id="devir-child-wrapper-${d.personel_id}">
+                    <div class="text-muted small py-2"><span class="spinner-border spinner-border-sm me-1"></span> Devir kullanımları yükleniyor...</div>
+                </div>
             </div>
         `;
+    }
+
+    function loadDevirListChildRow(personelId, encId) {
+        $.get(HAKEDIS_API, { action: 'list_devir', personel_id: encId }, function(res) {
+            const container = $(`#devir-child-wrapper-${personelId}`);
+            if (!container.length) return;
+
+            if (res.status !== 'success' || !res.list || res.list.length === 0) {
+                container.html('<div class="small text-muted italic">Bu personele ait devir kullanımı bulunmuyor.</div>');
+                return;
+            }
+
+            let rows = '';
+            res.list.forEach(item => {
+                rows += `
+                    <tr>
+                        <td><span class="badge bg-purple-lt">Devir Kullanımı</span></td>
+                        <td class="text-center font-weight-bold text-danger">${item.kullanilan_gun} Gün</td>
+                        <td><small class="text-muted">${escapeHtml(item.aciklama || '—')}</small></td>
+                        <td><small class="text-muted">${fmtDate(item.olusturma_tarihi)}</small></td>
+                        <td class="text-center">
+                            <button class="btn btn-icon btn-sm btn-ghost-danger" onclick="event.stopPropagation(); silDevirKullanim(${item.id})" title="Sil" style="width: 24px; height: 24px; padding:0; display: inline-flex; align-items: center; justify-content: center;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0;">
+                                    <path d="M4 7l16 0"></path>
+                                    <path d="M10 11l0 6"></path>
+                                    <path d="M14 11l0 6"></path>
+                                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.html(`
+                <h5 class="mb-2 font-weight-bold text-purple d-flex align-items-center">
+                    <i class="ti ti-history me-1"></i> Devir Kullanım Kayıtları
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-vcenter bg-white mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tür</th>
+                                <th class="text-center">Kullanılan Gün</th>
+                                <th>Açıklama</th>
+                                <th>Kayıt Tarihi</th>
+                                <th class="text-center" style="width:50px;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `);
+        });
     }
 
     const dt = window.createDataTable('#hakedis-table', {
@@ -555,6 +780,31 @@ $(document).ready(function() {
                     const k = row.total_hakedis - row.total_kullanilan;
                     return `<span class="${k > 0 ? 'text-success' : 'text-muted'}">${k} Gün</span>`;
                 }
+            },
+            {
+                data: null, className: 'text-center', orderable: false,
+                render: (d, t, row) => {
+                    return `
+                        <div class="dropdown" onclick="event.stopPropagation();">
+                            <button class="btn btn-icon btn-ghost-secondary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-dots-vertical" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                   <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+                                   <path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+                                   <path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <a class="dropdown-item py-2" href="index.php?p=persons/manage&id=${row.personel_enc_id}">
+                                    <i class="ti ti-user me-2 text-primary"></i> Personel Kartına Git
+                                </a>
+                                <a class="dropdown-item py-2" href="#" onclick="event.preventDefault(); event.stopPropagation(); openDevirModal('${row.personel_enc_id}')">
+                                    <i class="ti ti-history me-2 text-purple"></i> Devir Kullanım Ekle
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }
             }
         ],
         order: [[1, 'asc']],
@@ -564,7 +814,7 @@ $(document).ready(function() {
 
     // Add event listener for opening and closing details
     $('#hakedis-table tbody').on('click', 'td.dt-control, tr', function (e) {
-        if ($(e.target).closest('button, a, input, select, .show-leaves').length) {
+        if ($(e.target).closest('button, a, input, select, .show-leaves, .dropdown').length) {
             return;
         }
 
@@ -582,6 +832,74 @@ $(document).ready(function() {
         }
     });
 
+    // Right-click Context Menu
+    let selectedContextRowData = null;
+
+    $('#hakedis-table tbody').on('contextmenu', 'tr', function(e) {
+        if ($(e.target).closest('button, a, input, select, .show-leaves').length) {
+            return;
+        }
+        e.preventDefault();
+
+        const tr = $(this);
+        const rowData = dt.row(tr).data();
+        if (!rowData) return;
+
+        selectedContextRowData = rowData;
+
+        const menu = $('#hakedis-context-menu');
+        menu.css({
+            display: 'block',
+            left: e.clientX + 'px',
+            top: e.clientY + 'px'
+        });
+    });
+
+    $(document).on('click scroll', function(e) {
+        if (!$(e.target).closest('#hakedis-context-menu').length) {
+            $('#hakedis-context-menu').hide();
+        }
+    });
+
+    $('#ctx-personel-karti').on('click', function(e) {
+        e.preventDefault();
+        $('#hakedis-context-menu').hide();
+        if (selectedContextRowData && selectedContextRowData.personel_enc_id) {
+            window.location.href = 'index.php?p=persons/manage&id=' + selectedContextRowData.personel_enc_id;
+        }
+    });
+
+    $('#ctx-devir-ekle').on('click', function(e) {
+        e.preventDefault();
+        $('#hakedis-context-menu').hide();
+        if (selectedContextRowData) {
+            openDevirModal(selectedContextRowData.personel_id || selectedContextRowData.personel_enc_id);
+        }
+    });
+
+    $('#ctx-detay-toggle').on('click', function(e) {
+        e.preventDefault();
+        $('#hakedis-context-menu').hide();
+        if (selectedContextRowData) {
+            const tr = $('#hakedis-table tbody tr').filter(function() {
+                const rData = dt.row(this).data();
+                return rData && rData.personel_id === selectedContextRowData.personel_id;
+            });
+            if (tr.length) {
+                const row = dt.row(tr);
+                if (row.child.isShown()) {
+                    row.child.hide();
+                    tr.removeClass('shown');
+                    tr.find('td.dt-control i').removeClass('ti-chevron-down').addClass('ti-chevron-right');
+                } else {
+                    row.child(formatChildRow(row.data())).show();
+                    tr.addClass('shown');
+                    tr.find('td.dt-control i').removeClass('ti-chevron-right').addClass('ti-chevron-down');
+                }
+            }
+        }
+    });
+
     function loadList() {
         const enc = $('#filter-personel').val();
         const params = new URLSearchParams({ action: 'list' });
@@ -596,6 +914,7 @@ $(document).ready(function() {
                 if (!grouped[pid]) {
                     grouped[pid] = {
                         personel_id: pid,
+                        personel_enc_id: item.personel_enc_id,
                         personel_adi: item.personel_adi,
                         total_hakedis: 0,
                         total_kullanilan: 0,
@@ -618,6 +937,154 @@ $(document).ready(function() {
             dt.clear().rows.add(groupedList).draw();
         });
     }
+
+    function updateDevirPersonelSummary() {
+        const val = $('#devir-personel').val();
+        const $opt = $('#devir-personel option:selected');
+        const pid = $opt.data('personel-id');
+
+        if (!val && !pid) {
+            $('#devir-personel-summary-card').slideUp(150);
+            return;
+        }
+
+        let found = null;
+        if (typeof dt !== 'undefined' && dt.rows) {
+            dt.rows().data().each(function(row) {
+                if (row.personel_enc_id === val || row.personel_id == pid) {
+                    found = row;
+                }
+            });
+        }
+
+        if (found) {
+            const kalan = found.total_hakedis - found.total_kullanilan;
+            $('#summary-hakedilen').text(found.total_hakedis + ' Gün');
+            $('#summary-kullanilan').text(found.total_kullanilan + ' Gün');
+            $('#summary-kalan').text(kalan + ' Gün')
+                .removeClass('text-success text-danger text-muted')
+                .addClass(kalan > 0 ? 'text-success' : (kalan < 0 ? 'text-danger' : 'text-muted'));
+            $('#devir-personel-summary-card').slideDown(150);
+        } else {
+            $('#devir-personel-summary-card').slideUp(150);
+        }
+    }
+
+    $('#devir-personel').on('change', updateDevirPersonelSummary);
+
+    // Devir Kullanım Modal işlemleri
+    window.openDevirModal = function(targetId) {
+        $('#form-devir-tekil')[0].reset();
+        if (targetId) {
+            let $opt = $('#devir-personel option').filter(function() {
+                return $(this).val() === targetId || $(this).data('personel-id') == targetId;
+            });
+            if ($opt.length) {
+                $('#devir-personel').val($opt.val()).trigger('change');
+            } else {
+                $('#devir-personel').val(null).trigger('change');
+            }
+        } else {
+            $('#devir-personel').val(null).trigger('change');
+        }
+        updateDevirPersonelSummary();
+        $('#devir-tekil-tab').tab('show');
+        resetDevirDropzone();
+        const modalEl = document.getElementById('modalDevirKullanim');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    };
+
+    $('#btn-devir-kullanim-modal-top').on('click', function() {
+        openDevirModal(null);
+    });
+
+    window.silDevirKullanim = function(id) {
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: 'Bu devir kullanımı kaydı silinecektir.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'Vazgeç',
+            confirmButtonColor: '#d33'
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            $.post(HAKEDIS_API, { action: 'delete_devir', id: id }, function(res) {
+                if (res.status === 'success') {
+                    swalSuccess(res.message);
+                    loadList();
+                } else {
+                    swalError(res.message);
+                }
+            });
+        });
+    };
+
+    $('#btn-devir-kaydet').on('click', function() {
+        const activeTab = $('#devirTabs .active').attr('id');
+        if (activeTab === 'devir-tekil-tab') {
+            const pid = $('#devir-personel').val();
+            const gun = $('#devir-gun').val();
+            const ack = $('#devir-aciklama').val();
+
+            if (!pid || !gun || gun <= 0) {
+                swalWarning('Lütfen personel seçin ve geçerli bir gün sayısı girin.');
+                return;
+            }
+
+            $.post(HAKEDIS_API, {
+                action: 'add_devir',
+                personel_id: pid,
+                kullanilan_gun: gun,
+                aciklama: ack
+            }, function(res) {
+                if (res.status === 'success') {
+                    swalSuccess(res.message);
+                    bootstrap.Modal.getInstance('#modalDevirKullanim').hide();
+                    loadList();
+                } else {
+                    swalError(res.message);
+                }
+            });
+        } else if (activeTab === 'devir-excel-tab') {
+            if (!parsedDevirRows.length) {
+                swalWarning('Lütfen geçerli bir Excel dosyası yükleyin.');
+                return;
+            }
+            const $btn = $(this);
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Aktarılıyor...');
+
+            fetch(HAKEDIS_API + '?action=bulk_add_devir', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(parsedDevirRows)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status !== 'success') { swalError(res.message); return; }
+
+                const basarili = res.sonuclar.filter(s => s.status === 'success').length;
+                const hatali   = res.sonuclar.filter(s => s.status === 'error').length;
+                const detay    = res.sonuclar.filter(s => s.status !== 'success')
+                    .map(s => `<li class="text-danger">${s.message}</li>`)
+                    .join('');
+
+                Swal.fire({
+                    icon: hatali > 0 ? 'warning' : 'success',
+                    title: 'Devir Kullanımları Aktarıldı',
+                    html: `<strong>${basarili}</strong> eklendi, <strong>${hatali}</strong> hata.` +
+                          (detay ? `<ul class="text-start mt-2 small" style="max-height:200px;overflow-y:auto">${detay}</ul>` : ''),
+                });
+
+                bootstrap.Modal.getInstance('#modalDevirKullanim').hide();
+                loadList();
+            })
+            .finally(() => {
+                $btn.prop('disabled', false).html('Kaydet');
+            });
+        }
+    });
 
     window.duzenleHakedis = function(rowJsonStr) {
         const row = JSON.parse(decodeURIComponent(rowJsonStr));
@@ -729,7 +1196,7 @@ $(document).ready(function() {
         });
     });
 
-    // Şablon indir (modal içi)
+    // Şablon indir (Hakediş Excel)
     const personelListesi = <?= json_encode(array_map(fn($p) => [
         'ad' => $p->full_name,
         'tc' => \App\Helper\Security::safeDecrypt($p->kimlik_no ?? '')
@@ -746,7 +1213,19 @@ $(document).ready(function() {
     }
     $('#btn-sablon-indir-modal').on('click', sablonIndir);
 
-    // Dropzone
+    // Devir Kullanım Şablon İndir
+    function devirSablonIndir() {
+        const wb = XLSX.utils.book_new();
+        const satirlar = [['Personel Adı', 'TC Kimlik', 'Kullanılan Gün Sayısı', 'Açıklama']];
+        personelListesi.forEach(p => satirlar.push([p.ad, p.tc, '', '']));
+        const ws = XLSX.utils.aoa_to_sheet(satirlar);
+        ws['!cols'] = [{ wch: 35 }, { wch: 14 }, { wch: 20 }, { wch: 35 }];
+        XLSX.utils.book_append_sheet(wb, ws, 'Devir Kullanımları');
+        XLSX.writeFile(wb, 'devir_kullanim_sablonu.xlsx');
+    }
+    $('#btn-devir-sablon-indir').on('click', devirSablonIndir);
+
+    // Dropzone Hakediş Excel
     let parsedRows = [];
     const $zone    = $('#hakedis-dropzone');
     const $fileIn  = $('#excel-dosya');
@@ -867,6 +1346,88 @@ $(document).ready(function() {
     });
 
     $('#modalExcel').on('hidden.bs.modal', resetDropzone);
+
+    // Dropzone Devir Kullanımı Excel
+    let parsedDevirRows = [];
+    const $devirZone    = $('#devir-dropzone');
+    const $devirFileIn  = $('#devir-excel-dosya');
+    const $devirPreview = $('#devir-dropzone-preview');
+
+    $devirZone.on('click', () => $devirFileIn.trigger('click'));
+
+    $devirZone.on('dragover dragenter', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        $devirZone.addClass('dragover');
+    });
+    $devirZone.on('dragleave drop', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        $devirZone.removeClass('dragover');
+    });
+    $devirZone.on('drop', function(e) {
+        const file = e.originalEvent.dataTransfer.files[0];
+        if (file) parseDevirFile(file);
+    });
+
+    $devirFileIn.on('change', function() {
+        if (this.files[0]) parseDevirFile(this.files[0]);
+    });
+
+    $('#devir-preview-remove').on('click', resetDevirDropzone);
+
+    function resetDevirDropzone() {
+        $devirFileIn.val('');
+        $devirPreview.hide();
+        $('#devir-excel-onizleme').hide();
+        $('#devir-excel-tbody').empty();
+        parsedDevirRows = [];
+    }
+
+    function parseDevirFile(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['xls','xlsx'].includes(ext)) { swalWarning('Sadece .xls ve .xlsx dosyaları desteklenir.'); return; }
+        if (file.size > 5 * 1024 * 1024) { swalWarning('Dosya boyutu 5MB\'ı geçemez.'); return; }
+
+        $('#devir-preview-name').text(file.name);
+        $('#devir-preview-size').text((file.size / 1024).toFixed(1) + ' KB');
+        $devirPreview.css('display', 'flex');
+
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const wb   = XLSX.read(ev.target.result, { type: 'binary' });
+            const ws   = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            if (rows.length < 2) { swalWarning('Dosyada veri bulunamadı.'); return; }
+
+            parsedDevirRows = [];
+            const tbody = $('#devir-excel-tbody').empty();
+            let gecerli = 0;
+
+            rows.slice(1).forEach((r, i) => {
+                const ad  = String(r[0] || '').trim();
+                const tc  = String(r[1] || '').trim();
+                const gun = parseInt(r[2]) || 0;
+                const ack = String(r[3] || '').trim();
+                if (!ad && !tc && !gun) return;
+
+                parsedDevirRows.push({ personel_adi: ad, tc_no: tc, kullanilan_gun: gun, aciklama: ack });
+                const hata = (!ad && !tc) || (gun <= 0);
+                if (!hata) gecerli++;
+                tbody.append(`<tr class="${hata ? 'table-danger' : ''}">
+                    <td class="text-center">${i + 2}</td>
+                    <td>${ad || '<em class="text-danger">Boş</em>'}</td>
+                    <td>${tc || '—'}</td>
+                    <td class="text-center">${gun || '<em class="text-danger">—</em>'}</td>
+                    <td>${ack || '—'}</td>
+                </tr>`);
+            });
+
+            $('#devir-excel-satir-sayisi').text(`${parsedDevirRows.length} satır okundu, ${gecerli} geçerli`);
+            $('#devir-excel-onizleme').show();
+        };
+        reader.readAsBinaryString(file);
+    }
+
+    $('#modalDevirKullanim').on('hidden.bs.modal', resetDevirDropzone);
 
     loadList();
 });
