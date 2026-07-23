@@ -131,6 +131,96 @@ $("#payroll-detail-modal").on("hidden.bs.modal", function () {
   $("#print-detailed-payroll").prop("disabled", true);
 });
 
+$(document).on("click", ".delete-payroll-transaction", async function () {
+  const button = this;
+  const label = $(button).data("label") || "Bu bordro hareketi";
+
+  const confirmation = await Swal.fire({
+    icon: "warning",
+    title: "Hareket silinsin mi?",
+    text: label + " kalıcı olarak silinecek.",
+    showCancelButton: true,
+    confirmButtonColor: "#d63939",
+    cancelButtonText: "Vazgeç",
+    confirmButtonText: "Evet, sil"
+  });
+
+  if (!confirmation.isConfirmed) return;
+
+  const formData = new FormData();
+  formData.append("id", $(button).data("id"));
+  formData.append("source", $(button).data("source"));
+  formData.append("month", $(button).data("month"));
+  formData.append("year", $(button).data("year"));
+
+  $(button).prop("disabled", true);
+
+  try {
+    const response = await fetch("api/bordro/delete-transaction.php", {
+      method: "POST",
+      body: formData
+    });
+    const result = await response.json();
+
+    if (!response.ok || result.status !== "success") {
+      throw new Error(result.message || "Bordro hareketi silinemedi.");
+    }
+
+    const formatPayrollMoney = function (amount) {
+      return new Intl.NumberFormat("tr-TR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount) + " TRY";
+    };
+
+    const setPayrollSummaryAmount = function (selector, amount) {
+      const normalizedAmount = Math.abs(amount) < 0.005 ? 0 : amount;
+      $(selector)
+        .attr("data-amount", normalizedAmount)
+        .text(formatPayrollMoney(normalizedAmount));
+      return normalizedAmount;
+    };
+
+    let totalIncome = Number($("#payroll-total-income").attr("data-amount")) || 0;
+    let totalExpense = Number($("#payroll-total-expense").attr("data-amount")) || 0;
+    const deletedAmount = Number(result.amount) || 0;
+
+    if (result.transaction_kind === "income") {
+      totalIncome = Math.max(0, totalIncome - deletedAmount);
+    } else {
+      totalExpense = Math.max(0, totalExpense - deletedAmount);
+    }
+
+    totalIncome = setPayrollSummaryAmount("#payroll-total-income", totalIncome);
+    totalExpense = setPayrollSummaryAmount("#payroll-total-expense", totalExpense);
+    setPayrollSummaryAmount("#payroll-total-net", totalIncome - totalExpense);
+
+    const detailTrigger = $("#payroll-detail-modal").data("detail-trigger");
+    if (detailTrigger) {
+      $(detailTrigger).trigger("click");
+    }
+
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable("#bordroTable")) {
+      $("#bordroTable").DataTable().ajax.reload(null, false);
+    }
+
+    await Swal.fire({
+      icon: "success",
+      title: "Silindi",
+      text: result.message,
+      timer: 1200,
+      showConfirmButton: false
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Hata",
+      text: error.message || "Bordro hareketi silinemedi."
+    });
+    $(button).prop("disabled", false);
+  }
+});
+
 // Bordro detayını yazdır
 $(document).on("click", "#print-detailed-payroll", function () {
   let $content = $("#payroll-detail-content").clone();

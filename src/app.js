@@ -3,17 +3,87 @@ $(function() {
   $("<style>")
     .prop("type", "text/css")
     .html(`
+      /* Global Top Alignment & Zero Gap Fix for DataTables & Tables across all pages */
+      div.dt-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        vertical-align: top !important;
+      }
+
+      div.dt-container div.dt-layout-row {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        align-items: flex-start !important;
+      }
+
+      div.dt-container div.dt-layout-row.dt-empty-row,
+      div.dt-container div.dt-layout-row:empty,
+      div.dt-container div.dt-layout-row:first-child:not(.dt-layout-table) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+      }
+
+      div.dt-container div.dt-layout-row.dt-layout-table {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+
+      div.dt-container div.dt-layout-row.dt-layout-table > div.dt-layout-cell {
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+
+      div.dt-container table.dataTable,
+      table.dataTable {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        vertical-align: top !important;
+      }
+
+      .table-responsive {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        vertical-align: top !important;
+      }
+
+      /* Card-body padding reset when it wraps table-responsive or DataTables */
+      .card-body:has(> .table-responsive),
+      .card-body:has(> .dt-container),
+      .card-body:has(> div > .table-responsive),
+      .card-body:has(> div > .dt-container) {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+      }
+
+      /* Ensure card header bottom border and table top header sit flush */
+      .card-header + .card-body .table-responsive,
+      .card-header + .table-responsive {
+        margin-top: 0 !important;
+      }
+
+      /* Footer controls layout */
       div.dt-container .dt-layout-row:last-child,
-      div.dt-container .dt-layout-row:has(.dt-paging) {
+      div.dt-container .dt-layout-row:has(.dt-paging),
+      div.dt-container .dt-layout-row:has(.dt-info) {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
         flex-wrap: wrap !important;
         width: 100% !important;
         gap: 1rem !important;
-        padding: 0.75rem 1.25rem !important;
-        background-color: transparent !important;
-        border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+        margin: 0 !important;
+        padding: 0.5rem 1.25rem !important;
+        background-color: var(--tblr-bg-surface, #ffffff) !important;
+        border-top: 1px solid var(--tblr-border-color, #dadcde) !important;
         box-sizing: border-box !important;
       }
       div.dt-container .dt-layout-row:last-child .dt-layout-start,
@@ -67,8 +137,24 @@ $(function() {
         display: inline-block !important;
         width: auto !important;
       }
-      div.dt-container .dt-layout-row.dt-empty-row {
-        display: none !important;
+
+      /* Ensure table row bottom borders are always visible and distinct */
+      table.dataTable > tbody > tr > td,
+      table.dataTable > tbody > tr > th,
+      table.dataTable > tbody > tr:last-child > td,
+      table.dataTable > tbody > tr:last-child > th {
+        border-bottom: 1px solid var(--tblr-border-color, #dadcde) !important;
+        border-top: none !important;
+      }
+      table.dataTable > thead > tr > th,
+      table.dataTable > thead > tr > td {
+        border-bottom: 1px solid var(--tblr-border-color, #dadcde) !important;
+      }
+      table.dataTable > thead > tr.search-input-row > th,
+      table.dataTable > thead > tr.search-input-row > td {
+        border-bottom: 1px solid var(--tblr-border-color, #dadcde) !important;
+        background-color: var(--tblr-bg-surface-secondary, #f8fafc) !important;
+        padding: 4px 6px !important;
       }
     `)
     .appendTo("head");

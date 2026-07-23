@@ -6,6 +6,7 @@ require_once '../../App/Helper/helper.php';
 require_once '../../App/Helper/security.php';
 require_once '../../Model/Auths.php';
 require_once '../../App/Helper/financial.php';
+require_once '../../Model/ActivityLogModel.php';
 
 
 use App\Helper\Helper;
@@ -64,6 +65,20 @@ if ($_POST['action'] == 'saveWageCut') {
             ];
             $lastInsertId = $wagecut->saveWithAttr($data) ?? $id;
         }
+
+        ActivityLogModel::log(
+            'payroll',
+            $id > 0 ? 'deduction_update' : 'deduction_add',
+            sprintf(
+                'Kesinti %s. Personel: %d, dönem: %04d-%02d, tür: %s, tutar: %s',
+                $id > 0 ? 'güncellendi' : 'eklendi',
+                $person_id,
+                $year,
+                $month,
+                (string) ($_POST['wage_cut_type'] ?? 'Kesinti'),
+                (string) ($_POST['wage_cut_amount'] ?? '0')
+            )
+        );
 
         //Eğer Personel detay sayfasında ise
         if ($page == 'persons/manage') {

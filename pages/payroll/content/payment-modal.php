@@ -2,7 +2,6 @@
 require_once "App/Helper/financial.php";
 
 $financialHelper = new Financial();
-use App\Helper\Date;
 
 // $case_id = $_POST['case_id'] ?? 0;
 ?>
@@ -38,6 +37,8 @@ use App\Helper\Date;
 
                     <input type="hidden" class="form-control" name="id" value="0">
                     <input type="hidden" class="form-control" name="person_id_payment" id="person_id_payment" value="0">
+                    <input type="hidden" name="payment_month" value="<?php echo (int) $month; ?>">
+                    <input type="hidden" name="payment_year" value="<?php echo (int) $year; ?>">
 
                     <div class="text-secondary mt-3">
                         <label for="payment_type">Ödeme Adı</label>
@@ -61,23 +62,6 @@ use App\Helper\Date;
                             </div>
                         </div>
                     </div>
-
-                    <div class="text-secondary mt-3">
-
-                        <label class="mb-1">Ödeme Dönemi</label>
-                        <div class="row d-flex">
-                            <div class="col-6">
-
-                                <?php echo Date::getMonthsSelect("payment_month", $month); ?>
-                            </div>
-                            <div class="col-6">
-
-                                <?php echo Date::getYearsSelect("payment_year"); ?>
-
-                            </div>
-                        </div>
-                    </div>
-
 
                     <div class="text-secondary mt-3">
                         <label for="">Açıklama</label>

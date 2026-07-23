@@ -12,6 +12,7 @@ require_once ROOT . '/Model/Bordro.php';
 require_once ROOT . '/Model/MyFirmModel.php';
 require_once ROOT . '/Model/DefinesModel.php';
 require_once ROOT . '/Model/Puantaj.php';
+require_once ROOT . '/Model/Auths.php';
 require_once ROOT . '/App/Helper/security.php';
 require_once ROOT . '/App/Helper/helper.php';
 require_once ROOT . '/Model/SettingsModel.php';
@@ -27,6 +28,7 @@ try {
     $Defines = new DefinesModel();
     $PuantajModel = new Puantaj();
     $SettingsModel = new SettingsModel();
+    $Auths = new Auths();
 
     $overtime_rate = floatval($SettingsModel->getSettings("overtime_rate")->set_value ?? 50);
     if ($overtime_rate < 50) { $overtime_rate = 50; }
@@ -92,10 +94,13 @@ try {
     };
 
     // Personel Gelir Bilgileri
-    $incomes = $Bordro->getPersonIncome($personel_id, $ay, $yil);
+    $incomes = $Bordro->getPersonIncomeDetails($personel_id, $ay, $yil);
 
     // Personel Gider Bilgileri
-    $expenses = $Bordro->getPersonExpense($personel_id, $ay, $yil);
+    $expenses = $Bordro->getPersonExpenseDetails($personel_id, $ay, $yil);
+    $canDeletePayment = $Auths->hasPermission('delete_staff_payment');
+    $canDeleteIncomeExpense = $Auths->hasPermission('delete_income_expense');
+    $showTransactionActions = $canDeletePayment || $canDeleteIncomeExpense;
 
     // Personel Puantaj Detayları (Günlük)
     $firstDay = Date::firstDay($ay, $yil);
@@ -332,6 +337,9 @@ try {
                             <th style="width: 120px;">İşlem</th>
                             <th>Kalem</th>
                             <th class="text-end">Tutar</th>
+                            <?php if ($showTransactionActions): ?>
+                                <th class="text-end" style="width: 64px;">Sil</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -343,11 +351,40 @@ try {
                         if (!empty($incomes)) {
                             foreach ($incomes as $income) {
                                 $total_income += $income->tutar;
-                                $income_name = htmlspecialchars((string) ($income->turu ?: 'Gelir'), ENT_QUOTES, 'UTF-8');
+                                $incomeNameRaw = (string) ($income->turu ?: 'Gelir');
+                                $income_name = htmlspecialchars($incomeNameRaw, ENT_QUOTES, 'UTF-8');
+                                $incomeDescription = trim((string) ($income->aciklama ?? ''));
+                                $incomeDescriptionHtml = '';
+                                if ($incomeDescription !== '' && $incomeDescription !== $incomeNameRaw) {
+                                    $incomeDescriptionHtml = "<div class='text-muted small mt-1'>" .
+                                        htmlspecialchars($incomeDescription, ENT_QUOTES, 'UTF-8') .
+                                        "</div>";
+                                }
+                                $incomeDeleteCell = '';
+                                if ($showTransactionActions) {
+                                    $canDeleteIncome = $canDeleteIncomeExpense
+                                        && ($income->tablename ?? '') === 'maas_gelir_kesinti'
+                                        && !in_array((int) ($income->kategori ?? 0), [14, 16, 17], true)
+                                        && !empty($income->id);
+                                    $incomeDeleteCell = '<td class="text-end">';
+                                    if ($canDeleteIncome) {
+                                        $incomeDeleteCell .= "<button type='button' class='btn btn-sm btn-ghost-danger btn-icon delete-payroll-transaction'
+                                            data-id='" . htmlspecialchars(Security::encrypt($income->id), ENT_QUOTES, 'UTF-8') . "'
+                                            data-source='maas_gelir_kesinti'
+                                            data-month='" . (int) $ay . "'
+                                            data-year='" . (int) $yil . "'
+                                            data-label='{$income_name}'
+                                            title='Geliri sil' aria-label='Geliri sil'>
+                                            <i class='ti ti-trash'></i>
+                                        </button>";
+                                    }
+                                    $incomeDeleteCell .= '</td>';
+                                }
                                 echo "<tr>
                                     <td><span class='badge bg-success-lt text-success'><i class='ti ti-plus me-1'></i>Gelir</span></td>
-                                    <td class='fw-medium'>{$income_name}</td>
+                                    <td><div class='fw-medium'>{$income_name}</div>{$incomeDescriptionHtml}</td>
                                     <td class='text-end fw-bold text-success'>+₺" . Helper::formattedMoneyWithoutCurrency($income->tutar) . "</td>
+                                    {$incomeDeleteCell}
                                 </tr>";
                             }
                         }
@@ -361,20 +398,55 @@ try {
                                     $name = $expense->turu;
                                     $badge = "<span class='badge bg-purple-lt text-purple'><i class='ti ti-scale me-1'></i>İcra Kesintisi</span>";
                                 } else {
-                                    $name = $Defines->getTypeNameById($expense->kategori ?? 0) ?: $expense->turu;
+                                    $name = $expense->turu ?: $Defines->getTypeNameById($expense->kategori ?? 0);
                                     $badge = "<span class='badge bg-danger-lt text-danger'><i class='ti ti-minus me-1'></i>Kesinti</span>";
                                 }
                                 $name = htmlspecialchars((string) ($name ?: 'Kesinti'), ENT_QUOTES, 'UTF-8');
+                                $description = trim((string) ($expense->aciklama ?? ''));
+                                $descriptionHtml = '';
+                                if ($description !== '' && $description !== html_entity_decode($name, ENT_QUOTES, 'UTF-8')) {
+                                    $descriptionHtml = "<div class='text-muted small mt-1'>" .
+                                        htmlspecialchars($description, ENT_QUOTES, 'UTF-8') .
+                                        "</div>";
+                                }
+                                $expenseDeleteCell = '';
+                                if ($showTransactionActions) {
+                                    $expenseCategory = (int) ($expense->kategori ?? 0);
+                                    $expenseSource = (string) ($expense->tablename ?? '');
+                                    $isSystemDeduction = $is_icra || in_array($expenseCategory, [14, 16, 17], true);
+                                    $hasDeletePermission = $expenseCategory === 7
+                                        ? $canDeletePayment
+                                        : $canDeleteIncomeExpense;
+                                    $canDeleteExpense = $hasDeletePermission
+                                        && in_array($expenseSource, ['maas_gelir_kesinti', 'case_transactions'], true)
+                                        && !$isSystemDeduction
+                                        && !empty($expense->id);
+                                    $expenseDeleteCell = '<td class="text-end">';
+                                    if ($canDeleteExpense) {
+                                        $expenseDeleteCell .= "<button type='button' class='btn btn-sm btn-ghost-danger btn-icon delete-payroll-transaction'
+                                            data-id='" . htmlspecialchars(Security::encrypt($expense->id), ENT_QUOTES, 'UTF-8') . "'
+                                            data-source='" . htmlspecialchars($expenseSource, ENT_QUOTES, 'UTF-8') . "'
+                                            data-month='" . (int) $ay . "'
+                                            data-year='" . (int) $yil . "'
+                                            data-label='{$name}'
+                                            title='Hareketi sil' aria-label='Hareketi sil'>
+                                            <i class='ti ti-trash'></i>
+                                        </button>";
+                                    }
+                                    $expenseDeleteCell .= '</td>';
+                                }
                                 echo "<tr>
                                     <td>{$badge}</td>
-                                    <td class='fw-medium'>{$name}</td>
+                                    <td><div class='fw-medium'>{$name}</div>{$descriptionHtml}</td>
                                     <td class='text-end fw-bold text-danger'>-₺" . Helper::formattedMoneyWithoutCurrency($expense->tutar) . "</td>
+                                    {$expenseDeleteCell}
                                 </tr>";
                             }
                         }
                         
                         if (empty($incomes) && empty($expenses)) {
-                            echo "<tr><td colspan='3' class='text-center py-5 text-muted'><i class='ti ti-receipt-off d-block fs-1 mb-2'></i>Bu döneme ait hareket bulunamadı.</td></tr>";
+                            $emptyColspan = $showTransactionActions ? 4 : 3;
+                            echo "<tr><td colspan='{$emptyColspan}' class='text-center py-5 text-muted'><i class='ti ti-receipt-off d-block fs-1 mb-2'></i>Bu döneme ait hareket bulunamadı.</td></tr>";
                         }
                         ?>
                     </tbody>
@@ -383,6 +455,7 @@ try {
                             <tr>
                                 <td colspan="2" class="text-end fw-semibold">Net tutar</td>
                                 <td class="text-end fw-bold text-success">₺<?= Helper::formattedMoneyWithoutCurrency(max(0, $total_income - $total_expense)) ?></td>
+                                <?php if ($showTransactionActions): ?><td></td><?php endif; ?>
                             </tr>
                         </tfoot>
                     <?php endif; ?>

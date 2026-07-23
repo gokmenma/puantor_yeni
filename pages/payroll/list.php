@@ -338,7 +338,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium">
+                            <div class="font-weight-medium" id="payroll-total-income"
+                                data-amount="<?php echo htmlspecialchars((string) $total_gelir, ENT_QUOTES, 'UTF-8'); ?>">
                                 <?php echo Helper::formattedMoney($total_gelir); ?>
                             </div>
                             <div class="text-secondary">
@@ -359,7 +360,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium">
+                            <div class="font-weight-medium" id="payroll-total-expense"
+                                data-amount="<?php echo htmlspecialchars((string) $total_odeme, ENT_QUOTES, 'UTF-8'); ?>">
                                 <?php echo Helper::formattedMoney($total_odeme); ?>
                             </div>
                             <div class="text-secondary">
@@ -380,7 +382,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium">
+                            <div class="font-weight-medium" id="payroll-total-net"
+                                data-amount="<?php echo htmlspecialchars((string) $total_kalan, ENT_QUOTES, 'UTF-8'); ?>">
                                 <?php echo Helper::formattedMoney($total_kalan); ?>
                             </div>
                             <div class="text-secondary">

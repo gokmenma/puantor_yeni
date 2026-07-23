@@ -12,6 +12,7 @@ require_once "../../Model/Projects.php";
 require_once ROOT . "/Model/CaseTransactions.php";
 require_once ROOT . "/App/Helper/date.php";
 require_once ROOT . "/Model/KvkkAydinlatmaModel.php";
+require_once ROOT . "/Model/ActivityLogModel.php";
 require_once ROOT . "/App/Helper/ErrorMail.php";
 
 use App\Helper\Security;
@@ -313,6 +314,16 @@ if ($_POST['action'] == 'deletePayment') {
 
 
         $db->commit();
+
+        ActivityLogModel::log(
+            'payroll',
+            'transaction_delete',
+            sprintf(
+                'Personel gelir/ödeme/kesinti hareketi silindi. Personel: %d, kaynak: %s',
+                (int) $person_id,
+                (string) $type
+            )
+        );
     } catch (PDOException $e) {
         $db->rollBack();
         $status = 'error';

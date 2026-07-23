@@ -7,6 +7,7 @@ require_once '../../App/Helper/helper.php';
 require_once '../../App/Helper/security.php';
 require_once "../../Model/Auths.php";
 require_once "../../App/Helper/financial.php";
+require_once '../../Model/ActivityLogModel.php';
 
 use App\Helper\Date;
 use App\Helper\Helper;
@@ -71,6 +72,20 @@ if ($_POST['action'] == 'savePayment') {
             ];
             $lastInsertId = $payment->saveWithAttr($data);
         }
+
+        ActivityLogModel::log(
+            'payroll',
+            $id > 0 ? 'payment_update' : 'payment_add',
+            sprintf(
+                'Ödeme %s. Personel: %d, dönem: %04d-%02d, tür: %s, tutar: %s',
+                $id > 0 ? 'güncellendi' : 'eklendi',
+                $person_id,
+                $year,
+                $month,
+                (string) ($_POST['payment_type'] ?? 'Ödeme'),
+                (string) ($_POST['payment_amount'] ?? '0')
+            )
+        );
 
         //Personel düzenleme sayfasında, ödeme eklendiği zaman, sayfa yenilenmeden kayıtları göstermek için
         if ($page == 'persons/manage') {

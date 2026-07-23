@@ -427,6 +427,75 @@ class Bordro extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
+    /**
+     * Bordro detayında gelir kalemlerini kaynak kayıtlarıyla birlikte getirir.
+     * Böylece manuel hareketler tek tek görüntülenip yönetilebilir.
+     */
+    public function getPersonIncomeDetails($person_id, $ay, $yil)
+    {
+        $gelir = $this->Defines->getExpenseTypes(1);
+        $first_day = Date::firstDay($ay, $yil);
+        $last_day = Date::lastDay($ay, $yil);
+
+        $sql = $this->db->prepare("SELECT
+                                        id,
+                                        yil,
+                                        ay,
+                                        tutar,
+                                        turu,
+                                        aciklama,
+                                        saat,
+                                        kategori,
+                                        puantaj_turu,
+                                        gun,
+                                        created_at,
+                                        tablename
+                                    FROM sqlmaas_gelir_kesinti
+                                    WHERE person_id = :person_id
+                                      AND tutar > 0
+                                      AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) >= :first_day
+                                      AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) <= :last_day
+                                      AND kategori IN($gelir)
+                                    ORDER BY CAST(REPLACE(gun, '-', '') AS UNSIGNED), created_at, id");
+        $sql->execute([
+            ':person_id' => $person_id,
+            ':first_day' => $first_day,
+            ':last_day' => $last_day
+        ]);
+
+        $rows = $sql->fetchAll(PDO::FETCH_OBJ);
+        $result = [];
+        $puantajGroupIndexes = [];
+
+        foreach ($rows as $row) {
+            if ((int) ($row->kategori ?? 0) !== 14) {
+                $result[] = $row;
+                continue;
+            }
+
+            $groupKey = implode('|', [
+                (string) ($row->kategori ?? ''),
+                (string) ($row->turu ?? 'Puantaj Çalışma'),
+                (string) ($row->puantaj_turu ?? '')
+            ]);
+
+            if (!array_key_exists($groupKey, $puantajGroupIndexes)) {
+                $row->id = '';
+                $row->aciklama = '';
+                $row->tablename = 'puantaj';
+                $puantajGroupIndexes[$groupKey] = count($result);
+                $result[] = $row;
+                continue;
+            }
+
+            $groupedRow = $result[$puantajGroupIndexes[$groupKey]];
+            $groupedRow->tutar = (float) $groupedRow->tutar + (float) $row->tutar;
+            $groupedRow->saat = (float) ($groupedRow->saat ?? 0) + (float) ($row->saat ?? 0);
+        }
+
+        return $result;
+    }
+
     //Personelin Kesinti bilgieri getirilir
     public function getPersonExpense($person_id, $ay, $yil)
     {
@@ -453,6 +522,44 @@ class Bordro extends Model
             ':last_day' => $last_day
 
         ]);
+        return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Bordro detayında kesinti/ödeme kalemlerini girildikleri ad ve
+     * açıklamayla ayrı ayrı göstermek için toplulaştırılmamış kayıtları getirir.
+     */
+    public function getPersonExpenseDetails($person_id, $ay, $yil)
+    {
+        $kesinti = $this->Defines->getExpenseTypes(2);
+        $first_day = Date::firstDay($ay, $yil);
+        $last_day = Date::lastDay($ay, $yil);
+
+        $sql = $this->db->prepare("SELECT
+                                        id,
+                                        yil,
+                                        ay,
+                                        tutar,
+                                        turu,
+                                        aciklama,
+                                        saat,
+                                        kategori,
+                                        puantaj_turu,
+                                        gun,
+                                        created_at,
+                                        tablename
+                                    FROM sqlmaas_gelir_kesinti
+                                    WHERE person_id = :person_id
+                                      AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) >= :first_day
+                                      AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) <= :last_day
+                                      AND kategori IN($kesinti)
+                                    ORDER BY CAST(REPLACE(gun, '-', '') AS UNSIGNED), created_at, id");
+        $sql->execute([
+            ':person_id' => $person_id,
+            ':first_day' => $first_day,
+            ':last_day' => $last_day
+        ]);
+
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 

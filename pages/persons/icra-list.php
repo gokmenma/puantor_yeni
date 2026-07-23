@@ -257,7 +257,7 @@ $statuses = PersonIcra::getStatuses();
             </div>
         </div>
 
-        <div class="card-body p-3">
+        <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-vcenter card-table table-striped table-hover align-middle w-100" id="icraMainTable">
                     <thead class="bg-light">

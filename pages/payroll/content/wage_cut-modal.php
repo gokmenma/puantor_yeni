@@ -1,7 +1,5 @@
 <?php
-require_once "App/Helper/date.php";
 require_once "App/Helper/financial.php";
-use App\Helper\Date;
 
 $financialHelper = new Financial();
 ?>
@@ -35,6 +33,8 @@ $financialHelper = new Financial();
                     <input type="hidden" class="form-control" name="wage_cut_id" value="0">
                     <input type="hidden" class="form-control" name="person_id_wage_cut" id="person_id_wage_cut"
                         value="0">
+                    <input type="hidden" name="wage_cut_month" value="<?php echo (int) $month; ?>">
+                    <input type="hidden" name="wage_cut_year" value="<?php echo (int) $year; ?>">
 
                     <div class="text-secondary mt-3">
                         <label for="">Kesinti Adı</label>
@@ -49,21 +49,6 @@ $financialHelper = new Financial();
                         </div>
 
 
-                    </div>
-
-                    <div class="text-secondary mt-3">
-                        <label for="">Kesinti Yapılacak Dönem</label>
-                        <div class="row d-flex">
-                            <div class="col-6">
-
-                                <?php echo Date::getMonthsSelect("wage_cut_month"); ?>
-                            </div>
-                            <div class="col-6">
-
-                                <?php echo Date::getYearsSelect("wage_cut_year"); ?>
-
-                            </div>
-                        </div>
                     </div>
 
                     <div class="text-secondary mt-3">

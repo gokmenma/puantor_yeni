@@ -3,6 +3,7 @@ require_once '../../Model/Bordro.php';
 require_once '../../Database/require.php';
 require_once '../../App/Helper/date.php';
 require_once '../../App/Helper/helper.php';
+require_once '../../Model/ActivityLogModel.php';
 
 
 use App\Helper\Date;
@@ -54,6 +55,20 @@ if ($_POST['action'] == 'saveIncome') {
             ];
             $lastInsertId = $income->saveWithAttr($data);
         }
+
+        ActivityLogModel::log(
+            'payroll',
+            $id > 0 ? 'income_update' : 'income_add',
+            sprintf(
+                'Gelir %s. Personel: %d, dönem: %04d-%02d, tür: %s, tutar: %s',
+                $id > 0 ? 'güncellendi' : 'eklendi',
+                $person_id,
+                $year,
+                $month,
+                (string) ($_POST['income_type'] ?? 'Gelir'),
+                (string) ($_POST['income_amount'] ?? '0')
+            )
+        );
 
         if ($page == 'persons/manage') {
             if ($tablename === 'case_transactions') {
