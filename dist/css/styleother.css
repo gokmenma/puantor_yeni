@@ -1275,12 +1275,13 @@ body {
 
 .search-input-row .search {
   margin: 0px !important;
-  padding: 3px !important;
+  padding: 0px !important;
 }
 .search-input-row input {
   margin: 0px !important;
-  padding: 8px !important;
-  border: 1px solid #bfc1c2 !important;
+  padding: 4px 8px !important;
+  border: 1px solid #cbd5e1 !important;
+  height: 32px !important;
 }
 
 .form-control:focus,

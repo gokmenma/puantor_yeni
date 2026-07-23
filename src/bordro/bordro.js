@@ -167,10 +167,19 @@ $(function () {
   var table = $.fn.DataTable.isDataTable('#bordroTable')
     ? $('#bordroTable').DataTable()
     : (typeof window.createDataTable === 'function'
-        ? window.createDataTable('#bordroTable')
-        : $('#bordroTable').DataTable());
+        ? window.createDataTable('#bordroTable', window.bordroServerSideOptions || {})
+        : $('#bordroTable').DataTable(window.bordroServerSideOptions || {}));
 
   if (!table) return;
+
+  function syncBordroSearchVisibility() {
+    table.columns().every(function (index) {
+      $('#bordroTable .search-input-row th[data-column-index="' + index + '"]')
+        .css('display', this.visible() ? '' : 'none');
+    });
+  }
+
+  table.on('column-visibility.dt draw.dt', syncBordroSearchVisibility);
 
   // Sütun indeksleri (thead sırasına göre: 0=Sıra, 1=Personel, 2=ÜcretTürü, 3=Görevi, 4=Ekip, 5=Proje, 6=IBAN, 7=İşeBaşlama, 8=Brüt, 9=Ödenen, 10=Ödenecek, 11=İşlem)
   var columnConfig = {
@@ -189,6 +198,8 @@ $(function () {
   $.each(columnConfig, function (idx, conf) {
     var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
     table.column(idx).visible(isVisible, false);
+    $('#bordroTable .search-input-row th[data-column-index="' + idx + '"]')
+      .css('display', isVisible ? '' : 'none');
     menuHtml += `
       <label class="dropdown-item d-flex align-items-center cursor-pointer py-1 px-3 rounded-2" style="font-size:0.85rem;">
         <div class="form-check mb-0 w-100">
@@ -199,12 +210,14 @@ $(function () {
   });
 
   $('#bordroColvisMenu').html(menuHtml);
-  table.columns.adjust().draw(false);
+  table.columns.adjust();
+  syncBordroSearchVisibility();
 
   $(document).off('change.bordroCol').on('change.bordroCol', '.bordro-col-trigger', function () {
     var colIdx = parseInt($(this).data('column'));
     var isChecked = this.checked;
     table.column(colIdx).visible(isChecked);
+    syncBordroSearchVisibility();
     visibilityState[colIdx] = isChecked;
     localStorage.setItem('bordro_column_visibility', JSON.stringify(visibilityState));
   });

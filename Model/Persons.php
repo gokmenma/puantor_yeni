@@ -149,6 +149,157 @@ class Persons extends Model
         return $ordered;
     }
 
+    public function getPersonsServerSideCounts($firm_id, array $person_ids, string $status = ''): array
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return ['total' => 0, 'filtered' => 0];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $baseSql = " FROM persons WHERE firm_id = ? AND deleted_at IS NULL AND id IN ($placeholders)";
+        $params = array_merge([(int) $firm_id], $person_ids);
+
+        $totalQuery = $this->db->prepare("SELECT COUNT(*)" . $baseSql);
+        $totalQuery->execute($params);
+        $total = (int) $totalQuery->fetchColumn();
+
+        $statusSql = '';
+        if ($status === 'active') {
+            $statusSql = " AND (job_end_date IS NULL OR job_end_date = '')";
+        } elseif ($status === 'passive') {
+            $statusSql = " AND (job_end_date IS NOT NULL AND job_end_date != '')";
+        }
+
+        $filteredQuery = $this->db->prepare("SELECT COUNT(*)" . $baseSql . $statusSql);
+        $filteredQuery->execute($params);
+
+        return [
+            'total' => $total,
+            'filtered' => (int) $filteredQuery->fetchColumn(),
+        ];
+    }
+
+    public function getPersonsServerSidePage(
+        $firm_id,
+        array $person_ids,
+        int $start,
+        int $length,
+        string $status = '',
+        string $order_field = 'id',
+        string $order_direction = 'asc'
+    ): array {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $allowedOrderFields = [
+            'id', 'full_name', 'wage_type', 'job_start_date', 'job_end_date',
+            'job_group', 'job', 'ekip', 'address', 'description',
+        ];
+        if (!in_array($order_field, $allowedOrderFields, true)) {
+            $order_field = 'id';
+        }
+        $order_direction = strtolower($order_direction) === 'desc' ? 'DESC' : 'ASC';
+        $start = max(0, $start);
+        $length = max(10, min(100, $length));
+
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $sql = "SELECT * FROM persons
+                WHERE firm_id = ? AND deleted_at IS NULL AND id IN ($placeholders)";
+        $params = array_merge([(int) $firm_id], $person_ids);
+
+        if ($status === 'active') {
+            $sql .= " AND (job_end_date IS NULL OR job_end_date = '')";
+        } elseif ($status === 'passive') {
+            $sql .= " AND (job_end_date IS NOT NULL AND job_end_date != '')";
+        }
+
+        $sql .= " ORDER BY $order_field $order_direction, id ASC LIMIT $length OFFSET $start";
+        $query = $this->db->prepare($sql);
+        $query->execute($params);
+        return $this->attachCurrentWages($query->fetchAll(PDO::FETCH_OBJ));
+    }
+
+    public function getPayrollPersonsServerSideCount($firm_id, array $person_ids, string $first_day): int
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return 0;
+        }
+
+        $firstDay = strlen($first_day) === 8
+            ? substr($first_day, 0, 4) . '-' . substr($first_day, 4, 2) . '-' . substr($first_day, 6, 2)
+            : $first_day;
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $query = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM persons
+            WHERE firm_id = ?
+              AND deleted_at IS NULL
+              AND id IN ($placeholders)
+              AND (
+                  job_end_date IS NULL
+                  OR job_end_date = ''
+                  OR COALESCE(
+                      STR_TO_DATE(job_end_date, '%d.%m.%Y'),
+                      STR_TO_DATE(job_end_date, '%Y-%m-%d')
+                  ) >= ?
+              )
+        ");
+        $query->execute(array_merge([(int) $firm_id], $person_ids, [$firstDay]));
+        return (int) $query->fetchColumn();
+    }
+
+    public function getPayrollPersonsServerSidePage(
+        $firm_id,
+        array $person_ids,
+        string $first_day,
+        int $start,
+        int $length,
+        string $order_field = 'full_name',
+        string $order_direction = 'asc'
+    ): array {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $allowedOrderFields = [
+            'id', 'full_name', 'wage_type', 'job', 'ekip', 'iban_number', 'job_start_date',
+        ];
+        if (!in_array($order_field, $allowedOrderFields, true)) {
+            $order_field = 'full_name';
+        }
+        $orderDirection = strtolower($order_direction) === 'desc' ? 'DESC' : 'ASC';
+        $start = max(0, $start);
+        $length = max(10, min(100, $length));
+        $firstDay = strlen($first_day) === 8
+            ? substr($first_day, 0, 4) . '-' . substr($first_day, 4, 2) . '-' . substr($first_day, 6, 2)
+            : $first_day;
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $query = $this->db->prepare("
+            SELECT *
+            FROM persons
+            WHERE firm_id = ?
+              AND deleted_at IS NULL
+              AND id IN ($placeholders)
+              AND (
+                  job_end_date IS NULL
+                  OR job_end_date = ''
+                  OR COALESCE(
+                      STR_TO_DATE(job_end_date, '%d.%m.%Y'),
+                      STR_TO_DATE(job_end_date, '%Y-%m-%d')
+                  ) >= ?
+              )
+            ORDER BY $order_field $orderDirection, id ASC
+            LIMIT $length OFFSET $start
+        ");
+        $query->execute(array_merge([(int) $firm_id], $person_ids, [$firstDay]));
+        return $this->attachCurrentWages($query->fetchAll(PDO::FETCH_OBJ));
+    }
+
 //Personelin ad soyadını getir
     public function getPersonName($person_id)
     {

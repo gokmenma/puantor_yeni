@@ -168,6 +168,30 @@ class Projects extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function getProjectNamesByPersonIds(array $person_ids, int $firm_id): array
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $sql = $this->db->prepare("
+            SELECT pp.person_id, p.project_name
+            FROM project_person pp
+            INNER JOIN projects p ON p.id = pp.project_id
+            WHERE pp.person_id IN ($placeholders) AND p.firm_id = ?
+            ORDER BY p.project_name
+        ");
+        $sql->execute(array_merge($person_ids, [$firm_id]));
+
+        $results = [];
+        foreach ($sql->fetchAll(PDO::FETCH_OBJ) as $row) {
+            $results[(int) $row->person_id][] = $row->project_name;
+        }
+        return $results;
+    }
+
     public function getPersonIdByFromProjectCurrentMonth($project_ids, $first_day, $last_day = null, $job_group = 0, $team_id = 0, $include_white_collar = false, $person_status = 'active')
     {
         $firm_id = (int) ($_SESSION['firm_id'] ?? 0);

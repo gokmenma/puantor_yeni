@@ -9,39 +9,46 @@ require_once 'Model/Bordro.php';
 require_once 'App/Helper/company.php';
 require_once 'App/Helper/helper.php';
 require_once 'App/Helper/date.php';
+require_once 'App/Helper/security.php';
+require_once 'Model/Auths.php';
+require_once 'Model/Projects.php';
+require_once 'Model/ActivityLogModel.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Helper\Helper;
+use App\Helper\Security;
 
-if (!isset($_SESSION['firm_id'])) {
+if (
+    !isset($_SESSION['firm_id'], $_SESSION['user'])
+    || (int) ($_SESSION['user']->firm_id ?? 0) !== (int) $_SESSION['firm_id']
+) {
     die("Yetkisiz erişim.");
 }
 
 $firm_id = $_SESSION['firm_id'];
+$auths = new Auths();
+if (!$auths->Authorize('personnel_page')) {
+    http_response_code(403);
+    die("Bu işlem için yetkiniz yok.");
+}
+
+$_GET['p'] = 'persons/list';
 $personObj = new Persons();
 $bordro = new Bordro();
 $companyHelper = new CompanyHelper();
-
-require_once 'Model/Projects.php';
 $projectsObj = new Projects();
-$allProjects = $projectsObj->getProjectsByFirm($firm_id);
-$projectMap = [];
-foreach ($allProjects as $proj) {
-    $projectMap[$proj->id] = $proj->project_name;
-}
-
-$allAssignments = $projectsObj->getDb()->query("
-    SELECT pp.person_id, pp.project_id 
-    FROM project_person pp 
-    JOIN projects p ON pp.project_id = p.id 
-    WHERE p.firm_id = " . intval($firm_id)
-)->fetchAll(PDO::FETCH_OBJ);
-
-$personProjectsMap = [];
-foreach ($allAssignments as $assign) {
-    $personProjectsMap[$assign->person_id][] = $assign->project_id;
-}
+$persons = $personObj->getPersonsByFirm($firm_id);
+$personIds = array_map(static function ($person) {
+    return (int) $person->id;
+}, $persons);
+$balances = $bordro->getBalances($personIds);
+$projectNames = $projectsObj->getProjectNamesByPersonIds($personIds, (int) $firm_id);
+$companyIds = array_map(static function ($person) {
+    return (int) ($person->company_id ?? 0);
+}, $persons);
+$companyNames = $companyHelper->getCompanyNames($companyIds);
+$firmName = $companyHelper->getFirmName($firm_id);
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
@@ -73,26 +80,18 @@ $row = 2;
 $i = 1;
 foreach ($persons as $person) {
     $wage_type = $person->wage_type == 1 ? 'Beyaz Yaka' : 'Mavi Yaka';
-    $balance = $bordro->getBalance($person->id);
-    $compName = $companyHelper->getCompanyName($person->company_id);
-    $company_name = ($compName !== 'bilinmiyor' && $compName !== '') ? $compName : $companyHelper->getFirmName($person->firm_id);
-
-    $assignedProjs = [];
-    if (isset($personProjectsMap[$person->id])) {
-        foreach ($personProjectsMap[$person->id] as $projId) {
-            if (isset($projectMap[$projId])) {
-                $assignedProjs[] = $projectMap[$projId];
-            }
-        }
-    }
-    $projectsStr = !empty($assignedProjs) ? implode(', ', $assignedProjs) : '-';
+    $balance = $balances[(int) $person->id] ?? 0;
+    $company_name = $companyNames[(int) ($person->company_id ?? 0)] ?? $firmName;
+    $projectsStr = !empty($projectNames[(int) $person->id])
+        ? implode(', ', $projectNames[(int) $person->id])
+        : '-';
 
     $sheet->setCellValue('A' . $row, $i++);
     $sheet->setCellValue('B' . $row, $person->full_name);
     $sheet->setCellValue('C' . $row, $company_name);
     $sheet->setCellValue('D' . $row, $wage_type);
     $sheet->setCellValue('E' . $row, $person->job_start_date ?? '-');
-    $sheet->setCellValue('F' . $row, $person->phone);
+    $sheet->setCellValue('F' . $row, Security::safeDecrypt($person->phone ?? '') ?: '-');
     $sheet->setCellValue('G' . $row, $person->ekip ?: '-');
     $sheet->setCellValue('H' . $row, $projectsStr);
     $sheet->setCellValue('I' . $row, Helper::formattedMoney($person->daily_wages));
@@ -109,6 +108,8 @@ $sheet->getStyle('A1:K' . ($row - 1))->getBorders()->getAllBorders()->setBorderS
 foreach (range('A', 'K') as $col) {
     $sheet->getColumnDimension($col)->setAutoSize(true);
 }
+
+ActivityLogModel::log('personnel', 'export', 'Personel listesi PDF olarak dışa aktarıldı.');
 
 // Set orientation to landscape for PDF
 $spreadsheet->getActiveSheet()->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);

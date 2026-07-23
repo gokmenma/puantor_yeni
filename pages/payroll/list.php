@@ -87,7 +87,6 @@ $salaryAndWageCutMap = $isPayrollCalculation
 $icraAmountMap = $isPayrollCalculation
     ? []
     : $bordro->getIcraAmounts($personIds, $month, $year);
-$payrollRows = [];
 
 // Set the default timezone to your local timezone
 
@@ -95,24 +94,6 @@ $payrollRows = [];
 $lastDay = Date::lastDay($month, $year);
 
 $case_id = $Cases->getDefaultCaseIdByFirm();
-
-// Proje haritası (id => project_name) - sütun gösterimi için
-$allProjects = $projects->getProjectsByFirm($firm_id);
-$projectMap = [];
-foreach ($allProjects as $proj) {
-    $projectMap[$proj->id] = $proj->project_name;
-}
-
-// Kişi → proje ilişkisi haritası
-$ppQuery = $personObj->getDb()->prepare(
-    "SELECT pp.person_id, pp.project_id FROM project_person pp
-     JOIN projects pr ON pr.id = pp.project_id AND pr.firm_id = ?"
-);
-$ppQuery->execute([$firm_id]);
-$personProjectMap = [];
-foreach ($ppQuery->fetchAll(PDO::FETCH_OBJ) as $row) {
-    $personProjectMap[$row->person_id][] = $row->project_id;
-}
 
 $total_gelir = 0;
 $total_odeme = 0;
@@ -332,13 +313,6 @@ foreach ($persons as $item) {
         $p_icra = $icraAmountMap[(int) $person->id] ?? 0;
     }
 
-    $payrollRows[(int) $person->id] = [
-        'person' => $person,
-        'gelir' => $res->gelir,
-        'odeme' => $res->odeme,
-        'icra' => $p_icra,
-    ];
-
     $total_gelir += ($res->gelir ?? 0);
     $total_odeme += (($res->odeme ?? 0) - $p_icra);
     $total_icra = ($total_icra ?? 0) + $p_icra;
@@ -347,17 +321,10 @@ foreach ($persons as $item) {
 $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 ?>
 
-<div class="page-header d-print-none mb-3">
-    <div class="container-xl">
-        <div class="row g-2 align-items-center">
-            <div class="col">
-                <h2 class="page-title">Bordro</h2>
-            </div>
-        </div>
+<div class="container-xl mt-2 mb-2">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <h2 class="page-title m-0">Bordro</h2>
     </div>
-</div>
-
-<div class="container-xl mt-3">
     <form action="" method="post" id="bordroInfoForm">
         <div class="row">
             <div class="col-3">
@@ -405,7 +372,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                 <?php
                 if ($Auths->hasPermission('payroll_export_excel')) { ?>
                     <label for=""></label>
-                    <a href="#" class="btn btn-icon me-2" id="export_excel" data-tooltip="Excele Aktar">
+                    <a href="pages/payroll/xls/payroll-list.php?month=<?php echo urlencode((string) $month); ?>&year=<?php echo urlencode((string) $year); ?>&project_id=<?php echo urlencode((string) $project_id); ?>&team_id=<?php echo urlencode((string) $team_id); ?>"
+                        class="btn btn-icon me-2" data-tooltip="Excele Aktar">
                         <i class="ti ti-file-excel icon"></i>
                     </a>
                 <?php } ?>
@@ -463,7 +431,7 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
     </form>
 </div>
 
-<div class="container-xl mt-3">
+<div class="container-xl mt-2">
     <div class="row row-cards">
         <div class="col-md-6 col-lg-3">
             <div class="card card-sm">
@@ -560,7 +528,21 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 }
 
 </style>
-<div class="container-xl mt-3">
+<style>
+#bordroTable th:last-child,
+#bordroTable td:last-child {
+    width: 110px !important;
+    min-width: 110px !important;
+    white-space: nowrap;
+}
+
+#bordroTable td:last-child .dropdown,
+#bordroTable td:last-child .dropdown-toggle {
+    width: 100%;
+    min-width: 88px;
+}
+</style>
+<div class="container-xl mt-2">
     <div class="row row-deck row-cards">
         <div class="col-12">
             <div class="card">
@@ -568,7 +550,7 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 
 
 
-                    <table class="table card-table table-responsive table-hover text-nowrap datatable" id="bordroTable"
+                    <table class="table card-table table-responsive table-hover text-nowrap" id="bordroTable"
                     >
                         <thead>
                             <tr>
@@ -592,7 +574,7 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 
                             <?php
                             $i = 1;
-                            foreach ($persons as $item):
+                            foreach ([] as $item):
 
 
                                 $payrollRow = $payrollRows[(int) $item->id] ?? null;
@@ -774,6 +756,38 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
         </div>
     </div>
 </div>
+
+<script>
+window.bordroServerSideOptions = {
+    processing: true,
+    serverSide: true,
+    autoWidth: false,
+    ordering: true,
+    searchDelay: 400,
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    order: [[1, 'asc']],
+    ajax: {
+        url: 'api/bordro/list.php',
+        type: 'POST',
+        data: function(data) {
+            data.month = <?php echo json_encode((int) $month); ?>;
+            data.year = <?php echo json_encode((int) $year); ?>;
+            data.project_id = <?php echo json_encode((int) $project_id); ?>;
+            data.team_id = <?php echo json_encode((string) $team_id, JSON_UNESCAPED_UNICODE); ?>;
+        }
+    },
+    columnDefs: [
+        { targets: 0, className: 'text-center' },
+        { targets: [8, 9, 10, 11, 12], className: 'text-end' },
+        { targets: 12, width: '110px', orderable: false, searchable: false, className: 'text-end no-export actions-column' }
+    ],
+    language: {
+        url: 'src/tr.json',
+        processing: '<span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...'
+    }
+};
+</script>
 
 <?php include_once 'content/wage_cut-modal.php'; ?>
 <?php include_once 'content/income-modal.php'; ?>

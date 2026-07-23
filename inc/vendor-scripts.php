@@ -97,6 +97,9 @@ if ($page == 'defines/service-head/list' || $page == 'defines/service-head/manag
 // Personel Liste, ekleme ve düzenleme sayfası
 if ($page == 'persons/list' || $page == 'persons/manage') {
     echo '<script src="./src/persons/persons.js?v=' . time() . '"></script>';
+    if ($page == 'persons/list') {
+        echo '<script src="./src/bordro/bulk-wages.js?v=' . time() . '"></script>';
+    }
 }
 // Personel diğer bilgileri ekleme ve düzenleme sayfası
 if ($page == 'persons/manage') {

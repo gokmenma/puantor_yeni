@@ -1,58 +1,5 @@
 <?php
-require_once 'Model/Persons.php';
-require_once 'Model/Bordro.php';
-require_once 'App/Helper/company.php';
-require_once 'App/Helper/helper.php';
-require_once 'App/Helper/date.php';
-require_once 'Model/Projects.php';
-require_once 'App/Helper/projects.php';
-
-
-//Yetki Kontrolü yapılır
 $perm->checkAuthorize("personnel_page");
-
-use App\Helper\Helper;
-use App\Helper\Date;
-use App\Helper\Security;
-
-$person = new Persons();
-$bordro = new Bordro();
-
-$persons = $person->getPersonsByFirm($firm_id);
-$company = new CompanyHelper();
-$personIds = array_map(static function ($item) {
-    return (int) $item->id;
-}, $persons);
-$balances = $bordro->getBalances($personIds);
-$companyIds = array_map(static function ($item) {
-    return (int) ($item->company_id ?? 0);
-}, $persons);
-$companyNames = $company->getCompanyNames($companyIds);
-$firmName = $company->getFirmName($firm_id);
-
-// Firma projeleri ve personel-proje atama tablosunu çekerek eşleştirme dizisi oluşturma
-$projectMap = [];
-$personProjectsMap = [];
-try {
-    $projectsObj = new Projects();
-    $allProjects = $projectsObj->getProjectsByFirm($firm_id);
-    foreach ($allProjects as $proj) {
-        $projectMap[$proj->id] = $proj->project_name;
-    }
-    
-    $allAssignments = $projectsObj->getDb()->query("
-        SELECT pp.person_id, pp.project_id 
-        FROM project_person pp 
-        JOIN projects p ON pp.project_id = p.id 
-        WHERE p.firm_id = " . intval($firm_id)
-    )->fetchAll(PDO::FETCH_OBJ);
-    
-    foreach ($allAssignments as $assign) {
-        $personProjectsMap[$assign->person_id][] = $assign->project_id;
-    }
-} catch (Exception $e) {
-    // Hata durumunda boş kalması sağlanır
-}
 ?>
 <div class="container-xl mt-3">
     <div class="row row-deck row-cards">
@@ -119,7 +66,7 @@ try {
                                 </a>
                                 <a class="dropdown-item" data-tooltip="Günlük Ücretleri toplu olarak güncelleyin"
                                     data-tooltip-location="left" href="#" data-bs-toggle="modal"
-                                    data-bs-target="#update_wages_modal">
+                                    data-bs-target="#bulk-wages-modal">
                                     <i class="ti ti-user-dollar icon me-3"></i> Ücretleri Güncelle
                                 </a>
 
@@ -136,7 +83,7 @@ try {
 
 
                 <div class="table-responsive">
-                    <table class="table card-table table-hover text-nowrap datatable" id="persons">
+                    <table class="table card-table table-hover text-nowrap" id="persons">
                         <thead>
                             <tr>
                                 <th style="width: 2%" class="no-export" data-orderable="false"><input type="checkbox"
@@ -163,86 +110,7 @@ try {
                                 <th style="width:7%" class="no-export">İşlem</th>
                             </tr>
                         </thead>
-                        <tbody>
-
-
-                            <?php
-                            $i = 1;
-                            foreach ($persons as $person):
-                                $wage_type = $person->wage_type == 1 ? 'Beyaz Yaka' : 'Mavi Yaka';
-                                $wage_type_color = $person->wage_type == 2 ? "style='color:blue'" : '';
-                                $balance = $balances[(int) $person->id] ?? 0;
-                                $color = Helper::balanceColor($balance);
-                                $id = Security::encrypt($person->id);
-
-                                ?>
-                            <?php if ($person->firm_id == $_SESSION["firm_id"]) { ?>
-                            <tr>
-                                <td><input type="checkbox" class="form-check-input person-checkbox"
-                                        value="<?php echo $id; ?>"></td>
-                                <td class="text-center"><?php echo $i; ?></td>
-                                <td> <a href="#" data-tooltip="Detay/Güncelle"
-                                        data-page="persons/manage&id=<?php echo $id ?>"
-                                        class="nav-item route-link"><?php echo $person->full_name; ?></a></td>
-                                <td><?php echo Security::safeDecrypt($person->kimlik_no ?? '') ?: '-'; ?></td>
-                                <td><?php echo $companyNames[(int) ($person->company_id ?? 0)] ?? $firmName; ?></td>
-                                <td <?php echo $wage_type_color; ?>><?php echo $wage_type; ?></td>
-                                <td><?php echo $person->job_start_date ?? '-'; ?></td>
-                                <td><?php echo $person->job_end_date ?? '-'; ?></td>
-                                <td><?php echo Security::safeDecrypt($person->phone ?? '') ?: '-'; ?></td>
-                                <td><?php echo Security::safeDecrypt($person->email ?? '') ?: '-'; ?>
-                                </td>
-                                <td><?php echo Security::safeDecrypt($person->iban_number ?? '') ?: '-'; ?></td>
-                                <td><?php echo $person->job_group ?? '-'; ?></td>
-                                <td><?php echo $person->job ?? '-'; ?></td>
-                                <td><?php echo $person->ekip ?: '-'; ?></td>
-                                <td><?php 
-                                            $assignedProjs = [];
-                                            if (isset($personProjectsMap[$person->id])) {
-                                                foreach ($personProjectsMap[$person->id] as $projId) {
-                                                    if (isset($projectMap[$projId])) {
-                                                        $assignedProjs[] = $projectMap[$projId];
-                                                    }
-                                                }
-                                            }
-                                            echo !empty($assignedProjs) ? implode(', ', $assignedProjs) : '-';
-                                        ?></td>
-                                <td><?php echo Helper::formattedMoney($person->daily_wages ?? 0); ?></td>
-                                <td>
-                                    <?php if (empty($person->job_end_date)): ?>
-                                    <span class="badge bg-success-lt">Aktif</span>
-                                    <?php else: ?>
-                                    <span class="badge bg-danger-lt">Pasif</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="<?php echo $color ?>"><?php echo Helper::formattedMoney($balance) ?></td>
-                                <td><?php echo $person->address ?: '-'; ?></td>
-                                <td><?php echo ($person->description ?? '') ?: (($person->aciklama ?? '') ?: '-'); ?></td>
-                                <td class="text-end">
-                                    <div class="dropdown">
-                                        <button class="btn dropdown-toggle align-text-top"
-                                            data-bs-toggle="dropdown">İşlem</button>
-                                        <div class="dropdown-menu dropdown-menu-end">
-
-
-                                            <a class="dropdown-item route-link"
-                                                data-page="persons/manage&id=<?php echo $id ?>" href="#">
-                                                <i class="ti ti-edit icon me-3"></i> Detay/Güncelle
-                                            </a>
-
-                                            <a class="dropdown-item delete-person" data-id="<?php echo $id ?>" href="#">
-                                                <i class="ti ti-trash icon me-3"></i> Sil
-                                            </a>
-                                        </div>
-                                    </div>
-
-                                </td>
-                            </tr>
-                            <?php } ?>
-                            <?php
-                                $i++;
-                            endforeach; ?>
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
 
@@ -251,9 +119,104 @@ try {
     </div>
 </div>
 
+<style>
+#persons th:last-child,
+#persons td:last-child {
+    width: 110px !important;
+    min-width: 110px !important;
+    white-space: nowrap;
+}
+
+#persons td:last-child .dropdown,
+#persons td:last-child .dropdown-toggle {
+    width: 100%;
+    min-width: 88px;
+}
+
+#persons_wrapper .dt-layout-table,
+#persons_wrapper .table-responsive {
+    overflow-x: auto;
+}
+</style>
+
 <script>
 $(document).ready(function() {
-    var table = $('#persons').DataTable();
+    var currentStatus = 'active';
+    var $searchRow = $('<tr class="search-input-row"></tr>');
+    var personColumnTitles = [];
+    $('#persons thead tr:first th').each(function(index) {
+        personColumnTitles.push($(this).text().trim());
+        $searchRow.append('<th data-column-index="' + index + '"></th>');
+    });
+    $('#persons thead').append($searchRow);
+
+    var table = $('#persons').DataTable({
+        processing: true,
+        serverSide: true,
+        autoWidth: false,
+        searchDelay: 400,
+        pageLength: 25,
+        lengthMenu: [10, 25, 50, 100],
+        order: [[1, 'asc']],
+        orderCellsTop: true,
+        ajax: {
+            url: 'api/persons/list.php',
+            type: 'POST',
+            data: function(data) {
+                data.status = currentStatus;
+            }
+        },
+        columnDefs: [
+            { targets: [0, 20], orderable: false, searchable: false },
+            { targets: 0, className: 'no-export' },
+            { targets: 1, className: 'text-center' },
+            { targets: 20, width: '110px', className: 'text-end no-export actions-column' }
+        ],
+        language: {
+            url: 'src/tr.json',
+            processing: '<span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...'
+        },
+        initComplete: function() {
+            var api = this.api();
+
+            api.columns().every(function(index) {
+                var column = this;
+                var title = personColumnTitles[index] || '';
+                var $cell = $('#persons .search-input-row th[data-column-index="' + index + '"]');
+                if (index > 1 && index < 20 && index !== 16) {
+                    var $input = $('<input type="text" class="form-control form-control-sm" autocomplete="off">')
+                        .attr('placeholder', title);
+                    var timer = null;
+                    $input.on('input', function() {
+                        var value = this.value;
+                        clearTimeout(timer);
+                        timer = setTimeout(function() {
+                            if (column.search() !== value) {
+                                column.search(value).draw();
+                            }
+                        }, 400);
+                    });
+                    $cell.append($input);
+                }
+            });
+            syncPersonSearchVisibility();
+        },
+        drawCallback: function() {
+            $('.select-all-persons').prop('checked', false);
+            if (typeof toggleBulkDeleteButton === 'function') {
+                toggleBulkDeleteButton();
+            }
+        }
+    });
+
+    function syncPersonSearchVisibility() {
+        table.columns().every(function(index) {
+            $('#persons .search-input-row th[data-column-index="' + index + '"]')
+                .css('display', this.visible() ? '' : 'none');
+        });
+    }
+
+    table.on('column-visibility.dt draw.dt', syncPersonSearchVisibility);
 
     // Sütunların varsayılan durumları ve etiketleri
     var columnConfig = {
@@ -338,6 +301,8 @@ $(document).ready(function() {
 
         // DataTable üzerinde görünürlüğü ayarla (ikinci argüman false: redraw yapmaz, daha performanslı)
         table.column(idx).visible(isVisible, false);
+        $('#persons .search-input-row th[data-column-index="' + idx + '"]')
+            .css('display', isVisible ? '' : 'none');
 
         // Menü elemanını ekle
         menuHtml += `
@@ -354,7 +319,7 @@ $(document).ready(function() {
     $('#personsColvisMenu').html(menuHtml);
 
     // Tabloyu çiz ve kolon boyutlarını otomatik ayarla
-    table.columns.adjust().draw(false);
+    table.columns.adjust();
 
     // Sütun tetikleyicilerine tıklama olayı
     $(document).on('change', '.persons-col-trigger', function() {
@@ -363,6 +328,7 @@ $(document).ready(function() {
 
         // DataTable sütununu gizle/göster
         table.column(colIdx).visible(isChecked);
+        syncPersonSearchVisibility();
 
         // Durumu kaydet
         visibilityState[colIdx] = isChecked;
@@ -374,66 +340,12 @@ $(document).ready(function() {
         e.stopPropagation();
     });
 
-    // Varsayılan olarak Aktif olanları filtrele (Durumu kolonu indeksi 16 oldu)
-    table.column(16).search('^Aktif$', true, false).draw();
-
-    // Filtre butonlarına tıklandığında
     $('.status-filter').on('change', function() {
         var val = $(this).val();
-        if (val === '') {
-            table.column(16).search('').draw();
-        } else {
-            // Tam eşleşme için regex kullanıyoruz: ^Aktif$ veya ^Pasif$
-            table.column(16).search('^' + val + '$', true, false).draw();
-        }
+        currentStatus = val === 'Aktif' ? 'active' : (val === 'Pasif' ? 'passive' : '');
+        table.ajax.reload(null, true);
     });
 });
 </script>
 
-<!-- Ücret Güncelleme Modalı -->
-<div class="modal modal-blur fade" id="update_wages_modal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Günlük Ücretleri Güncelle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="bulkWageForm">
-                    <div class="table-responsive">
-                        <table class="table table-vcenter">
-                            <thead>
-                                <tr>
-                                    <th>Adı Soyadı</th>
-                                    <th>Görevi</th>
-                                    <th>Mevcut Ücret</th>
-                                    <th style="width: 150px;">Yeni Ücret</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($persons as $p): ?>
-                                <tr>
-                                    <td><?php echo $p->full_name; ?></td>
-                                    <td class="text-secondary"><?php echo $p->job ?? '-'; ?></td>
-                                    <td><?php echo Helper::formattedMoney($p->daily_wages); ?></td>
-                                    <td>
-                                        <input type="text" name="wages[<?php echo $p->id; ?>]"
-                                            class="form-control money" placeholder="Yeni Ücret"
-                                            value="<?php echo Helper::moneyToNumber($p->daily_wages); ?>">
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">İptal</button>
-                <button type="button" id="btnSaveBulkWages" class="btn btn-primary">
-                    <i class="ti ti-device-floppy icon me-2"></i> Kaydet
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<?php include ROOT . '/pages/payroll/content/bulk-wages-modal.php'; ?>

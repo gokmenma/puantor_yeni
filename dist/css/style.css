@@ -378,15 +378,23 @@
   box-shadow: 0 0 5px rgba(71, 216, 241, 0.527) !important;
 }
 
-.search-input-row .form-control {
-  height: 34px !important;
+.search-input-row th {
+  padding: 4px 6px !important;
+  vertical-align: middle !important;
+}
+
+.search-input-row .form-control,
+.search-input-row input {
+  height: 32px !important;
   border-radius: 4px !important;
-  margin: 2px 0 !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  box-sizing: border-box !important;
 }
 
 .search-input-row .search {
-  margin: 0 1px !important;
-  padding: 2px 3px !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .form-control:hover {
@@ -1155,6 +1163,118 @@ table tr td {
 /* textarea {
 min-height: 100px !important;} */
 
+/* Light Mode Overrides for Table Headers, Search Rows and Cell Borders */
+:root:not([data-bs-theme="dark"]) .table,
+:root:not([data-bs-theme="dark"]) table.dataTable,
+[data-bs-theme="light"] .table,
+[data-bs-theme="light"] table.dataTable {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 1px solid #dadcde !important;
+}
+
+:root:not([data-bs-theme="dark"]) .table thead th,
+:root:not([data-bs-theme="dark"]) table.dataTable thead th,
+:root:not([data-bs-theme="dark"]) .table thead td,
+:root:not([data-bs-theme="dark"]) table.dataTable thead td,
+[data-bs-theme="light"] .table thead th,
+[data-bs-theme="light"] table.dataTable thead th,
+[data-bs-theme="light"] .table thead td,
+[data-bs-theme="light"] table.dataTable thead td {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: 1px solid #dadcde !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+:root:not([data-bs-theme="dark"]) .table thead th:last-child,
+:root:not([data-bs-theme="dark"]) table.dataTable thead th:last-child,
+[data-bs-theme="light"] .table thead th:last-child,
+[data-bs-theme="light"] table.dataTable thead th:last-child {
+  border-right: none !important;
+}
+
+:root:not([data-bs-theme="dark"]) .search-input-row th,
+[data-bs-theme="light"] .search-input-row th {
+  background-color: #f8fafc !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: 1px solid #dadcde !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+  padding: 4px 6px !important;
+}
+
+:root:not([data-bs-theme="dark"]) .search-input-row th:last-child,
+[data-bs-theme="light"] .search-input-row th:last-child {
+  border-right: none !important;
+}
+
+:root:not([data-bs-theme="dark"]) .search-input-row .form-control,
+:root:not([data-bs-theme="dark"]) .search-input-row input,
+[data-bs-theme="light"] .search-input-row .form-control,
+[data-bs-theme="light"] .search-input-row input {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 4px !important;
+  font-size: 0.8125rem !important;
+  height: 32px !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  box-shadow: none !important;
+}
+
+:root:not([data-bs-theme="dark"]) .search-input-row .form-control::placeholder,
+:root:not([data-bs-theme="dark"]) .search-input-row input::placeholder,
+[data-bs-theme="light"] .search-input-row .form-control::placeholder,
+[data-bs-theme="light"] .search-input-row input::placeholder {
+  color: #94a3b8 !important;
+}
+
+:root:not([data-bs-theme="dark"]) .search-input-row .form-control:focus,
+:root:not([data-bs-theme="dark"]) .search-input-row input:focus,
+[data-bs-theme="light"] .search-input-row .form-control:focus,
+[data-bs-theme="light"] .search-input-row input:focus {
+  background-color: #ffffff !important;
+  border-color: #206bc4 !important;
+  box-shadow: 0 0 0 2px rgba(32, 107, 196, 0.25) !important;
+  outline: none !important;
+}
+
+:root:not([data-bs-theme="dark"]) .table tbody td,
+:root:not([data-bs-theme="dark"]) table.dataTable tbody td,
+[data-bs-theme="light"] .table tbody td,
+[data-bs-theme="light"] table.dataTable tbody td {
+  border-top: 1px solid #dadcde !important;
+  border-left: none !important;
+  border-right: 1px solid #e2e8f0 !important;
+  border-bottom: none !important;
+}
+
+:root:not([data-bs-theme="dark"]) .table tbody td:last-child,
+:root:not([data-bs-theme="dark"]) table.dataTable tbody td:last-child,
+[data-bs-theme="light"] .table tbody td:last-child,
+[data-bs-theme="light"] table.dataTable tbody td:last-child {
+  border-right: none !important;
+}
+
+:root:not([data-bs-theme="dark"]) .table.table-striped tbody tr:nth-of-type(odd),
+:root:not([data-bs-theme="dark"]) table.dataTable.stripe tbody tr:nth-of-type(odd),
+[data-bs-theme="light"] .table.table-striped tbody tr:nth-of-type(odd),
+[data-bs-theme="light"] table.dataTable.stripe tbody tr:nth-of-type(odd) {
+  background-color: #f8fafc !important;
+}
+
+:root:not([data-bs-theme="dark"]) .table.table-hover tbody tr:hover,
+:root:not([data-bs-theme="dark"]) table.dataTable.hover tbody tr:hover,
+[data-bs-theme="light"] .table.table-hover tbody tr:hover,
+[data-bs-theme="light"] table.dataTable.hover tbody tr:hover {
+  background-color: #f1f5f9 !important;
+}
+
 /* Dark Mode Overrides for Table Headers, Search Rows and Borders */
 [data-bs-theme="dark"] .table thead th,
 [data-bs-theme="dark"] table.dataTable thead th,
@@ -1508,6 +1628,160 @@ min-height: 100px !important;} */
     30%, 50%, 70%, 90% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg); }
     40%, 60%, 80% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg); }
     100% { transform: scale3d(1, 1, 1); }
+}
+
+/* ==========================================================================
+   DataTables Full Viewport Layout, Sticky Header & Single Scrollbar
+   ========================================================================== */
+
+/* Prevent double/multiple scrollbars on parent wrappers when DataTables is present */
+html:has(table.dataTable),
+body:has(table.dataTable) {
+    overflow: hidden !important;
+}
+
+body:has(table.dataTable) .page-wrapper,
+body:has(table.dataTable) .page-body {
+    overflow: hidden !important;
+}
+
+/* Page & Card Layout Flex Stretch */
+.page-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+}
+
+.card:has(table.dataTable),
+.card-body:has(table.dataTable) {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+}
+
+/* 1. DataTables Main Container */
+div.dt-container {
+    font-family: inherit;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+}
+
+/* Disable overflow on nested .table-responsive to prevent duplicate scrollbars */
+div.dt-container .table-responsive,
+.table-responsive:has(table.dataTable) {
+    overflow: visible !important;
+}
+
+/* 2. THE ONLY SCROLLBAR CONTAINER - Stretch to Fit Height */
+div.dt-container .dt-layout-table,
+div.dt-container .dt-scroll-body {
+    position: relative !important;
+    flex: 1 1 auto !important;
+    max-height: calc(100vh - 350px) !important;
+    min-height: 220px !important;
+    overflow: auto !important;
+}
+
+/* For simpler pages without summary cards, allow taller max-height */
+body:not(:has(.row-deck)) div.dt-container .dt-layout-table,
+body:not(:has(.row-deck)) div.dt-container .dt-scroll-body {
+    max-height: calc(100vh - 240px) !important;
+}
+
+/* 3. Table Column Non-wrapping & Alignment Fix */
+table.dataTable {
+    width: 100% !important;
+    margin: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+table.dataTable th,
+table.dataTable td {
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+}
+
+/* Actions Column Alignment & Min-width */
+.actions-column,
+table.dataTable th.actions-column,
+table.dataTable td.actions-column,
+table.dataTable th:last-child,
+table.dataTable td:last-child {
+    white-space: nowrap !important;
+    min-width: 100px !important;
+    text-align: right !important;
+}
+
+/* Search input elements inside search-input-row */
+.search-input-row th {
+    padding: 3px 4px !important;
+    vertical-align: middle !important;
+}
+
+.search-input-row .form-control,
+.search-input-row input {
+    width: 100% !important;
+    min-width: 60px !important;
+    height: 30px !important;
+    font-size: 0.8125rem !important;
+    padding: 3px 6px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* 4. Sticky Header Configuration */
+table.dataTable thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+}
+
+table.dataTable thead tr:first-child th,
+table.dataTable thead tr:first-child td {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 22 !important;
+    background-color: #f8fafc !important;
+}
+
+table.dataTable thead tr.search-input-row th,
+table.dataTable thead tr.search-input-row td {
+    position: sticky !important;
+    top: 37px !important;
+    z-index: 21 !important;
+    background-color: #f8fafc !important;
+}
+
+/* Dark Mode Sticky Headers Background */
+[data-bs-theme="dark"] table.dataTable thead tr:first-child th,
+[data-bs-theme="dark"] table.dataTable thead tr:first-child td,
+[data-bs-theme="dark"] table.dataTable thead tr.search-input-row th,
+[data-bs-theme="dark"] table.dataTable thead tr.search-input-row td {
+    background-color: #1b2431 !important;
+}
+
+/* 5. Fixed Table Footer (Pagination & Info Bar) at Page Bottom */
+div.dt-container .dt-layout-row:not(.dt-layout-table):last-child {
+    flex: 0 0 auto !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 25 !important;
+    background-color: #ffffff !important;
+    border-top: 1px solid #dadcde !important;
+    padding: 10px 16px !important;
+    margin-top: auto !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-bs-theme="dark"] div.dt-container .dt-layout-row:not(.dt-layout-table):last-child {
+    background-color: #1b2431 !important;
+    border-top-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* ==========================================================================

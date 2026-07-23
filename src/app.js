@@ -1365,6 +1365,7 @@ window.createDataTable = function (selector, userOptions) {
     var config = $.extend({
         ordering:      false,
         orderCellsTop: true,
+        autoWidth:     false,
         pagingType:    'simple_numbers',
         language:      { url: 'src/tr.json' },
         layout: {
