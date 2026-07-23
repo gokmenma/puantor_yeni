@@ -84,6 +84,76 @@ class Bordro extends Model
         return $query->fetch(PDO::FETCH_OBJ);
     }
 
+    public function getPersonsSalaryAndWageCut(array $person_ids, $start_date, $end_date)
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $gelir = $this->Defines->getExpenseTypes(1);
+        $kesinti = $this->Defines->getExpenseTypes(2);
+        $start_date = (int) str_replace('-', '', (string) $start_date);
+        $end_date = (int) str_replace('-', '', (string) $end_date);
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+
+        $query = $this->db->prepare("
+            SELECT
+                person_id,
+                SUM(CASE WHEN kategori IN ($gelir) THEN tutar END) AS gelir,
+                COALESCE(SUM(CASE WHEN kategori IN ($kesinti) THEN tutar END), 0) AS odeme
+            FROM $this->sql_table
+            WHERE person_id IN ($placeholders)
+              AND CAST(REPLACE(gun, '-', '') AS UNSIGNED) BETWEEN ? AND ?
+            GROUP BY person_id
+        ");
+        $query->execute(array_merge($person_ids, [$start_date, $end_date]));
+
+        $results = [];
+        foreach ($person_ids as $person_id) {
+            $results[$person_id] = (object) ['gelir' => null, 'odeme' => 0];
+        }
+        foreach ($query->fetchAll(PDO::FETCH_OBJ) as $row) {
+            $results[(int) $row->person_id] = (object) [
+                'gelir' => $row->gelir,
+                'odeme' => $row->odeme,
+            ];
+        }
+        return $results;
+    }
+
+    public function getIcraAmounts(array $person_ids, $month, $year)
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $query = $this->db->prepare("
+            SELECT person_id, tutar
+            FROM maas_gelir_kesinti
+            WHERE person_id IN ($placeholders)
+              AND ay = ?
+              AND yil = ?
+              AND kategori = 15
+              AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')
+            ORDER BY person_id, id
+        ");
+        $query->execute(array_merge($person_ids, [(int) $month, (int) $year]));
+
+        $results = array_fill_keys($person_ids, 0.0);
+        $seen = [];
+        foreach ($query->fetchAll(PDO::FETCH_OBJ) as $row) {
+            $person_id = (int) $row->person_id;
+            if (!isset($seen[$person_id])) {
+                $results[$person_id] = (float) $row->tutar;
+                $seen[$person_id] = true;
+            }
+        }
+        return $results;
+    }
+
 
     //Devreden Bakiye Hesaplama
     public function getCarryOverBalance($person_id, $start_date = null)
@@ -195,6 +265,36 @@ class Bordro extends Model
     {
         $result = $this->sumAllIncomeExpense($person_id);
         return $result->total_income - $result->total_expense;
+    }
+
+    public function getBalances(array $person_ids)
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $gelir = $this->Defines->getExpenseTypes(1);
+        $kesinti = $this->Defines->getExpenseTypes(2);
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+
+        $sql = $this->db->prepare("
+            SELECT
+                person_id,
+                COALESCE(SUM(CASE WHEN kategori IN ($gelir) THEN tutar END), 0)
+                - COALESCE(SUM(CASE WHEN kategori IN ($kesinti) THEN tutar END), 0) AS balance
+            FROM $this->sql_table
+            WHERE person_id IN ($placeholders)
+            GROUP BY person_id
+        ");
+        $sql->execute($person_ids);
+
+        $balances = array_fill_keys($person_ids, 0.0);
+        foreach ($sql->fetchAll(PDO::FETCH_OBJ) as $row) {
+            $balances[(int) $row->person_id] = (float) $row->balance;
+        }
+
+        return $balances;
     }
 
     //Personelin maaşı eklenmiş mi kontrol eder

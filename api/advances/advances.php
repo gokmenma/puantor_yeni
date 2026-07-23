@@ -16,6 +16,9 @@ try {
     require_once ROOT . "/App/Helper/security.php";
     require_once ROOT . "/Model/Cases.php";
 
+    require_once ROOT . "/Model/ActivityLogModel.php";
+    require_once ROOT . "/Model/AdvanceRequest.php";
+
     $Auths = new Auths();
 
     // Oturum kontrolü
@@ -28,21 +31,33 @@ try {
     // Hem 'action' hem 'func' parametresini destekle (WAF bypass için 'action' önerilir)
     $action = $_REQUEST['action'] ?? $_REQUEST['func'] ?? '';
     $firm_id = $_SESSION['firm_id'] ?? 0;
+    $user_id = $_SESSION['user']->id ?? null;
 
     if ($action == 'list') {
-        $query = $db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as created_at 
-                               FROM personel_avans_talepleri a 
-                               JOIN persons p ON a.person_id = p.id 
-                               WHERE a.firm_id = ?
-                               ORDER BY a.id DESC");
-        $query->execute([$firm_id]);
-        $list = $query->fetchAll(PDO::FETCH_OBJ);
+        $advanceModel = new AdvanceRequest();
+        $list = $advanceModel->getRequestsByFirm($firm_id);
         $json = json_encode(['status' => 'success', 'list' => $list], JSON_UNESCAPED_UNICODE);
         if ($json === false) {
             throw new Exception("JSON Encode Hatasi: " . json_last_error_msg());
         }
         if (ob_get_length()) ob_clean();
         echo $json;
+        exit;
+
+    } elseif ($action == 'get_detail' || $action == 'detail') {
+        $id = $_REQUEST['id'] ?? 0;
+        if (!is_numeric($id)) {
+            $id = Security::decrypt($id);
+        }
+        $advanceModel = new AdvanceRequest();
+        $detail = $advanceModel->getRequestById($id, $firm_id);
+
+        if (!$detail) {
+            throw new Exception("Talep bulunamadı.");
+        }
+
+        if (ob_get_length()) ob_clean();
+        echo json_encode(['status' => 'success', 'detail' => $detail], JSON_UNESCAPED_UNICODE);
         exit;
 
     } elseif ($action == 'update_status') {
@@ -72,9 +87,13 @@ try {
         $db->prepare("DELETE FROM case_transactions WHERE person_id = ? AND description LIKE ?")
            ->execute([$request->person_id, "%" . $identifier . "%"]);
 
-        // Durumu güncelle
-        $db->prepare("UPDATE personel_avans_talepleri SET durum = ? WHERE id = ? AND firm_id = ?")
-           ->execute([$status, $id, $firm_id]);
+        // Durumu ve işlemi yapan kullanıcıyı güncelle
+        $db->prepare("UPDATE personel_avans_talepleri SET durum = ?, processed_by = ?, updated_at = NOW() WHERE id = ? AND firm_id = ?")
+           ->execute([$status, $user_id, $id, $firm_id]);
+
+        // Aktivite logu
+        $status_label = ($status == 1) ? 'onaylandı' : 'reddedildi';
+        ActivityLogModel::log('avans_talebi', 'update_status', "Avans talebi #$id $status_label.");
 
         // Eğer onaylandıysa kasa/maaş kaydı oluştur
         if ($status == 1) {
@@ -140,8 +159,8 @@ try {
 
         $db->beginTransaction();
 
-        $db->prepare("INSERT INTO personel_avans_talepleri (firm_id, person_id, tutar, hedef_ay, hedef_yil, aciklama, durum) VALUES (?, ?, ?, ?, ?, ?, 1)")
-           ->execute([$firm_id, $person_id, $tutar, $hedef_ay, $hedef_yil, $aciklama]);
+        $db->prepare("INSERT INTO personel_avans_talepleri (firm_id, person_id, tutar, hedef_ay, hedef_yil, aciklama, durum, processed_by) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
+           ->execute([$firm_id, $person_id, $tutar, $hedef_ay, $hedef_yil, $aciklama, $user_id]);
 
         $new_id = $db->lastInsertId();
         $identifier = "Talep ID: #" . $new_id;
@@ -153,6 +172,8 @@ try {
         $db->prepare("INSERT INTO maas_gelir_kesinti (user_id, person_id, case_id, gun, ay, yil, tutar, kategori, turu, aciklama) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
            ->execute([$firm_id, $person_id, $default_case_id, $target_gun_db, $hedef_ay, $hedef_yil, $tutar, 7, 'Avans', $identifier . " | Yönetici Tarafından Eklendi: " . $aciklama]);
 
+        ActivityLogModel::log('avans_talebi', 'add', "Yönetici tarafından avans talebi eklendi (#$new_id, Tutar: $tutar TL).");
+
         $db->commit();
         if (ob_get_length()) ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'Avans başarıyla eklendi.'], JSON_UNESCAPED_UNICODE);
@@ -160,7 +181,6 @@ try {
 
     } elseif ($action == 'delete') {
         $id = $_POST['id'] ?? '';
-        // Eğer şifrelenmiş gelirse çöz (Bazı yerlerde decrypt kullanılıyor olabilir)
         if (!is_numeric($id)) {
             $id = Security::decrypt($id);
         }
@@ -183,6 +203,8 @@ try {
 
         $db->prepare("DELETE FROM personel_avans_talepleri WHERE id = ? AND firm_id = ?")->execute([$id, $firm_id]);
         
+        ActivityLogModel::log('avans_talebi', 'delete', "Avans talebi silindi (#$id).");
+
         $db->commit();
         if (ob_get_length()) ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'Talep ve bağlı kayıtlar silindi.'], JSON_UNESCAPED_UNICODE);

@@ -143,7 +143,7 @@ if (!empty($person->id)) {
 
             <div class="row mt-2">
                 <div class="col-md-2">
-                    <label for="">PWA Giriş Şifresi</label>
+                    <label for="">Mobil Giriş Şifresi</label>
                 </div>
                 <div class="col-md-4">
                     <input type="password" class="form-control" name="password" placeholder="Yeni şifre girin (Boş bırakılırsa değişmez)">

@@ -123,6 +123,32 @@ class Persons extends Model
         return $this->filterPersons($results);
     }
 
+    public function getPersonsByIds(array $person_ids)
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+        $query = $this->db->prepare("SELECT * FROM persons WHERE id IN ($placeholders) AND deleted_at IS NULL");
+        $query->execute($person_ids);
+        $results = $this->attachCurrentWages($query->fetchAll(PDO::FETCH_OBJ));
+
+        $personMap = [];
+        foreach ($this->filterPersons($results) as $person) {
+            $personMap[(int) $person->id] = $person;
+        }
+
+        $ordered = [];
+        foreach ($person_ids as $person_id) {
+            if (isset($personMap[$person_id])) {
+                $ordered[] = $personMap[$person_id];
+            }
+        }
+        return $ordered;
+    }
+
 //Personelin ad soyadını getir
     public function getPersonName($person_id)
     {

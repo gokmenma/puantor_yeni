@@ -213,6 +213,6 @@ $balance = $incomes - $expense;// Bakiye
         </div>
     </div>
 </div>
-<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/pages/payroll/content/wage_cut-modal.php' ?>
-<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/pages/payroll/content/income-modal.php' ?>
-<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/pages/payroll/content/payment-modal.php' ?>
+<?php include_once ROOT . '/pages/payroll/content/wage_cut-modal.php' ?>
+<?php include_once ROOT . '/pages/payroll/content/income-modal.php' ?>
+<?php include_once ROOT . '/pages/payroll/content/payment-modal.php' ?>

@@ -83,7 +83,7 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                 </div>
                 <div class="d-none d-md-flex">
 
-                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 hide-theme-dark"
+                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 hide-theme-dark js-theme-toggle"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable dark mode"
                         data-bs-original-title="Enable dark mode">
                         <!-- Download SVG icon from http://tabler-icons.io/i/moon -->
@@ -95,7 +95,7 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                             </path>
                         </svg>
                     </a>
-                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 hide-theme-light"
+                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 hide-theme-light js-theme-toggle"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable light mode"
                         data-bs-original-title="Enable light mode">
                         <!-- Download SVG icon from http://tabler-icons.io/i/sun -->
@@ -196,12 +196,30 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                     </div>
                 </div>
                 <div class="nav-item dropdown">
+                    <?php
+                    $_topbar_avatar = $_SESSION["user"]->avatar ?? null;
+                    $_topbar_avatar_exists = !empty($_topbar_avatar) && file_exists(ROOT . '/uploads/avatars/' . $_topbar_avatar);
+                    $_topbar_avatar_url = $_topbar_avatar_exists ? 'uploads/avatars/' . htmlspecialchars($_topbar_avatar) : '';
+
+                    $_topbar_user_name = $_SESSION["user"]->full_name ?? '';
+                    $topbar_words = explode(" ", trim($_topbar_user_name));
+                    $topbar_initials = "";
+                    foreach ($topbar_words as $w) {
+                        $topbar_initials .= mb_substr($w, 0, 1, 'UTF-8');
+                    }
+                    $topbar_initials = mb_strtoupper(mb_substr($topbar_initials, 0, 2, 'UTF-8'));
+                    if (empty($topbar_initials)) { $topbar_initials = "U"; }
+                    ?>
                     <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown"
                         aria-label="Open user menu">
-                        <span class="avatar avatar-sm" style="background-image: url()"></span>
+                        <?php if ($_topbar_avatar_exists): ?>
+                            <span class="avatar avatar-sm rounded-circle" style="background-image: url('<?php echo $_topbar_avatar_url; ?>'); background-size: cover; background-position: center;"></span>
+                        <?php else: ?>
+                            <span class="avatar avatar-sm rounded-circle bg-primary text-white fw-bold d-inline-flex align-items-center justify-content-center" style="font-size: 11px;"><?php echo htmlspecialchars($topbar_initials); ?></span>
+                        <?php endif; ?>
                         <div class="d-none d-xl-block ps-2">
-                            <div><?php echo $_SESSION["user"]->full_name; ?></div>
-                            <div class="mt-1 small text-secondary"><?php echo $_SESSION["user"]->job; ?></div>
+                            <div><?php echo htmlspecialchars($_SESSION["user"]->full_name ?? ''); ?></div>
+                            <div class="mt-1 small text-secondary"><?php echo htmlspecialchars($_SESSION["user"]->job ?? ''); ?></div>
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">

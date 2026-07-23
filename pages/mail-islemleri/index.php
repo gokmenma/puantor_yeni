@@ -521,9 +521,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'id', searchable: false, orderable: false, className: 'text-end', render: function (id) { return `<button type="button" class="btn btn-sm btn-outline-primary mail-detail-button" data-id="${Number(id)}"><i class="ti ti-eye me-1"></i>Detay</button>`; } }
         ],
         language: {
-            processing: 'Yükleniyor...', search: 'Ara:', lengthMenu: '_MENU_ kayıt göster', info: '_TOTAL_ kayıttan _START_ - _END_',
-            infoEmpty: 'Kayıt yok', zeroRecords: 'Eşleşen gönderim bulunamadı', emptyTable: 'Henüz mail gönderilmedi',
-            paginate: { first: 'İlk', last: 'Son', next: 'Sonraki', previous: 'Önceki' }
+            url: 'src/tr.json'
         }
     });
 

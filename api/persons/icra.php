@@ -21,8 +21,8 @@ $Auths = new Auths();
 $Persons = new Persons();
 $PersonIcra = new PersonIcra();
 
-// Yetki kontrolü (person_page_icra_info yetkisi var mı kontrol edilir)
-if (!$Auths->Authorize('person_page_icra_info')) {
+// Yetki kontrolü (person_page_icra_info veya icra_files_list yetkisi var mı kontrol edilir)
+if (!$Auths->Authorize('person_page_icra_info') && !$Auths->Authorize('icra_files_list')) {
     ob_clean();
     header('Content-Type: application/json');
     echo json_encode(['status' => 'error', 'message' => 'Yetkisiz erişim.']);
@@ -192,6 +192,77 @@ if ($action == 'list') {
         ],
         'icra_kesintisi_aktif' => (int)($person->icra_kesintisi_aktif ?? 0),
         'defines' => $defines
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// 2.b Tüm Personellerin İcra Dosyaları (Firma Düzeyinde Listeleme)
+if ($action == 'firm_list') {
+    if (!$Auths->Authorize('icra_files_list') && !$Auths->Authorize('person_page_icra_info')) {
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Yetkisiz erişim']);
+        exit;
+    }
+
+    $firm_id = $_SESSION['firm_id'] ?? 0;
+    $status_filter = $_POST['status_filter'] ?? $_GET['status_filter'] ?? ['Kesilen'];
+
+    $files = $PersonIcra->getFirmIcraFiles($firm_id, $status_filter);
+    $stats = $PersonIcra->getFirmIcraStats($firm_id);
+
+    $formatted_files = [];
+    foreach ($files as $f) {
+        $toplam_borc = (float)$f->toplam_borc;
+        $yapilan_kesinti = (float)$f->yapilan_kesinti;
+        $kalan_borc = (float)$f->kalan_borc;
+
+        $formatted_files[] = [
+            'id' => Security::encrypt($f->id),
+            'person_id' => Security::encrypt($f->person_id),
+            'person_name' => htmlspecialchars($f->full_name ?? '', ENT_QUOTES, 'UTF-8'),
+            'person_tc' => htmlspecialchars(Security::safeDecrypt($f->kimlik_no ?? ''), ENT_QUOTES, 'UTF-8'),
+            'person_sicil' => htmlspecialchars($f->sigorta_no ?? '', ENT_QUOTES, 'UTF-8'),
+            'person_departman' => htmlspecialchars($f->job ?? '', ENT_QUOTES, 'UTF-8'),
+            'icra_sirasi' => (int)$f->icra_sirasi,
+            'icra_dairesi' => htmlspecialchars($f->icra_dairesi, ENT_QUOTES, 'UTF-8'),
+            'dosya_no' => htmlspecialchars($f->dosya_no, ENT_QUOTES, 'UTF-8'),
+            'alacakli' => htmlspecialchars($f->alacakli, ENT_QUOTES, 'UTF-8'),
+            'toplam_borc' => Helper::formattedMoney($toplam_borc),
+            'toplam_borc_raw' => $toplam_borc,
+            'kesinti_yontemi' => $f->kesinti_yontemi,
+            'kesinti_orani' => htmlspecialchars($f->kesinti_orani ?? '', ENT_QUOTES, 'UTF-8'),
+            'kesinti_tutari' => $f->kesinti_tutari ? Helper::formattedMoney($f->kesinti_tutari) : null,
+            'kesinti_tutari_raw' => $f->kesinti_tutari ? (float)$f->kesinti_tutari : null,
+            'yapilan_kesinti' => Helper::formattedMoney($yapilan_kesinti),
+            'yapilan_kesinti_raw' => $yapilan_kesinti,
+            'kalan_borc' => Helper::formattedMoney($kalan_borc),
+            'kalan_borc_raw' => $kalan_borc,
+            'durum' => htmlspecialchars($f->durum, ENT_QUOTES, 'UTF-8'),
+            'baslama_tarihi' => $f->baslama_tarihi,
+            'baslama_tarihi_formatted' => !empty($f->baslama_tarihi) ? Date::dmY($f->baslama_tarihi) : '',
+            'bitis_tarihi' => $f->bitis_tarihi,
+            'bitis_tarihi_formatted' => !empty($f->bitis_tarihi) ? Date::dmY($f->bitis_tarihi) : '',
+            'aciklama' => htmlspecialchars($f->aciklama ?? '', ENT_QUOTES, 'UTF-8'),
+            'gelen_evrak' => htmlspecialchars($f->gelen_evrak ?? '', ENT_QUOTES, 'UTF-8'),
+            'giden_evrak' => htmlspecialchars($f->giden_evrak ?? '', ENT_QUOTES, 'UTF-8'),
+            'has_belge' => !empty($f->belge_yolu),
+            'icra_kesintisi_aktif' => (int)($f->icra_kesintisi_aktif ?? 0)
+        ];
+    }
+
+    ob_clean();
+    echo json_encode([
+        'status' => 'success',
+        'files' => $formatted_files,
+        'stats' => [
+            'total_files' => $stats['total_files'],
+            'active_files' => $stats['active_files'],
+            'pending_files' => $stats['pending_files'],
+            'finished_files' => $stats['finished_files'],
+            'total_debt' => Helper::formattedMoney($stats['total_debt']),
+            'total_deductions' => Helper::formattedMoney($stats['total_deductions']),
+            'remaining_debt' => Helper::formattedMoney($stats['remaining_debt'])
+        ]
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -430,6 +501,68 @@ if ($action == 'toggle_payroll_deduction') {
         ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Ayarlar güncellenirken bir hata oluştu.']);
     }
+    exit;
+}
+
+// 6. Kesintiler Geçmişi Detay Aksiyonu
+if ($action == 'deductions_history') {
+    $person_id_encrypted = $_POST['person_id'] ?? $_GET['person_id'] ?? '';
+    $person_id = !empty($person_id_encrypted) ? Security::decrypt($person_id_encrypted) : 0;
+    
+    $file_id_encrypted = $_POST['file_id'] ?? $_GET['file_id'] ?? '';
+    $file_id = !empty($file_id_encrypted) ? Security::decrypt($file_id_encrypted) : 0;
+
+    $dosya_no = null;
+
+    if ($file_id > 0) {
+        $icra_file = $PersonIcra->find($file_id);
+        if ($icra_file) {
+            $person_id = $icra_file->person_id;
+            $dosya_no = $icra_file->dosya_no;
+        }
+    }
+
+    if (!$person_id) {
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Geçersiz personel veya dosya kimliği']);
+        exit;
+    }
+
+    $person = $Persons->find($person_id);
+    if (!$person || $person->firm_id != $_SESSION['firm_id']) {
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Personel bulunamadı veya yetkiniz yok']);
+        exit;
+    }
+
+    $history = $PersonIcra->getDeductionsHistory($person_id, $dosya_no);
+
+    $formatted = [];
+    $total_sum = 0.0;
+
+    foreach ($history as $h) {
+        $tutar = (float)$h->tutar;
+        $total_sum += $tutar;
+
+        $formatted[] = [
+            'id' => $h->id,
+            'donem' => sprintf('%02d/%04d', (int)$h->ay, (int)$h->yil),
+            'tutar' => Helper::formattedMoney($tutar),
+            'tutar_raw' => $tutar,
+            'turu' => htmlspecialchars($h->turu ?? 'İcra Kesintisi', ENT_QUOTES, 'UTF-8'),
+            'aciklama' => htmlspecialchars($h->aciklama ?? '', ENT_QUOTES, 'UTF-8'),
+            'created_at' => !empty($h->created_at) ? Date::dmYHis($h->created_at) : ''
+        ];
+    }
+
+    ob_clean();
+    echo json_encode([
+        'status' => 'success',
+        'person_name' => htmlspecialchars($person->full_name, ENT_QUOTES, 'UTF-8'),
+        'dosya_no' => htmlspecialchars($dosya_no ?? 'Tüm Dosyalar', ENT_QUOTES, 'UTF-8'),
+        'total_amount' => Helper::formattedMoney($total_sum),
+        'history' => $formatted
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 

@@ -11,9 +11,13 @@ class AdvanceRequest extends Model
 
     public function getRequestsByFirm($firm_id)
     {
-        $sql = $this->db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as formatted_date 
+        $sql = $this->db->prepare("SELECT a.*, p.full_name, 
+                                          u.full_name as processed_by_name,
+                                          DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as formatted_date,
+                                          DATE_FORMAT(a.updated_at, '%d.%m.%Y %H:%i') as formatted_updated_at 
                                    FROM personel_avans_talepleri a 
                                    JOIN persons p ON a.person_id = p.id 
+                                   LEFT JOIN users u ON a.processed_by = u.id
                                    WHERE p.firm_id = ? 
                                    ORDER BY a.id DESC");
         $sql->execute([$firm_id]);
@@ -22,13 +26,31 @@ class AdvanceRequest extends Model
 
     public function getPendingRequestsByFirm($firm_id)
     {
-        $sql = $this->db->prepare("SELECT a.*, p.full_name, DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as formatted_date 
+        $sql = $this->db->prepare("SELECT a.*, p.full_name, 
+                                          u.full_name as processed_by_name,
+                                          DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as formatted_date,
+                                          DATE_FORMAT(a.updated_at, '%d.%m.%Y %H:%i') as formatted_updated_at 
                                    FROM personel_avans_talepleri a 
                                    JOIN persons p ON a.person_id = p.id 
+                                   LEFT JOIN users u ON a.processed_by = u.id
                                    WHERE p.firm_id = ? AND a.durum = 0
                                    ORDER BY a.id DESC");
         $sql->execute([$firm_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function getRequestById($id, $firm_id)
+    {
+        $sql = $this->db->prepare("SELECT a.*, p.full_name, 
+                                          u.full_name as processed_by_name,
+                                          DATE_FORMAT(a.created_at, '%d.%m.%Y %H:%i') as formatted_date,
+                                          DATE_FORMAT(a.updated_at, '%d.%m.%Y %H:%i') as formatted_updated_at 
+                                   FROM personel_avans_talepleri a 
+                                   JOIN persons p ON a.person_id = p.id 
+                                   LEFT JOIN users u ON a.processed_by = u.id
+                                   WHERE a.id = ? AND p.firm_id = ?");
+        $sql->execute([$id, $firm_id]);
+        return $sql->fetch(PDO::FETCH_OBJ);
     }
 
     public function getStats($firm_id)

@@ -3,56 +3,91 @@ $(function() {
   $("<style>")
     .prop("type", "text/css")
     .html(`
-      .dt-layout-row:last-child,
-      .dt-layout-row:has(.dt-paging) {
+      div.dt-container .dt-layout-row:last-child,
+      div.dt-container .dt-layout-row:has(.dt-paging) {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
         flex-wrap: wrap !important;
-        gap: 1.5rem !important;
+        width: 100% !important;
+        gap: 1rem !important;
         padding: 0.75rem 1.25rem !important;
         background-color: transparent !important;
         border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-sizing: border-box !important;
       }
-      .dt-layout-row:last-child .dt-layout-start,
-      .dt-layout-row:has(.dt-paging) .dt-layout-start {
+      div.dt-container .dt-layout-row:last-child .dt-layout-start,
+      div.dt-container .dt-layout-row:has(.dt-paging) .dt-layout-start {
         display: flex !important;
         align-items: center !important;
-        gap: 1.5rem !important;
+        justify-content: flex-start !important;
+        gap: 1.25rem !important;
         flex-wrap: wrap !important;
-        margin: 0 !important;
+        margin-right: auto !important;
       }
-      .dt-layout-row:last-child .dt-layout-start > *,
-      .dt-layout-row:has(.dt-paging) .dt-layout-start > * {
+      div.dt-container .dt-layout-row:last-child .dt-layout-start > *,
+      div.dt-container .dt-layout-row:has(.dt-paging) .dt-layout-start > * {
         margin: 0 !important;
         display: inline-flex !important;
         align-items: center !important;
-        gap: 0.25rem !important;
+        gap: 0.5rem !important;
       }
-      .dt-layout-row:last-child .dt-layout-end,
-      .dt-layout-row:has(.dt-paging) .dt-layout-end {
-        margin: 0 !important;
+      div.dt-container .dt-layout-row:last-child .dt-layout-end,
+      div.dt-container .dt-layout-row:has(.dt-paging) .dt-layout-end {
+        margin-left: auto !important;
         display: flex !important;
         align-items: center !important;
+        justify-content: flex-end !important;
       }
-      .dt-layout-row:last-child .dt-layout-end .dt-paging,
-      .dt-layout-row:has(.dt-paging) .dt-layout-end .dt-paging {
+      div.dt-container .dt-layout-row:last-child .dt-layout-end .dt-paging,
+      div.dt-container .dt-layout-row:has(.dt-paging) .dt-layout-end .dt-paging {
         margin: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
       }
-      .dt-length select {
-        padding: 0.15rem 1.5rem 0.15rem 0.5rem !important;
+      div.dt-container .dt-paging .dt-paging-button,
+      div.dt-container .dt-paging .dt-paging-button.current,
+      div.dt-container .dt-paging .dt-paging-button:first-child,
+      div.dt-container .dt-paging .dt-paging-button:last-child,
+      div.dt-container .dt-paging button,
+      div.dt-container .dt-paging a {
+        border-radius: 6px !important;
+        -webkit-border-radius: 6px !important;
+        border-top-left-radius: 6px !important;
+        border-top-right-radius: 6px !important;
+        border-bottom-left-radius: 6px !important;
+        border-bottom-right-radius: 6px !important;
+      }
+      div.dt-container .dt-length select {
+        padding: 0.2rem 1.75rem 0.2rem 0.6rem !important;
         font-size: 0.875rem !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         margin: 0 0.25rem !important;
         display: inline-block !important;
         width: auto !important;
       }
-      .dt-layout-row.dt-empty-row {
+      div.dt-container .dt-layout-row.dt-empty-row {
         display: none !important;
       }
     `)
     .appendTo("head");
 });
+
+if ($.fn && $.fn.dataTable) {
+  $.extend(true, $.fn.dataTable.defaults, {
+    pagingType: "simple_numbers",
+    layout: {
+      bottomStart: ["info", "pageLength"],
+      bottomEnd: "paging",
+      topStart: null,
+      topEnd: null
+    },
+    language: {
+      url: "src/tr.json"
+    }
+  });
+}
 
 if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankDataTable").length > 0) {
 
@@ -73,6 +108,7 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
     autoWidth: false,
     order: [],
     orderCellsTop: true,
+    pagingType: "simple_numbers",
     language: {
       url: "src/tr.json"
     },
@@ -204,6 +240,7 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
         { orderable: false, targets: "_all" },
         { defaultContent: "", targets: "_all" }
       ],
+      pagingType: "simple_numbers",
       layout: {
         bottomStart: ["info", "pageLength"],
         bottomEnd: "paging",
@@ -498,10 +535,11 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
       scrollX: true,
       colReorder: isColReorderAvailable ? true : false,
       stateSave: true,
+      pagingType: "simple_numbers",
       layout: {
         topStart: null,
         topEnd: null,
-        bottomStart: "info",
+        bottomStart: ["info", "pageLength"],
         bottomEnd: "paging"
       },
       buttons: [
@@ -694,10 +732,11 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
       scrollX: true,
       colReorder: isColReorderAvailable ? true : false,
       stateSave: true,
+      pagingType: "simple_numbers",
       layout: {
         topStart: null,
         topEnd: null,
-        bottomStart: "info",
+        bottomStart: ["info", "pageLength"],
         bottomEnd: "paging"
       },
       buttons: [
@@ -1326,6 +1365,7 @@ window.createDataTable = function (selector, userOptions) {
     var config = $.extend({
         ordering:      false,
         orderCellsTop: true,
+        pagingType:    'simple_numbers',
         language:      { url: 'src/tr.json' },
         layout: {
             bottomStart: ['info', 'pageLength'],
@@ -1392,3 +1432,44 @@ window.createDataTable = function (selector, userOptions) {
 
     return $table.DataTable(config);
 };
+
+// Dynamic Seamless Animated Theme Switcher (No Page Reload & GPU Accelerated 60fps)
+$(document).on('click', '.js-theme-toggle, a[aria-label="Enable dark mode"], a[aria-label="Enable light mode"]', function(e) {
+    e.preventDefault();
+
+    var currentTheme = document.body.getAttribute('data-bs-theme') || 'light';
+    var targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    var applyThemeChange = function() {
+        document.body.setAttribute('data-bs-theme', targetTheme);
+
+        // Update tooltip titles
+        if (targetTheme === 'dark') {
+            $('.hide-theme-dark').attr('aria-label', 'Enable light mode').attr('data-bs-original-title', 'Enable light mode');
+        } else {
+            $('.hide-theme-light').attr('aria-label', 'Enable dark mode').attr('data-bs-original-title', 'Enable dark mode');
+        }
+    };
+
+    if (document.startViewTransition) {
+        // Native GPU cross-fade without layout reflows
+        document.startViewTransition(function() {
+            applyThemeChange();
+        });
+    } else {
+        // High performance CSS fallback for major containers
+        document.body.classList.add('theme-transitioning');
+        applyThemeChange();
+        setTimeout(function() {
+            document.body.classList.remove('theme-transitioning');
+        }, 300);
+    }
+
+    // Persist preference to session silently via API
+    $.ajax({
+        url: 'api/set-theme.php',
+        type: 'GET',
+        data: { theme: targetTheme },
+        dataType: 'json'
+    });
+});

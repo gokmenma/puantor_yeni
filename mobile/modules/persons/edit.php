@@ -351,8 +351,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
               <label for="floatingEmail">E-posta</label>
             </div>
             <div class="form-floating mb-3">
-              <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="PWA Giriş Şifresi">
-              <label for="floatingPassword">Yeni PWA Giriş Şifresi</label>
+              <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Mobil Giriş Şifresi">
+              <label for="floatingPassword">Yeni Mobil Giriş Şifresi</label>
             </div>
             <div class="form-floating mb-3">
               <input type="text" name="iban_number" class="form-control" id="floatingIban" placeholder="TR..." value="<?php echo Security::safeDecrypt($person->iban_number ?? ''); ?>" maxlength="32">

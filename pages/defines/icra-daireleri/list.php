@@ -12,7 +12,7 @@ $IcraDaireleri = new IcraDaireleriModel();
 $icraDaireleri = $IcraDaireleri->all();
 ?>
 <div class="container-xl mt-3">
-    <div class="alert alert-info bg-white alert-dismissible d-flex">
+    <div class="alert alert-info alert-dismissible d-flex">
         <div class="d-flex">
             <div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"

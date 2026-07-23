@@ -1,6 +1,6 @@
 {
-    "info": "_START_ - _END_ / _TOTAL_ Toplam Kayıt ",
-    "infoEmpty": "Kayıt yok",
+    "info": "Gösterilen <b>_START_ - _END_</b> / <b>_TOTAL_</b> kayıt",
+    "infoEmpty": "Gösterilen 0 kayıt",
     "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
     "infoThousands": ".",
     "lengthMenu": "Sayfada _MENU_ kayıt göster",
@@ -9,10 +9,10 @@
     "search": "Ara:",
     "zeroRecords": "Eşleşen kayıt bulunamadı",
     "paginate": {
-        "first": "İlk",
-        "last": "Son",
-        "next": "Sonraki",
-        "previous": "Önceki"
+        "first": "",
+        "last": "",
+        "next": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/><path d=\"M9 6l6 6l-6 6\" /></svg>",
+        "previous": "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/><path d=\"M15 6l-6 6l6 6\" /></svg>"
     },
     "aria": {
         "sortAscending": ": artan sütun sıralamasını aktifleştir",

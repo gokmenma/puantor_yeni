@@ -11,6 +11,38 @@ $(document).ready(function () {
     $('#system-settings-tabs a[href="#tabs-system-smtp"]').tab('show');
   }
 
+  // Avatar Selection and Preview Handlers
+  $(document).on("click", "#btnSelectAvatar", function () {
+    $("#avatarInput").click();
+  });
+
+  $(document).on("change", "#avatarInput", function () {
+    var file = this.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        Swal.fire("Hata!", "Yüklenen resim 5MB'dan büyük olamaz.", "warning");
+        $(this).val("");
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        $("#profileAvatarPreview").css("background-image", "url(" + e.target.result + ")");
+        $("#profileAvatarInitials").removeClass("d-flex").hide();
+        $("#btnRemoveAvatar").removeClass("d-none").show();
+        $("#avatarRemoveInput").val("0");
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  $(document).on("click", "#btnRemoveAvatar", function () {
+    $("#avatarInput").val("");
+    $("#avatarRemoveInput").val("1");
+    $("#profileAvatarPreview").css("background-image", "none");
+    $("#profileAvatarInitials").addClass("d-flex").show();
+    $("#btnRemoveAvatar").addClass("d-none").hide();
+  });
+
   // Profile Form submit validation and handler
   $(document).on("submit", "#profileForm", function (e) {
     e.preventDefault();

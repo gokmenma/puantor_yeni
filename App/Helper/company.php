@@ -50,6 +50,24 @@ class CompanyHelper extends Db
         }
     }
 
+    public function getCompanyNames(array $ids)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $query = $this->db->prepare("SELECT id, company_name FROM companies WHERE id IN ($placeholders)");
+        $query->execute($ids);
+
+        $names = [];
+        foreach ($query->fetchAll(PDO::FETCH_OBJ) as $row) {
+            $names[(int) $row->id] = $row->company_name;
+        }
+        return $names;
+    }
+
     public function myCompanySelect($name = 'companies', $id = null, $disabled = null)
     {
 

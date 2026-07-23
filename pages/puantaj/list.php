@@ -1744,7 +1744,7 @@ $(document).ready(function() {
     // DataTable yüklendikten sonra sütun genişliklerini ayarla
     setTimeout(function() {
         if ($.fn.DataTable.isDataTable('#puantajTable')) {
-            $('#puantajTable').DataTable().columns.adjust().draw();
+            $('#puantajTable').DataTable().columns.adjust();
         }
         initializePopovers();
     }, 500);

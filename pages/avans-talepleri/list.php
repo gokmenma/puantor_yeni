@@ -74,6 +74,15 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
     /* Vibrant Icon Colors */
     .icon-success-vibrant { color: #2fb344 !important; }
     .icon-danger-vibrant { color: #d63939 !important; }
+    
+    .clickable-desc {
+        cursor: pointer;
+        transition: color 0.15s ease;
+    }
+    .clickable-desc:hover {
+        color: #206bc4;
+        text-decoration: underline;
+    }
 </style>
 
 <div class="page-header d-print-none mb-0">
@@ -107,7 +116,7 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
                         <select class="form-select" name="person_id" id="avans_person_id" required>
                             <option value=""></option>
                             <?php foreach ($persons as $person): ?>
-                                <option value="<?php echo $person->id; ?>"><?php echo htmlspecialchars($person->full_name); ?></option>
+                                <option value="<?php echo $person->id; ?>"><?php echo htmlspecialchars($person->full_name, ENT_QUOTES, 'UTF-8'); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -153,6 +162,89 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                     Kaydet
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Avans Detay Modal -->
+<div class="modal modal-blur fade" id="detailAvansModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Avans Talebi Detayı
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-3 bg-body-tertiary border-0 shadow-none">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-muted small">Personel</div>
+                                <div class="fw-bold fs-3 text-dark" id="detail_personel">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Talep Tutarı</div>
+                                <div class="fw-bold fs-3 text-primary" id="detail_tutar">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Hedef Dönem</div>
+                                <div class="fw-medium text-dark" id="detail_donem">-</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted small">Durum</div>
+                                <div id="detail_durum">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted small mb-1 d-flex align-items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /></svg>
+                                    Talep Tarihi
+                                </div>
+                                <div class="fw-bold text-dark" id="detail_talep_tarihi">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card card-sm">
+                            <div class="card-body">
+                                <div class="text-muted small mb-1 d-flex align-items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>
+                                    İşlem / Onay Tarihi
+                                </div>
+                                <div class="fw-bold text-dark" id="detail_islem_tarihi">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small mb-1 d-flex align-items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-check" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4" /><path d="M15 19l2 2l4 -4" /></svg>
+                        İşlemi Yapan (Onaylayan / Reddeden)
+                    </div>
+                    <div class="p-2 border rounded bg-white fw-medium text-dark" id="detail_islem_yapan">-</div>
+                </div>
+
+                <div>
+                    <div class="text-muted small mb-1 d-flex align-items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-text" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 9l1 0" /><path d="M9 13l6 0" /><path d="M9 17l6 0" /></svg>
+                        Açıklama
+                    </div>
+                    <div class="p-3 border rounded bg-body text-dark" id="detail_aciklama" style="white-space: pre-wrap; word-break: break-word; min-height: 80px; max-height: 250px; overflow-y: auto;">-</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary ms-auto" data-bs-dismiss="modal">Kapat</button>
             </div>
         </div>
     </div>
@@ -239,7 +331,7 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
                     <h3 class="card-title">Avans Talepleri</h3>
                 </div>
                 <div class="table-responsive">
-                    <table id="advanceTable" class="table card-table text-nowrap table-hover datatable">
+                    <table id="advanceTable" class="table card-table text-nowrap table-hover">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -262,21 +354,48 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
                                 } elseif ($req->durum == 2) {
                                     $status_badge = '<span class="badge bg-danger-lt">Reddedildi</span>';
                                 }
+                                $islem_tarihi_formatted = ($req->durum != 0 && !empty($req->formatted_updated_at)) ? $req->formatted_updated_at : '-';
                                 ?>
                                 <tr>
                                     <td><?php echo $req->id; ?></td>
-                                    <td><?php echo $req->full_name; ?></td>
+                                    <td><?php echo htmlspecialchars($req->full_name, ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td class="font-weight-bold"><?php echo Helper::formattedMoney($req->tutar); ?></td>
                                     <td><?php echo Date::monthName($req->hedef_ay) . ' ' . $req->hedef_yil; ?></td>
                                     <td>
-                                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="<?php echo $req->aciklama; ?>">
-                                            <?php echo $req->aciklama; ?>
+                                        <span class="text-truncate d-inline-block clickable-desc view-detail" style="max-width: 200px;" 
+                                              title="Detayı görüntülemek için tıklayın: <?php echo htmlspecialchars($req->aciklama ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                              data-id="<?php echo $req->id; ?>"
+                                              data-personel="<?php echo htmlspecialchars($req->full_name, ENT_QUOTES, 'UTF-8'); ?>"
+                                              data-tutar="<?php echo Helper::formattedMoney($req->tutar); ?>"
+                                              data-donem="<?php echo Date::monthName($req->hedef_ay) . ' ' . $req->hedef_yil; ?>"
+                                              data-talep-tarihi="<?php echo $req->formatted_date; ?>"
+                                              data-islem-tarihi="<?php echo $islem_tarihi_formatted; ?>"
+                                              data-durum="<?php echo $req->durum; ?>"
+                                              data-islem-yapan="<?php echo htmlspecialchars($req->processed_by_name ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                              data-aciklama="<?php echo htmlspecialchars($req->aciklama ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                            <?php echo htmlspecialchars($req->aciklama ?? '', ENT_QUOTES, 'UTF-8'); ?>
                                         </span>
                                     </td>
                                     <td><?php echo $req->formatted_date; ?></td>
                                     <td><?php echo $status_badge; ?></td>
                                     <td class="text-end">
                                         <div class="btn-list justify-content-end flex-nowrap">
+                                            <button class="btn-action btn-animate-rotate view-detail" 
+                                                    data-id="<?php echo $req->id; ?>"
+                                                    data-personel="<?php echo htmlspecialchars($req->full_name, ENT_QUOTES, 'UTF-8'); ?>"
+                                                    data-tutar="<?php echo Helper::formattedMoney($req->tutar); ?>"
+                                                    data-donem="<?php echo Date::monthName($req->hedef_ay) . ' ' . $req->hedef_yil; ?>"
+                                                    data-talep-tarihi="<?php echo $req->formatted_date; ?>"
+                                                    data-islem-tarihi="<?php echo $islem_tarihi_formatted; ?>"
+                                                    data-durum="<?php echo $req->durum; ?>"
+                                                    data-islem-yapan="<?php echo htmlspecialchars($req->processed_by_name ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                    data-aciklama="<?php echo htmlspecialchars($req->aciklama ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1 text-primary">
+                                                    <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"></path>
+                                                    <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"></path>
+                                                </svg>
+                                                Detay
+                                            </button>
                                             <?php if ($req->durum == 0): ?>
                                                 <button class="btn-action btn-animate-tada update-status" data-id="<?php echo $req->id; ?>" data-status="1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1 icon-success-vibrant">
@@ -312,8 +431,6 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
                                                     </svg>
                                                     Sil
                                                 </button>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -329,6 +446,83 @@ $persons = $personsModel->getPersonsByFirm($_SESSION["firm_id"]);
 
 <script>
 $(document).ready(function() {
+
+    if ($.fn.DataTable && !$.fn.DataTable.isDataTable('#advanceTable') && $('#advanceTable').length) {
+        if (typeof window.createDataTable === 'function') {
+            window.createDataTable('#advanceTable', {
+                order: [[0, 'desc']]
+            });
+        }
+    }
+
+    $(document).on('click', '.view-detail', function() {
+        var $el = $(this);
+        var id = $el.data('id');
+        var personel = $el.data('personel');
+        var tutar = $el.data('tutar');
+        var donem = $el.data('donem');
+        var talepTarihi = $el.data('talep-tarihi');
+        var islemTarihi = $el.data('islem-tarihi');
+        var durum = parseInt($el.data('durum'));
+        var islemYapan = $el.data('islem-yapan');
+        var aciklama = $el.data('aciklama');
+
+        $('#detail_personel').text(personel || '-');
+        $('#detail_tutar').text(tutar || '-');
+        $('#detail_donem').text(donem || '-');
+        $('#detail_talep_tarihi').text(talepTarihi || '-');
+
+        renderDetailStatus(durum, islemTarihi, islemYapan);
+        $('#detail_aciklama').text(aciklama && aciklama.trim() !== '' ? aciklama : 'Açıklama girilmemiş.');
+
+        $('#detailAvansModal').modal('show');
+
+        // Backend'den en güncel veriyi AJAX ile da çekelim
+        if (id) {
+            $.ajax({
+                url: 'api/advances/advances.php',
+                type: 'GET',
+                data: { action: 'get_detail', id: id },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success' && res.detail) {
+                        var d = res.detail;
+                        $('#detail_personel').text(d.full_name || personel);
+                        if (d.tutar) {
+                            $('#detail_tutar').text(parseFloat(d.tutar).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺');
+                        }
+                        if (d.formatted_date) {
+                            $('#detail_talep_tarihi').text(d.formatted_date);
+                        }
+                        var updatedDate = (d.durum != 0 && d.formatted_updated_at) ? d.formatted_updated_at : '-';
+                        renderDetailStatus(parseInt(d.durum), updatedDate, d.processed_by_name);
+                        $('#detail_aciklama').text(d.aciklama && d.aciklama.trim() !== '' ? d.aciklama : 'Açıklama girilmemiş.');
+                    }
+                }
+            });
+        }
+    });
+
+    function renderDetailStatus(durum, islemTarihi, islemYapan) {
+        var statusBadge = '';
+        var islemYapanText = '-';
+
+        if (durum === 0) {
+            statusBadge = '<span class="badge bg-warning-lt fs-4">Beklemede</span>';
+            islemTarihi = 'Henüz işlem yapılmadı';
+            islemYapanText = 'Henüz işlem yapılmadı';
+        } else if (durum === 1) {
+            statusBadge = '<span class="badge bg-success-lt fs-4">Onaylandı</span>';
+            islemYapanText = (islemYapan && islemYapan.trim() !== '') ? 'Onaylayan: ' + islemYapan : 'Onaylayan: Yönetici / Sistem';
+        } else if (durum === 2) {
+            statusBadge = '<span class="badge bg-danger-lt fs-4">Reddedildi</span>';
+            islemYapanText = (islemYapan && islemYapan.trim() !== '') ? 'Reddeden: ' + islemYapan : 'Reddeden: Yönetici / Sistem';
+        }
+
+        $('#detail_durum').html(statusBadge);
+        $('#detail_islem_tarihi').text(islemTarihi || '-');
+        $('#detail_islem_yapan').text(islemYapanText);
+    }
 
     $('#saveAvansBtn').on('click', function() {
         var $btn = $(this);

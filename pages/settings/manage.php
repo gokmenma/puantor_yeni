@@ -215,6 +215,10 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                 <div class="col-md-3">
                     <!-- Kullanıcı Bilgi Özeti -->
                     <?php
+                    $sidebarAvatar = $user->avatar ?? null;
+                    $sidebarAvatarExists = !empty($sidebarAvatar) && file_exists(ROOT . '/uploads/avatars/' . $sidebarAvatar);
+                    $sidebarAvatarUrl = $sidebarAvatarExists ? 'uploads/avatars/' . htmlspecialchars($sidebarAvatar) : '';
+
                     $words = explode(" ", trim($user->full_name ?? ''));
                     $initials = "";
                     foreach ($words as $w) {
@@ -225,7 +229,11 @@ $pageTitle = ($view == 'profile') ? 'Profil Ayarları' : 'Sistem Ayarları';
                     ?>
                     <div class="card mb-3">
                         <div class="card-body text-center p-4">
-                            <span class="avatar avatar-xl mb-3 rounded-circle bg-primary text-white fw-bold"><?php echo htmlspecialchars($initials); ?></span>
+                            <?php if ($sidebarAvatarExists): ?>
+                                <span class="avatar avatar-xl mb-3 rounded-circle shadow-sm" style="width: 80px; height: 80px; background-image: url('<?php echo $sidebarAvatarUrl; ?>'); background-size: cover; background-position: center;"></span>
+                            <?php else: ?>
+                                <span class="avatar avatar-xl mb-3 rounded-circle bg-primary text-white fw-bold shadow-sm" style="width: 80px; height: 80px; font-size: 1.6rem;"><?php echo htmlspecialchars($initials); ?></span>
+                            <?php endif; ?>
                             <h3 class="mb-1 fw-bold"><?php echo htmlspecialchars($user->full_name ?? ''); ?></h3>
                             <div class="text-secondary small"><?php echo htmlspecialchars($user->email ?? ''); ?></div>
                         </div>

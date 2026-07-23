@@ -8,6 +8,8 @@ if (!$Auths->Authorize("person_page_icra_info")) {
     return;
 }
 
+require_once "Model/PersonIcra.php";
+
 $person_id_encrypted = Security::encrypt($person->id);
 ?>
 
@@ -15,9 +17,9 @@ $person_id_encrypted = Security::encrypt($person->id);
     <!-- İcra İstatistik Kartları -->
     <div class="row row-cards mb-4 align-items-stretch">
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm bg-gradient-zinc shadow-sm border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <div class="card card-sm shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
-                    <span class="bg-blue-lt text-blue avatar avatar-md border-0 shadow-sm me-3" style="background-color: rgba(32, 107, 196, 0.1);">
+                    <span class="bg-blue-lt text-blue avatar avatar-md border-0 shadow-sm me-3">
                         <i class="ti ti-folder fs-2"></i>
                     </span>
                     <div>
@@ -28,9 +30,9 @@ $person_id_encrypted = Security::encrypt($person->id);
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm bg-gradient-zinc shadow-sm border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <div class="card card-sm shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
-                    <span class="bg-success-lt text-success avatar avatar-md border-0 shadow-sm me-3" style="background-color: rgba(47, 179, 171, 0.1);">
+                    <span class="bg-success-lt text-success avatar avatar-md border-0 shadow-sm me-3">
                         <i class="ti ti-circle-check fs-2"></i>
                     </span>
                     <div>
@@ -41,9 +43,9 @@ $person_id_encrypted = Security::encrypt($person->id);
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm bg-gradient-zinc shadow-sm border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <div class="card card-sm shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
-                    <span class="bg-warning-lt text-warning avatar avatar-md border-0 shadow-sm me-3" style="background-color: rgba(245, 159, 0, 0.1);">
+                    <span class="bg-warning-lt text-warning avatar avatar-md border-0 shadow-sm me-3">
                         <i class="ti ti-coin fs-2"></i>
                     </span>
                     <div>
@@ -54,9 +56,9 @@ $person_id_encrypted = Security::encrypt($person->id);
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm bg-gradient-zinc shadow-sm border-0" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <div class="card card-sm shadow-sm border-0">
                 <div class="card-body d-flex align-items-center">
-                    <span class="bg-danger-lt text-danger avatar avatar-md border-0 shadow-sm me-3" style="background-color: rgba(214, 51, 108, 0.1);">
+                    <span class="bg-danger-lt text-danger avatar avatar-md border-0 shadow-sm me-3">
                         <i class="ti ti-wallet fs-2"></i>
                     </span>
                     <div>
@@ -70,27 +72,23 @@ $person_id_encrypted = Security::encrypt($person->id);
 
     <!-- Filtreler ve Tablo -->
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <h3 class="card-title font-weight-700 text-dark mb-0">İcra Dosyaları</h3>
+        <div class="card-header border-bottom py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h3 class="card-title font-weight-700 mb-0">İcra Dosyaları</h3>
             
             <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
                 <!-- Bordro kesintisi yapılsın tetiği -->
                 <div class="form-check form-switch mb-0 me-3 pe-3 border-end border-light">
                     <input class="form-check-input" type="checkbox" id="icra-kesintisi-toggle" data-person-id="<?= $person_id_encrypted; ?>">
-                    <label class="form-check-label fw-bold text-dark fs-5 mb-0" for="icra-kesintisi-toggle">Bordro kesintisi yapılsın</label>
+                    <label class="form-check-label fw-bold fs-5 mb-0" for="icra-kesintisi-toggle">Bordro kesintisi yapılsın</label>
                 </div>
 
                 <!-- Durum Filtresi (Select2) -->
-                <div style="width: 180px;">
+                <div style="width: 200px;">
                     <select class="form-select" id="icra-status-filter">
                         <option value="">Tüm Durumlar</option>
-                        <option value="Bekliyor">Bekliyor</option>
-                        <option value="Kesilen">Kesilen</option>
-                        <option value="Güncellendi">Güncellendi</option>
-                        <option value="Durduruldu">Durduruldu</option>
-                        <option value="Durduruldu(Bekleyen)">Durduruldu(Bekleyen)</option>
-                        <option value="Fekki Geldi">Fekki Geldi</option>
-                        <option value="Kesinti Bitti">Kesinti Bitti</option>
+                        <?php foreach (PersonIcra::getStatuses() as $key => $stInfo): ?>
+                            <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($stInfo['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 
@@ -238,13 +236,9 @@ $person_id_encrypted = Security::encrypt($person->id);
                         <div class="col-md-12">
                             <label class="form-label required fw-bold">Durum</label>
                             <select class="form-select" name="durum" id="icra-durum" required>
-                                <option value="Bekliyor">Bekliyor</option>
-                                <option value="Kesilen">Kesilen</option>
-                                <option value="Güncellendi">Güncellendi</option>
-                                <option value="Durduruldu">Durduruldu</option>
-                                <option value="Durduruldu(Bekleyen)">Durduruldu(Bekleyen)</option>
-                                <option value="Fekki Geldi">Fekki Geldi</option>
-                                <option value="Kesinti Bitti">Kesinti Bitti</option>
+                                <?php foreach (PersonIcra::getStatuses() as $key => $stInfo): ?>
+                                    <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($stInfo['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -410,7 +404,11 @@ $(document).ready(function() {
                                     <td class="text-center">${belgeLink}</td>
                                     <td><small class="text-secondary fw-semibold">${dateRange}</small></td>
                                     <td class="text-end fw-bold text-dark">${f.toplam_borc}</td>
-                                    <td class="text-end text-success">${f.yapilan_kesinti}</td>
+                                    <td class="text-end fw-bold">
+                                        <a href="javascript:void(0)" class="text-success text-decoration-underline btn-view-deductions" data-file-id="${f.id}" data-person-id="<?= $person_id_encrypted; ?>" title="Kesinti Detaylarını Gör">
+                                            ${f.yapilan_kesinti} <i class="ti ti-info-circle ms-1 small"></i>
+                                        </a>
+                                    </td>
                                     <td class="text-end fw-bold text-danger">${f.kalan_borc}</td>
                                     <td class="text-center">${statusBadge}</td>
                                     <td class="text-end">
@@ -676,7 +674,107 @@ $(document).ready(function() {
             },
             error: function() {
                 $('#icra-kesintisi-toggle').prop('checked', !isChecked);
-                Swal.fire('Hata', 'Sunucu bağlantısında hata oluştu.', 'error');
+                Swal.fire('Hata', 'Sunucu hatası oluştu.', 'error');
+            }
+        });
+    });
+});
+</script>
+<!-- İcra Kesintileri Geçmişi Modalı -->
+<div class="modal modal-blur fade" id="deductionsHistoryModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title font-weight-700 text-white" id="modal-deductions-title">
+                    <i class="ti ti-history me-2"></i>İcra Kesintileri Geçmişi
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-muted text-uppercase tracking-wide font-weight-600">Personel / Dosya</div>
+                        <div class="font-weight-700 text-dark" id="modal-deductions-person-name">-</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small text-muted text-uppercase tracking-wide font-weight-600">Toplam Kesilen</div>
+                        <div class="h3 mb-0 text-success font-weight-700" id="modal-deductions-total">0,00 ₺</div>
+                    </div>
+                </div>
+                <div class="table-responsive" style="max-height: 350px;">
+                    <table class="table table-vcenter table-striped table-sm mb-0">
+                        <thead class="bg-white sticky-top">
+                            <tr>
+                                <th class="ps-3">Dönem</th>
+                                <th>Açıklama</th>
+                                <th class="text-end pe-3">Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-deductions-table-body">
+                            <!-- AJAX ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary px-4 ms-auto" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 9. Kesintiler Geçmişi Detayı Tıklama
+    $(document).on('click', '.btn-view-deductions', function(e) {
+        e.preventDefault();
+        const fileId = $(this).data('file-id') || '';
+        const personId = $(this).data('person-id') || '';
+
+        $('#modal-deductions-person-name').text('Yükleniyor...');
+        $('#modal-deductions-total').text('0,00 ₺');
+        $('#modal-deductions-table-body').html('<tr><td colspan="3" class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> Kesintiler yükleniyor...</td></tr>');
+        $('#deductionsHistoryModal').modal('show');
+
+        $.ajax({
+            url: 'api/persons/icra.php',
+            type: 'POST',
+            data: {
+                action: 'deductions_history',
+                file_id: fileId,
+                person_id: personId
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    $('#modal-deductions-person-name').html(`<strong>${res.person_name}</strong> <span class="badge bg-light text-dark ms-2">${res.dosya_no}</span>`);
+                    $('#modal-deductions-total').text(res.total_amount || '0,00 ₺');
+
+                    const tbody = $('#modal-deductions-table-body');
+                    tbody.empty();
+
+                    if (!res.history || res.history.length === 0) {
+                        tbody.html('<tr><td colspan="3" class="text-center py-4 text-muted"><i class="ti ti-folder-off fs-1 d-block mb-1 text-secondary"></i>Bu icra dosyasına ait bordro kesintisi bulunamadı.</td></tr>');
+                    } else {
+                        res.history.forEach((h) => {
+                            tbody.append(`
+                                <tr>
+                                    <td class="ps-3 fw-bold text-dark">${h.donem}</td>
+                                    <td>
+                                        <div class="font-weight-600 text-dark">${h.aciklama || h.turu}</div>
+                                        <div class="small text-muted">${h.created_at || ''}</div>
+                                    </td>
+                                    <td class="text-end pe-3 text-success font-weight-700">${h.tutar}</td>
+                                </tr>
+                            `);
+                        });
+                    }
+                } else {
+                    Swal.fire('Hata!', res.message || 'Kesintiler yüklenemedi.', 'error');
+                }
+            },
+            error: function() {
+                Swal.fire('Hata!', 'Sunucu hatası oluştu.', 'error');
             }
         });
     });

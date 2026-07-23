@@ -72,6 +72,23 @@ if ($project_id == 0 || $project_id == '') {
     $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $firstDay, $last_day, 0, $team_id, true);
 }
 
+$personIds = array_map(static function ($item) {
+    return (int) $item->id;
+}, $persons);
+$personDetails = $personObj->getPersonsByIds($personIds);
+$personDetailsMap = [];
+foreach ($personDetails as $personDetail) {
+    $personDetailsMap[(int) $personDetail->id] = $personDetail;
+}
+$isPayrollCalculation = in_array($action, ['payroll_calculate', 'update_personnel'], true);
+$salaryAndWageCutMap = $isPayrollCalculation
+    ? []
+    : $bordro->getPersonsSalaryAndWageCut($personIds, $firstDay, Date::lastDay($month, $year));
+$icraAmountMap = $isPayrollCalculation
+    ? []
+    : $bordro->getIcraAmounts($personIds, $month, $year);
+$payrollRows = [];
+
 // Set the default timezone to your local timezone
 
 // Ayın son gününü bulma (20240930) şeklinde döner
@@ -102,7 +119,10 @@ $total_odeme = 0;
 $total_persons = 0;
 
 foreach ($persons as $item) {
-    $person = $personObj->find($item->id);
+    $person = $personDetailsMap[(int) $item->id] ?? null;
+    if (!$person) {
+        continue;
+    }
     if ($person->job_end_date != null && $person->job_end_date != '') {
         $job_end_date_ymd = Date::Ymd($person->job_end_date);
         if ($job_end_date_ymd < $firstDay) {
@@ -302,10 +322,22 @@ foreach ($persons as $item) {
         }
     }
 
-    $res = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay);
-    $stmt_icra_calc = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
-    $stmt_icra_calc->execute([$person->id, $month, $year]);
-    $p_icra = (float)($stmt_icra_calc->fetchColumn() ?? 0);
+    if ($isPayrollCalculation || !empty($person->icra_kesintisi_aktif)) {
+        $res = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay);
+        $stmt_icra_calc = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
+        $stmt_icra_calc->execute([$person->id, $month, $year]);
+        $p_icra = (float)($stmt_icra_calc->fetchColumn() ?? 0);
+    } else {
+        $res = $salaryAndWageCutMap[(int) $person->id] ?? (object) ['gelir' => null, 'odeme' => 0];
+        $p_icra = $icraAmountMap[(int) $person->id] ?? 0;
+    }
+
+    $payrollRows[(int) $person->id] = [
+        'person' => $person,
+        'gelir' => $res->gelir,
+        'odeme' => $res->odeme,
+        'icra' => $p_icra,
+    ];
 
     $total_gelir += ($res->gelir ?? 0);
     $total_odeme += (($res->odeme ?? 0) - $p_icra);
@@ -563,8 +595,11 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                             foreach ($persons as $item):
 
 
-                                // Personel id'sine göre personel bilgilerini getirir
-                                $person = $personObj->find($item->id);
+                                $payrollRow = $payrollRows[(int) $item->id] ?? null;
+                                if (!$payrollRow) {
+                                    continue;
+                                }
+                                $person = $payrollRow['person'];
                                 $person_id = Security::encrypt($person->id);
                                 $id = Security::encrypt($person->id);
 
@@ -576,9 +611,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                                     }
                                 }
 
-                                // Personel id'sine göre personelin maaş ve kesinti bilgilerini getirir(Örnek: 20240901-20240930 arası)
-                                $gelir = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay)->gelir;
-                                $odeme = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay)->odeme;
+                                $gelir = $payrollRow['gelir'];
+                                $odeme = $payrollRow['odeme'];
                                 $kalan = $gelir - $odeme;
 
                                 ?>
@@ -643,9 +677,7 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 
                                     <!-- İcra Kesintisi -->
                                     <?php
-                                    $stmt_icra_month = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
-                                    $stmt_icra_month->execute([$person->id, $month, $year]);
-                                    $icra_month_amount = (float)($stmt_icra_month->fetchColumn() ?? 0);
+                                    $icra_month_amount = (float) $payrollRow['icra'];
                                     $odeme_haric_icra = max(0, $odeme - $icra_month_amount);
                                     ?>
                                     <td class="text-end text-purple fw-semibold">

@@ -46,7 +46,8 @@ if (
     $page == 'bildirimler/push' ||
     $page == 'mail-islemleri/index' ||
     $page == 'supports/tickets' || $page == 'supports/ticket-view' ||
-    $page == 'supports/admin-tickets' || $page == 'supports/admin-ticket-view'
+    $page == 'supports/admin-tickets' || $page == 'supports/admin-ticket-view' ||
+    $page == 'persons/icra-list'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }

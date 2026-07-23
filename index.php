@@ -121,6 +121,8 @@ if ($_SESSION["user"]->parent_id != 0) {
                 "id" => 0,
                 "firm_id" => $_SESSION['firm_id'],
                 "roleName" => 'Admin',
+                "roleDescription" => 'Sistem Yöneticisi',
+                "isActive" => 1,
                 "main_role" => 1
             ];
             $lastInsertRoleId = $rolesObj->saveWithAttr($roleData);

@@ -209,4 +209,215 @@ class PersonIcra extends Model
 
         return $total_applied;
     }
+
+    /**
+     * Get all centralized execution file statuses with titles and UI badges
+     *
+     * @return array
+     */
+    public static function getStatuses()
+    {
+        return [
+            'Kesilen' => [
+                'title' => 'Kesilen',
+                'badge_class' => 'bg-success-lt text-success',
+                'icon' => 'ti-scissors'
+            ],
+            'Bekliyor' => [
+                'title' => 'Bekliyor',
+                'badge_class' => 'bg-warning-lt text-warning',
+                'icon' => 'ti-clock'
+            ],
+            'Güncellendi' => [
+                'title' => 'Güncellendi',
+                'badge_class' => 'bg-info-lt text-info',
+                'icon' => 'ti-refresh'
+            ],
+            'Durduruldu' => [
+                'title' => 'Durduruldu',
+                'badge_class' => 'bg-secondary-lt text-secondary',
+                'icon' => 'ti-player-pause'
+            ],
+            'Durduruldu(Bekleyen)' => [
+                'title' => 'Durduruldu (Bekleyen)',
+                'badge_class' => 'bg-warning-lt text-warning',
+                'icon' => 'ti-pause'
+            ],
+            'Fekki Geldi' => [
+                'title' => 'Fekki Geldi',
+                'badge_class' => 'bg-success-lt text-success',
+                'icon' => 'ti-check'
+            ],
+            'Kesinti Bitti' => [
+                'title' => 'Kesinti Bitti',
+                'badge_class' => 'bg-muted-lt text-muted',
+                'icon' => 'ti-circle-check'
+            ]
+        ];
+    }
+
+    /**
+     * Get all execution files for a firm with personnel info and status filter
+     *
+     * @param int|string $firm_id
+     * @param string|array|null $status_filter
+     * @return array
+     */
+    public function getFirmIcraFiles($firm_id, $status_filter = ['Kesilen'])
+    {
+        $params = ['firm_id' => $firm_id];
+        $whereStatus = "";
+
+        if (!empty($status_filter)) {
+            if (is_array($status_filter)) {
+                $status_filter = array_values(array_filter($status_filter));
+                if (!empty($status_filter) && !in_array('Tümü', $status_filter) && !in_array('all', $status_filter)) {
+                    $inPlaceholders = [];
+                    foreach ($status_filter as $idx => $st) {
+                        $pKey = "st_" . $idx;
+                        $inPlaceholders[] = ":$pKey";
+                        $params[$pKey] = $st;
+                    }
+                    if (!empty($inPlaceholders)) {
+                        $whereStatus = " AND f.durum IN (" . implode(', ', $inPlaceholders) . ")";
+                    }
+                }
+            } elseif ($status_filter !== 'Tümü' && $status_filter !== 'all') {
+                $whereStatus = " AND f.durum = :status";
+                $params['status'] = $status_filter;
+            }
+        }
+
+        $sql = "SELECT f.*, 
+                       p.full_name, 
+                       p.kimlik_no, 
+                       p.sigorta_no, 
+                       p.job,
+                       p.icra_kesintisi_aktif
+                FROM $this->table f
+                INNER JOIN persons p ON p.id = f.person_id
+                WHERE p.firm_id = :firm_id 
+                  AND f.deleted_at IS NULL 
+                  AND p.deleted_at IS NULL
+                  $whereStatus
+                ORDER BY p.full_name ASC, f.icra_sirasi ASC";
+
+        $query = $this->db->prepare($sql);
+        $query->execute($params);
+        $files = $query->fetchAll(PDO::FETCH_OBJ);
+
+        // Compute deductions sequentially per person
+        $personDeductions = [];
+        $result = [];
+
+        foreach ($files as $f) {
+            $pid = $f->person_id;
+            if (!isset($personDeductions[$pid])) {
+                $personDeductions[$pid] = $this->getTotalDeductions($pid);
+            }
+
+            $toplam_borc = (float)$f->toplam_borc;
+            $yapilan_kesinti = 0.0;
+
+            if ($personDeductions[$pid] > 0) {
+                if ($personDeductions[$pid] >= $toplam_borc) {
+                    $yapilan_kesinti = $toplam_borc;
+                    $personDeductions[$pid] -= $toplam_borc;
+                } else {
+                    $yapilan_kesinti = $personDeductions[$pid];
+                    $personDeductions[$pid] = 0.0;
+                }
+            }
+
+            $kalan_borc = max(0.0, $toplam_borc - $yapilan_kesinti);
+            $f->yapilan_kesinti = $yapilan_kesinti;
+            $f->kalan_borc = $kalan_borc;
+
+            $result[] = $f;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get aggregate statistics for all execution files of a firm
+     *
+     * @param int|string $firm_id
+     * @return array
+     */
+    public function getFirmIcraStats($firm_id)
+    {
+        $sql = "SELECT 
+                    COUNT(f.id) as total_files,
+                    SUM(CASE WHEN f.durum IN ('Kesilen', 'Aktif') THEN 1 ELSE 0 END) as active_files,
+                    SUM(CASE WHEN f.durum IN ('Bekliyor', 'Bekleyen', 'Durduruldu(Bekleyen)') THEN 1 ELSE 0 END) as pending_files,
+                    SUM(CASE WHEN f.durum IN ('Fekki Geldi', 'Fekki Gelmiş', 'Kesinti Bitti', 'Kapatıldı', 'Ödendi') THEN 1 ELSE 0 END) as finished_files,
+                    SUM(f.toplam_borc) as total_debt
+                FROM $this->table f
+                INNER JOIN persons p ON p.id = f.person_id
+                WHERE p.firm_id = :firm_id 
+                  AND f.deleted_at IS NULL 
+                  AND p.deleted_at IS NULL";
+
+        $query = $this->db->prepare($sql);
+        $query->execute(['firm_id' => $firm_id]);
+        $res = $query->fetch(PDO::FETCH_OBJ);
+
+        // Get total firm icra deductions
+        $sql_ded = "SELECT SUM(m.tutar) as total 
+                    FROM maas_gelir_kesinti m
+                    INNER JOIN persons p ON p.id = m.person_id
+                    WHERE p.firm_id = :firm_id 
+                      AND m.kategori = 15 
+                      AND (m.aciklama LIKE '%İcra%' OR m.aciklama LIKE '%icra%' OR m.turu = 'İcra Kesintisi')";
+        $q_ded = $this->db->prepare($sql_ded);
+        $q_ded->execute(['firm_id' => $firm_id]);
+        $res_ded = $q_ded->fetch(PDO::FETCH_OBJ);
+
+        $total_debt = (float)($res->total_debt ?? 0.00);
+        $total_deductions = (float)($res_ded->total ?? 0.00);
+        $remaining_debt = max(0.00, $total_debt - $total_deductions);
+
+        return [
+            'total_files' => (int)($res->total_files ?? 0),
+            'active_files' => (int)($res->active_files ?? 0),
+            'pending_files' => (int)($res->pending_files ?? 0),
+            'finished_files' => (int)($res->finished_files ?? 0),
+            'total_debt' => $total_debt,
+            'total_deductions' => $total_deductions,
+            'remaining_debt' => $remaining_debt
+        ];
+    }
+
+    /**
+     * Get list of all execution deductions for a person (and optional file number)
+     *
+     * @param int $person_id
+     * @param string|null $dosya_no
+     * @return array
+     */
+    public function getDeductionsHistory($person_id, $dosya_no = null)
+    {
+        $params = ['person_id' => $person_id];
+        $whereFile = "";
+
+        if (!empty($dosya_no)) {
+            $whereFile = " AND (m.aciklama LIKE :dosya_no OR m.aciklama LIKE '%İcra%')";
+            $params['dosya_no'] = '%' . $dosya_no . '%';
+        }
+
+        $sql = "SELECT m.*, p.full_name
+                FROM maas_gelir_kesinti m
+                INNER JOIN persons p ON p.id = m.person_id
+                WHERE m.person_id = :person_id 
+                  AND m.kategori = 15 
+                  AND (m.aciklama LIKE '%İcra%' OR m.aciklama LIKE '%icra%' OR m.turu = 'İcra Kesintisi')
+                  $whereFile
+                ORDER BY m.yil DESC, m.ay DESC, m.id DESC";
+
+        $query = $this->db->prepare($sql);
+        $query->execute($params);
+        return $query->fetchAll(PDO::FETCH_OBJ);
+    }
 }
+

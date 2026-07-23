@@ -1,5 +1,7 @@
 <?php
-define('ROOT', $_SERVER['DOCUMENT_ROOT']);
+if (!defined('ROOT')) {
+    define('ROOT', dirname(__DIR__, 2));
+}
 require_once ROOT . "/Database/require.php";
 require_once ROOT . "/Model/UserModel.php";
 require_once ROOT . "/App/Helper/date.php";
@@ -67,11 +69,70 @@ if ($_POST["action"] == "userSave") {
             $data["password"] = password_hash($_POST['password'], PASSWORD_DEFAULT);
         }
 
+        // Avatar removal handling
+        if (isset($_POST["avatar_remove"]) && $_POST["avatar_remove"] == "1") {
+            if (!empty($currentUser->avatar)) {
+                $oldFile = ROOT . '/uploads/avatars/' . $currentUser->avatar;
+                if (file_exists($oldFile)) {
+                    @unlink($oldFile);
+                }
+            }
+            $data["avatar"] = null;
+        }
+        // Avatar upload handling
+        elseif (isset($_FILES["avatar"]) && $_FILES["avatar"]["error"] == UPLOAD_ERR_OK) {
+            $fileTmp = $_FILES["avatar"]["tmp_name"];
+            $fileSize = $_FILES["avatar"]["size"];
+            
+            if ($fileSize > 5 * 1024 * 1024) {
+                throw new Exception("Yüklenen resim dosyası 5MB'dan büyük olamaz.");
+            }
+            
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $fileTmp);
+            finfo_close($finfo);
+            
+            $allowedMimeTypes = [
+                'image/jpeg' => 'jpg',
+                'image/jpg'  => 'jpg',
+                'image/png'  => 'png',
+                'image/webp' => 'webp',
+                'image/gif'  => 'gif'
+            ];
+            
+            if (!array_key_exists($mimeType, $allowedMimeTypes)) {
+                throw new Exception("Geçersiz dosya biçimi. Sadece JPG, PNG, WEBP ve GIF formatları desteklenmektedir.");
+            }
+            
+            $ext = $allowedMimeTypes[$mimeType];
+            $newAvatarName = 'avatar_' . $id . '_' . time() . '.' . $ext;
+            $uploadDir = ROOT . '/uploads/avatars/';
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+                @chmod($uploadDir, 0777);
+            }
+            
+            $targetPath = $uploadDir . $newAvatarName;
+            if (!@move_uploaded_file($fileTmp, $targetPath)) {
+                $lastErr = error_get_last();
+                $errDetail = isset($lastErr['message']) ? ' (' . $lastErr['message'] . ')' : '';
+                throw new Exception("Profil resmi yüklenirken bir hata oluştu" . $errDetail . ".");
+            }
+            
+            // Delete old avatar file if present
+            if (!empty($currentUser->avatar) && $currentUser->avatar !== $newAvatarName) {
+                $oldFile = $uploadDir . $currentUser->avatar;
+                if (file_exists($oldFile)) {
+                    @unlink($oldFile);
+                }
+            }
+            
+            $data["avatar"] = $newAvatarName;
+        }
+
         $lastInsertId = $User->saveWithAttr($data) ?? $id;
-        
-        // Güncellenmiş kullanıcı bilgisini oturuma kaydet
         $_SESSION["user"] = $User->find($id);
-        
+
         $status = "success";
         $message = "Profil Bilgileriniz başarıyla güncellendi.";
     } catch (Exception $e) {

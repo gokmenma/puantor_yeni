@@ -20,6 +20,15 @@ $bordro = new Bordro();
 
 $persons = $person->getPersonsByFirm($firm_id);
 $company = new CompanyHelper();
+$personIds = array_map(static function ($item) {
+    return (int) $item->id;
+}, $persons);
+$balances = $bordro->getBalances($personIds);
+$companyIds = array_map(static function ($item) {
+    return (int) ($item->company_id ?? 0);
+}, $persons);
+$companyNames = $company->getCompanyNames($companyIds);
+$firmName = $company->getFirmName($firm_id);
 
 // Firma projeleri ve personel-proje atama tablosunu çekerek eşleştirme dizisi oluşturma
 $projectMap = [];
@@ -162,7 +171,7 @@ try {
                             foreach ($persons as $person):
                                 $wage_type = $person->wage_type == 1 ? 'Beyaz Yaka' : 'Mavi Yaka';
                                 $wage_type_color = $person->wage_type == 2 ? "style='color:blue'" : '';
-                                $balance = $bordro->getBalance($person->id);
+                                $balance = $balances[(int) $person->id] ?? 0;
                                 $color = Helper::balanceColor($balance);
                                 $id = Security::encrypt($person->id);
 
@@ -176,10 +185,7 @@ try {
                                         data-page="persons/manage&id=<?php echo $id ?>"
                                         class="nav-item route-link"><?php echo $person->full_name; ?></a></td>
                                 <td><?php echo Security::safeDecrypt($person->kimlik_no ?? '') ?: '-'; ?></td>
-                                <td><?php 
-                                             $compName = $company->getCompanyName($person->company_id);
-                                             echo ($compName !== 'bilinmiyor' && $compName !== '') ? $compName : $company->getFirmName($person->firm_id); 
-                                         ?></td>
+                                <td><?php echo $companyNames[(int) ($person->company_id ?? 0)] ?? $firmName; ?></td>
                                 <td <?php echo $wage_type_color; ?>><?php echo $wage_type; ?></td>
                                 <td><?php echo $person->job_start_date ?? '-'; ?></td>
                                 <td><?php echo $person->job_end_date ?? '-'; ?></td>
@@ -211,7 +217,7 @@ try {
                                 </td>
                                 <td class="<?php echo $color ?>"><?php echo Helper::formattedMoney($balance) ?></td>
                                 <td><?php echo $person->address ?: '-'; ?></td>
-                                <td><?php echo $person->description ?: ($person->aciklama ?: '-'); ?></td>
+                                <td><?php echo ($person->description ?? '') ?: (($person->aciklama ?? '') ?: '-'); ?></td>
                                 <td class="text-end">
                                     <div class="dropdown">
                                         <button class="btn dropdown-toggle align-text-top"
