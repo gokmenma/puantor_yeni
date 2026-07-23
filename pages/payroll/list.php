@@ -325,114 +325,9 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
     <div class="d-flex align-items-center justify-content-between mb-2">
         <h2 class="page-title m-0">Bordro</h2>
     </div>
-    <form action="" method="post" id="bordroInfoForm">
-        <div class="row">
-            <div class="col-3">
-                <label for="projects" class="form-label">Proje:</label>
-                <?php echo $projectHelper->getProjectSelect('projects', $project_id, 'Tüm Projeler'); ?>
-            </div>
-            <div class="col-2">
-                <label for="team_id" class="form-label">Ekip:</label>
-                <?php echo $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler'); ?>
-            </div>
-            <div class="col-2">
-                <label for="period_picker" class="form-label">Dönem:</label>
-                <div class="input-group input-group-flat border rounded shadow-none bg-white">
-                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0" id="prevPeriodBtn" title="Önceki Ay">
-                        <i class="ti ti-chevron-left icon m-0"></i>
-                    </button>
-                    <input type="text" class="form-control text-center fw-bold bg-transparent border-0 px-0 cursor-pointer" id="period_picker" style="cursor: pointer; font-size: 0.88rem;" readonly placeholder="Dönem">
-                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0" id="nextPeriodBtn" title="Sonraki Ay">
-                        <i class="ti ti-chevron-right icon m-0"></i>
-                    </button>
-                </div>
-                <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
-                <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
-            </div>
 
-            <div class="col-auto ms-auto mt-auto d-flex align-items-center">
-                <?php if ($Auths->hasPermission('toggle_payroll_period_status')): ?>
-                <div class="d-flex align-items-center me-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Dönem Durumu: <?php echo Date::monthName($month) . ' ' . $year; ?> dönemi <?php echo $period_is_visible == 1 ? 'KAPALI (PWA Personellere Açık, Puantaj Kilitli)' : 'AÇIK (PWA Personellere Kapalı, Puantaj Düzenlenebilir)'; ?>">
-                    <div class="form-check form-switch mb-0 p-0 d-flex align-items-center cursor-pointer">
-                        <input class="form-check-input cursor-pointer m-0 me-1" type="checkbox" id="pwa-visibility-toggle" data-year="<?php echo $year; ?>" data-month="<?php echo $month; ?>" <?php echo $period_is_visible == 1 ? 'checked' : ''; ?>>
-                        <span id="pwa-visibility-status" class="badge <?php echo $period_is_visible == 1 ? 'bg-danger-lt text-danger' : 'bg-success-lt text-success'; ?> cursor-pointer">
-                            <i class="ti <?php echo $period_is_visible == 1 ? 'ti-lock' : 'ti-lock-open'; ?> icon me-1" id="pwa-visibility-icon"></i><span id="pwa-visibility-text"><?php echo $period_is_visible == 1 ? 'Dönem Kapalı' : 'Dönem Açık'; ?></span>
-                        </span>
-                    </div>
-                </div>
-                <?php endif; ?>
-                <div class="dropdown me-2">
-                    <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" title="Sütunları Seç" id="colvisDropdownBtn">
-                        <i class="ti ti-columns icon"></i>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end p-2" id="bordroColvisMenu"
-                        style="min-width: 200px; max-height: 300px; overflow-y: auto;">
-                    </div>
-                </div>
-                <?php
-                if ($Auths->hasPermission('payroll_export_excel')) { ?>
-                    <label for=""></label>
-                    <a href="pages/payroll/xls/payroll-list.php?month=<?php echo urlencode((string) $month); ?>&year=<?php echo urlencode((string) $year); ?>&project_id=<?php echo urlencode((string) $project_id); ?>&team_id=<?php echo urlencode((string) $team_id); ?>"
-                        class="btn btn-icon me-2" data-tooltip="Excele Aktar">
-                        <i class="ti ti-file-excel icon"></i>
-                    </a>
-                <?php } ?>
-
-
-
-                <label for="" class="form-label"></label>
-
-                <div class="dropdown">
-                    <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">
-                        <i class="ti ti-list-details icon me-2"></i>
-                        İşlemler</button>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <?php if ($Auths->hasPermission('upload_payment_permission')) { ?>
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#load-payment-modal"
-                                data-tooltip="Personellere yapılan ödemeleri excelden yükleyin" data-tooltip-location="left">
-                                <i class="ti ti-table-import icon me-3 text-info"></i> Ödeme Yükle
-                            </a>
-                        <?php } ?>
-                        <?php if ($Auths->hasPermission('update_fees_permission')) { ?>
-                            <a class="dropdown-item" data-tooltip="Günlük Ücretleri güncelleyin"
-                                data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wages-modal">
-                                <i class="ti ti-user-dollar icon me-3"></i> Ücretleri Güncelle
-                            </a>
-                        <?php } ?>
-
-                        <?php if ($Auths->hasPermission('payroll_export_excel')) { ?>
-                            <a class="dropdown-item add-income"
-                                data-tooltip="Personellere yapılacak ödeme listesini indirin" data-tooltip-location="left"
-                                href="pages/payroll/xls/bank-list-for-payments.php">
-                                <i class="ti ti-checklist icon me-3"></i> Banka Listesi İndir
-                            </a>
-                        <?php } ?>
-                        <?php if ($Auths->hasPermission('income_expense_add_update')) { ?>
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-income-modal">
-                                <i class="ti ti-circle-plus icon me-3 text-success"></i> Toplu Gelir Ekle
-                            </a>
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wage-cut-modal">
-                                <i class="ti ti-circle-minus icon me-3 text-danger"></i> Toplu Kesinti Ekle
-                            </a>
-                        <?php } ?>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#" id="update_personnel">
-                            <i class="ti ti-users-plus icon me-3"></i> Personelleri Güncelle
-                        </a>
-                    </div>
-                </div>
-                <a class="btn btn-primary ms-2" href="#" id="payroll_calculate">
-                    <i class="ti ti-calculator icon me-2"></i> Hesapla
-                </a>
-
-
-            </div>
-        </div>
-    </form>
-</div>
-
-<div class="container-xl mt-2">
-    <div class="row row-cards">
+    <!-- Özet Kartları -->
+    <div class="row row-cards mb-2">
         <div class="col-md-6 col-lg-3">
             <div class="card card-sm">
                 <div class="card-body">
@@ -518,6 +413,112 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
             </div>
         </div>
     </div>
+
+    <!-- Filtreler ve Butonlar -->
+    <form action="" method="post" id="bordroInfoForm">
+        <div class="row">
+            <div class="col-3">
+                <label for="projects" class="form-label">Proje:</label>
+                <?php echo $projectHelper->getProjectSelect('projects', $project_id, 'Tüm Projeler'); ?>
+            </div>
+            <div class="col-2">
+                <label for="team_id" class="form-label">Ekip:</label>
+                <?php echo $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler'); ?>
+            </div>
+            <div class="col-2">
+                <label for="period_picker" class="form-label">Dönem:</label>
+                <div class="input-group input-group-flat rounded period-picker-group" style="height: 40px !important;">
+                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="prevPeriodBtn" title="Önceki Ay">
+                        <i class="ti ti-chevron-left icon m-0"></i>
+                    </button>
+                    <input type="text" class="form-control text-center fw-bold bg-transparent border-0 px-0 cursor-pointer h-100 shadow-none" id="period_picker" readonly placeholder="Dönem">
+                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="nextPeriodBtn" title="Sonraki Ay">
+                        <i class="ti ti-chevron-right icon m-0"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
+                <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
+            </div>
+
+            <div class="col-auto ms-auto mt-auto d-flex align-items-center">
+                <?php if ($Auths->hasPermission('toggle_payroll_period_status')): ?>
+                <div class="d-flex align-items-center me-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Dönem Durumu: <?php echo Date::monthName($month) . ' ' . $year; ?> dönemi <?php echo $period_is_visible == 1 ? 'KAPALI (PWA Personellere Açık, Puantaj Kilitli)' : 'AÇIK (PWA Personellere Kapalı, Puantaj Düzenlenebilir)'; ?>">
+                    <div class="form-check form-switch mb-0 p-0 d-flex align-items-center cursor-pointer">
+                        <input class="form-check-input cursor-pointer m-0 me-1" type="checkbox" id="pwa-visibility-toggle" data-year="<?php echo $year; ?>" data-month="<?php echo $month; ?>" <?php echo $period_is_visible == 1 ? 'checked' : ''; ?>>
+                        <span id="pwa-visibility-status" class="badge <?php echo $period_is_visible == 1 ? 'bg-danger-lt text-danger' : 'bg-success-lt text-success'; ?> cursor-pointer">
+                            <i class="ti <?php echo $period_is_visible == 1 ? 'ti-lock' : 'ti-lock-open'; ?> icon me-1" id="pwa-visibility-icon"></i><span id="pwa-visibility-text"><?php echo $period_is_visible == 1 ? 'Dönem Kapalı' : 'Dönem Açık'; ?></span>
+                        </span>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <div class="dropdown me-2">
+                    <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" title="Sütunları Seç" id="colvisDropdownBtn">
+                        <i class="ti ti-columns icon"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-2" id="bordroColvisMenu"
+                        style="min-width: 200px; max-height: 300px; overflow-y: auto;">
+                    </div>
+                </div>
+                <?php
+                if ($Auths->hasPermission('payroll_export_excel')) { ?>
+                    <label for=""></label>
+                    <a href="pages/payroll/xls/payroll-list.php?month=<?php echo urlencode((string) $month); ?>&year=<?php echo urlencode((string) $year); ?>&project_id=<?php echo urlencode((string) $project_id); ?>&team_id=<?php echo urlencode((string) $team_id); ?>"
+                        class="btn btn-icon me-2" data-tooltip="Excele Aktar">
+                        <i class="ti ti-file-excel icon"></i>
+                    </a>
+                <?php } ?>
+
+
+
+                <label for="" class="form-label"></label>
+
+                <div class="dropdown">
+                    <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">
+                        <i class="ti ti-list-details icon me-2"></i>
+                        İşlemler</button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <?php if ($Auths->hasPermission('upload_payment_permission')) { ?>
+                            <a class="dropdown-item" href="#" data-bs-target="#load-payment-modal" data-bs-toggle="modal"
+                                data-tooltip="Personellere yapılan ödemeleri excelden yükleyin" data-tooltip-location="left">
+                                <i class="ti ti-table-import icon me-3 text-info"></i> Ödeme Yükle
+                            </a>
+                        <?php } ?>
+                        <?php if ($Auths->hasPermission('update_fees_permission')) { ?>
+                            <a class="dropdown-item" data-tooltip="Günlük Ücretleri güncelleyin"
+                                data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wages-modal">
+                                <i class="ti ti-user-dollar icon me-3"></i> Ücretleri Güncelle
+                            </a>
+                        <?php } ?>
+
+                        <?php if ($Auths->hasPermission('payroll_export_excel')) { ?>
+                            <a class="dropdown-item add-income"
+                                data-tooltip="Personellere yapılacak ödeme listesini indirin" data-tooltip-location="left"
+                                href="pages/payroll/xls/bank-list-for-payments.php">
+                                <i class="ti ti-checklist icon me-3"></i> Banka Listesi İndir
+                            </a>
+                        <?php } ?>
+                        <?php if ($Auths->hasPermission('income_expense_add_update')) { ?>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-income-modal">
+                                <i class="ti ti-circle-plus icon me-3 text-success"></i> Toplu Gelir Ekle
+                            </a>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wage-cut-modal">
+                                <i class="ti ti-circle-minus icon me-3 text-danger"></i> Toplu Kesinti Ekle
+                            </a>
+                        <?php } ?>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" id="update_personnel">
+                            <i class="ti ti-users-plus icon me-3"></i> Personelleri Güncelle
+                        </a>
+                    </div>
+                </div>
+                <a class="btn btn-primary ms-2" href="#" id="payroll_calculate">
+                    <i class="ti ti-calculator icon me-2"></i> Hesapla
+                </a>
+
+
+            </div>
+        </div>
+    </form>
 </div>
 
 
