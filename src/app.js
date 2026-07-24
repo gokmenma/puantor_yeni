@@ -149,16 +149,16 @@ $(function() {
       table.dataTable > tbody > tr > th,
       table.dataTable > tbody > tr:last-child > td,
       table.dataTable > tbody > tr:last-child > th {
-        border-bottom: 1px solid var(--tblr-border-color, #dadcde) !important;
+        border-bottom: 1px solid rgba(98, 105, 118, 0.18) !important;
         border-top: none !important;
       }
       table.dataTable > thead > tr > th,
       table.dataTable > thead > tr > td {
-        border-bottom: 1px solid var(--tblr-border-color, #dadcde) !important;
+        border-bottom: 1px solid rgba(98, 105, 118, 0.14) !important;
       }
       table.dataTable > thead > tr.search-input-row > th,
       table.dataTable > thead > tr.search-input-row > td {
-        border-bottom: 1px solid var(--tblr-border-color, #dadcde) !important;
+        border-bottom: 1px solid rgba(98, 105, 118, 0.12) !important;
         background-color: var(--tblr-bg-surface-secondary, #f8fafc) !important;
         padding: 4px 6px !important;
       }
@@ -180,8 +180,8 @@ $(function() {
        */
       .dt-container.dt-viewport-managed {
         min-height: 0 !important;
-        --dt-header-bg: #eef5fc;
-        --dt-search-header-bg: #f7faff;
+        --dt-header-bg: #f8fafc;
+        --dt-search-header-bg: #fbfcfe;
       }
       [data-bs-theme="dark"] .dt-container.dt-viewport-managed {
         --dt-header-bg: #1b2431;

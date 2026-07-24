@@ -939,7 +939,15 @@ $(document).ready(function() {
 });
 
 function checkProjectsWarning() {
+  const available_projects_count = $("#projects option:not([disabled])").length;
   const current_projects = $("#projects").val() || [];
+
+  if (available_projects_count === 0) {
+    $("#project-empty-warning-bar").addClass("d-none");
+    $("#project-warning-bar").addClass("d-none");
+    return;
+  }
+
   if (current_projects.length === 0) {
     $("#project-empty-warning-bar").removeClass("d-none");
     $("#project-warning-bar").addClass("d-none");
