@@ -146,11 +146,17 @@ $(function() {
 
       /* Ensure table row bottom borders are always visible and distinct */
       table.dataTable > tbody > tr > td,
-      table.dataTable > tbody > tr > th,
+      table.dataTable > tbody > tr > th {
+        border-top: 1px solid rgba(98, 105, 118, 0.18) !important;
+        border-bottom: none !important;
+      }
+      table.dataTable > tbody > tr:first-child > td,
+      table.dataTable > tbody > tr:first-child > th {
+        border-top: none !important;
+      }
       table.dataTable > tbody > tr:last-child > td,
       table.dataTable > tbody > tr:last-child > th {
         border-bottom: 1px solid rgba(98, 105, 118, 0.18) !important;
-        border-top: none !important;
       }
       table.dataTable > thead > tr > th,
       table.dataTable > thead > tr > td {
@@ -217,6 +223,98 @@ $(function() {
         overflow: hidden !important;
         min-height: 0 !important;
       }
+
+      /* Global DataTable empty state */
+      table.dataTable > tbody > tr > td.dt-empty,
+      table.dataTable > tbody > tr > td.dataTables_empty {
+        height: calc(var(--dt-viewport-body-height, 390px) - var(--dt-empty-header-offset, 76px)) !important;
+        min-height: 240px !important;
+        padding: 24px !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        background: transparent !important;
+        border: 0 !important;
+      }
+      .dt-empty-state {
+        width: min(680px, calc(100% - 32px));
+        min-height: 340px;
+        margin: 0 auto;
+        padding: 48px 40px;
+        border: 1px solid rgba(98, 105, 118, 0.08);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fafbfc 0%, #f7f8fa 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #182433;
+        box-sizing: border-box;
+        box-shadow: 0 8px 30px rgba(24, 36, 51, 0.035);
+      }
+      .dt-empty-state-icon {
+        position: relative;
+        isolation: isolate;
+        width: 52px;
+        height: 52px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(98, 105, 118, 0.14);
+        border-radius: 12px;
+        background: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 1px 2px rgba(24, 36, 51, 0.05),
+          0 8px 18px rgba(24, 36, 51, 0.06);
+      }
+      .dt-empty-state-icon::before {
+        content: "";
+        position: absolute;
+        inset: -9px;
+        z-index: -1;
+        border-radius: 16px;
+        background: rgba(98, 105, 118, 0.035);
+      }
+      .dt-empty-state-icon .ti {
+        font-size: 26px;
+        color: #182433;
+      }
+      .dt-empty-state-title {
+        margin-bottom: 8px;
+        font-size: 1.125rem;
+        line-height: 1.4;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .dt-empty-state-description {
+        max-width: 410px;
+        font-size: 0.875rem;
+        line-height: 1.65;
+        color: #667085;
+      }
+      [data-bs-theme="dark"] .dt-empty-state {
+        background: linear-gradient(180deg, #17212e 0%, #151f2c 100%);
+        border-color: rgba(255, 255, 255, 0.05);
+        color: #e6e7e9;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+      [data-bs-theme="dark"] .dt-empty-state-icon {
+        background: #1b2431;
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: none;
+      }
+      [data-bs-theme="dark"] .dt-empty-state-icon .ti {
+        color: #cbd5e1;
+      }
+      [data-bs-theme="dark"] .dt-empty-state-description {
+        color: #94a3b8;
+      }
+      @media (max-height: 720px) {
+        .dt-empty-state {
+          min-height: 260px;
+          padding: 32px;
+        }
+      }
     `)
     .appendTo("head");
 });
@@ -231,7 +329,9 @@ if ($.fn && $.fn.dataTable) {
       topEnd: null
     },
     language: {
-      url: "src/tr.json"
+      url: "src/tr.json",
+      emptyTable: "Henüz kayıt yok",
+      zeroRecords: "Sonuç bulunamadı"
     }
   });
 }
@@ -1627,6 +1727,46 @@ $(document).on('click', '.js-theme-toggle, a[aria-label="Enable dark mode"], a[a
 });
 
 /**
+ * Tüm DataTable örnekleri için merkezi boş durum görünümü.
+ * Gerçekten boş tablolar ile aktif arama/filtre sonucu boş kalan tabloları ayırır.
+ */
+window.renderDataTableEmptyStates = function(table) {
+    var $scope = table ? $(table) : $('table.dataTable');
+
+    $scope.each(function() {
+        var tableNode = this;
+        if (!$.fn.DataTable || !$.fn.DataTable.isDataTable(tableNode)) return;
+
+        var settings = $(tableNode).DataTable().settings()[0];
+        var $emptyCell = $(tableNode).find('tbody td.dt-empty, tbody td.dataTables_empty');
+        if (!$emptyCell.length) return;
+
+        var recordsTotal = typeof settings.fnRecordsTotal === 'function'
+            ? settings.fnRecordsTotal()
+            : (settings._iRecordsTotal || 0);
+        var recordsDisplay = typeof settings.fnRecordsDisplay === 'function'
+            ? settings.fnRecordsDisplay()
+            : (settings._iRecordsDisplay || 0);
+        var isFilteredEmpty = recordsTotal > 0 && recordsDisplay === 0;
+        var icon = isFilteredEmpty ? 'ti-search' : 'ti-inbox';
+        var title = isFilteredEmpty ? 'Sonuç bulunamadı' : 'Henüz kayıt bulunmuyor';
+        var description = isFilteredEmpty
+            ? 'Arama veya filtre ölçütlerinizi değiştirin.<br>Farklı kriterlerle tekrar deneyebilirsiniz.'
+            : 'Bu listede henüz görüntülenecek bir kayıt yok.<br>Yeni kayıtlar eklendiğinde burada listelenecek.';
+
+        $emptyCell.html(
+            '<div class="dt-empty-state" role="status">' +
+                '<div class="dt-empty-state-icon" aria-hidden="true">' +
+                    '<i class="ti ' + icon + '"></i>' +
+                '</div>' +
+                '<div class="dt-empty-state-title">' + title + '</div>' +
+                '<div class="dt-empty-state-description">' + description + '</div>' +
+            '</div>'
+        );
+    });
+};
+
+/**
  * Otomatik DataTable Yüksekliği Ayarlayıcı
  * Her tablonun sayfadaki gerçek konumuna göre veri alanının dikey yüksekliğini hesaplar.
  * Başlığı ve bilgi/sayfalama footer'ını kaydırma alanının dışında görünür tutar.
@@ -1685,6 +1825,9 @@ window.autoAdjustTableHeights = function() {
                 $(this).children('th, td').css('--dt-sticky-top', stickyTop + 'px');
                 stickyTop += this.getBoundingClientRect().height;
             });
+            $container.css('--dt-empty-header-offset', stickyTop + 'px');
+        } else {
+            $container.css('--dt-empty-header-offset', '0px');
         }
     });
 };
@@ -1696,6 +1839,7 @@ window.scheduleTableHeightAdjustment = function(delay) {
 };
 
 $(document).ready(function() {
+    window.renderDataTableEmptyStates();
     window.scheduleTableHeightAdjustment();
     window.scheduleTableHeightAdjustment(150);
     setTimeout(window.autoAdjustTableHeights, 500);
@@ -1711,6 +1855,10 @@ $(document).on('shown.bs.tab shown.bs.collapse hidden.bs.collapse closed.bs.aler
 
 $(document).ajaxComplete(function() {
     window.scheduleTableHeightAdjustment(150);
+});
+
+$(document).on('init.dt draw.dt', function(e, settings) {
+    window.renderDataTableEmptyStates(settings.nTable);
 });
 
 $(document).on('init.dt draw.dt column-visibility.dt responsive-display.dt', function() {

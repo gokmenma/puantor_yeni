@@ -154,7 +154,7 @@ try {
             if ($search !== '') {
                 $matches = false;
                 foreach ($searchable as $value) {
-                    if (mb_stripos((string) $value, $search, 0, 'UTF-8') !== false) {
+                    if (Helper::searchContains($value, $search)) {
                         $matches = true;
                         break;
                     }
@@ -165,7 +165,7 @@ try {
             }
 
             foreach ($columnSearches as $index => $value) {
-                if (mb_stripos((string) ($searchable[$index] ?? ''), $value, 0, 'UTF-8') === false) {
+                if (!Helper::searchContains($searchable[$index] ?? '', $value)) {
                     $matches = false;
                     break;
                 }

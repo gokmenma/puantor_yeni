@@ -75,6 +75,21 @@ class Helper
         return strlen($value) > $lenght ? substr($value, 0, $lenght) . '...' : $value;
     }
 
+    public static function normalizeSearchText($value)
+    {
+        $value = mb_strtolower((string) $value, 'UTF-8');
+        return str_replace(["\u{0307}", 'ı'], ['', 'i'], $value);
+    }
+
+    public static function searchContains($haystack, $needle)
+    {
+        $needle = self::normalizeSearchText($needle);
+        if ($needle === '') {
+            return true;
+        }
+        return mb_strpos(self::normalizeSearchText($haystack), $needle, 0, 'UTF-8') !== false;
+    }
+
     public static function formattedMoney($value, $currency = 1)
     {
         return number_format($value, 2, ',', '.') . ' ' . self::MONEY_UNIT[$currency];
