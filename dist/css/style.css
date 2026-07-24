@@ -1872,39 +1872,6 @@ min-height: 100px !important;} */
     0% { transform: scale3d(1, 1, 1); }
     10%, 20% { transform: scale3d(.9, .9, .9) rotate3d(0, 0, 1, -3deg); }
     30%, 50%, 70%, 90% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg); }
-    40%, 60%, 80% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg); }
-    100% { transform: scale3d(1, 1, 1); }
-}
-
-/* ==========================================================================
-   DataTables Full Viewport Layout, Sticky Header & Single Scrollbar
-   ========================================================================== */
-
-/* Prevent double/multiple scrollbars on parent wrappers when DataTables is present */
-html:has(table.dataTable),
-body:has(table.dataTable) {
-    overflow: hidden !important;
-}
-
-body:has(table.dataTable) .page-wrapper,
-body:has(table.dataTable) .page-body {
-    overflow: hidden !important;
-}
-
-/* Page & Card Layout Flex Stretch */
-.page-body {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 1 auto !important;
-}
-
-.card:has(table.dataTable),
-.card-body:has(table.dataTable) {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 1 auto !important;
-    overflow: hidden !important;
-}
 
 /* 1. DataTables Main Container */
 div.dt-container {
