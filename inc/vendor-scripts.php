@@ -141,9 +141,9 @@ if ($page == 'projects/list' || $page == 'projects/manage') {
 // Bordro sayfası
 if ($page == 'payroll/list') {
     echo '<script src="./src/bordro/bordro.js?v=' . time() . '"></script>';
-    echo '<script src="./src/bordro/payment.js"></script>';
-    echo '<script src="./src/bordro/wage_cut.js"></script>';
-    echo '<script src="./src/bordro/income.js"></script>';
+    echo '<script src="./src/bordro/payment.js?v=' . time() . '"></script>';
+    echo '<script src="./src/bordro/wage_cut.js?v=' . time() . '"></script>';
+    echo '<script src="./src/bordro/income.js?v=' . time() . '"></script>';
     echo '<script src="./src/bordro/bulk-import.js"></script>';
     echo '<script src="./src/bordro/bulk-wages.js"></script>';
 

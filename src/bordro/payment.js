@@ -1,7 +1,7 @@
 $(document).on("click", ".add-payment", function () {
   let personel_id = $(this).data("id");
   let personel_name = $(this).closest("tr").find("td:eq(1)").text();
-  let balance = $(this).closest("tr").find("td:eq(9)").text();
+  let balance = $(this).attr("data-balance") || "";
   $("#person_id_payment").val(personel_id);
   $("#person_name_payment").text(personel_name);
   console.log(personel_name);
@@ -88,6 +88,7 @@ $(document).on("click", "#person_payment_balance", function () {
   if (balanceNumber < 0) {
     return;
   }
-  $("#payment_amount").val(balanceNumber);
+  let formattedVal = balanceNumber.toFixed(2).replace(".", ",");
+  $("#payment_amount").val(formattedVal).trigger("input");
   $("#payment_type").val("Bakiye Ödemesi").focus();
 });

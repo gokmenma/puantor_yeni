@@ -685,7 +685,7 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 
 
                                     <!-- Bakiye rengini belirle ve göster -->
-                                    <td class="text-end <?php echo Helper::balanceColor($kalan) ?> view-payroll-detail"
+                                    <td class="text-end payroll-balance <?php echo Helper::balanceColor($kalan) ?> view-payroll-detail"
                                         data-id="<?php echo $id ?>"
                                         data-month="<?php echo $month ?>"
                                         data-year="<?php echo $year ?>"
@@ -704,7 +704,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                                                 data-bs-toggle="dropdown">İşlem</button>
                                             <div class="dropdown-menu dropdown-menu-end">
                                                 <?php if ($Auths->hasPermission('make_staff_payment')) { ?>
-                                                    <a class="dropdown-item add-payment" data-id="<?php echo $id ?>" href="#"
+                                                    <a class="dropdown-item add-payment" data-id="<?php echo $id ?>"
+                                                        data-balance="<?php echo htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8'); ?>" href="#"
                                                         data-bs-toggle="modal" data-bs-target="#payment-modal">
                                                         <i class="ti ti-cash-register icon me-3"></i> Ödeme Yap
                                                     </a>
@@ -713,12 +714,14 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                                                 <?php if ($Auths->hasPermission("income_expense_add_update")) {
                                                     ; ?>
                                                     <a class="dropdown-item add-wage-cut" data-id="<?php echo $id ?>"
+                                                        data-balance="<?php echo htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
                                                         data-tooltip="Avans,Ceza veya Bes gibi" data-tooltip-location="left"
                                                         href="#">
                                                         <i class="ti ti-cut icon me-3"></i> Kesinti Ekle
                                                     </a>
 
                                                     <a class="dropdown-item add-income" data-id="<?php echo $id ?>"
+                                                        data-balance="<?php echo htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
                                                         data-tooltip="Prim,İkramiye veya Ödül gibi" data-tooltip-location="left"
                                                         href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
                                                         <i class="ti ti-download icon me-3"></i> Gelir Ekle

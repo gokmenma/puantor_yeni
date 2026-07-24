@@ -93,12 +93,10 @@ $(document).on("click", "#person_payment_balance", function () {
     balanceText.replace(/[^\d,-]/g, "").replace(",", ".")
   );
   
-  if(balanceNumber < 0){
-    return
+  if (balanceNumber < 0) {
+    return;
   }
-  $("#payment_amount").val(balanceNumber);
+  let formattedVal = balanceNumber.toFixed(2).replace(".", ",");
+  $("#payment_amount").val(formattedVal).trigger("input");
   $("#payment_type").val("Bakiye Ödemesi").focus();
 });
-
-
-

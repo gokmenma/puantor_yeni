@@ -1,7 +1,7 @@
 $(document).on("click", ".add-income", function () {
     let personel_id = $(this).data("id");
     let personel_name = $(this).closest("tr").find("td:eq(1)").text();
-    let balance = $(this).closest("tr").find("td:eq(9)").text();
+    let balance = $(this).attr("data-balance") || "";
     $("#person_id_income").val(personel_id);
     $("#person_name_income").text(personel_name);
     console.log(personel_name);
@@ -87,7 +87,7 @@ $(document).on("click", ".add-income", function () {
     if (balanceNumber < 0) {
       return;
     }
-    $("#income_amount").val(balanceNumber);
+    let formattedVal = balanceNumber.toFixed(2).replace(".", ",");
+    $("#income_amount").val(formattedVal).trigger("input");
     $("#income_type").val("Bakiye Ödemesi").focus();
   });
-  

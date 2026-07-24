@@ -249,17 +249,21 @@ try {
             </div>
         </div>";
 
+        $safeBalance = htmlspecialchars(Helper::formattedMoney($kalan), ENT_QUOTES, 'UTF-8');
         $actions = '';
         if ($canMakePayment) {
-            $actions .= '<a class="dropdown-item add-payment" data-id="' . $encryptedId . '" href="#" data-bs-toggle="modal" data-bs-target="#payment-modal">
+            $actions .= '<a class="dropdown-item add-payment" data-id="' . $encryptedId
+                . '" data-balance="' . $safeBalance . '" href="#" data-bs-toggle="modal" data-bs-target="#payment-modal">
                 <i class="ti ti-cash-register icon me-3"></i> Ödeme Yap
             </a>';
         }
         if ($canEditIncomeExpense) {
-            $actions .= '<a class="dropdown-item add-wage-cut" data-id="' . $encryptedId . '" data-tooltip="Avans,Ceza veya Bes gibi" data-tooltip-location="left" href="#">
+            $actions .= '<a class="dropdown-item add-wage-cut" data-id="' . $encryptedId
+                . '" data-balance="' . $safeBalance . '" data-tooltip="Avans,Ceza veya Bes gibi" data-tooltip-location="left" href="#">
                 <i class="ti ti-cut icon me-3"></i> Kesinti Ekle
             </a>
-            <a class="dropdown-item add-income" data-id="' . $encryptedId . '" data-tooltip="Prim,İkramiye veya Ödül gibi" data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
+            <a class="dropdown-item add-income" data-id="' . $encryptedId
+                . '" data-balance="' . $safeBalance . '" data-tooltip="Prim,İkramiye veya Ödül gibi" data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
                 <i class="ti ti-download icon me-3"></i> Gelir Ekle
             </a>';
         }
@@ -294,7 +298,7 @@ try {
             '<span class="text-purple fw-semibold">' . ($icra > 0 ? Helper::formattedMoney($icra) : '0,00 ₺') . '</span>',
             '<span class="view-payroll-detail"' . $detailAttributes . '>'
                 . Helper::formattedMoney($odemeHaricIcra) . ' <i class="ti ti-cash-register icon color-green"></i></span>',
-            '<span class="' . Helper::balanceColor($kalan) . ' view-payroll-detail"' . $detailAttributes . '>'
+            '<span class="payroll-balance ' . Helper::balanceColor($kalan) . ' view-payroll-detail"' . $detailAttributes . '>'
                 . Helper::formattedMoney($kalan) . ' <i class="ti ti-credit-card-pay icon"></i></span>',
             '<div class="dropdown">
                 <button class="btn dropdown-toggle" data-bs-toggle="dropdown">İşlem</button>

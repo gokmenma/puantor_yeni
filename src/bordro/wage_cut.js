@@ -1,7 +1,7 @@
 $(document).on("click", ".add-wage-cut", function () {
     let personel_id = $(this).data("id");
     let personel_name = $(this).closest("tr").find("td:eq(1)").text();
-    let balance = $(this).closest("tr").find("td:eq(9)").text();
+    let balance = $(this).attr("data-balance") || "";
     $("#person_id_wage_cut").val(personel_id);
     $("#person_name_wage_cut").text(personel_name);
     $("#wage_cut_modal").modal("show");
