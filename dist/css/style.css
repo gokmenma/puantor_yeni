@@ -1181,13 +1181,13 @@ body:not([data-bs-theme="dark"]) table.dataTable thead td,
 [data-bs-theme="light"] table.dataTable thead th,
 [data-bs-theme="light"] .table thead td,
 [data-bs-theme="light"] table.dataTable thead td {
-  background-color: #f1f5f9 !important;
+  background-color: #eef5fc !important;
   color: #0f172a !important;
   font-weight: 700 !important;
   border-top: none !important;
   border-left: none !important;
-  border-right: 1px solid #cbd5e1 !important;
-  border-bottom: 1px solid #cbd5e1 !important;
+  border-right: 1px solid #d8e5f3 !important;
+  border-bottom: 1px solid #d8e5f3 !important;
   box-shadow: none !important;
 }
 
@@ -1200,11 +1200,11 @@ body:not([data-bs-theme="dark"]) table.dataTable thead th:last-child,
 
 body:not([data-bs-theme="dark"]) .search-input-row th,
 [data-bs-theme="light"] .search-input-row th {
-  background-color: #f1f5f9 !important;
+  background-color: #f7faff !important;
   border-top: none !important;
   border-left: none !important;
-  border-right: 1px solid #cbd5e1 !important;
-  border-bottom: 2px solid #cbd5e1 !important;
+  border-right: 1px solid #d8e5f3 !important;
+  border-bottom: 2px solid #d8e5f3 !important;
   padding: 4px 6px !important;
 }
 
@@ -2005,7 +2005,7 @@ table.dataTable thead {
 
 table.dataTable thead,
 table.dataTable thead tr {
-    background-color: #f1f5f9 !important;
+    background-color: #eef5fc !important;
 }
 
 table.dataTable thead tr:first-child th,
@@ -2013,7 +2013,7 @@ table.dataTable thead tr:first-child td {
     position: sticky !important;
     top: 0 !important;
     z-index: 30 !important;
-    background-color: #f1f5f9 !important;
+    background-color: #eef5fc !important;
 }
 
 table.dataTable thead tr.search-input-row th,
@@ -2021,7 +2021,7 @@ table.dataTable thead tr.search-input-row td {
     position: sticky !important;
     top: 36px !important;
     z-index: 29 !important;
-    background-color: #f1f5f9 !important;
+    background-color: #f7faff !important;
 }
 
 /* Dark Mode Sticky Headers Background */
