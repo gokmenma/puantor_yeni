@@ -69,7 +69,7 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
 
             <div class="navbar-nav flex-row order-md-last ms-auto me-3">
 
-                <div class="nav-item ms-auto">
+                <div class="nav-item ms-auto me-1">
                     <?php
 
 
@@ -81,9 +81,9 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                     ?>
                     
                 </div>
-                <div class="d-none d-md-flex">
+                <div class="d-none d-md-flex align-items-center">
 
-                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 hide-theme-dark js-theme-toggle"
+                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 me-1 hide-theme-dark js-theme-toggle"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable dark mode"
                         data-bs-original-title="Enable dark mode">
                         <!-- Download SVG icon from http://tabler-icons.io/i/moon -->
@@ -95,7 +95,7 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                             </path>
                         </svg>
                     </a>
-                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 hide-theme-light js-theme-toggle"
+                    <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 me-1 hide-theme-light js-theme-toggle"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable light mode"
                         data-bs-original-title="Enable light mode">
                         <!-- Download SVG icon from http://tabler-icons.io/i/sun -->
@@ -131,7 +131,7 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                             $_topbar_open_supports_count = 0;
                         }
                     ?>
-                    <a href="index.php?p=<?php echo $_topbar_is_superadmin ? 'supports/admin-tickets' : 'supports/tickets'; ?>" class="nav-link px-0 me-3"
+                    <a href="index.php?p=<?php echo $_topbar_is_superadmin ? 'supports/admin-tickets' : 'supports/tickets'; ?>" class="nav-link px-0 me-1"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Destek Talepleri" aria-label="Destek Talepleri">
                         <span class="position-relative d-inline-flex">
                             <i class="ti ti-headset" style="font-size:1.25rem;"></i>
@@ -142,7 +142,7 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                     </a>
                     <?php } ?>
 
-                    <div class="nav-item dropdown d-none d-md-flex me-3">
+                    <div class="nav-item dropdown d-none d-md-flex me-1">
                         <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
                             aria-label="Duyurular">
                             <span class="position-relative d-inline-flex">

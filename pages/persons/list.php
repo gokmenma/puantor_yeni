@@ -69,8 +69,6 @@ $perm->checkAuthorize("personnel_page");
                                     data-bs-target="#bulk-wages-modal">
                                     <i class="ti ti-user-dollar icon me-3"></i> Ücretleri Güncelle
                                 </a>
-
-
                             </div>
                         </div>
                         <a href="#" class="btn btn-primary route-link" data-page="persons/manage">
@@ -81,12 +79,11 @@ $perm->checkAuthorize("personnel_page");
 
                 </div>
 
-
                 <div class="table-responsive">
                     <table class="table card-table table-hover text-nowrap" id="persons">
                         <thead>
                             <tr>
-                                <th style="width: 2%" class="no-export" data-orderable="false"><input type="checkbox"
+                                <th style="width: 40px; min-width: 40px;" class="text-center no-export" data-orderable="false"><input type="checkbox"
                                         class="form-check-input select-all-persons"></th>
                                 <th style="width:5%">Sıra</th>
                                 <th>Adı Soyadı</th>

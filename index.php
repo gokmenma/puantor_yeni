@@ -244,7 +244,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
     <div class="page">
 
 
-        <div class="fab-menu text-center">
+        <div class="fab-menu text-center d-none">
             <button class="main-fab" onclick="toggleFabMenu()">
                 <span id="main-icon" class="icon-hamburger">&#9776;</span>
                 <span id="close-icon" class="icon-close">&#10006;</span>

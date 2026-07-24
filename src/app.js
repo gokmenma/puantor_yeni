@@ -3,12 +3,10 @@ $(function() {
   $("<style>")
     .prop("type", "text/css")
     .html(`
-      /* Global Top Alignment & Zero Gap Fix for DataTables & Tables across all pages */
+      /* Global Layout & Padding Reset for DataTables & Tables */
       div.dt-container {
         margin: 0 !important;
         padding: 0 !important;
-        display: block !important;
-        vertical-align: top !important;
       }
 
       div.dt-container div.dt-layout-row {
@@ -16,7 +14,6 @@ $(function() {
         margin-bottom: 0 !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
-        align-items: flex-start !important;
       }
 
       div.dt-container div.dt-layout-row.dt-empty-row,
@@ -33,27 +30,33 @@ $(function() {
       div.dt-container div.dt-layout-row.dt-layout-table {
         margin: 0 !important;
         padding: 0 !important;
-        display: block !important;
       }
 
       div.dt-container div.dt-layout-row.dt-layout-table > div.dt-layout-cell {
         margin: 0 !important;
         padding: 0 !important;
-        display: block !important;
       }
 
       div.dt-container table.dataTable,
+      table.card-table.dataTable,
+      table.card-table,
       table.dataTable {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-        vertical-align: top !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
       }
 
       .table-responsive {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
-        vertical-align: top !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
       }
+
+
 
       /* Card-body padding reset when it wraps table-responsive or DataTables */
       .card-body:has(> .table-responsive),
@@ -70,17 +73,20 @@ $(function() {
         margin-top: 0 !important;
       }
 
-      /* Footer controls layout */
+      /* Footer controls layout - Pinned to bottom of card */
       div.dt-container .dt-layout-row:last-child,
       div.dt-container .dt-layout-row:has(.dt-paging),
       div.dt-container .dt-layout-row:has(.dt-info) {
+        margin-top: auto !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        z-index: 11 !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
         flex-wrap: wrap !important;
         width: 100% !important;
         gap: 1rem !important;
-        margin: 0 !important;
         padding: 0.5rem 1.25rem !important;
         background-color: var(--tblr-bg-surface, #ffffff) !important;
         border-top: 1px solid var(--tblr-border-color, #dadcde) !important;
@@ -155,6 +161,54 @@ $(function() {
         border-bottom: 1px solid var(--tblr-border-color, #dadcde) !important;
         background-color: var(--tblr-bg-surface-secondary, #f8fafc) !important;
         padding: 4px 6px !important;
+      }
+
+      /* Ensure proper padding for first & last table columns in card tables so checkboxes & text are never clipped */
+      table.dataTable > thead > tr > th:first-child,
+      table.dataTable > tbody > tr > td:first-child {
+        padding-left: 1.25rem !important;
+      }
+      table.dataTable > thead > tr > th:last-child,
+      table.dataTable > tbody > tr > td:last-child {
+        padding-right: 1.25rem !important;
+      }
+
+      /*
+       * Viewport'a sığdırılan DataTable'larda yalnızca veri alanı kayar.
+       * Header (çok satırlı arama başlığı dahil) kaydırma alanının üstünde,
+       * DataTables bilgi/sayfalama satırı ise altında sabit kalır.
+       */
+      .dt-container.dt-viewport-managed {
+        min-height: 0 !important;
+      }
+      .dt-container.dt-viewport-managed .dt-layout-row.dt-layout-table {
+        min-height: 0 !important;
+      }
+      .dt-container.dt-viewport-managed .dt-viewport-scroll {
+        height: var(--dt-viewport-body-height) !important;
+        max-height: var(--dt-viewport-body-height) !important;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+      }
+      .dt-container.dt-viewport-managed .dt-layout-row.dt-layout-table.dt-viewport-scroll {
+        display: block !important;
+      }
+      .dt-container.dt-viewport-managed .dt-viewport-scroll table.dataTable > thead > tr > th,
+      .dt-container.dt-viewport-managed .dt-viewport-scroll table.dataTable > thead > tr > td {
+        position: sticky !important;
+        top: var(--dt-sticky-top, 0px) !important;
+        z-index: 12 !important;
+        background-color: var(--tblr-bg-surface, #ffffff) !important;
+      }
+      .dt-container.dt-viewport-managed .dt-viewport-scroll table.dataTable > thead > tr.search-input-row > th,
+      .dt-container.dt-viewport-managed .dt-viewport-scroll table.dataTable > thead > tr.search-input-row > td {
+        z-index: 13 !important;
+      }
+      .table-responsive.dt-viewport-host {
+        overflow: hidden !important;
+        min-height: 0 !important;
       }
     `)
     .appendTo("head");
@@ -1513,6 +1567,10 @@ window.createDataTable = function (selector, userOptions) {
         if (typeof userInitDone === 'function') {
             userInitDone.call(this, settings, json);
         }
+
+        if (typeof window.autoAdjustTableHeights === 'function') {
+            setTimeout(window.autoAdjustTableHeights, 50);
+        }
     };
 
     delete config.skipSearch;
@@ -1559,4 +1617,95 @@ $(document).on('click', '.js-theme-toggle, a[aria-label="Enable dark mode"], a[a
         data: { theme: targetTheme },
         dataType: 'json'
     });
+});
+
+/**
+ * Otomatik DataTable Yüksekliği Ayarlayıcı
+ * Her tablonun sayfadaki gerçek konumuna göre veri alanının dikey yüksekliğini hesaplar.
+ * Başlığı ve bilgi/sayfalama footer'ını kaydırma alanının dışında görünür tutar.
+ */
+window.autoAdjustTableHeights = function() {
+    var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    var bottomGap = 20;
+    var minimumBodyHeight = 100;
+
+    $('div.dt-container').each(function() {
+        var $container = $(this);
+        var tableId = $container.find('table.dataTable').first().attr('id') || '';
+        var tableBottomGap = (tableId === 'persons' || tableId === 'bordroTable') ? 10 : bottomGap;
+
+        // Modal içindeki küçük/seçim tabloları kendi tanımlı ölçülerini kullanmaya devam etsin.
+        if (!$container.is(':visible') || $container.closest('.modal').length) return;
+
+        var $tableRow = $container.children('.dt-layout-row.dt-layout-table').first();
+        if (!$tableRow.length) return;
+
+        // scrollX kullanan DataTables başlığı zaten ayrı üretir. Diğer tablolarda
+        // tüm layout-table alanı kayar ve thead hücreleri sticky tutulur.
+        var $dataTablesScrollBody = $tableRow.find('.dt-scroll-body').first();
+        var $scrollArea = $dataTablesScrollBody.length ? $dataTablesScrollBody : $tableRow;
+        var scrollElement = $scrollArea.get(0);
+        if (!scrollElement) return;
+
+        var scrollTop = scrollElement.getBoundingClientRect().top;
+        var footerHeight = 0;
+
+        // layout-table'dan sonra gelen tüm bilgi/sayfalama satırlarını hesaba kat.
+        $tableRow.nextAll('.dt-layout-row:visible').each(function() {
+            footerHeight += this.getBoundingClientRect().height;
+        });
+
+        var bodyHeight = Math.floor(viewportHeight - scrollTop - footerHeight - tableBottomGap);
+
+        if (bodyHeight < minimumBodyHeight) {
+            $container.removeClass('dt-viewport-managed')
+                .css('--dt-viewport-body-height', '');
+            $scrollArea.removeClass('dt-viewport-scroll');
+            $container.closest('.table-responsive').removeClass('dt-viewport-host');
+            return;
+        }
+
+        $container.addClass('dt-viewport-managed')
+            .css('--dt-viewport-body-height', bodyHeight + 'px');
+        $scrollArea.addClass('dt-viewport-scroll');
+        $container.closest('.table-responsive').addClass('dt-viewport-host');
+
+        // Sticky başlığın her satırı, kendinden önceki başlık satırlarının
+        // toplam yüksekliği kadar aşağıda kalır (normal başlık + arama satırı vb.).
+        if (!$dataTablesScrollBody.length) {
+            var stickyTop = 0;
+            $scrollArea.find('table.dataTable > thead > tr').each(function() {
+                $(this).children('th, td').css('--dt-sticky-top', stickyTop + 'px');
+                stickyTop += this.getBoundingClientRect().height;
+            });
+        }
+    });
+};
+
+var tableHeightTimer = null;
+window.scheduleTableHeightAdjustment = function(delay) {
+    clearTimeout(tableHeightTimer);
+    tableHeightTimer = setTimeout(window.autoAdjustTableHeights, delay || 0);
+};
+
+$(document).ready(function() {
+    window.scheduleTableHeightAdjustment();
+    window.scheduleTableHeightAdjustment(150);
+    setTimeout(window.autoAdjustTableHeights, 500);
+});
+
+$(window).on('resize orientationchange', function() {
+    window.scheduleTableHeightAdjustment(50);
+});
+
+$(document).on('shown.bs.tab shown.bs.collapse hidden.bs.collapse closed.bs.alert', function() {
+    window.scheduleTableHeightAdjustment(50);
+});
+
+$(document).ajaxComplete(function() {
+    window.scheduleTableHeightAdjustment(150);
+});
+
+$(document).on('init.dt draw.dt column-visibility.dt responsive-display.dt', function() {
+    window.scheduleTableHeightAdjustment(30);
 });

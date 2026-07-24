@@ -527,7 +527,7 @@ table {
 
 /* Tablo içeriğinin kaydırılabilir olması ve başlıkların sabit kalması için */
 .table-responsive {
-    max-height: 70vh;
+    height: auto;
     overflow: auto !important;
     border: 1px solid var(--tblr-border-color);
 }
@@ -1067,15 +1067,19 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                 <label for='projects' class='form-label'>Proje:</label>
                 <?php echo $projectHelper->getProjectSelectMultiple( 'projects', $valid_project_ids ); ?>
             </div>
-            <div class='col-md-1'>
-                <label for='months' class='form-label'>Ay:</label>
-                <?php echo Date::getMonthsSelect( 'months', $month );
-        ?>
-            </div>
-            <div class='col-md-1'>
-                <label for='year' class='form-label'>Yıl:</label>
-                <?php echo Date::getYearsSelect( 'year', $year );
-        ?>
+            <div class="col-md-2">
+                <label for="period_picker" class="form-label">Dönem:</label>
+                <div class="input-group input-group-flat rounded period-picker-group" style="height: 40px !important;">
+                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="prevPeriodBtn" title="Önceki Ay">
+                        <i class="ti ti-chevron-left icon m-0"></i>
+                    </button>
+                    <input type="text" class="form-control text-center fw-bold bg-transparent border-0 px-0 cursor-pointer h-100 shadow-none" id="period_picker" readonly placeholder="Dönem">
+                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="nextPeriodBtn" title="Sonraki Ay">
+                        <i class="ti ti-chevron-right icon m-0"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
+                <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
             </div>
             <div class='col-md-2'>
                 <label for='job_groups' class='form-label'>Grup:</label>
@@ -1770,5 +1774,95 @@ $(document).ready(function() {
     $('#setting-auto-open-modal').on('change', function() {
         localStorage.setItem('autoOpenPuantajTypes', $(this).is(':checked'));
     });
+});
+</script>
+
+<script>
+$(document).ready(function() {
+    function initPuantajPeriodPicker() {
+        var currentMonth = parseInt($('#months').val()) || (new Date().getMonth() + 1);
+        var currentYear = parseInt($('#year').val()) || new Date().getFullYear();
+
+        var fp = flatpickr('#period_picker', {
+            locale: typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.tr ? flatpickr.l10ns.tr : 'tr',
+            defaultDate: new Date(currentYear, currentMonth - 1, 1),
+            dateFormat: "F Y",
+            plugins: [
+                typeof monthSelectPlugin === 'function' ? monthSelectPlugin({
+                    shorthand: false,
+                    dateFormat: "F Y",
+                    altFormat: "F Y"
+                }) : null
+            ].filter(Boolean),
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length > 0) {
+                    var date = selectedDates[0];
+                    var m = (date.getMonth() + 1).toString().padStart(2, '0');
+                    var y = date.getFullYear();
+                    $('#months').val(m);
+                    $('#year').val(y);
+                    document.cookie = "p_months=" + m + "; path=/; max-age=31536000";
+                    document.cookie = "p_year=" + y + "; path=/; max-age=31536000";
+                    if (typeof loadPuantajTable === 'function') {
+                        loadPuantajTable();
+                    } else {
+                        $('#puantajInfoForm').submit();
+                    }
+                }
+            }
+        });
+
+        $(document).off('click.prevP').on('click.prevP', '#prevPeriodBtn', function(e) {
+            e.preventDefault();
+            var m = parseInt($('#months').val());
+            var y = parseInt($('#year').val());
+            if (m === 1) {
+                m = 12;
+                y = y - 1;
+            } else {
+                m = m - 1;
+            }
+            var mStr = m.toString().padStart(2, '0');
+            $('#months').val(mStr);
+            $('#year').val(y);
+            document.cookie = "p_months=" + mStr + "; path=/; max-age=31536000";
+            document.cookie = "p_year=" + y + "; path=/; max-age=31536000";
+            if (fp) {
+                fp.setDate(new Date(y, m - 1, 1), false);
+            }
+            if (typeof loadPuantajTable === 'function') {
+                loadPuantajTable();
+            } else {
+                $('#puantajInfoForm').submit();
+            }
+        });
+
+        $(document).off('click.nextP').on('click.nextP', '#nextPeriodBtn', function(e) {
+            e.preventDefault();
+            var m = parseInt($('#months').val());
+            var y = parseInt($('#year').val());
+            if (m === 12) {
+                m = 1;
+                y = y + 1;
+            } else {
+                m = m + 1;
+            }
+            var mStr = m.toString().padStart(2, '0');
+            $('#months').val(mStr);
+            $('#year').val(y);
+            document.cookie = "p_months=" + mStr + "; path=/; max-age=31536000";
+            document.cookie = "p_year=" + y + "; path=/; max-age=31536000";
+            if (fp) {
+                fp.setDate(new Date(y, m - 1, 1), false);
+            }
+            if (typeof loadPuantajTable === 'function') {
+                loadPuantajTable();
+            } else {
+                $('#puantajInfoForm').submit();
+            }
+        });
+    }
+
+    initPuantajPeriodPicker();
 });
 </script>

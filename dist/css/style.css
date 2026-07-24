@@ -1932,20 +1932,6 @@ div.dt-container .dt-scroll-body {
     overflow: auto !important;
 }
 
-/* Personel Listesi Tablosu Yüksekliği */
-#persons_wrapper .dt-layout-table,
-#persons_wrapper .dt-scroll-body,
-div.dt-container:has(#persons) .dt-layout-table {
-    max-height: calc(100vh - 250px) !important;
-}
-
-/* Bordro Listesi Tablosu Yüksekliği */
-#bordroTable_wrapper .dt-layout-table,
-#bordroTable_wrapper .dt-scroll-body,
-div.dt-container:has(#bordroTable) .dt-layout-table {
-    max-height: calc(100vh - 360px) !important;
-}
-
 /* 3. Table Column Non-wrapping & Alignment Fix */
 table.dataTable {
     width: 100% !important;
