@@ -26,8 +26,8 @@ $giftEndDate = date('d.m.Y', strtotime('+1 month'));
 $requestHost = preg_replace('/[^a-zA-Z0-9.:-]/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'www.puantor.com.tr'));
 $requestScheme = function_exists('puantorIsHttps') && puantorIsHttps() ? 'https' : 'http';
 $requestBaseUrl = $requestScheme . '://' . $requestHost;
-$emailLogoPath = ROOT . '/static/png/puantor-email-logo.jpg';
-$emailLogoSrc = 'api/mail-islemleri/logo.php?v=' . (is_file($emailLogoPath) ? filemtime($emailLogoPath) : time());
+$emailLogoPath = ROOT . '/static/Logo-ai.svg';
+$emailLogoSrc = 'static/Logo-ai.svg?v=' . (is_file($emailLogoPath) ? filemtime($emailLogoPath) : time());
 $giftTemplateHtml = str_replace(
     [
         '{{BASLANGIC_TARIHI}}',
