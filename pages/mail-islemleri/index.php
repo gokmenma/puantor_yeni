@@ -19,6 +19,28 @@ $serverReady = $smtpHost !== '' && $smtpPort > 0;
 $infoReady = $serverReady && filter_var($infoEmail, FILTER_VALIDATE_EMAIL) !== false;
 $supportReady = $serverReady && filter_var($supportEmail, FILTER_VALIDATE_EMAIL) !== false;
 $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
+$giftTemplatePath = ROOT . '/mail-templates/1-ay-hediye-abonelik.html';
+$giftTemplateHtml = is_file($giftTemplatePath) ? (string) file_get_contents($giftTemplatePath) : '';
+$giftStartDate = date('d.m.Y');
+$giftEndDate = date('d.m.Y', strtotime('+1 month'));
+$requestHost = preg_replace('/[^a-zA-Z0-9.:-]/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'www.puantor.com.tr'));
+$requestScheme = function_exists('puantorIsHttps') && puantorIsHttps() ? 'https' : 'http';
+$requestBaseUrl = $requestScheme . '://' . $requestHost;
+$giftTemplateHtml = str_replace(
+    [
+        '{{BASLANGIC_TARIHI}}',
+        '{{BITIS_TARIHI}}',
+        'https://www.puantor.com.tr/static/png/puantor-email-logo.png',
+        'https://www.puantor.com.tr/sign-in.php',
+    ],
+    [
+        $giftStartDate,
+        $giftEndDate,
+        $requestBaseUrl . '/static/png/puantor-email-logo.png',
+        $requestBaseUrl . '/sign-in.php',
+    ],
+    $giftTemplateHtml
+);
 ?>
 
 <div class="page-header d-print-none mb-0">
@@ -384,7 +406,12 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
                     </div>
 
                     <div>
-                        <label class="form-label required">Mesaj</label>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label required mb-0">Mesaj</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="loadGiftSubscriptionTemplate">
+                                <i class="ti ti-gift me-1"></i>1 Aylık Hediye Şablonu
+                            </button>
+                        </div>
                         <textarea class="form-control" name="icerik" id="mailBody" rows="10"></textarea>
                     </div>
                 </div>
@@ -467,6 +494,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const composeForm = document.getElementById('mailComposeForm');
     const sendButton = document.getElementById('mailSendButton');
     const csrfToken = composeForm.querySelector('input[name="csrf_token"]').value;
+    const giftTemplateHtml = <?php echo json_encode($giftTemplateHtml, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
     let inboxPage = 1;
     let inboxPageCount = 1;
     let inboxLoaded = false;
@@ -491,6 +519,18 @@ document.addEventListener('DOMContentLoaded', function () {
             ['insert', ['link']],
             ['view', ['codeview']]
         ]
+    });
+
+    document.getElementById('loadGiftSubscriptionTemplate').addEventListener('click', function () {
+        composeForm.querySelector('[name="konu"]').value = "Puantor'dan Size 1 Aylık Hediye Abonelik 🎁";
+        $('#mailBody').summernote('code', giftTemplateHtml);
+        Swal.fire({
+            icon: 'success',
+            title: 'Şablon hazırlandı',
+            text: 'Başlangıç ve bitiş tarihlerini kontrol ederek alıcıları seçebilirsiniz.',
+            timer: 2200,
+            showConfirmButton: false
+        });
     });
 
     const escapeHtml = function (value) {
