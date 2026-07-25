@@ -770,6 +770,23 @@ html, body {
     margin: 0 !important;
     padding-bottom: env(safe-area-inset-bottom, 20px) !important;
     width: 100%;
+    max-height: 80vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.modal-bottom-sheet .modal-header {
+    flex-shrink: 0 !important;
+}
+
+.modal-bottom-sheet .modal-body {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+}
+
+.modal-bottom-sheet .modal-footer {
+    flex-shrink: 0 !important;
 }
 
 /* Swipe-to-Delete Styling */

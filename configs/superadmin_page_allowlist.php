@@ -53,7 +53,7 @@ return [
     'modules' => [
         //ana sayfa
         [
-            'menu_titles' => ['Admin Ana Sayfa', 'Ana Sayfa'],
+            'menu_titles' => ['Dashboard'],
             'exact_pages' => ['admin-home'],
         ],
         [

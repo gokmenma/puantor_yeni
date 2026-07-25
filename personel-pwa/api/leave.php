@@ -28,16 +28,31 @@ try {
         if (!$person_id) throw new Exception('Personel belirtilmedi.');
 
         $model = new IzinTalep();
-        $hakedis = new IzinHakedis();
+        $hakedisModel = new IzinHakedis();
+
+        $personObj = (new Persons())->find($person_id);
+        if ($personObj && !empty($personObj->job_start_date)) {
+            $hakedisModel->hesaplaVeKaydet($person_id, (int)$personObj->firm_id, $personObj->job_start_date, $personObj->birth_date ?? null);
+        }
 
         $talepler = $model->getByPersonel($person_id);
-        $kalan    = $hakedis->getTotalKalan($person_id);
+        $hakedisler = $hakedisModel->getByPersonel($person_id);
+
+        $toplamHakedis = 0;
+        $toplamKullanilan = 0;
+        foreach ($hakedisler as $h) {
+            $toplamHakedis += (int) ($h->gun_sayisi ?? 0);
+            $toplamKullanilan += (int) ($h->kullanilan_gun ?? 0);
+        }
+        $kalan = max(0, $toplamHakedis - $toplamKullanilan);
 
         ob_clean();
         echo json_encode([
-            'status'    => 'success',
-            'list'      => $talepler,
-            'kalan_gun' => $kalan,
+            'status'          => 'success',
+            'list'            => $talepler,
+            'toplam_hakedis'  => $toplamHakedis,
+            'kullanilan_gun'  => $toplamKullanilan,
+            'kalan_gun'       => $kalan,
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

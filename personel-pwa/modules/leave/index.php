@@ -51,13 +51,34 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
         <div class="position-absolute" style="right: -10px; bottom: -20px; font-size: 8rem; opacity: 0.12; pointer-events: none;">
             <i class="ti ti-beach"></i>
         </div>
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="text-white-50 text-xs text-uppercase tracking-wider font-weight-bold" style="font-size: 0.7rem;">KALAN YILLIK İZİN</span>
-            <i class="ti ti-beach" style="font-size: 1.5rem; opacity: 0.8;"></i>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="text-white-50 text-xs text-uppercase tracking-wider font-weight-bold" style="font-size: 0.75rem;">YILLIK İZİN ÖZETİ</span>
+            <span class="badge bg-white bg-opacity-20 text-white rounded-pill px-2.5 py-1 text-xs fw-normal d-flex align-items-center gap-1">
+                <i class="ti ti-info-circle"></i> Detaylar
+            </span>
         </div>
-        <div class="d-flex align-items-baseline gap-1 text-white">
-            <h2 id="leave-kalan-gun" class="mb-0 text-bold" style="font-size: 2.2rem; letter-spacing: -1px;">—</h2>
-            <span class="fs-4 opacity-75 font-weight-bold">gün</span>
+        <div class="row g-2 text-white position-relative" style="z-index: 1;">
+            <div class="col-4 border-end border-white-10 pe-2">
+                <div class="text-white-50 text-xs fw-medium mb-1">Toplam Hakediş</div>
+                <div class="d-flex align-items-baseline gap-1">
+                    <span id="leave-toplam-hakedis" class="fs-2 fw-bold">—</span>
+                    <span class="text-xs opacity-75">gün</span>
+                </div>
+            </div>
+            <div class="col-4 border-end border-white-10 px-2">
+                <div class="text-white-50 text-xs fw-medium mb-1">Kullanılan</div>
+                <div class="d-flex align-items-baseline gap-1">
+                    <span id="leave-kullanilan-gun" class="fs-2 fw-bold">—</span>
+                    <span class="text-xs opacity-75">gün</span>
+                </div>
+            </div>
+            <div class="col-4 ps-2">
+                <div class="text-white-50 text-xs fw-medium mb-1">Kalan İzin</div>
+                <div class="d-flex align-items-baseline gap-1">
+                    <span id="leave-kalan-gun" class="fs-1 fw-bold text-white">—</span>
+                    <span class="text-xs opacity-75 font-weight-bold">gün</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -84,12 +105,29 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
 <!-- Modal: Yeni İzin Talebi -->
 <div class="modal modal-blur fade modal-bottom-sheet" id="modalYeniIzin" tabindex="-1">
     <div class="modal-dialog" role="document">
-        <div class="modal-content" style="border-radius: 24px 24px 0 0;">
-            <div class="modal-header border-0 pb-0">
+        <div class="modal-content" style="border-radius: 24px 24px 0 0; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header border-0 pb-0 flex-shrink-0">
                 <h5 class="modal-title fw-bold">Yeni İzin Talebi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body pt-2">
+            <div class="modal-body pt-2 overflow-y-auto flex-grow-1" style="max-height: calc(80vh - 120px);">
+                <!-- Özet Hakediş ve Kalan İzin Bilgisi -->
+                <div class="mb-3 p-3 bg-light rounded-3 border border-light">
+                    <div class="row text-center g-2">
+                        <div class="col-4 border-end">
+                            <div class="text-muted extra-small fw-semibold text-uppercase" style="font-size: 0.65rem;">Toplam Hakediş</div>
+                            <div class="fs-5 fw-bold text-dark"><span id="modal-toplam-hakedis">—</span> <span class="fs-6 fw-normal text-muted">gün</span></div>
+                        </div>
+                        <div class="col-4 border-end">
+                            <div class="text-muted extra-small fw-semibold text-uppercase" style="font-size: 0.65rem;">Kullanılan</div>
+                            <div class="fs-5 fw-bold text-secondary"><span id="modal-kullanilan-gun">—</span> <span class="fs-6 fw-normal text-muted">gün</span></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted extra-small fw-semibold text-uppercase" style="font-size: 0.65rem;">Kalan İzin</div>
+                            <div class="fs-5 fw-bold text-info"><span id="modal-kalan-gun">—</span> <span class="fs-6 fw-normal text-muted">gün</span></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">İzin Türü</label>
                     <select id="leave-tur" class="form-select">
@@ -125,9 +163,9 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
                     <textarea id="leave-adres" class="form-control" rows="2" style="resize:none;" placeholder="İzninizi geçireceğiniz adres..."></textarea>
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-light w-100 mb-2" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-info w-100 fw-bold" id="btn-leave-gonder">Talep Gönder</button>
+            <div class="modal-footer border-0 pt-2 flex-shrink-0 d-flex gap-2">
+                <button type="button" class="btn btn-light flex-fill mb-0 py-2.5 rounded-3" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-info flex-fill mb-0 py-2.5 fw-bold rounded-3" id="btn-leave-gonder">Talep Gönder</button>
             </div>
         </div>
     </div>
@@ -247,7 +285,29 @@ body[data-bs-theme="dark"] .leave-item-pending:active .transaction-item-content 
             .then(res => {
                 if (res.status !== 'success') return;
                 allTalepler = res.list;
-                document.getElementById('leave-kalan-gun').textContent = res.kalan_gun ?? '—';
+
+                const toplamHakedis = res.toplam_hakedis ?? '—';
+                const kullanilanGun = res.kullanilan_gun ?? '—';
+                const kalanGun = res.kalan_gun ?? '—';
+
+                // Ana sayfa özet kartı
+                const elToplam = document.getElementById('leave-toplam-hakedis');
+                const elKullanilan = document.getElementById('leave-kullanilan-gun');
+                const elKalan = document.getElementById('leave-kalan-gun');
+
+                if (elToplam) elToplam.textContent = toplamHakedis;
+                if (elKullanilan) elKullanilan.textContent = kullanilanGun;
+                if (elKalan) elKalan.textContent = kalanGun;
+
+                // Modal özet kartı
+                const modalToplam = document.getElementById('modal-toplam-hakedis');
+                const modalKullanilan = document.getElementById('modal-kullanilan-gun');
+                const modalKalan = document.getElementById('modal-kalan-gun');
+
+                if (modalToplam) modalToplam.textContent = toplamHakedis;
+                if (modalKullanilan) modalKullanilan.textContent = kullanilanGun;
+                if (modalKalan) modalKalan.textContent = kalanGun;
+
                 renderList();
             });
     }
