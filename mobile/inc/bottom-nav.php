@@ -3,6 +3,28 @@
 $active_page = $active_page ?? 'home';
 ?>
 <nav class="app-nav">
+  <?php if (!empty($is_superadmin)): ?>
+  <a href="dashboard" class="nav-item <?php echo ($active_page == 'home') ? 'active' : ''; ?>">
+    <i class="ti ti-shield-lock"></i>
+    <span>Sistem</span>
+  </a>
+  <a href="tickets" class="nav-item <?php echo ($route === 'tickets' || $route === 'ticket-view') ? 'active' : ''; ?>">
+    <i class="ti ti-headset"></i>
+    <span>Destek</span>
+  </a>
+  <a href="abonelik-islemleri" class="nav-item <?php echo ($route === 'abonelik-islemleri') ? 'active' : ''; ?>">
+    <i class="ti ti-building-community"></i>
+    <span>Abonelik</span>
+  </a>
+  <a href="notifications" class="nav-item <?php echo ($route === 'notifications') ? 'active' : ''; ?>">
+    <i class="ti ti-bell"></i>
+    <span>Bildirim</span>
+  </a>
+  <a href="more" class="nav-item <?php echo ($route === 'more' || $route === 'settings' || $route === 'profile') ? 'active' : ''; ?>">
+    <i class="ti ti-settings"></i>
+    <span>Menü</span>
+  </a>
+  <?php else: ?>
   <a href="home" class="nav-item <?php echo ($active_page == 'home') ? 'active' : ''; ?>">
     <i class="ti ti-smart-home"></i>
     <span>Ana Sayfa</span>
@@ -39,4 +61,5 @@ $active_page = $active_page ?? 'home';
     <i class="ti ti-grid-pattern"></i>
     <span>Menü</span>
   </a>
+  <?php endif; ?>
 </nav>

@@ -1,17 +1,30 @@
 <?php
 session_start();
 
+if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
+    header("Location: sign-in.php");
+    exit();
+}
+
 $user_id = $_SESSION['user']->id;
 $email = $_SESSION['user']->email;
+$is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
 
+if ($is_superadmin) {
+    $_SESSION['firm_id'] = $_SESSION['user']->firm_id ?? 0;
+    $rawReturn = $_GET['returnUrl'] ?? '';
+    $returnUrl = !empty($rawReturn) ? urldecode($rawReturn) : '';
+    if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
+        $redirectUri = 'index.php?p=home';
+    } else {
+        $redirectUri = $returnUrl;
+    }
+    header('Location: ' . $redirectUri);
+    exit();
+}
 
-// require_once "Model/Company.php";
 require_once "Model/MyFirmModel.php";
-// $companyObj = new Company();
 $myFirmObj = new MyFirmModel();
-
-// $myCompanies = $companyObj->getMyCompanies($user_id);
-//$myFirms = $myFirmObj->getAuthorizedMyFirmsByEmail($email);
 
 $myFirms = $myFirmObj->getMyFirmByUserId();
 if(count($myFirms) == 1){
@@ -20,7 +33,6 @@ if(count($myFirms) == 1){
     header('Location: ' . $redirectUri);
     exit();
 }
-
 ?>
 <!doctype html>
 <html lang="tr">

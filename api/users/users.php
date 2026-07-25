@@ -3,6 +3,7 @@ define('ROOT', $_SERVER['DOCUMENT_ROOT']);
 require_once ROOT . "/Database/require.php";
 require_once ROOT . "/Model/UserModel.php";
 require_once ROOT . "/Model/RolesModel.php";
+require_once ROOT . "/Model/Auths.php";
 require_once ROOT . "/App/Helper/date.php";
 
 
@@ -13,8 +14,37 @@ use App\Helper\Security;
 $User = new UserModel();
 $Roles = new Roles();
 
+header('Content-Type: application/json; charset=utf-8');
+if (!isset($_SESSION['user'])) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Oturum süreniz dolmuş.']);
+    exit;
+}
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['status' => 'error', 'message' => 'Geçersiz istek.']);
+    exit;
+}
+$sessionCsrf = (string) ($_SESSION['csrf_token'] ?? '');
+$requestCsrf = (string) ($_POST['csrf_token'] ?? '');
+if ($sessionCsrf === '' || $requestCsrf === '' || !hash_equals($sessionCsrf, $requestCsrf)) {
+    http_response_code(419);
+    echo json_encode(['status' => 'error', 'message' => 'Güvenlik doğrulaması başarısız.']);
+    exit;
+}
+(new Auths())->hasPermissionReturn('user_add_update');
+
 if ($_POST["action"] == "userSave") {
     $id = Security::safeDecrypt($_POST["id"]);
+    if ($id > 0 && (int) ($_SESSION['user']->superadmin ?? 0) !== 1) {
+        $targetUser = $User->find($id);
+        if (!$targetUser
+            || (int) $targetUser->firm_id !== (int) ($_SESSION['firm_id'] ?? 0)
+            || (int) ($targetUser->superadmin ?? 0) === 1) {
+            echo json_encode(['status' => 'error', 'message' => 'Bu kullanıcı üzerinde işlem yetkiniz yok.']);
+            exit;
+        }
+    }
     //Eğer kayıt yapan kullanıcı ana kullanıcı ise kend id'si, değilse parent_id'si alınır.
     $parent_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
     // If it's a new user registration, check the alt-user limit
@@ -116,6 +146,13 @@ if ($_POST["action"] == "userSave") {
 if ($_POST["action"] == "deleteUser") {
     $id = $_POST["id"];
     try {
+        $targetUser = $User->find(Security::safeDecrypt($id));
+        if (!$targetUser
+            || (int) ($targetUser->superadmin ?? 0) === 1
+            || ((int) ($_SESSION['user']->superadmin ?? 0) !== 1
+                && (int) $targetUser->firm_id !== (int) ($_SESSION['firm_id'] ?? 0))) {
+            throw new Exception('Bu kullanıcıyı silme yetkiniz yok.');
+        }
         $User->delete($id);
         $status = "success";
         $message = "Kullanıcı başarıyla silindi.";

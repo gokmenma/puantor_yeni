@@ -17,10 +17,10 @@ $smtp_from_name = $sysSettings->getSystemSetting("smtp_from_name") ?? 'İşçi M
 
 if (in_array($script, ['register.php', 'sign-in.php', 'register-activate.php', 'register-success.php'])) {
     $smtp_username = $sysSettings->getSystemSetting("smtp_info_username") ?? 'bilgi@puantor.com.tr';
-    $smtp_password = $sysSettings->getSystemSetting("smtp_info_password") ?? 'Us(@ixgfPDwt';
+    $smtp_password = $sysSettings->getSystemSetting("smtp_info_password") ?? '';
 } else {
     $smtp_username = $sysSettings->getSystemSetting("smtp_username") ?? 'sifre@puantor.com.tr';
-    $smtp_password = $sysSettings->getSystemSetting("smtp_password") ?? 'Us(@ixgfPDwt';
+    $smtp_password = $sysSettings->getSystemSetting("smtp_password") ?? '';
 }
 
 // PHPMailer ile e-posta gönderme

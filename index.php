@@ -2,7 +2,8 @@
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-session_start();
+require_once __DIR__ . '/App/Helper/session_security.php';
+puantorStartSecureSession();
 
 // Mobil Cihaz Kontrolü
 function isMobile() {
@@ -29,13 +30,20 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
         $User = new UserModel();
         $token = $_COOKIE['remember_me'];
         $cookie_user = $User->getUserBySessionToken($token);
-        if ($cookie_user && $cookie_user->status == 1) {
+        if ($cookie_user && (int) ($cookie_user->superadmin ?? 0) === 1) {
+            puantorExpireCookie('remember_me');
+            $User->setToken($cookie_user->id, bin2hex(random_bytes(32)));
+            header("Location: sign-in.php");
+            exit();
+        } elseif ($cookie_user && $cookie_user->status == 1) {
+            session_regenerate_id(true);
             $_SESSION['user'] = $cookie_user;
             $_SESSION['firm_id'] = $cookie_user->firm_id;
             $_SESSION['full_name'] = $cookie_user->full_name;
             $_SESSION['user_role'] = $cookie_user->user_roles;
             // Giriş logu oluştur
             $_SESSION["log_id"] = $User->loginLog($cookie_user->id);
+            $_SESSION['last_activity_at'] = time();
         } else {
             $returnUrl = urlencode($_SERVER["REQUEST_URI"]);
             if (!isset($_GET["p"])) {
@@ -53,6 +61,7 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
         exit();
     }
 }
+puantorEnforceSessionTimeout();
 // CSRF token oluşturma
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -89,58 +98,60 @@ if (!$user) {
 
 $_SESSION["user"] = $user;
 
-if ($_SESSION["user"]->parent_id != 0) {
-    //kullanıcının kayıtlı mail adresi birden fazla ise seçili firmadaki bilgileri ile işlem yapılır
-    $email = $_SESSION['user']->email ?? null;
-    $firm_id = $_SESSION['firm_id'];
-    $user = $User->getUserByEmailAndFirm($email, $firm_id);
-    $_SESSION['user'] = $user;
-} else {
-    // Eğer ana kullanıcı ise, aktif firma ID'sini kullanıcının firm_id alanına senkronize ederiz
-    if (isset($_SESSION['firm_id'])) {
-        $_SESSION['user']->firm_id = $_SESSION['firm_id'];
-        
-        // Aktif firmanın ana rolünü bulup kullanıcının rolüne atayalım
-        require_once "Model/RolesModel.php";
-        $rolesObj = new Roles();
-        $db = $rolesObj->getDb();
-        $sql = $db->prepare("SELECT id FROM userroles WHERE firm_id = ? AND main_role = 1 LIMIT 1");
-        $sql->execute([$_SESSION['firm_id']]);
-        $main_role = $sql->fetch(PDO::FETCH_OBJ);
-        if ($main_role) {
-            $_SESSION['user']->user_roles = $main_role->id;
-        } else {
-            // Eğer bu firmanın bir ana Admin rolü yoksa (geçmişte eklenmiş bir firmaysa), hemen oluşturuyoruz
-            require_once "Model/Auths.php";
-            require_once "Model/RoleAuthsModel.php";
+if (($user->superadmin ?? 0) == 1) {
+    $_SESSION['firm_id'] = $user->firm_id ?? 0;
+} else if ($_SESSION["user"]->parent_id != 0) {
+        //kullanıcının kayıtlı mail adresi birden fazla ise seçili firmadaki bilgileri ile işlem yapılır
+        $email = $_SESSION['user']->email ?? null;
+        $firm_id = $_SESSION['firm_id'] ?? 0;
+        $user = $User->getUserByEmailAndFirm($email, $firm_id);
+        $_SESSION['user'] = $user;
+    } else {
+        // Eğer ana kullanıcı ise, aktif firma ID'sini kullanıcının firm_id alanına senkronize ederiz
+        if (isset($_SESSION['firm_id'])) {
+            $_SESSION['user']->firm_id = $_SESSION['firm_id'];
             
-            $AuthsObj = new Auths();
-            $RoleAuthsObj = new RoleAuthsModel();
-            
-            $roleData = [
-                "id" => 0,
-                "firm_id" => $_SESSION['firm_id'],
-                "roleName" => 'Admin',
-                "roleDescription" => 'Sistem Yöneticisi',
-                "isActive" => 1,
-                "main_role" => 1
-            ];
-            $lastInsertRoleId = $rolesObj->saveWithAttr($roleData);
-            $decryptedRoleId = Security::decrypt($lastInsertRoleId);
-            
-            $authsIds = $AuthsObj->getNonSuperadminAuthIds();
-            $authsIdsString = implode(',', $authsIds);
-            
-            $roleAuthData = [
-                "role_id" => $decryptedRoleId,
-                "auth_ids" => $authsIdsString
-            ];
-            $RoleAuthsObj->saveWithAttr($roleAuthData);
-            
-            $_SESSION['user']->user_roles = $decryptedRoleId;
+            // Aktif firmanın ana rolünü bulup kullanıcının rolüne atayalım
+            require_once "Model/RolesModel.php";
+            $rolesObj = new Roles();
+            $db = $rolesObj->getDb();
+            $sql = $db->prepare("SELECT id FROM userroles WHERE firm_id = ? AND main_role = 1 LIMIT 1");
+            $sql->execute([$_SESSION['firm_id']]);
+            $main_role = $sql->fetch(PDO::FETCH_OBJ);
+            if ($main_role) {
+                $_SESSION['user']->user_roles = $main_role->id;
+            } else {
+                // Eğer bu firmanın bir ana Admin rolü yoksa (geçmişte eklenmiş bir firmaysa), hemen oluşturuyoruz
+                require_once "Model/Auths.php";
+                require_once "Model/RoleAuthsModel.php";
+                
+                $AuthsObj = new Auths();
+                $RoleAuthsObj = new RoleAuthsModel();
+                
+                $roleData = [
+                    "id" => 0,
+                    "firm_id" => $_SESSION['firm_id'],
+                    "roleName" => 'Admin',
+                    "roleDescription" => 'Sistem Yöneticisi',
+                    "isActive" => 1,
+                    "main_role" => 1
+                ];
+                $lastInsertRoleId = $rolesObj->saveWithAttr($roleData);
+                $decryptedRoleId = Security::decrypt($lastInsertRoleId);
+                
+                $authsIds = $AuthsObj->getNonSuperadminAuthIds();
+                $authsIdsString = implode(',', $authsIds);
+                
+                $roleAuthData = [
+                    "role_id" => $decryptedRoleId,
+                    "auth_ids" => $authsIdsString
+                ];
+                $RoleAuthsObj->saveWithAttr($roleAuthData);
+                
+                $_SESSION['user']->user_roles = $decryptedRoleId;
+            }
         }
     }
-}
 
 // if ($user->status == 0) {
 //     header("Location: sign-in.php");
@@ -148,6 +159,19 @@ if ($_SESSION["user"]->parent_id != 0) {
 // }
 
 $active_page = isset($_GET["p"]) ? $_GET["p"] : "";
+
+if (($user->superadmin ?? 0) == 1 && ($active_page === '' || $active_page === 'home')) {
+    header('Location: index.php?p=admin-home');
+    exit();
+}
+
+// Superadmin yalnızca merkezi izin listesindeki yönetim sayfalarına erişebilir.
+// Menü gizleme tek başına yeterli olmadığından doğrudan URL ve AJAX istekleri
+// de aynı merkezi listeyle burada engellenir.
+if (($user->superadmin ?? 0) == 1 && !$Auths->isSuperadminPageAllowed($active_page)) {
+    header("Location: index.php?p=authorize");
+    exit();
+}
 
 // auths.superadmin = 1 olan yönetim sayfalarını yalnızca menüde gizlemek
 // yeterli değildir. Doğrudan URL ve AJAX sayfa yüklemelerini de burada kes.
@@ -213,7 +237,7 @@ if (isset($_GET['theme'])) {
 $theme = $_SESSION['theme'] ?? 'light';
 
 if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-    $page = isset($_GET["p"]) ? $_GET["p"] : "home";
+    $page = $active_page !== '' ? $active_page : 'home';
     if (file_exists("pages/{$page}.php")) {
         include "pages/{$page}.php";
     } else {
@@ -414,7 +438,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             <div class="container-xl">
                 <!-- Eğer kullanıcı demo kullanıcısı ise uyarı göster -->
                 <?php 
-                if ($user->user_type == 1) { 
+                if (($user->superadmin ?? 0) != 1 && $user->user_type == 1) {
                     $owner_id = $user->parent_id == 0 ? $user->id : $user->parent_id;
                     $owner_user = $User->find($owner_id);
                     $diff = 0;
@@ -445,23 +469,17 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                 ?>
             </div>
             <?php
-            $page = isset($_GET["p"]) ? $_GET["p"] : "home";
+            $page = $active_page !== '' ? $active_page : 'home';
             // echo "user token" . $user->session_token;
             // echo "session token : ".$_SESSION['csrf_token'];
             ; ?>
 
             <?php
-            if (isset($_GET["p"]) && file_exists("pages/{$page}.php")) {
-
+            if (file_exists("pages/{$page}.php")) {
                 include "pages/{$page}.php";
-
-            } else if (!file_exists("pages/{$page}.php")) {
-
+            } else {
                 include "pages/404.php";
-            } else
-                (
-                    include "pages/home.php"
-                );
+            }
             ?>
             <?php include "inc/footer.php" ?>
         </div>

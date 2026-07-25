@@ -27,6 +27,12 @@ class PushBildirimService
         $this->gonder($subscriptions, $baslik, $icerik, $ekVeri);
     }
 
+    public function kullaniciyaGonder(int $kullanici_id, int $firma_id, string $baslik, string $icerik, array $ekVeri = []): void
+    {
+        $subscriptions = $this->getSubscriptions('user', $kullanici_id, $firma_id);
+        $this->gonder($subscriptions, $baslik, $icerik, $ekVeri);
+    }
+
     private function getSubscriptions(string $userType, ?int $userId, int $firmaId): array
     {
         if ($userId !== null) {

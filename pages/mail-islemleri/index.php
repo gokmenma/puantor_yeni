@@ -294,6 +294,14 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
     background: #fff;
 }
 
+#mailDetailBodyFrame {
+    display: block;
+    width: 100%;
+    min-height: 280px;
+    border: 0;
+    background: #fff;
+}
+
 @media (max-height: 700px) {
     #mailComposeForm .note-editable {
         min-height: 150px !important;
@@ -392,7 +400,7 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
 </div>
 
 <div class="modal modal-blur fade" id="mailDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
@@ -402,6 +410,11 @@ $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
             <div class="modal-body p-0">
+                <div class="border-bottom">
+                    <div class="px-4 pt-3 fw-semibold"><i class="ti ti-mail me-1"></i>Gönderilen Mail İçeriği</div>
+                    <iframe id="mailDetailBodyFrame" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Gönderilen mail içeriği"></iframe>
+                </div>
+                <div class="px-4 pt-3 fw-semibold">Alıcılar</div>
                 <div class="table-responsive">
                     <table class="table table-vcenter card-table mb-0">
                         <thead><tr><th>Alıcı</th><th>E-posta</th><th>Durum</th><th>Gönderilme Tarihi</th></tr></thead>
@@ -879,6 +892,9 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#mailHistoryTable').on('click', '.mail-detail-button', async function () {
         const id = Number(this.dataset.id);
         const body = document.getElementById('mailDetailRecipients');
+        const contentFrame = document.getElementById('mailDetailBodyFrame');
+        document.getElementById('mailDetailSummary').textContent = 'Gönderim bilgileri yükleniyor...';
+        contentFrame.srcdoc = '<p style="color:#667382;font-family:Arial,sans-serif;padding:16px">Mail içeriği yükleniyor...</p>';
         body.innerHTML = '<tr><td colspan="4" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...</td></tr>';
         bootstrap.Modal.getOrCreateInstance(document.getElementById('mailDetailModal')).show();
         try {
@@ -886,10 +902,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
             if (data.status !== 'success') throw new Error(data.message);
             document.getElementById('mailDetailSummary').textContent = `${data.send.konu} · ${data.send.toplam_alici} alıcı`;
+            contentFrame.srcdoc = data.send.icerik || '<p style="color:#667382;font-family:Arial,sans-serif;padding:16px">Mail içeriği bulunamadı.</p>';
             body.innerHTML = data.recipients.map(function (recipient) {
                 return `<tr><td>${escapeHtml(recipient.alici_adi || '—')}</td><td>${escapeHtml(recipient.email)}</td><td>${statusBadge(recipient.durum)}</td><td>${formatDate(recipient.gonderilme_tarihi)}</td></tr>`;
             }).join('') || '<tr><td colspan="4" class="text-center text-secondary py-4">Alıcı kaydı yok.</td></tr>';
         } catch (error) {
+            document.getElementById('mailDetailSummary').textContent = 'Detay yüklenemedi';
+            contentFrame.srcdoc = '<p style="color:#d63939;font-family:Arial,sans-serif;padding:16px">Mail içeriği yüklenemedi.</p>';
             body.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">${escapeHtml(error.message || 'Detay yüklenemedi.')}</td></tr>`;
         }
     });

@@ -83,6 +83,7 @@ if ($action == 'list') {
                 $duyuru_data = [
                     'baslik' => 'Yeni Avans Talebi',
                     'icerik' => htmlspecialchars($person_name) . " adlı personel, " . number_format($tutar, 2, ',', '.') . " TL tutarında avans talebi oluşturdu. (Dönem: " . htmlspecialchars($donem) . ")",
+                    'kaynak_turu' => 'sistem',
                     'olusturan_id' => 0,
                     'hedef_tip' => 'bazi_kullanicilar',
                     'hedef_firma_id' => $firm_id,

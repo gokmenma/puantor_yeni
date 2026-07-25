@@ -130,6 +130,7 @@ try {
                     </div>
                     <div class="card-body">
                         <form action="" id="userForm">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                             <input type="hidden" id="user_id" value="<?php echo $new_id ?>">
                             <div class="tab-content">
                                 <div class="tab-pane active show" id="tabs-home-3" role="tabpanel">

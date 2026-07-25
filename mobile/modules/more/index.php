@@ -2,6 +2,56 @@
 // Puantor Mobil - Diğer Menüler ve Ayarlar
 $user = $_SESSION['user'] ?? null;
 $userId = $user->id ?? 0;
+
+if (!empty($is_superadmin)):
+?>
+<div class="container px-0">
+  <div class="mb-4">
+    <h2 class="mb-1 text-semibold">Sistem Menüsü</h2>
+    <div class="text-muted small">Yalnızca sistem yöneticisine açık işlemler</div>
+  </div>
+  <a href="profile" class="mobile-card mb-4 p-3 d-flex align-items-center gap-3 text-decoration-none text-reset">
+    <span class="avatar avatar-lg bg-primary-lt"><i class="ti ti-shield-lock fs-2"></i></span>
+    <div class="flex-fill">
+      <div class="fw-bold"><?= htmlspecialchars($user->full_name ?? $user->email ?? 'Sistem Yöneticisi') ?></div>
+      <div class="text-muted small"><?= htmlspecialchars($user->email ?? '') ?></div>
+    </div>
+    <i class="ti ti-chevron-right text-muted"></i>
+  </a>
+  <div class="list-group list-group-mobile">
+    <a href="dashboard" class="list-group-item">
+      <div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm bg-blue-lt"><i class="ti ti-layout-dashboard"></i></span><span class="fw-semibold">Sistem Ana Sayfası</span></div>
+      <i class="ti ti-chevron-right text-muted"></i>
+    </a>
+    <a href="tickets" class="list-group-item">
+      <div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm bg-indigo-lt"><i class="ti ti-headset"></i></span><span class="fw-semibold">Destek Yönetimi</span></div>
+      <i class="ti ti-chevron-right text-muted"></i>
+    </a>
+    <a href="abonelik-islemleri" class="list-group-item">
+      <div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm bg-green-lt"><i class="ti ti-building-community"></i></span><span class="fw-semibold">Abonelik İşlemleri</span></div>
+      <i class="ti ti-chevron-right text-muted"></i>
+    </a>
+    <a href="notifications" class="list-group-item">
+      <div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm bg-orange-lt"><i class="ti ti-bell"></i></span><span class="fw-semibold">Bildirimler</span></div>
+      <i class="ti ti-chevron-right text-muted"></i>
+    </a>
+    <a href="announcements" class="list-group-item">
+      <div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm bg-pink-lt"><i class="ti ti-speakerphone"></i></span><span class="fw-semibold">Duyurular</span></div>
+      <i class="ti ti-chevron-right text-muted"></i>
+    </a>
+    <a href="settings" class="list-group-item">
+      <div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm bg-secondary-lt"><i class="ti ti-settings"></i></span><span class="fw-semibold">Ayarlar</span></div>
+      <i class="ti ti-chevron-right text-muted"></i>
+    </a>
+    <a href="logout.php" class="list-group-item text-danger">
+      <div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm bg-red-lt"><i class="ti ti-logout"></i></span><span class="fw-semibold">Güvenli Çıkış</span></div>
+      <i class="ti ti-chevron-right"></i>
+    </a>
+  </div>
+</div>
+<?php
+return;
+endif;
 ?>
 
 <style>
@@ -173,6 +223,17 @@ $userId = $user->id ?? 0;
       <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
     </a>
     <?php endif; ?>
+
+    <a href="announcements" class="list-group-item" data-id="announcements">
+      <div class="d-flex align-items-center gap-1">
+        <i class="ti ti-grip-vertical text-muted drag-handle"></i>
+        <div class="avatar avatar-sm rounded bg-pink-lt me-2">
+          <i class="ti ti-speakerphone text-pink"></i>
+        </div>
+        <span class="text-semibold text-sm">Duyurular</span>
+      </div>
+      <i class="ti ti-chevron-right text-muted" style="opacity: 0.5;"></i>
+    </a>
   </div>
 
   <!-- Destek ve Ayarlar -->
@@ -300,4 +361,3 @@ $(document).ready(function() {
     }
 });
 </script>
-

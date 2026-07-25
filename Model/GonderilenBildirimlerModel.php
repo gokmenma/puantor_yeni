@@ -10,31 +10,56 @@ class GonderilenBildirimlerModel extends Model
         parent::__construct($this->table);
     }
 
-    public function kaydet(int $firmaId, int $gonderenId, string $hedef, ?array $personelIds, string $baslik, string $icerik, string $url = ''): int
+    public function kaydet(
+        int $firmaId,
+        int $gonderenId,
+        string $hedefTuru,
+        string $hedef,
+        ?array $hedefIds,
+        string $baslik,
+        string $icerik,
+        string $url = ''
+    ): int
     {
-        $personelIdsStr = $personelIds ? implode(',', $personelIds) : null;
-        
+        $hedefIdsStr = $hedefIds ? implode(',', $hedefIds) : null;
+
         $stmt = $this->db->prepare(
-            "INSERT INTO gonderilen_bildirimler (firma_id, gonderen_id, hedef, personel_ids, baslik, icerik, url) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO gonderilen_bildirimler
+                (firma_id, gonderen_id, hedef_turu, hedef, personel_ids, kullanici_ids, baslik, icerik, url)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt->execute([$firmaId, $gonderenId, $hedef, $personelIdsStr, $baslik, $icerik, $url]);
+        $stmt->execute([
+            $firmaId,
+            $gonderenId,
+            $hedefTuru,
+            $hedef,
+            $hedefTuru === 'personel' ? $hedefIdsStr : null,
+            $hedefTuru === 'kullanici' ? $hedefIdsStr : null,
+            $baslik,
+            $icerik,
+            $url,
+        ]);
         return (int) $this->db->lastInsertId();
     }
 
-    public function getList(int $firmaId, int $limit = 100): array
+    public function getList(?int $firmaId, int $limit = 100): array
     {
+        $where = $firmaId === null ? '' : 'WHERE gb.firma_id = :firma_id';
         $stmt = $this->db->prepare(
-            "SELECT gb.*, u.full_name as gonderen_adi 
+            "SELECT gb.*, u.full_name AS gonderen_adi, mf.firm_name AS firma_adi
              FROM gonderilen_bildirimler gb
              LEFT JOIN users u ON u.id = gb.gonderen_id
-             WHERE gb.firma_id = ? 
-             ORDER BY gb.created_at DESC 
-             LIMIT ?"
+             LEFT JOIN myfirms mf ON mf.id = gb.firma_id
+             {$where}
+             ORDER BY gb.created_at DESC
+             LIMIT :limit"
         );
-        $stmt->bindValue(1, $firmaId, PDO::PARAM_INT);
-        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        if ($firmaId !== null) {
+            $stmt->bindValue(':firma_id', $firmaId, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
-        
+
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 }

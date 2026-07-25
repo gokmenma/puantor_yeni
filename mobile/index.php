@@ -1,12 +1,15 @@
 <?php
 // Puantor Premium Mobil Giriş ve Kabuk (App Shell) Dosyası
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
-session_start();
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
 define("ROOT", dirname(__DIR__));
 date_default_timezone_set('Europe/Istanbul');
 
+require_once ROOT . "/App/Helper/session_security.php";
+puantorStartSecureSession();
+puantorEnforceSessionTimeout();
 require_once __DIR__ . "/../Database/db.php";
 require_once __DIR__ . "/../Model/UserModel.php";
 require_once __DIR__ . "/../Model/MyFirmModel.php";
@@ -15,6 +18,9 @@ require_once __DIR__ . "/../Model/Auths.php";
 
 $User = new UserModel();
 $Auths = new Auths();
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 
 // Oturum kontrolü
@@ -22,14 +28,25 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
     if (isset($_COOKIE['remember_me_mobile'])) {
         $token = $_COOKIE['remember_me_mobile'];
         $cookie_user = $User->getUserByMobileSessionToken($token);
-        if ($cookie_user && $cookie_user->status == 1) {
+        if ($cookie_user && (int) ($cookie_user->superadmin ?? 0) === 1) {
+            puantorExpireCookie('remember_me_mobile');
+            $User->setMobileToken($cookie_user->id, bin2hex(random_bytes(32)));
+            header("Location: sign-in.php");
+            exit();
+        } elseif ($cookie_user && $cookie_user->status == 1) {
+            session_regenerate_id(true);
             $_SESSION['user'] = $cookie_user;
             $_SESSION['firm_id'] = $cookie_user->firm_id;
             $_SESSION['full_name'] = $cookie_user->full_name;
             $_SESSION['user_role'] = $cookie_user->user_roles;
             // Refresh cookie expiry
-            setcookie('remember_me_mobile', $token, time() + 30 * 24 * 3600, '/');
+            $_SESSION['last_activity_at'] = time();
+            setcookie('remember_me_mobile', $token, [
+                'expires' => time() + 30 * 24 * 3600, 'path' => '/',
+                'secure' => puantorIsHttps(), 'httponly' => true, 'samesite' => 'Lax',
+            ]);
         } else {
+            puantorExpireCookie('remember_me_mobile');
             header("Location: sign-in.php");
             exit();
         }
@@ -47,13 +64,18 @@ if (!$user) {
 }
 
 $_SESSION["user"] = $user;
+$is_superadmin = (int) ($user->superadmin ?? 0) === 1;
 
 // Kullanıcının yetkili firmalarını çek
 $myFirmObj = new MyFirmModel();
-$myFirms = $myFirmObj->getMyFirmByUserId();
+$myFirms = $is_superadmin ? [] : $myFirmObj->getMyFirmByUserId();
 
 // Post ile firma seçildiyse ve kullanıcının bu firmaya yetkisi varsa session'a yaz
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'select_firm') {
+    if ($is_superadmin || !hash_equals((string) $_SESSION['csrf_token'], (string) ($_POST['csrf_token'] ?? ''))) {
+        http_response_code(403);
+        exit('Bu işlem için yetkiniz yok.');
+    }
     $selected_firm_id = intval($_POST['firm_id'] ?? 0);
     if ($selected_firm_id > 0) {
         $has_access = false;
@@ -83,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // Aktif firmanın yetki kontrolünü yap ve varsayılan firmayı güvenli bir şekilde belirle
-$has_active_access = false;
+$has_active_access = $is_superadmin;
 if (isset($_SESSION['firm_id']) && !empty($_SESSION['firm_id'])) {
     foreach ($myFirms as $firm) {
         if ($firm->id == $_SESSION['firm_id']) {
@@ -112,13 +134,32 @@ $theme = $_SESSION['theme'] ?? 'light';
 // Aktif rota/sayfa tayini
 $route = isset($_GET["route"]) ? trim($_GET["route"], "/") : "";
 
+/*
+ * SUPERADMIN MOBİL MENÜ / SAYFA İZİNLERİ
+ * Bir sayfayı superadmin mobil alanına eklemek veya buradan çıkarmak için yalnızca
+ * aşağıdaki listeyi güncelleyin. Listede olmayan rotalar menüde gösterilmez ve
+ * adres çubuğundan doğrudan çağrılsa bile sunucu tarafından engellenir.
+ */
+$superadmin_mobile_routes = [
+    '', 'home', 'dashboard',
+    'tickets', 'ticket-view',
+    'abonelik-islemleri',
+    'notifications', 'announcements', 'duyurular',
+    'settings', 'profile', 'more',
+];
+
+if ($is_superadmin && !in_array($route, $superadmin_mobile_routes, true)) {
+    header('Location: dashboard');
+    exit();
+}
+
 // Temiz rotaları modüler yapıya eşleştir
 switch ($route) {
     case '':
     case 'home':
     case 'dashboard':
-        $title = "Puantaj Takip";
-        $page_file = "modules/dashboard/index.php";
+        $title = $is_superadmin ? "Sistem Yönetimi" : "Puantaj Takip";
+        $page_file = $is_superadmin ? "modules/superadmin/dashboard.php" : "modules/dashboard/index.php";
         $active_page = "home";
         break;
     case 'persons':
@@ -274,6 +315,12 @@ switch ($route) {
         $page_file = "modules/more/notifications.php";
         $active_page = "more";
         break;
+    case 'announcements':
+    case 'duyurular':
+        $title = "Duyurular";
+        $page_file = "modules/more/announcements.php";
+        $active_page = "more";
+        break;
     case 'advance-requests':
         $advance_auth = $Auths->getAuthIdByTitle("Avans Talepleri");
         if ($advance_auth && !$Auths->AuthorizeByAuthId($advance_auth->id)) {
@@ -334,8 +381,8 @@ switch ($route) {
         $active_page = "more";
         break;
     default:
-        $title = "Puantaj Takip";
-        $page_file = "modules/dashboard/index.php";
+        $title = $is_superadmin ? "Sistem Yönetimi" : "Puantaj Takip";
+        $page_file = $is_superadmin ? "modules/superadmin/dashboard.php" : "modules/dashboard/index.php";
         $active_page = "home";
         break;
 }

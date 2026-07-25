@@ -94,18 +94,29 @@ body[data-bs-theme="dark"] .app-header {
   left: 0;
   right: 0;
   z-index: 1030;
-  background: var(--mobile-glass-bg-light);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid var(--mobile-card-border-light);
+  background: #ffffff !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
   display: flex;
   justify-content: space-around;
   align-items: center;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.03);
 }
 
 body[data-bs-theme="dark"] .app-nav {
-  background: var(--mobile-glass-bg-dark);
-  border-top: 1px solid var(--mobile-card-border-dark);
+  background: #1a2234 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.app-nav .nav-item::before,
+.app-nav .nav-item::after,
+.app-nav .nav-item.active::before,
+.app-nav .nav-item.active::after,
+.app-nav::before,
+.app-nav::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 .nav-item {
@@ -745,6 +756,7 @@ input.flatpickr-input[type="date"]::-webkit-calendar-picker-indicator {
 /* Bottom Sheet Modal Styling */
 .modal-bottom-sheet {
     display: none;
+    z-index: 1060 !important;
 }
 
 .modal-bottom-sheet.show {
@@ -755,10 +767,13 @@ input.flatpickr-input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* Ensure dialog starts off-screen */
-.modal-bottom-sheet .modal-dialog {
-    margin: 0 !important;
+.modal-bottom-sheet .modal-dialog,
+.modal-bottom-sheet .modal-dialog.modal-dialog-scrollable {
+    margin: 0 auto 0 auto !important;
     width: 100% !important;
     max-width: 500px !important;
+    height: auto !important;
+    max-height: 88vh !important;
     transform: translateY(100%);
     transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -776,9 +791,10 @@ input.flatpickr-input[type="date"]::-webkit-calendar-picker-indicator {
 .modal-bottom-sheet .modal-content {
     border-radius: 24px 24px 0 0 !important;
     border: none !important;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2) !important;
     margin: 0 !important;
-    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
     width: 100%;
+    max-height: 88vh !important;
 }
 

@@ -355,6 +355,7 @@ $has_advance_auth = (!$advance_auth || $Auths->AuthorizeByAuthId($advance_auth->
             <?php $is_active = ($firm->id == $firm_id); ?>
             <form action="" method="POST" class="m-0 select-firm-form">
               <input type="hidden" name="action" value="select_firm">
+              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
               <input type="hidden" name="firm_id" value="<?php echo $firm->id; ?>">
               <button type="submit" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between text-start border-0 py-3 <?php echo $is_active ? 'bg-primary-lt' : ''; ?>" style="background: none; width: 100%;">
                 <div class="d-flex align-items-center gap-3">
@@ -383,4 +384,3 @@ $has_advance_auth = (!$advance_auth || $Auths->AuthorizeByAuthId($advance_auth->
     </div>
   </div>
 </div>
-

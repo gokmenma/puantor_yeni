@@ -111,7 +111,7 @@ class UserModel extends Model
     //Kullanıcı girişinde bir token oluştur ve kullanıcıya kaydet
     public function setToken($id, $token)
     {
-        //$token = bin2hex(random_bytes(32));
+        $token = hash('sha256', $token);
         $sql = $this->db->prepare("UPDATE $this->table SET session_token = ? WHERE id = ?");
         $sql->execute(array($token, $id));
         return $token;
@@ -126,13 +126,14 @@ class UserModel extends Model
 
     public function getUserBySessionToken($token)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE session_token = ?");
-        $sql->execute(array($token));
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE session_token IN (?, ?)");
+        $sql->execute([hash('sha256', $token), $token]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 
     public function setMobileToken($id, $token)
     {
+        $token = hash('sha256', $token);
         $sql = $this->db->prepare("UPDATE $this->table SET mobile_session_token = ? WHERE id = ?");
         $sql->execute(array($token, $id));
         return $token;
@@ -140,8 +141,8 @@ class UserModel extends Model
 
     public function getUserByMobileSessionToken($token)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE mobile_session_token = ?");
-        $sql->execute(array($token));
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE mobile_session_token IN (?, ?)");
+        $sql->execute([hash('sha256', $token), $token]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }
 

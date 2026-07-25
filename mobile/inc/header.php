@@ -13,7 +13,9 @@ $toggle_theme = ($theme == 'dark') ? 'light' : 'dark';
     </svg>
     <div class="d-flex flex-column lh-1">
       <span class="text-semibold" style="font-size: 0.92rem; letter-spacing: -0.3px;">Puantor</span>
-      <?php if (isset($_SESSION['firm_id'])): ?>
+      <?php if (!empty($is_superadmin)): ?>
+        <span class="text-muted" style="font-size: 0.6rem; font-weight: 500;">Sistem Yönetimi</span>
+      <?php elseif (isset($_SESSION['firm_id'])): ?>
         <?php
           $hdr_firm_name = "Yükleniyor...";
           if (isset($myFirms)) {
@@ -55,7 +57,7 @@ $toggle_theme = ($theme == 'dark') ? 'light' : 'dark';
     $_hdr_firm_id = $_SESSION['firm_id'] ?? 0;
     $_hdr_okunmamis = 0;
     try {
-        $_hdr_okunmamis = $_hdr_is_superadmin ? 0 : $_hdr_duyuru->getOkunmamisSayisi($_hdr_kullanici_id, $_hdr_firm_id, $_hdr_is_main_user);
+        $_hdr_okunmamis = $_hdr_is_superadmin ? 0 : $_hdr_duyuru->getOkunmamisBildirimSayisi($_hdr_kullanici_id, $_hdr_firm_id, $_hdr_is_main_user);
     } catch (Exception $e) {}
     ?>
     <a href="notifications" class="btn-active-scale text-reset text-decoration-none position-relative me-1">
@@ -68,7 +70,7 @@ $toggle_theme = ($theme == 'dark') ? 'light' : 'dark';
     </a>
 
     <!-- User Profile Dropdown / Indicator -->
-    <a href="?p=more" class="btn-active-scale text-decoration-none d-flex align-items-center">
+    <a href="more" class="btn-active-scale text-decoration-none d-flex align-items-center">
       <span class="avatar avatar-sm rounded-circle text-uppercase" style="background-color: rgba(32, 107, 196, 0.1); color: var(--tblr-primary); font-size: 0.75rem; font-weight: 700;">
         <?php 
           if ($user) {

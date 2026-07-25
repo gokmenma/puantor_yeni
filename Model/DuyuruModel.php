@@ -10,8 +10,15 @@ class DuyuruModel extends Model
         parent::__construct($this->table);
     }
 
-    public function getDuyurular($kullanici_id, $firma_id, $is_superadmin = false, $is_main_user = false)
+    public function getDuyurular($kullanici_id, $firma_id, $is_superadmin = false, $is_main_user = false, $kaynak_filter = 'duyuru')
     {
+        $kaynak_sql = "d.kaynak_turu = 'duyuru'";
+        if ($kaynak_filter === 'bildirim') {
+            $kaynak_sql = "d.kaynak_turu IN ('sistem', 'kullanici')";
+        } elseif ($kaynak_filter === 'all') {
+            $kaynak_sql = "d.kaynak_turu IN ('duyuru', 'sistem', 'kullanici')";
+        }
+
         if ($is_superadmin) {
             $sql = "SELECT d.*,
                         u.full_name as olusturan_adi,
@@ -20,6 +27,7 @@ class DuyuruModel extends Model
                     FROM duyurular d
                     LEFT JOIN users u ON u.id = d.olusturan_id
                     WHERE d.is_active = 1
+                      AND {$kaynak_sql}
                     ORDER BY FIELD(d.oncelik,'acil','onemli','normal'), d.created_at DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
@@ -35,6 +43,7 @@ class DuyuruModel extends Model
                     LEFT JOIN users u ON u.id = d.olusturan_id
                     LEFT JOIN duyuru_okundu do2 ON do2.duyuru_id = d.id AND do2.kullanici_id = :kullanici_id
                     WHERE d.is_active = 1
+                      AND {$kaynak_sql}
                       AND (
                             (d.hedef_firma_id = :firma_id AND d.hedef_tip NOT IN ('aboneler', 'bazi_firmalar', 'bazi_kullanicilar', 'bazi_personeller'))
                             OR $global_kosul
@@ -62,8 +71,20 @@ class DuyuruModel extends Model
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    public function getOkunmamisSayisi($kullanici_id, $firma_id, $is_main_user = false)
+    public function getBildirimler($kullanici_id, $firma_id, $is_superadmin = false, $is_main_user = false)
     {
+        return $this->getDuyurular($kullanici_id, $firma_id, $is_superadmin, $is_main_user, 'bildirim');
+    }
+
+    public function getOkunmamisSayisi($kullanici_id, $firma_id, $is_main_user = false, $kaynak_filter = 'duyuru')
+    {
+        $kaynak_sql = "d.kaynak_turu = 'duyuru'";
+        if ($kaynak_filter === 'bildirim') {
+            $kaynak_sql = "d.kaynak_turu IN ('sistem', 'kullanici')";
+        } elseif ($kaynak_filter === 'all') {
+            $kaynak_sql = "d.kaynak_turu IN ('duyuru', 'sistem', 'kullanici')";
+        }
+
         $global_kosul = $is_main_user
             ? "(d.hedef_firma_id IS NULL AND d.hedef_tip = 'aboneler')"
             : "0";
@@ -71,6 +92,7 @@ class DuyuruModel extends Model
                 FROM duyurular d
                 LEFT JOIN duyuru_okundu do2 ON do2.duyuru_id = d.id AND do2.kullanici_id = :kullanici_id
                 WHERE d.is_active = 1
+                  AND {$kaynak_sql}
                   AND do2.id IS NULL
                   AND (
                         (d.hedef_firma_id = :firma_id AND d.hedef_tip NOT IN ('aboneler', 'bazi_firmalar', 'bazi_kullanicilar', 'bazi_personeller'))
@@ -97,6 +119,11 @@ class DuyuruModel extends Model
         return (int) $stmt->fetch(PDO::FETCH_OBJ)->sayi;
     }
 
+    public function getOkunmamisBildirimSayisi($kullanici_id, $firma_id, $is_main_user = false)
+    {
+        return $this->getOkunmamisSayisi($kullanici_id, $firma_id, $is_main_user, 'bildirim');
+    }
+
     public function find($id)
     {
         $stmt = $this->db->prepare("SELECT * FROM duyurular WHERE id = :id");
@@ -107,13 +134,14 @@ class DuyuruModel extends Model
     public function ekle($data)
     {
         $sql = "INSERT INTO duyurular
-                    (baslik, icerik, olusturan_id, hedef_tip, hedef_firma_id, baslangic_tarihi, bitis_tarihi, oncelik, is_active)
+                    (baslik, icerik, kaynak_turu, olusturan_id, hedef_tip, hedef_firma_id, baslangic_tarihi, bitis_tarihi, oncelik, is_active)
                 VALUES
-                    (:baslik, :icerik, :olusturan_id, :hedef_tip, :hedef_firma_id, :baslangic_tarihi, :bitis_tarihi, :oncelik, 1)";
+                    (:baslik, :icerik, :kaynak_turu, :olusturan_id, :hedef_tip, :hedef_firma_id, :baslangic_tarihi, :bitis_tarihi, :oncelik, 1)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             ':baslik'           => $data['baslik'],
             ':icerik'           => $data['icerik'],
+            ':kaynak_turu'      => $data['kaynak_turu'] ?? 'duyuru',
             ':olusturan_id'     => $data['olusturan_id'],
             ':hedef_tip'        => $data['hedef_tip'],
             ':hedef_firma_id'   => $data['hedef_firma_id'] ?? null,
@@ -164,12 +192,20 @@ class DuyuruModel extends Model
         return $stmt->execute([':duyuru_id' => $duyuru_id, ':kullanici_id' => $kullanici_id]);
     }
 
-    public function tumunuOkunduIsaretle($kullanici_id, $firma_id)
+    public function tumunuOkunduIsaretle($kullanici_id, $firma_id, $kaynak_filter = 'duyuru')
     {
+        $kaynak_sql = "d.kaynak_turu = 'duyuru'";
+        if ($kaynak_filter === 'bildirim') {
+            $kaynak_sql = "d.kaynak_turu IN ('sistem', 'kullanici')";
+        } elseif ($kaynak_filter === 'all') {
+            $kaynak_sql = "d.kaynak_turu IN ('duyuru', 'sistem', 'kullanici')";
+        }
+
         $sql = "INSERT IGNORE INTO duyuru_okundu (duyuru_id, kullanici_id)
                 SELECT d.id, :kullanici_id
                 FROM duyurular d
                 WHERE d.is_active = 1
+                  AND {$kaynak_sql}
                   AND (
                         (d.hedef_firma_id = :firma_id AND d.hedef_tip NOT IN ('aboneler', 'bazi_firmalar', 'bazi_kullanicilar', 'bazi_personeller'))
                         OR (d.hedef_firma_id IS NULL AND d.hedef_tip = 'aboneler')
@@ -192,6 +228,46 @@ class DuyuruModel extends Model
                   AND (d.bitis_tarihi IS NULL OR d.bitis_tarihi >= CURDATE())";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([':kullanici_id' => $kullanici_id, ':firma_id' => $firma_id]);
+    }
+
+    public function getSistemBildirimleri(?int $firma_id, int $limit = 100): array
+    {
+        $scope = $firma_id === null
+            ? ''
+            : "AND (
+                    d.hedef_firma_id = :firma_id
+                    OR d.hedef_tip = 'aboneler'
+                    OR (d.hedef_tip = 'bazi_firmalar' AND EXISTS (
+                        SELECT 1 FROM duyuru_hedefler dh
+                        WHERE dh.duyuru_id = d.id AND dh.hedef_tip = 'firma' AND dh.hedef_id = :firma_id
+                    ))
+                    OR (d.hedef_tip = 'bazi_kullanicilar' AND EXISTS (
+                        SELECT 1
+                        FROM duyuru_hedefler dh
+                        JOIN users hu ON hu.id = dh.hedef_id
+                        WHERE dh.duyuru_id = d.id AND dh.hedef_tip = 'kullanici' AND hu.firm_id = :firma_id
+                    ))
+                    OR (d.hedef_tip = 'bazi_personeller' AND EXISTS (
+                        SELECT 1
+                        FROM duyuru_hedefler dh
+                        JOIN persons hp ON hp.id = dh.hedef_id
+                        WHERE dh.duyuru_id = d.id AND dh.hedef_tip = 'personel' AND hp.firm_id = :firma_id
+                    ))
+                )";
+        $sql = "SELECT d.*, u.full_name AS olusturan_adi
+                FROM duyurular d
+                LEFT JOIN users u ON u.id = d.olusturan_id
+                WHERE d.kaynak_turu = 'sistem'
+                  {$scope}
+                ORDER BY d.created_at DESC
+                LIMIT :limit";
+        $stmt = $this->db->prepare($sql);
+        if ($firma_id !== null) {
+            $stmt->bindValue(':firma_id', $firma_id, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
     public function getOkunmaDetayi($duyuru_id)

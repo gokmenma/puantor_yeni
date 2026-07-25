@@ -1231,7 +1231,7 @@ function deleteRecord(
   //formData objesine action ve id elemanlarını ekle
   formData.append("action", action);
   formData.append("id", id);
-  // formData.append("csrf_token", csrf_token);
+  formData.append("csrf_token", document.querySelector('meta[name="csrf-token"]')?.content || "");
 
   // console.log(url);
 

@@ -1,27 +1,42 @@
 <?php
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
-session_start();
-
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 define("ROOT", dirname(__DIR__));
+require_once ROOT . '/App/Helper/session_security.php';
+puantorStartSecureSession();
 require_once ROOT . "/Database/db.php";
 require_once ROOT . "/Model/UserModel.php";
 require_once ROOT . "/Model/PasswordModel.php";
 require_once ROOT . "/App/Helper/security.php";
+require_once ROOT . "/Service/LoginSecurityService.php";
+require_once ROOT . "/Service/MailGonderimService.php";
+require_once ROOT . "/Model/SettingsModel.php";
 
 $User = new UserModel();
+$loginSecurity = new \Service\LoginSecurityService($User->getDb());
+$clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 // Beni Hatırla Kontrolü (Cookie)
 if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['remember_me_mobile'])) {
     $token = $_COOKIE['remember_me_mobile'];
     $cookie_user = $User->getUserByMobileSessionToken($token);
-    if ($cookie_user && $cookie_user->status == 1) {
+    if ($cookie_user && (int) ($cookie_user->superadmin ?? 0) === 1) {
+        puantorExpireCookie('remember_me_mobile');
+        $User->setMobileToken($cookie_user->id, bin2hex(random_bytes(32)));
+        $loginSecurity->event((int) $cookie_user->id, 'mobile_superadmin_remember_rejected', 'Mobil superadmin kalıcı oturumu reddedildi.');
+    } elseif ($cookie_user && $cookie_user->status == 1) {
+        session_regenerate_id(true);
         $_SESSION['user'] = $cookie_user;
         $_SESSION['firm_id'] = $cookie_user->firm_id;
         $_SESSION['full_name'] = $cookie_user->full_name;
         $_SESSION['user_role'] = $cookie_user->user_roles;
         // Refresh cookie expiry
-        setcookie('remember_me_mobile', $token, time() + 30 * 24 * 3600, '/');
+        setcookie('remember_me_mobile', $token, [
+            'expires' => time() + 30 * 24 * 3600, 'path' => '/',
+            'secure' => puantorIsHttps(), 'httponly' => true, 'samesite' => 'Lax',
+        ]);
     }
 }
 
@@ -40,28 +55,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'] ?? '';
         $view = 'login';
 
-        if (empty($email) || empty($password)) {
+        if (!hash_equals((string) $_SESSION['csrf_token'], (string) ($_POST['csrf_token'] ?? ''))) {
+            $error = "Güvenlik doğrulaması başarısız.";
+        } elseif ($loginSecurity->isBlocked($email, $clientIp)) {
+            $error = "Çok fazla hatalı giriş denemesi yapıldı. 15 dakika sonra tekrar deneyin.";
+        } elseif (empty($email) || empty($password)) {
             $error = "Lütfen tüm alanları doldurun.";
         } else {
             $user = $User->getUserByLoginField($email);
             if ($user && password_verify($password, $user->password)) {
                 if ($user->status == 1) {
+                    if ((int) ($user->superadmin ?? 0) === 1) {
+                        $code = (string) random_int(100000, 999999);
+                        try {
+                            $mailer = (new \Service\MailGonderimService(new SettingsModel()))->createMailer('info');
+                            $mailer->addAddress($user->email, $user->full_name);
+                            $mailer->Subject = 'Puantor mobil giriş doğrulama kodu';
+                            $mailer->Body = '<p>Mobil giriş doğrulama kodunuz:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px">' . $code . '</p><p>Kod 5 dakika geçerlidir.</p>';
+                            $mailer->AltBody = "Mobil giriş doğrulama kodunuz: {$code}. Kod 5 dakika geçerlidir.";
+                            $mailer->send();
+                            session_regenerate_id(true);
+                            $_SESSION['pending_mobile_superadmin_2fa'] = [
+                                'user_id' => (int) $user->id,
+                                'code_hash' => password_hash($code, PASSWORD_DEFAULT),
+                                'expires_at' => time() + 300,
+                                'attempts' => 0,
+                            ];
+                            $loginSecurity->event((int) $user->id, 'mobile_superadmin_2fa_sent', 'Mobil superadmin 2FA kodu gönderildi.');
+                            header('Location: superadmin-verify.php');
+                            exit;
+                        } catch (Throwable $e) {
+                            error_log('Mobile superadmin 2FA mail error: ' . $e->getMessage());
+                            $error = 'Doğrulama kodu gönderilemedi. SMTP ayarlarını kontrol edin.';
+                            goto mobile_login_complete;
+                        }
+                    }
+                    session_regenerate_id(true);
                     $_SESSION['user'] = $user;
                     $_SESSION['firm_id'] = $user->firm_id; // Varsayılan firmayı ata
                     
                     // Beni Hatırla seçildiyse
-                    if (isset($_POST['remember'])) {
+                    if (isset($_POST['remember']) && (int) ($user->superadmin ?? 0) !== 1) {
                         $token = bin2hex(random_bytes(32));
                         $User->setMobileToken($user->id, $token);
-                        setcookie('remember_me_mobile', $token, time() + 30 * 24 * 3600, '/');
+                        setcookie('remember_me_mobile', $token, [
+                            'expires' => time() + 30 * 24 * 3600, 'path' => '/',
+                            'secure' => puantorIsHttps(), 'httponly' => true, 'samesite' => 'Lax',
+                        ]);
                     }
+                    $_SESSION['last_activity_at'] = time();
+                    $loginSecurity->clearFailures($email, $clientIp);
                     
                     header("Location: index.php");
                     exit();
                 } else {
+                    $loginSecurity->record($email, $clientIp, false);
                     $error = "Hesabınız henüz aktif değil.";
                 }
             } else {
+                $loginSecurity->record($email, $clientIp, false);
                 $error = "Hatalı şifre, e-posta veya telefon.";
             }
         }
@@ -69,7 +121,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = $_POST['email'] ?? '';
         $view = 'forgot';
 
-        if (empty($email)) {
+        if (!hash_equals((string) $_SESSION['csrf_token'], (string) ($_POST['csrf_token'] ?? ''))) {
+            $error = "Güvenlik doğrulaması başarısız.";
+        } elseif (empty($email)) {
             $error = "Email adresi boş bırakılamaz.";
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = "Geçersiz e-posta adresi.";
@@ -112,6 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+mobile_login_complete:
 ?>
 <!doctype html>
 <html lang="tr">
@@ -392,6 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <?php if ($view === 'forgot'): ?>
                 <form method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                     <div class="form-floating mb-4">
                         <input type="email" name="email" class="form-control" id="floatingEmailForgot" placeholder="ad@sirket.com" required value="<?php echo htmlspecialchars($email ?? ''); ?>">
                         <label for="floatingEmailForgot">Email Adresi</label>
@@ -407,6 +463,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
             <?php else: ?>
                 <form method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                     <div class="form-floating mb-3">
                         <input type="text" name="email" class="form-control" id="floatingEmail" placeholder="E-posta, telefon veya kullanıcı adı" required autocomplete="username" value="<?php echo htmlspecialchars($email ?? ''); ?>">
                         <label for="floatingEmail">E-posta, Telefon veya Kullanıcı Adı</label>

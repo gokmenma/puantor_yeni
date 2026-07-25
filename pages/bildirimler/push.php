@@ -1,17 +1,16 @@
 <?php
 require_once ROOT . '/Model/Persons.php';
+require_once ROOT . '/Model/UserModel.php';
 
 $Auths->checkFirmReturn();
 
 $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
-if (!$is_superadmin) {
-    echo '<div class="container-xl py-5"><div class="alert alert-danger"><i class="ti ti-lock me-2"></i>Bu sayfaya erişim yetkiniz yok.</div></div>';
-    return;
-}
-
 $firma_id     = (int) ($_SESSION['firm_id'] ?? 0);
 $Person       = new Persons();
+$User         = new UserModel();
 $firm_persons = $Person->getPersonsByFirm($firma_id);
+$firm_users   = $User->allByFirms($firma_id);
+$csrf_token   = (string) ($_SESSION['csrf_token'] ?? '');
 ?>
 
 <div class="page-header d-print-none mb-0">
@@ -90,23 +89,57 @@ $firm_persons = $Person->getPersonsByFirm($firma_id);
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Gönderilen Bildirimler</h3>
+                        <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a href="#tab-sistem-bildirimleri" class="nav-link active" data-bs-toggle="tab" role="tab">
+                                    <i class="ti ti-settings-automation me-2"></i>Sistem Bildirimleri
+                                </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a href="#tab-kullanici-bildirimleri" class="nav-link" data-bs-toggle="tab" role="tab">
+                                    <i class="ti ti-user-share me-2"></i>Kullanıcı Bildirimleri
+                                </a>
+                            </li>
+                        </ul>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table card-table table-vcenter text-nowrap w-100" id="gonderilenTable">
-                            <thead>
-                                <tr>
-                                    <th>Tarih</th>
-                                    <th>Gönderen</th>
-                                    <th>Gönderim Hedefi</th>
-                                    <th>Başlık</th>
-                                    <th>İçerik</th>
-                                    <th>Açılacak Sayfa</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                    <div class="card-body p-0">
+                        <div class="tab-content">
+                            <div class="tab-pane active show" id="tab-sistem-bildirimleri" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table card-table table-vcenter text-nowrap w-100" id="sistemBildirimTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Tarih</th>
+                                                <?php if ($is_superadmin): ?><th>Firma</th><?php endif; ?>
+                                                <th>Gönderen</th>
+                                                <th>Bildirim Hedefi</th>
+                                                <th>Başlık</th>
+                                                <th>İçerik</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="tab-kullanici-bildirimleri" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table card-table table-vcenter text-nowrap w-100" id="gonderilenTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Tarih</th>
+                                                <?php if ($is_superadmin): ?><th>Firma</th><?php endif; ?>
+                                                <th>Gönderen</th>
+                                                <th>Gönderim Hedefi</th>
+                                                <th>Başlık</th>
+                                                <th>İçerik</th>
+                                                <th>Açılacak Sayfa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -123,6 +156,7 @@ $firm_persons = $Person->getPersonsByFirm($firma_id);
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="pushForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8') ?>">
                 <div class="modal-body">
                     <!-- Bilgi Alert Box -->
                     <div class="alert alert-info d-flex align-items-start mb-3" role="alert">
@@ -138,18 +172,36 @@ $firm_persons = $Person->getPersonsByFirm($firma_id);
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Alıcı Türü</label>
+                        <div class="form-selectgroup">
+                            <label class="form-selectgroup-item">
+                                <input type="radio" name="hedef_turu" value="personel" class="form-selectgroup-input" checked>
+                                <span class="form-selectgroup-label">
+                                    <i class="ti ti-id-badge-2 me-1"></i> Personeller
+                                </span>
+                            </label>
+                            <label class="form-selectgroup-item">
+                                <input type="radio" name="hedef_turu" value="kullanici" class="form-selectgroup-input">
+                                <span class="form-selectgroup-label">
+                                    <i class="ti ti-user-shield me-1"></i> Sistem Kullanıcıları
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Gönderim Hedefi</label>
                         <div class="form-selectgroup">
                             <label class="form-selectgroup-item">
                                 <input type="radio" name="hedef" id="hedefBelirli" value="belirli" class="form-selectgroup-input" checked>
                                 <span class="form-selectgroup-label">
-                                    <i class="ti ti-user me-1"></i> Belirli Personel(ler)
+                                    <i class="ti ti-user me-1"></i> <span id="belirliHedefEtiketi">Belirli Personel(ler)</span>
                                 </span>
                             </label>
                             <label class="form-selectgroup-item">
                                 <input type="radio" name="hedef" id="hedefHepsi" value="hepsi" class="form-selectgroup-input">
                                 <span class="form-selectgroup-label">
-                                    <i class="ti ti-users me-1"></i> Tüm Personellere (<span id="aboneSayisi">…</span>)
+                                    <i class="ti ti-users me-1"></i> <span id="tumHedefEtiketi">Tüm Personellere (…)</span>
                                 </span>
                             </label>
                         </div>
@@ -161,6 +213,17 @@ $firm_persons = $Person->getPersonsByFirm($firma_id);
                             <?php foreach ($firm_persons as $p): ?>
                                 <option value="<?= $p->id ?>">
                                     <?= htmlspecialchars($p->full_name) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-none" id="kullaniciSecWrapper">
+                        <label class="form-label">Sistem Kullanıcısı Seçin</label>
+                        <select name="kullanici_ids[]" id="kullaniciSec" class="form-select select2" multiple style="width:100%;">
+                            <?php foreach ($firm_users as $firm_user): ?>
+                                <option value="<?= (int) $firm_user->id ?>">
+                                    <?= htmlspecialchars($firm_user->full_name . ' — ' . $firm_user->email, ENT_QUOTES, 'UTF-8') ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -215,12 +278,67 @@ $firm_persons = $Person->getPersonsByFirm($firma_id);
     </div>
 </div>
 
+<div class="modal modal-blur fade" id="modalBildirimDetay" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div class="text-secondary small mb-1">Bildirim Detayı</div>
+                    <h5 class="modal-title" id="detayBaslik">—</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Tarih</div>
+                        <div class="fw-medium" id="detayTarih">—</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Firma</div>
+                        <div class="fw-medium" id="detayFirma">—</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Gönderen</div>
+                        <div class="fw-medium" id="detayGonderen">—</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Hedef</div>
+                        <div class="fw-medium" id="detayHedef">—</div>
+                    </div>
+                </div>
+                <div class="form-label">Bildirim İçeriği</div>
+                <div class="bg-light rounded border p-3 text-body"
+                     id="detayIcerik"
+                     style="white-space:pre-wrap;overflow-wrap:anywhere;min-height:90px;"></div>
+                <div class="d-flex align-items-center gap-2 mt-4 mb-2">
+                    <div class="form-label mb-0">İletilen Alıcılar</div>
+                    <span class="badge bg-primary-lt" id="detayAliciSayisi">0 alıcı</span>
+                </div>
+                <div class="bg-light rounded border p-3 d-flex flex-wrap gap-2"
+                     id="detayAlicilar"
+                     style="max-height:220px;overflow-y:auto;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const notificationRows = new Map();
+
     // Select2 elements inside modal
     $('#personelSec').select2({
         dropdownParent: $('#modalPushGonder'),
         placeholder: 'Personel Seç',
+        allowClear: true
+    });
+    $('#kullaniciSec').select2({
+        dropdownParent: $('#modalPushGonder'),
+        placeholder: 'Sistem Kullanıcısı Seç',
         allowClear: true
     });
     $('#pushUrl').select2({
@@ -234,26 +352,24 @@ document.addEventListener('DOMContentLoaded', () => {
         data: [],
         columns: [
             { data: 'created_at', render: fmtDateTime },
-            { data: 'gonderen_adi' },
+            <?php if ($is_superadmin): ?>
+            { data: 'firma_adi', render: (d) => escapeHtml(d || '—') },
+            <?php endif; ?>
+            { data: 'gonderen_adi', render: (d) => escapeHtml(d || '—') },
             { 
                 data: 'hedef', 
                 render: (d, t, row) => {
                     if (d === 'hepsi') {
-                        return '<span class="badge bg-success-lt"><i class="ti ti-users me-1"></i> Tüm Personeller</span>';
+                        const label = row.hedef_turu === 'kullanici' ? 'Tüm Sistem Kullanıcıları' : 'Tüm Personeller';
+                        return `<span class="badge bg-success-lt"><i class="ti ti-users me-1"></i>${label}</span>`;
                     }
-                    return `<span class="badge bg-primary-lt" title="${row.hedef_aciklama}"><i class="ti ti-user me-1"></i> ${row.hedef_aciklama}</span>`;
+                    return `<span class="badge bg-primary-lt" title="${escapeHtml(row.hedef_aciklama)}"><i class="ti ti-user me-1"></i>${escapeHtml(row.hedef_aciklama)}</span>`;
                 }
             },
             { data: 'baslik', render: $.fn.dataTable.render.text() },
-            { 
-                data: 'icerik', 
-                render: (d) => {
-                    const text = $.fn.dataTable.render.text().display(d);
-                    if (text.length > 50) {
-                        return `<span title="${text}">${text.substr(0, 50)}...</span>`;
-                    }
-                    return text;
-                }
+            {
+                data: 'icerik',
+                render: (d, type, row) => renderNotificationContent(d, type, row, 'kullanici')
             },
             { 
                 data: 'url',
@@ -274,6 +390,64 @@ document.addEventListener('DOMContentLoaded', () => {
         skipSearch: ['İşlem']
     });
 
+    const systemDt = window.createDataTable('#sistemBildirimTable', {
+        data: [],
+        columns: [
+            { data: 'created_at', render: fmtDateTime },
+            <?php if ($is_superadmin): ?>
+            { data: 'firma_adi', render: (d) => escapeHtml(d || 'Birden fazla firma') },
+            <?php endif; ?>
+            {
+                data: 'gonderen_adi',
+                render: () => '<span class="badge bg-azure-lt"><i class="ti ti-settings-automation me-1"></i>Sistem</span>'
+            },
+            {
+                data: 'hedef_aciklama',
+                render: (d) => `<span class="badge bg-secondary-lt">${escapeHtml(d)}</span>`
+            },
+            { data: 'baslik', render: $.fn.dataTable.render.text() },
+            {
+                data: 'icerik',
+                render: (d, type, row) => renderNotificationContent(d, type, row, 'sistem')
+            }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        skipSearch: ['İşlem']
+    });
+
+    dt.on('draw', initializeTooltips);
+    systemDt.on('draw', initializeTooltips);
+
+    function escapeHtml(value) {
+        return $('<div>').text(value || '').html();
+    }
+
+    function plainText(value) {
+        return $('<div>').html(value || '').text();
+    }
+
+    function renderNotificationContent(value, type, row, source) {
+        const plain = plainText(value);
+        if (type !== 'display') return plain;
+
+        const preview = plain.length > 70 ? `${plain.substring(0, 70)}...` : plain;
+        const key = `${source}:${row.id}`;
+        return `<button type="button"
+                        class="btn btn-link link-body p-0 text-start text-decoration-none js-bildirim-detay"
+                        data-notification-key="${escapeHtml(key)}"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        data-bs-title="${escapeHtml(plain)}"
+                        title="${escapeHtml(plain)}">${escapeHtml(preview)}</button>`;
+    }
+
+    function initializeTooltips() {
+        document.querySelectorAll('.js-bildirim-detay[data-bs-toggle="tooltip"]').forEach(element => {
+            bootstrap.Tooltip.getOrCreateInstance(element);
+        });
+    }
+
     function fmtDateTime(d) {
         if (!d) return '—';
         const p = (d + '').split(/[-T ]/);
@@ -292,7 +466,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('statToplam').textContent      = d.toplam;
                 document.getElementById('statAbone').textContent       = d.abone;
                 document.getElementById('statAboneDegil').textContent  = d.abone_degil;
-                document.getElementById('aboneSayisi').textContent     = d.abone;
+                document.getElementById('tumHedefEtiketi').dataset.personelCount = d.hedef_toplam_personel;
+                document.getElementById('tumHedefEtiketi').dataset.kullaniciCount = d.toplam_kullanici;
+                updateRecipientUi();
             });
     }
 
@@ -301,23 +477,107 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(r => r.json())
             .then(d => {
                 if (d.status !== 'success') return;
+                d.list.forEach(row => notificationRows.set(`kullanici:${row.id}`, row));
                 dt.clear().rows.add(d.list).draw();
+                initializeTooltips();
+            });
+    }
+
+    function loadSystemList() {
+        fetch('/api/bildirimler/push.php?action=system-list')
+            .then(r => r.json())
+            .then(d => {
+                if (d.status !== 'success') return;
+                d.list.forEach(row => notificationRows.set(`sistem:${row.id}`, row));
+                systemDt.clear().rows.add(d.list).draw();
+                initializeTooltips();
             });
     }
 
     // Initial loads
     loadStats();
     loadSentList();
+    loadSystemList();
 
-    document.querySelectorAll('input[name="hedef"]').forEach(r => {
-        r.addEventListener('change', () => {
-            document.getElementById('personelSecWrapper').style.display =
-                r.value === 'belirli' ? '' : 'none';
+    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', () => {
+            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+            initializeTooltips();
         });
     });
 
+    document.addEventListener('click', event => {
+        const trigger = event.target.closest('.js-bildirim-detay');
+        if (!trigger) return;
+
+        bootstrap.Tooltip.getInstance(trigger)?.hide();
+        const row = notificationRows.get(trigger.dataset.notificationKey);
+        if (!row) return;
+
+        document.getElementById('detayBaslik').textContent = plainText(row.baslik) || '—';
+        document.getElementById('detayTarih').textContent = fmtDateTime(row.created_at);
+        document.getElementById('detayFirma').textContent = row.firma_adi || '—';
+        document.getElementById('detayGonderen').textContent = row.gonderen_adi || 'Sistem';
+        document.getElementById('detayHedef').textContent = row.hedef_aciklama || '—';
+        document.getElementById('detayIcerik').textContent = plainText(row.icerik) || '—';
+        const recipients = Array.isArray(row.alici_listesi) ? row.alici_listesi : [];
+        const recipientContainer = document.getElementById('detayAlicilar');
+        recipientContainer.replaceChildren();
+        document.getElementById('detayAliciSayisi').textContent = `${row.alici_sayisi ?? recipients.length} alıcı`;
+        if (recipients.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'text-secondary';
+            empty.textContent = 'Alıcı bilgisi bulunamadı.';
+            recipientContainer.appendChild(empty);
+        } else {
+            recipients.forEach(name => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-white text-body border fw-normal';
+                badge.textContent = name;
+                recipientContainer.appendChild(badge);
+            });
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalBildirimDetay')).show();
+    });
+
+    document.querySelectorAll('input[name="hedef"]').forEach(r => {
+        r.addEventListener('change', () => {
+            updateRecipientUi();
+        });
+    });
+
+    document.querySelectorAll('input[name="hedef_turu"]').forEach(r => {
+        r.addEventListener('change', updateRecipientUi);
+    });
+
+    function updateRecipientUi() {
+        const recipientType = document.querySelector('input[name="hedef_turu"]:checked').value;
+        const target = document.querySelector('input[name="hedef"]:checked').value;
+        const specific = target === 'belirli';
+        const allLabel = document.getElementById('tumHedefEtiketi');
+        const count = recipientType === 'kullanici'
+            ? (allLabel.dataset.kullaniciCount || '…')
+            : (allLabel.dataset.personelCount || '…');
+
+        document.getElementById('belirliHedefEtiketi').textContent =
+            recipientType === 'kullanici' ? 'Belirli Sistem Kullanıcıları' : 'Belirli Personel(ler)';
+        allLabel.textContent =
+            recipientType === 'kullanici' ? `Tüm Sistem Kullanıcılarına (${count})` : `Tüm Personellere (${count})`;
+        document.getElementById('personelSecWrapper').classList.toggle('d-none', !specific || recipientType !== 'personel');
+        document.getElementById('kullaniciSecWrapper').classList.toggle('d-none', !specific || recipientType !== 'kullanici');
+    }
+
     document.getElementById('pushForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const recipientType = document.querySelector('input[name="hedef_turu"]:checked').value;
+        const target = document.querySelector('input[name="hedef"]:checked').value;
+        if (target === 'belirli') {
+            const selected = recipientType === 'kullanici' ? $('#kullaniciSec').val() : $('#personelSec').val();
+            if (!selected || selected.length === 0) {
+                Swal.fire({ icon: 'warning', title: 'Alıcı seçin', text: 'En az bir alıcı seçmelisiniz.' });
+                return;
+            }
+        }
         const btn = document.getElementById('btnGonder');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gönderiliyor…';
@@ -334,8 +594,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Reset form and select2
                 e.target.reset();
                 $('#personelSec').val(null).trigger('change');
+                $('#kullaniciSec').val(null).trigger('change');
                 $('#pushUrl').val(null).trigger('change');
-                document.getElementById('personelSecWrapper').style.display = '';
+                updateRecipientUi();
 
                 // Close Modal
                 const modalEl = document.getElementById('modalPushGonder');

@@ -48,6 +48,11 @@ $Auths = new Auths();
                 foreach ($top_menus as $menu) {
 
                     $menu_auth = $Auths->getAuthIdByTitle($menu->page_name);
+                    $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+
+                    if ($is_superadmin && !$Auths->isSuperadminTopMenuAllowed($menu)) {
+                        continue;
+                    }
 
                     // Alt menü yetkisi üst menüyü görünür kılsa bile, auths tablosunda
                     // superadmin olarak işaretli bir yönetim menüsü normal kullanıcıya
@@ -165,6 +170,10 @@ $Auths = new Auths();
                             <div class="dropdown-menu-columns">
                                 <div class="dropdown-menu-column">
                                     <?php foreach ($sub_menus as $sub_menu) {
+
+                                        if ($is_superadmin && !$Auths->isSuperadminPageAllowed((string) $sub_menu->page_link)) {
+                                            continue;
+                                        }
 
                                         //Eğer menü yetkiye tabi ise yetki kontrolü yapılır
                                         if ($sub_menu->is_authorize == 1) {

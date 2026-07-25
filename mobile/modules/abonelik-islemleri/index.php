@@ -134,9 +134,13 @@ body[data-bs-theme="dark"] .card-detail-item {
 
 /* Modallar için premium dokunuşlar */
 .modal-content {
-    border-radius: 20px !important;
+    border-radius: 20px;
     border: none !important;
     box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+}
+.modal-bottom-sheet .modal-content {
+    border-radius: 24px 24px 0 0 !important;
+    margin-bottom: 0 !important;
 }
 .form-floating > .form-control, .form-floating > .form-select {
     border-radius: 12px !important;
@@ -328,7 +332,7 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
         </ul>
     </div>
 
-    <div class="tab-content px-2 pb-5" id="subscriptionTabContent">
+    <div class="tab-content px-2" id="subscriptionTabContent" style="padding-bottom: 24px !important;">
         
         <?php if ($hasAboneler): ?>
         <!-- 1. ABONELER TABI -->
@@ -470,6 +474,13 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
                             <span class="text-muted">Kalan Süre:</span>
                             <span class="<?php echo $kalan_gun_class; ?>"><?php echo $kalan_gun_str; ?></span>
                         </div>
+                        <?php if ($hasSatinAlma): ?>
+                        <div class="d-flex justify-content-end mt-3 pt-2 border-top border-light">
+                            <button type="button" class="btn btn-sm btn-outline-primary px-3 py-1 btn-add-transaction-sub-mobile" style="border-radius: 8px;" data-kullanici-id="<?php echo Security::encrypt($sub->id); ?>">
+                                <i class="ti ti-shopping-cart me-1"></i> Satın Alma Ekle
+                            </button>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
                 </div><!-- /#aboneler-list -->
@@ -591,7 +602,7 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
             <?php endif; ?>
 
             <!-- Floating Action Button for adding Package -->
-            <button type="button" class="mobile-fab btn-add-paket-mobile border-0" style="position: fixed; right: 20px; bottom: 80px; z-index: 100; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(32, 107, 196, 0.4); text-decoration: none;">
+            <button type="button" class="mobile-fab btn-add-paket-mobile border-0" style="position: fixed; right: 20px; bottom: calc(var(--app-nav-height, 64px) + 25px); z-index: 1040; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(32, 107, 196, 0.45); text-decoration: none;">
                 <i class="ti ti-plus" style="font-size: 1.5rem;"></i>
             </button>
         </div>
@@ -633,8 +644,8 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
                         </ul>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
 
             <?php if (empty($payments)): ?>
                 <div class="text-center py-5">
@@ -693,7 +704,7 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
                         <div class="d-flex justify-content-end gap-1 mt-3 pt-2 border-top border-light">
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 8px; font-size: 0.75rem;">
-                                    Durum Değiştir
+                                    Durum / İşlem
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow" style="border-radius: 12px; font-size: 0.8rem;">
                                     <?php if ($pay->durum !== 'basarili'): ?>
@@ -719,6 +730,20 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
                                     <?php endif; ?>
                                     <li class="dropdown-divider"></li>
                                     <li>
+                                        <a class="dropdown-item edit-payment-btn-mobile d-flex align-items-center" href="#"
+                                           data-id="<?php echo $encryptedPayId; ?>"
+                                           data-kullanici-id="<?php echo Security::encrypt($pay->kullanici_id); ?>"
+                                           data-paket-id="<?php echo Security::encrypt($pay->paket_id); ?>"
+                                           data-firma-hakki="<?php echo (int)$pay->firma_hakki; ?>"
+                                           data-alt-kullanici-hakki="<?php echo (int)$pay->alt_kullanici_hakki; ?>"
+                                           data-tutar="<?php echo htmlspecialchars($pay->tutar); ?>"
+                                           data-baslangic-tarihi="<?php echo $pay->baslangic_tarihi ? date('d.m.Y', strtotime($pay->baslangic_tarihi)) : ''; ?>"
+                                           data-bitis-tarihi="<?php echo $pay->bitis_tarihi ? date('d.m.Y', strtotime($pay->bitis_tarihi)) : ''; ?>">
+                                            <i class="ti ti-edit me-2"></i> Düzenle
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-divider"></li>
+                                    <li>
                                         <a class="dropdown-item delete-payment-mobile text-danger d-flex align-items-center" href="#" data-id="<?php echo $encryptedPayId; ?>">
                                             <i class="ti ti-trash me-2"></i> Satışı Sil
                                         </a>
@@ -736,7 +761,7 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
             <?php endif; ?>
 
             <!-- Floating Action Button for adding Transaction -->
-            <button type="button" class="mobile-fab btn-add-transaction-mobile border-0" style="position: fixed; right: 20px; bottom: 80px; z-index: 100; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(32, 107, 196, 0.4); text-decoration: none;">
+            <button type="button" class="mobile-fab btn-add-transaction-mobile border-0" style="position: fixed; right: 20px; bottom: calc(var(--app-nav-height, 64px) + 25px); z-index: 1040; width: 56px; height: 56px; border-radius: 50%; background: #206bc4; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(32, 107, 196, 0.45); text-decoration: none;">
                 <i class="ti ti-plus" style="font-size: 1.5rem;"></i>
             </button>
         </div>
@@ -831,13 +856,14 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
             <div class="modal-header py-3 px-4 border-bottom border-light">
                 <h5 class="modal-title font-weight-bold" style="font-size: 1.1rem; display: flex; align-items: center; gap: 6px;">
                     <i class="ti ti-shopping-cart text-primary" style="font-size: 1.3rem;"></i>
-                    <span>Yeni İşlem Ekle</span>
+                    <span id="m_tx_modal_title">Yeni Satın Alma Ekle</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="" id="transactionFormMobile">
                 <div class="modal-body p-4">
-                    <input type="hidden" name="action" value="addManualSale">
+                    <input type="hidden" name="action" id="m_tx_action" value="addManualSale">
+                    <input type="hidden" name="payment_id" id="m_tx_payment_id" value="">
 
                     <!-- Kullanıcı Seçin -->
                     <div class="mb-3">
@@ -869,6 +895,14 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+
+                    <!-- Fiyat / Tutar -->
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="number" step="0.01" min="0" name="tutar" id="m_tx_tutar" class="form-control" placeholder="Fiyat (₺)" required>
+                            <label for="m_tx_tutar">Satış Fiyatı (₺) *</label>
+                        </div>
                     </div>
 
                     <!-- Firma Hakkı & Kullanıcı Hakkı -->
@@ -976,20 +1010,23 @@ $(document).ready(function() {
         }
     });
 
-    // Paket seçildiğinde otomatik limit ve tarih hesabı
+    // Paket seçildiğinde otomatik limit, fiyat ve tarih hesabı
     $(document).on('change', '#m_tx_paket_id', function() {
         let selectedOpt = $('option:selected', this);
         if (selectedOpt.val()) {
             let limitFirma = selectedOpt.data('firma_hakki');
             let limitUser = selectedOpt.data('alt_kullanici_hakki');
+            let fiyat = selectedOpt.data('fiyat');
             
             $('#m_tx_firma_hakki').val(limitFirma);
             $('#m_tx_alt_kullanici_hakki').val(limitUser);
+            $('#m_tx_tutar').val(fiyat);
             
             recalculateEndDateMobile();
         } else {
             $('#m_tx_firma_hakki').val('');
             $('#m_tx_alt_kullanici_hakki').val('');
+            $('#m_tx_tutar').val('');
             if (mFpEnd) mFpEnd.setDate('');
         }
     });
@@ -1167,6 +1204,9 @@ $(document).ready(function() {
     $(document).on('click', '.btn-add-transaction-mobile', function(e) {
         e.preventDefault();
         $('#transactionFormMobile')[0].reset();
+        $('#m_tx_action').val('addManualSale');
+        $('#m_tx_payment_id').val('');
+        $('#m_tx_modal_title').text('Yeni Satın Alma Ekle');
         
         // Select2 temizleme
         $('#m_tx_kullanici_id').val('').trigger('change');
@@ -1180,6 +1220,57 @@ $(document).ready(function() {
         $('#transactionModalMobile').modal('show');
     });
 
+    // Abone Kartından Satın Alma Ekle Butonu
+    $(document).on('click', '.btn-add-transaction-sub-mobile', function(e) {
+        e.preventDefault();
+        let kullaniciId = $(this).data('kullanici-id');
+        
+        $('#transactionFormMobile')[0].reset();
+        $('#m_tx_action').val('addManualSale');
+        $('#m_tx_payment_id').val('');
+        $('#m_tx_modal_title').text('Yeni Satın Alma Ekle');
+        
+        $('#m_tx_paket_id').val('').trigger('change');
+        $('#m_tx_kullanici_id').val(kullaniciId).trigger('change');
+        
+        let today = new Date();
+        if (mFpStart) mFpStart.setDate(today);
+        if (mFpEnd) mFpEnd.setDate('');
+
+        $('#transactionModalMobile').modal('show');
+    });
+
+    // Satış Düzenle Butonu
+    $(document).on('click', '.edit-payment-btn-mobile', function(e) {
+        e.preventDefault();
+        $('#transactionFormMobile')[0].reset();
+        
+        let id = $(this).data('id');
+        let kullaniciId = $(this).data('kullanici-id');
+        let paketId = $(this).data('paket-id');
+        let firmaHakki = $(this).data('firma-hakki');
+        let altKullaniciHakki = $(this).data('alt-kullanici-hakki');
+        let tutar = $(this).data('tutar');
+        let baslangicTarihi = $(this).data('baslangic-tarihi');
+        let bitisTarihi = $(this).data('bitis-tarihi');
+
+        $('#m_tx_action').val('editManualSale');
+        $('#m_tx_payment_id').val(id);
+        $('#m_tx_modal_title').text('Satış İşlemini Düzenle');
+
+        $('#m_tx_tutar').val(tutar);
+        $('#m_tx_firma_hakki').val(firmaHakki);
+        $('#m_tx_alt_kullanici_hakki').val(altKullaniciHakki);
+
+        $('#m_tx_kullanici_id').val(kullaniciId).trigger('change');
+        $('#m_tx_paket_id').val(paketId).trigger('change');
+
+        if (mFpStart && baslangicTarihi) mFpStart.setDate(baslangicTarihi);
+        if (mFpEnd && bitisTarihi) mFpEnd.setDate(bitisTarihi);
+
+        $('#transactionModalMobile').modal('show');
+    });
+
     // Satış İşlemini Kaydet
     $(document).on('submit', '#transactionFormMobile', function(e) {
         e.preventDefault();
@@ -1189,6 +1280,7 @@ $(document).ready(function() {
             rules: {
                 kullanici_id: { required: true },
                 paket_id: { required: true },
+                tutar: { required: true, number: true },
                 firma_hakki: { required: true, digits: true },
                 alt_kullanici_hakki: { required: true, digits: true },
                 baslangic_tarihi: { required: true },
@@ -1197,6 +1289,7 @@ $(document).ready(function() {
             messages: {
                 kullanici_id: { required: "Kullanıcı seçimi zorunludur." },
                 paket_id: { required: "Paket seçimi zorunludur." },
+                tutar: { required: "Satış fiyatı zorunludur.", number: "Geçerli bir fiyat giriniz." },
                 firma_hakki: { required: "Firma hakkı zorunludur.", digits: "Tam sayı olmalıdır." },
                 alt_kullanici_hakki: { required: "Kullanıcı hakkı zorunludur.", digits: "Tam sayı olmalıdır." },
                 baslangic_tarihi: { required: "Başlangıç tarihi zorunludur." },

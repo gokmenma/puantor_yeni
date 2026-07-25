@@ -1,14 +1,31 @@
 <?php
-define("ROOT", $_SERVER["DOCUMENT_ROOT"]);
+define("ROOT", __DIR__);
 require_once 'configs/require.php';
 require_once 'Model/UserModel.php';
 require_once 'App/Helper/security.php';
 require_once 'Model/SettingsModel.php';
 require_once 'App/Helper/date.php';
 require_once 'Model/LoginLogsModel.php';
+require_once 'Service/LoginSecurityService.php';
+require_once 'Service/MailGonderimService.php';
+
+use Service\LoginSecurityService;
+use Service\MailGonderimService;
 
 $Settings = new SettingsModel();
 $User = new UserModel();
+$loginSecurity = new LoginSecurityService($User->getDb());
+$clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+if (empty($_SESSION['csrf_token'])) $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+function safeLoginReturnUrl(string $value, string $fallback): string
+{
+    $value = urldecode($value);
+    if ($value === '' || preg_match('#^(?:https?:)?//#i', $value) || str_contains($value, "\r") || str_contains($value, "\n")) {
+        return $fallback;
+    }
+    return $value;
+}
 
 use App\Helper\Security;
 use App\Helper\Date;
@@ -19,21 +36,58 @@ $error = "";
 if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['remember_me'])) {
     $token = $_COOKIE['remember_me'];
     $cookie_user = $User->getUserBySessionToken($token);
-    if ($cookie_user && $cookie_user->status == 1) {
+    if ($cookie_user && (int) ($cookie_user->superadmin ?? 0) === 1) {
+        puantorExpireCookie('remember_me');
+        $User->setToken($cookie_user->id, bin2hex(random_bytes(32)));
+        $loginSecurity->event((int) $cookie_user->id, 'superadmin_remember_rejected', 'Superadmin kalıcı oturum girişimi reddedildi.');
+    } elseif ($cookie_user && $cookie_user->status == 1) {
+        session_regenerate_id(true);
         $_SESSION['user'] = $cookie_user;
         $_SESSION['firm_id'] = $cookie_user->firm_id;
         $_SESSION['full_name'] = $cookie_user->full_name;
         $_SESSION['user_role'] = $cookie_user->user_roles;
         $_SESSION["log_id"] = $User->loginLog($cookie_user->id);
         
-        $returnUrl = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? $_GET['returnUrl'] : 'company-list.php';
-        header("Location: {$returnUrl}");
+        $is_superadmin = ($cookie_user->superadmin ?? 0) == 1;
+        if ($is_superadmin) {
+            $_SESSION['firm_id'] = $cookie_user->firm_id ?? 0;
+            $rawReturn = $_GET['returnUrl'] ?? '';
+            $returnUrl = safeLoginReturnUrl($rawReturn, '');
+            if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
+                $redirectUri = 'index.php?p=home';
+            } else {
+                $redirectUri = $returnUrl;
+            }
+            header("Location: {$redirectUri}");
+        } else {
+            $rawReturn = $_GET['returnUrl'] ?? '';
+            $returnUrl = safeLoginReturnUrl($rawReturn, 'company-list.php');
+            header("Location: {$returnUrl}");
+        }
         exit();
     }
 }
 
 if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
-    header("Location: company-list.php");
+    $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+    if ($is_superadmin) {
+        $_SESSION['firm_id'] = $_SESSION['user']->firm_id ?? 0;
+        $rawReturn = $_GET['returnUrl'] ?? '';
+        $returnUrl = safeLoginReturnUrl($rawReturn, '');
+        if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
+            $redirectUri = 'index.php?p=home';
+        } else {
+            $redirectUri = $returnUrl;
+        }
+        header("Location: {$redirectUri}");
+    } elseif (!hash_equals((string) $_SESSION['csrf_token'], (string) ($_POST['csrf_token'] ?? ''))) {
+        $error = 'Güvenlik doğrulaması başarısız. Sayfayı yenileyin.';
+    } elseif ($loginSecurity->isBlocked($email, $clientIp)) {
+        $error = 'Çok fazla hatalı giriş denemesi yapıldı. 15 dakika sonra tekrar deneyin.';
+        $loginSecurity->event(null, 'login_rate_limited', 'Giriş deneme sınırı uygulandı.');
+    } else {
+        header("Location: company-list.php");
+    }
     exit();
 }
 
@@ -48,14 +102,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
     } else {
         $user = $User->getUserByLoginField($email);
         if (!$user) {
-            $error = 'Kullanıcı bulunamadı';
+            $loginSecurity->record($email, $clientIp, false);
+            $error = 'Giriş bilgileri hatalı veya hesap kullanıma kapalı.';
         } elseif (isset($user) && $user->status == 0) {
-            $error = 'Hesabınız henüz aktif değil';
+            $loginSecurity->record($email, $clientIp, false);
+            $error = 'Giriş bilgileri hatalı veya hesap kullanıma kapalı.';
         } else {
             $verified = password_verify($password, $user->password);
             $demo_date = $user->created_at;
 
             if ($verified) {
+                if ((int) ($user->superadmin ?? 0) === 1) {
+                    $code = (string) random_int(100000, 999999);
+                    try {
+                        $mailer = (new MailGonderimService(new SettingsModel()))->createMailer('info');
+                        $mailer->addAddress($user->email, $user->full_name);
+                        $mailer->Subject = 'Puantor giriş doğrulama kodu';
+                        $mailer->Body = '<p>Giriş doğrulama kodunuz:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px">' . $code . '</p><p>Kod 5 dakika geçerlidir.</p>';
+                        $mailer->AltBody = "Giriş doğrulama kodunuz: {$code}. Kod 5 dakika geçerlidir.";
+                        $mailer->send();
+                        session_regenerate_id(true);
+                        $_SESSION['pending_superadmin_2fa'] = [
+                            'user_id' => (int) $user->id,
+                            'code_hash' => password_hash($code, PASSWORD_DEFAULT),
+                            'expires_at' => time() + 300,
+                            'attempts' => 0,
+                        ];
+                        $loginSecurity->event((int) $user->id, 'superadmin_2fa_sent', 'Superadmin 2FA kodu gönderildi.');
+                        header('Location: superadmin-verify.php');
+                        exit;
+                    } catch (Throwable $e) {
+                        error_log('Superadmin 2FA mail error: ' . $e->getMessage());
+                        $loginSecurity->event((int) $user->id, 'superadmin_2fa_delivery_failed', '2FA kodu gönderilemedi.');
+                        $error = 'Doğrulama kodu gönderilemedi. SMTP ayarlarını kontrol edin.';
+                        goto login_processing_complete;
+                    }
+                }
                 // Deneme süresi kontrolü
                 $days = Date::getDateDiff($demo_date);
                 $has_active_sub = false;
@@ -74,17 +156,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
                 if ($days >= 15 && $user->user_type == 1 && !$has_active_sub && ($user->superadmin ?? 0) != 1) {
                     $error = 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.';
                 } else {
+                    session_regenerate_id(true);
                     $_SESSION['user'] = $user;
                     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     $_SESSION['full_name'] = $user->full_name;
                     $_SESSION['user_role'] = $user->user_roles;
 
                     // Beni Hatırla
-                    if (isset($_POST['remember'])) {
+                    if (isset($_POST['remember']) && (int) ($user->superadmin ?? 0) !== 1) {
                         $token = bin2hex(random_bytes(32));
                         $User->setToken($user->id, $token);
-                        setcookie('remember_me', $token, time() + 30 * 24 * 3600, '/');
+                        setcookie('remember_me', $token, [
+                            'expires' => time() + 30 * 24 * 3600, 'path' => '/',
+                            'secure' => puantorIsHttps(), 'httponly' => true, 'samesite' => 'Lax',
+                        ]);
                     }
+                    $_SESSION['last_activity_at'] = time();
+                    $loginSecurity->clearFailures($email, $clientIp);
 
                     $_SESSION["log_id"] = $User->loginLog($user->id);
                     $LoginLogs = new LoginLogsModel();
@@ -118,16 +206,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
                         }
                     }
 
-                    $returnUrl = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? urlencode($_GET['returnUrl']) : '';
-                    header("Location: company-list.php?returnUrl={$returnUrl}");
-                    exit();
+                    $is_superadmin = ($user->superadmin ?? 0) == 1;
+                    if ($is_superadmin) {
+                        $_SESSION['firm_id'] = $user->firm_id ?? 0;
+                        $rawReturn = $_GET['returnUrl'] ?? '';
+                        $returnUrl = safeLoginReturnUrl($rawReturn, '');
+                        if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
+                            $redirectUri = 'index.php?p=home';
+                        } else {
+                            $redirectUri = $returnUrl;
+                        }
+                        header("Location: {$redirectUri}");
+                        exit();
+                    } else {
+                        $returnUrl = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? urlencode($_GET['returnUrl']) : '';
+                        header("Location: company-list.php?returnUrl={$returnUrl}");
+                        exit();
+                    }
                 }
             } else {
+                $loginSecurity->record($email, $clientIp, false);
                 $error = 'Hatalı şifre, e-posta veya telefon';
             }
         }
     }
 }
+login_processing_complete:
 ?><!doctype html>
 <html lang="tr">
 <head>
@@ -331,6 +435,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
       <?php endif; ?>
 
       <form method="POST" action="" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
         <div class="form-floating mb-3">
           <input type="text" name="email" class="form-control" id="floatingEmail" placeholder="E-posta, telefon veya kullanıcı adı" required autocomplete="username" value="<?php echo htmlspecialchars($email ?? ''); ?>">
           <label for="floatingEmail">E-posta, Telefon veya Kullanıcı Adı</label>

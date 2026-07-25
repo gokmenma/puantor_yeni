@@ -504,6 +504,7 @@ class IzinTalep extends Model
             $duyuru_id = $Duyuru->ekle([
                 'baslik'          => $baslik,
                 'icerik'          => $icerik,
+                'kaynak_turu'     => 'sistem',
                 'olusturan_id'    => $olusturan_id,
                 'hedef_tip'       => 'bazi_personeller',
                 'hedef_firma_id'  => $firma_id,

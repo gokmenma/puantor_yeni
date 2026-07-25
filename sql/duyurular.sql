@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS `duyurular` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `baslik` varchar(255) NOT NULL,
   `icerik` longtext NOT NULL,
+  `kaynak_turu` enum('duyuru','sistem','kullanici') NOT NULL DEFAULT 'duyuru',
   `olusturan_id` int(11) NOT NULL,
   `hedef_tip` enum('aboneler','firma_kullanicilari','firma_personelleri','herkese') NOT NULL DEFAULT 'herkese',
   `hedef_firma_id` int(11) DEFAULT NULL,
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS `duyurular` (
   PRIMARY KEY (`id`),
   KEY `idx_hedef_firma` (`hedef_firma_id`),
   KEY `idx_olusturan` (`olusturan_id`),
+  KEY `idx_kaynak_turu` (`kaynak_turu`),
   KEY `idx_is_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -17,10 +17,58 @@ class Auths extends Model
     private static $authsLoaded = false;
     private static $packageAllowedAuthIds = null;
     private static $packageRestrictionLoaded = false;
+    private static $superadminPageAllowlist = null;
 
     public function __construct()
     {
         parent::__construct($this->table);
+    }
+
+    private function getSuperadminPageAllowlist(): array
+    {
+        if (self::$superadminPageAllowlist === null) {
+            $configFile = ROOT . '/configs/superadmin_page_allowlist.php';
+            $config = file_exists($configFile) ? require $configFile : [];
+            self::$superadminPageAllowlist = is_array($config) ? $config : [];
+        }
+
+        return self::$superadminPageAllowlist;
+    }
+
+    public function isSuperadminPageAllowed(string $pageLink): bool
+    {
+        $pageLink = trim(strtok($pageLink, '?#') ?: '', '/');
+        $config = $this->getSuperadminPageAllowlist();
+
+        if (in_array($pageLink, $config['utility_pages'] ?? [], true)) {
+            return true;
+        }
+
+        foreach ($config['modules'] ?? [] as $module) {
+            if (in_array($pageLink, $module['exact_pages'] ?? [], true)) {
+                return true;
+            }
+            foreach ($module['page_prefixes'] ?? [] as $prefix) {
+                if (strpos($pageLink, $prefix) === 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function isSuperadminTopMenuAllowed(object $menu): bool
+    {
+        $config = $this->getSuperadminPageAllowlist();
+        $menuTitle = (string) ($menu->page_name ?? '');
+        foreach ($config['modules'] ?? [] as $module) {
+            if (in_array($menuTitle, $module['menu_titles'] ?? [], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function loadAuths()
@@ -289,8 +337,8 @@ class Auths extends Model
     // Yetki kontrolü yapar ve yetki yoksa authorize sayfasına yönlendirir
     function checkAuthorize($auth_name)
     {
-        //user'in firm_id'si ve Session firm_id'si aynı mı kontrolü yapılır
-        if ($_SESSION['user']->firm_id != $_SESSION['firm_id']) {
+        $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+        if (!$is_superadmin && (($_SESSION['user']->firm_id ?? 0) != ($_SESSION['firm_id'] ?? 0))) {
             header("Location: index.php?p=authorize");
             exit();
         }
@@ -303,7 +351,8 @@ class Auths extends Model
     //Kullanıcının firm_id'si ve sessiondaki firmayı karşılaştır
     function checkFirm()
     {
-        if ($_SESSION['user']->firm_id != $_SESSION['firm_id']) {
+        $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+        if (!$is_superadmin && (($_SESSION['user']->firm_id ?? 0) != ($_SESSION['firm_id'] ?? 0))) {
             header("Location: index.php?p=authorize");
             exit();
         }
@@ -313,11 +362,12 @@ class Auths extends Model
     //Kullanıcının firm_id'si ve sessiondaki firmayı karşılaştır, eğer farklı ise false döner
     public function checkFirmReturn()
     {
-        if (isset($_SESSION['user']->is_main_user) && $_SESSION['user']->is_main_user == 1) {
+        $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
+        if ($is_superadmin || (isset($_SESSION['user']->is_main_user) && $_SESSION['user']->is_main_user == 1)) {
             return true;
         }
 
-        if ($_SESSION['user']->firm_id != $_SESSION['firm_id']) {
+        if (($_SESSION['user']->firm_id ?? 0) != ($_SESSION['firm_id'] ?? 0)) {
             $res = [
                 "status" => "error",
                 "message" => "Yetkiniz yok"

@@ -175,7 +175,7 @@ class MailIslemleriModel extends Model
     public function getSend(int $sendId): ?array
     {
         $stmt = $this->db->prepare(
-            "SELECT id, konu, gonderen_email, alici_turu, toplam_alici, basarili_sayisi, basarisiz_sayisi, durum, created_at
+            "SELECT id, konu, icerik, gonderen_email, alici_turu, toplam_alici, basarili_sayisi, basarisiz_sayisi, durum, created_at
              FROM mail_gonderimleri WHERE id = ?"
         );
         $stmt->execute([$sendId]);

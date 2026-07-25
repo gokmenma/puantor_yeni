@@ -218,7 +218,8 @@ try {
             break;
 
         case 'tumunu_okundu':
-            $Duyuru->tumunuOkunduIsaretle($kullanici_id, $firma_id);
+            $type = $_POST['type'] ?? $_GET['type'] ?? 'duyuru';
+            $Duyuru->tumunuOkunduIsaretle($kullanici_id, $firma_id, $type);
             echo json_encode(['success' => true]);
             break;
 

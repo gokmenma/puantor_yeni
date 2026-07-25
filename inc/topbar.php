@@ -73,8 +73,8 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                     <?php
 
 
-                    // Sayfa adını kontrol et
-                    if (basename($_SERVER['PHP_SELF']) != 'company-list.php') {
+                    // Sayfa adını ve superadmin durumunu kontrol et
+                    if (basename($_SERVER['PHP_SELF']) != 'company-list.php' && !$_topbar_is_superadmin) {
                         echo $company->myCompanySelect("myFirm", $firm_id);
                     }
 

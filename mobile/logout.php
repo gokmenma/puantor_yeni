@@ -1,11 +1,21 @@
 <?php
-session_start();
+define('ROOT', dirname(__DIR__));
+require_once ROOT . '/App/Helper/session_security.php';
+require_once ROOT . '/Model/UserModel.php';
+puantorStartSecureSession();
+
+if (!empty($_SESSION['user']->id)) {
+    try {
+        (new UserModel())->setMobileToken((int) $_SESSION['user']->id, bin2hex(random_bytes(32)));
+    } catch (Throwable $e) {
+        error_log('Mobile logout token rotation error: ' . $e->getMessage());
+    }
+}
+
+$_SESSION = [];
+puantorExpireCookie('remember_me_mobile');
+puantorExpireCookie('remember_me');
+puantorExpireCookie(session_name());
 session_destroy();
-if (isset($_COOKIE['remember_me_mobile'])) {
-    setcookie('remember_me_mobile', '', time() - 3600, '/');
-}
-if (isset($_COOKIE['remember_me'])) {
-    setcookie('remember_me', '', time() - 3600, '/');
-}
 header("Location: sign-in.php");
 exit();

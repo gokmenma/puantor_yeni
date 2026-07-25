@@ -129,16 +129,25 @@ try {
                 $mesaj = "{$isim} {$gun_sayisi} günlük {$tur_adi} talebi oluşturdu ({$baslangic} - {$bitis}).";
 
                 $yoneticiler = $User->allByFirms($firm_id);
-                foreach ($yoneticiler as $y) {
-                    $Duyuru->saveWithAttr([
+                $yonetici_ids = array_values(array_unique(array_map(
+                    static fn($yonetici) => (int) $yonetici->id,
+                    $yoneticiler
+                )));
+                if ($yonetici_ids) {
+                    $duyuru_id = (int) $Duyuru->ekle([
                         'baslik'          => 'Yeni İzin Talebi',
                         'icerik'          => $mesaj,
+                        'kaynak_turu'     => 'sistem',
                         'oncelik'         => 'normal',
                         'hedef_firma_id'  => $firm_id,
                         'hedef_tip'       => 'bazi_kullanicilar',
-                        'olusturan_id'    => $y->id,
-                        'is_active'       => 1,
+                        'olusturan_id'    => 0,
+                        'baslangic_tarihi'=> null,
+                        'bitis_tarihi'    => null,
                     ]);
+                    if ($duyuru_id) {
+                        $Duyuru->setHedefler($duyuru_id, 'kullanici', $yonetici_ids);
+                    }
                 }
 
                 $pushService = new PushBildirimService($db);

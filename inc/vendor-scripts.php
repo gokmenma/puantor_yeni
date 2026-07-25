@@ -244,7 +244,7 @@ if ($page == 'home') {
     echo '<script src="./src/home/project_gantt.js?v=' . time() . '"></script>';
 }
 
-if ($page == 'activities/index') {
+if ($page == 'activities/index' || $page == 'admin-home') {
     echo '<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>';
 }
 ?>
