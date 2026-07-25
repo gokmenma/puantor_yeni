@@ -21,7 +21,7 @@ $jobsHelper = new Jobs();
 $teamsHelper = new Teams();
 
 $firm_id = $_SESSION['firm_id'] ?? 0;
-$view_mode = $_GET['view'] ?? 'daily'; // daily, monthly
+$view_mode = $_GET['view'] ?? 'monthly'; // daily, monthly
 $month = $_GET['month'] ?? date('m');
 $year = $_GET['year'] ?? date('Y');
 
@@ -796,9 +796,9 @@ $months = [
                                       if ($i >= $limit) break;
                                       if ($stat->count == 0) continue;
                                   ?>
-                                    <div class="text-center px-1.5 py-0.5 rounded" style="min-width: 28px; background-color: <?php echo $stat->color; ?>15; border: 1px solid <?php echo $stat->color; ?>30;">
-                                      <div class="text-bold mb-0" style="font-size: 0.72rem; color: <?php echo $stat->color; ?>; line-height: 1.1;"><?php echo $stat->count; ?></div>
-                                      <div style="font-size: 7px; color: <?php echo $stat->color; ?>; font-weight: 800; opacity: 0.8; line-height: 1.1;"><?php echo $stat->short; ?></div>
+                                    <div class="text-center px-1.5 py-1" style="min-width: 33px; background-color: <?php echo $stat->color; ?>18; border: 1px solid <?php echo $stat->color; ?>38; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                                      <div class="fw-bold mb-0" style="font-size: 0.78rem; color: <?php echo $stat->color; ?>; line-height: 1.1;"><?php echo $stat->count; ?></div>
+                                      <div class="fw-bold" style="font-size: 0.62rem; color: <?php echo $stat->color; ?>; opacity: 0.9; line-height: 1; margin-top: 1px; letter-spacing: 0.2px; text-transform: uppercase;"><?php echo $stat->short; ?></div>
                                     </div>
                                   <?php 
                                     $i++;
@@ -2291,9 +2291,9 @@ function updateBackgroundPersonStats(personId) {
     sortedCats.forEach(catName => {
         const stat = counts[catName];
         if (i < limit && stat.count > 0) {
-            html += `<div class="text-center px-1.5 py-0.5 rounded" style="min-width: 28px; background-color: ${stat.color}15; border: 1px solid ${stat.color}30;">
-              <div class="text-bold mb-0" style="font-size: 0.72rem; color: ${stat.color}; line-height: 1.1;">${stat.count}</div>
-              <div style="font-size: 7px; color: ${stat.color}; font-weight: 800; opacity: 0.8; line-height: 1.1;">${stat.short}</div>
+            html += `<div class="text-center px-1.5 py-1" style="min-width: 33px; background-color: ${stat.color}18; border: 1px solid ${stat.color}38; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+              <div class="fw-bold mb-0" style="font-size: 0.78rem; color: ${stat.color}; line-height: 1.1;">${stat.count}</div>
+              <div class="fw-bold" style="font-size: 0.62rem; color: ${stat.color}; opacity: 0.9; line-height: 1; margin-top: 1px; letter-spacing: 0.2px; text-transform: uppercase;">${stat.short}</div>
             </div>`;
             i++;
         }

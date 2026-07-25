@@ -12,6 +12,7 @@ use App\Helper\Helper;
 $person_id = $_GET['person_id'] ?? 0;
 $req_month = (int)($_GET['month'] ?? date('m'));
 $req_year = (int)($_GET['year'] ?? date('Y'));
+$preserve_requested_period = (int)($_GET['preserve_period'] ?? 0) === 1;
 
 if (!$person_id) {
     echo json_encode(['status' => 'error', 'message' => 'Geçersiz personel.']);
@@ -34,15 +35,20 @@ $notice = null;
 $latest = null;
 
 if ($is_visible !== 1) {
-    // İstenen ay kapalı, en son açık dönemi bul
-    $latest = $Bordro->getLatestVisiblePeriod($firm_id);
-    if ($latest) {
-        $year = (int)$latest['yil'];
-        $month = (int)$latest['ay'];
-        $notice = "Seçilen dönemin ({$req_month}/{$req_year}) bordrosu henüz personellere açık değildir. En son onaylı açık dönem ({$month}/{$year}) gösterilmektedir.";
+    if ($preserve_requested_period) {
+        // Takvim oklarıyla seçilen ay ekranda kalır; kapalı döneme ait veri dönülmez.
+        $notice = "Seçilen dönemin ({$req_month}/{$req_year}) bordrosu henüz personellere açık değildir.";
     } else {
-        // Hiç açık dönem yok
-        $notice = "Bordro henüz personellerin erişimine açılmamıştır.";
+        // İlk açılışta en son görünür dönemi göster.
+        $latest = $Bordro->getLatestVisiblePeriod($firm_id);
+        if ($latest) {
+            $year = (int)$latest['yil'];
+            $month = (int)$latest['ay'];
+            $notice = "Seçilen dönemin ({$req_month}/{$req_year}) bordrosu henüz personellere açık değildir. En son onaylı açık dönem ({$month}/{$year}) gösterilmektedir.";
+        } else {
+            // Hiç açık dönem yok
+            $notice = "Bordro henüz personellerin erişimine açılmamıştır.";
+        }
     }
 }
 

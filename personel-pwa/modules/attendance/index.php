@@ -1,36 +1,34 @@
 <div id="attendance-tab" class="tab-content active">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="h2 mb-0">Puantaj Takvimi</h2>
-            <p id="current-month-label" class="text-muted small">Yükleniyor...</p>
+    <section class="attendance-calendar-card" aria-labelledby="attendance-person-name">
+        <div class="attendance-calendar-header">
+            <div class="min-w-0">
+                <h2 id="attendance-person-name" class="attendance-person-name">
+                    <?php echo htmlspecialchars($user->full_name ?? 'Personel', ENT_QUOTES, 'UTF-8'); ?>
+                </h2>
+                <p id="current-month-label" class="attendance-period-label">Yükleniyor...</p>
+            </div>
+            <div class="attendance-month-actions" aria-label="Ay seçimi">
+                <button type="button" onclick="app.changeMonth(-1)" class="attendance-month-button" aria-label="Önceki ay">
+                    <i class="ti ti-chevron-left"></i>
+                </button>
+                <button type="button" onclick="app.changeMonth(1)" class="attendance-month-button" aria-label="Sonraki ay">
+                    <i class="ti ti-chevron-right"></i>
+                </button>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            <button onclick="app.changeMonth(-1)" class="btn btn-icon btn-light rounded-circle">
-                <i class="ti ti-chevron-left"></i>
-            </button>
-            <button onclick="app.changeMonth(1)" class="btn btn-icon btn-light rounded-circle">
-                <i class="ti ti-chevron-right"></i>
-            </button>
-        </div>
-    </div>
 
-    <div class="mobile-card p-4">
-        <div class="calendar-grid mb-4" id="calendar-grid">
+        <div class="attendance-calendar-body">
+            <div class="calendar-grid" id="calendar-grid" aria-label="Aylık puantaj takvimi">
             <!-- Dynamic -->
-        </div>
-        <div class="d-flex justify-content-center gap-4 border-top pt-3">
-            <div class="d-flex align-items-center gap-2">
-                <span class="status-dot status-primary"></span>
-                <span class="small text-muted">Çalışma</span>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <span class="status-dot status-danger"></span>
-                <span class="small text-muted">Tatil</span>
             </div>
         </div>
-    </div>
 
-    <div id="day-details" class="mb-4">
+        <div class="attendance-calendar-footer">
+            <span id="attendance-calendar-hint">Gün detayını görmek için güne dokunun.</span>
+        </div>
+    </section>
+
+    <div id="day-details" class="mb-4 mt-4">
         <h3 id="selected-day-label" class="h4 mb-3">Seçili Gün Detayı</h3>
         <div class="mobile-card d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">

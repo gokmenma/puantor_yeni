@@ -121,9 +121,9 @@ $months = [
               // Çok az olanları (0 veya 1) bazen göstermemek isteyebiliriz ama burada hepsini gösterelim
               if ($stat->count == 0) continue;
           ?>
-            <div class="text-center px-1.5 py-1 rounded" style="min-width: 32px; background-color: <?php echo $stat->color; ?>20; border: 1px solid <?php echo $stat->color; ?>40;">
-              <div class="text-bold" style="font-size: 0.75rem; color: <?php echo $stat->color; ?>;"><?php echo $stat->count; ?></div>
-              <div style="font-size: 8px; color: <?php echo $stat->color; ?>; font-weight: 800; opacity: 0.8;"><?php echo $stat->short; ?></div>
+            <div class="text-center px-1.5 py-1" style="min-width: 33px; background-color: <?php echo $stat->color; ?>18; border: 1px solid <?php echo $stat->color; ?>38; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+              <div class="fw-bold mb-0" style="font-size: 0.78rem; color: <?php echo $stat->color; ?>; line-height: 1.1;"><?php echo $stat->count; ?></div>
+              <div class="fw-bold" style="font-size: 0.62rem; color: <?php echo $stat->color; ?>; opacity: 0.9; line-height: 1; margin-top: 1px; letter-spacing: 0.2px; text-transform: uppercase;"><?php echo $stat->short; ?></div>
             </div>
           <?php 
             $i++;

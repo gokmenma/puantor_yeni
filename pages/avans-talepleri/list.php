@@ -601,20 +601,64 @@ $(document).ready(function() {
     $(document).on('click', '.update-status', function() {
         var id = $(this).data('id');
         var status = $(this).data('status');
-        var statusText = status == 1 ? 'onaylamak' : 'reddetmek';
-        var confirmButtonText = status == 1 ? 'Evet, Onayla' : 'Evet, Reddet';
-        var cancelButtonText = status == 1 ? 'İptal Et' : 'Vazgeç';
-        var confirmButtonColor = status == 1 ? '#2fb344' : '#d63939';
+
+        if (status == 2) {
+            Swal.fire({
+                title: 'Avans Talebini Reddet',
+                text: 'Lütfen red gerekçesini belirtiniz:',
+                input: 'textarea',
+                inputValue: 'Uygun Değildir.',
+                inputPlaceholder: 'Red gerekçesini giriniz...',
+                showCancelButton: true,
+                confirmButtonColor: '#d63939',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Reddet',
+                cancelButtonText: 'Vazgeç',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'Açıklama yazılması zorunludur!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'api/advances/advances.php',
+                        type: 'POST',
+                        data: { 
+                            action: 'update_status',
+                            id: id, 
+                            status: 2,
+                            admin_note: result.value.trim()
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if(response.status === 'success') {
+                                Swal.fire('Başarılı', response.message, 'success').then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Hata', response.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('Hata', 'İşlem sırasında bir hata oluştu.', 'error');
+                        }
+                    });
+                }
+            });
+            return;
+        }
 
         Swal.fire({
             title: 'Emin misiniz?',
-            text: "Bu talebi " + statusText + " istediğinize emin misiniz?",
+            text: "Bu talebi onaylamak istediğinize emin misiniz?",
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: confirmButtonColor,
+            confirmButtonColor: '#2fb344',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: confirmButtonText,
-            cancelButtonText: cancelButtonText,
+            confirmButtonText: 'Evet, Onayla',
+            cancelButtonText: 'Vazgeç',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
@@ -623,7 +667,7 @@ $(document).ready(function() {
                     data: { 
                         action: 'update_status',
                         id: id, 
-                        status: status 
+                        status: 1 
                     },
                     dataType: 'json',
                     success: function(response) {

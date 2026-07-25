@@ -306,7 +306,7 @@ body[data-bs-theme="dark"] .transaction-item-content {
         $item_date = date('d.m.Y', strtotime($t->date));
       ?>
         <?php $can_delete = empty($t->sub_type) || $t->sub_type == 0; ?>
-        <div class="transaction-item-wrapper transaction-item <?php echo $can_delete ? 'can-swipe' : ''; ?>" data-type="<?php echo $is_income ? 'income' : 'expense'; ?>">
+        <div class="transaction-item-wrapper transaction-item mobile-card p-0 mb-2 border-0 shadow-sm overflow-hidden <?php echo $can_delete ? 'can-swipe' : ''; ?>" data-type="<?php echo $is_income ? 'income' : 'expense'; ?>" style="border-radius: 16px;">
           <?php if ($can_delete): ?>
           <div class="transaction-item-actions">
             <button class="btn-swipe-delete btn-delete-transaction" data-id="<?php echo Security::encrypt($t->id); ?>">
@@ -315,24 +315,24 @@ body[data-bs-theme="dark"] .transaction-item-content {
             </button>
           </div>
           <?php endif; ?>
-          <div class="transaction-item-content d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-3">
-              <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: <?php echo $is_income ? 'rgba(47, 179, 68, 0.15)' : 'rgba(214, 63, 63, 0.15)'; ?>; color: <?php echo $is_income ? '#2fb344' : '#d63f3f'; ?>;">
-                <i class="ti <?php echo $is_income ? 'ti-arrow-up-right' : 'ti-arrow-down-left'; ?>" style="font-size: 1.25rem;"></i>
+          <div class="transaction-item-content d-flex align-items-center justify-content-between p-3" style="width: 100%;">
+            <div class="d-flex align-items-center gap-2.5" style="min-width: 0; flex: 1;">
+              <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: <?php echo $is_income ? 'rgba(47, 179, 68, 0.12)' : 'rgba(214, 63, 63, 0.12)'; ?>; color: <?php echo $is_income ? '#2fb344' : '#d63f3f'; ?>;">
+                <i class="ti <?php echo $is_income ? 'ti-arrow-up-right' : 'ti-arrow-down-left'; ?>" style="font-size: 1.15rem;"></i>
               </div>
-              <div>
-                <div class="text-bold text-sm" style="color: var(--tblr-body-color, #1d273b);"><?php echo htmlspecialchars($t->account_name ?: ($sub_type_name ?: ($is_income ? 'Gelir' : 'Gider'))); ?></div>
-                <div class="text-muted text-xs d-flex align-items-center gap-1 mt-0.5">
-                  <span><?php echo htmlspecialchars($case_name); ?></span>
-                  <span class="text-muted-50">•</span>
-                  <span><?php echo $item_date; ?></span>
+              <div style="min-width: 0; flex: 1;">
+                <div class="text-bold text-truncate" style="font-size: 0.88rem; color: var(--tblr-body-color, #1d273b); line-height: 1.2;"><?php echo htmlspecialchars($t->account_name ?: ($sub_type_name ?: ($is_income ? 'Gelir' : 'Gider'))); ?></div>
+                <div class="text-muted text-xs d-flex align-items-center gap-1 mt-0.5 text-truncate" style="font-size: 0.72rem;">
+                  <span class="text-truncate"><?php echo htmlspecialchars($case_name); ?></span>
+                  <span class="opacity-40">•</span>
+                  <span class="flex-shrink-0"><?php echo $item_date; ?></span>
                 </div>
                 <?php if (!empty($t->description)): ?>
-                  <div class="text-muted text-xs font-italic mt-1" style="font-size: 0.7rem; opacity: 0.85;">"<?php echo htmlspecialchars($t->description); ?>"</div>
+                  <div class="text-muted text-xs font-italic mt-0.5 text-truncate" style="font-size: 0.7rem; opacity: 0.85;">"<?php echo htmlspecialchars($t->description); ?>"</div>
                 <?php endif; ?>
               </div>
             </div>
-            <div class="text-bold text-sm <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 0.9rem;">
+            <div class="text-bold text-end flex-shrink-0 ms-2 <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 0.92rem; letter-spacing: -0.3px;">
               <?php echo ($is_income ? '+' : '-') . ' ₺' . Helper::formattedMoneyWithoutCurrency($t->amount); ?>
             </div>
           </div>

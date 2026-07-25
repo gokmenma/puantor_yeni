@@ -466,30 +466,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
         $nextYear++;
     }
   ?>
+  <!-- Tab: Puantaj Bilgileri -->
   <div id="tab-puantaj" class="person-tab-content <?php echo $activeTab != 'puantaj' ? 'd-none' : ''; ?>">
-    <div class="mobile-card p-4 shadow-sm mb-4 text-center">
-      <div class="d-flex align-items-center justify-content-between mb-4">
-        <a href="person-edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $prevMonth; ?>&year=<?php echo $prevYear; ?>&tab=puantaj" class="btn btn-icon btn-ghost-secondary rounded-circle btn-calendar-nav"><i class="ti ti-chevron-left fs-2"></i></a>
-        <h3 class="mb-0 font-weight-bold d-flex align-items-center gap-2" style="font-size: 1.15rem;">
-          <?php echo Date::monthName($month); ?> <?php echo $year; ?>
-          <?php 
-          $targetDate = ($month == date('m') && $year == date('Y')) ? date('Y-m-d') : "$year-$month-01";
-          ?>
-          <a href="puantaj?date=<?php echo $targetDate; ?>" class="btn btn-icon btn-ghost-primary rounded-circle" style="width: 28px; height: 28px; min-height: 28px;">
-            <i class="ti ti-external-link icon" style="font-size: 1.1rem;"></i>
-          </a>
-        </h3>
-        <a href="person-edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $nextMonth; ?>&year=<?php echo $nextYear; ?>&tab=puantaj" class="btn btn-icon btn-ghost-secondary rounded-circle btn-calendar-nav"><i class="ti ti-chevron-right fs-2"></i></a>
+    <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+      <div>
+        <h3 class="mb-0 text-semibold" style="letter-spacing: -0.3px;">Puantaj Takvimi</h3>
+        <p class="text-muted text-xs mb-0"><?php echo Date::monthName($month); ?> <?php echo $year; ?></p>
       </div>
+      <div class="d-flex align-items-center gap-1">
+        <a href="person-edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $prevMonth; ?>&year=<?php echo $prevYear; ?>&tab=puantaj" class="btn btn-icon btn-light rounded-circle shadow-sm" style="width: 34px; height: 34px;">
+          <i class="ti ti-chevron-left"></i>
+        </a>
+        <a href="person-edit?id=<?php echo $id_encrypted; ?>&month=<?php echo $nextMonth; ?>&year=<?php echo $nextYear; ?>&tab=puantaj" class="btn btn-icon btn-light rounded-circle shadow-sm" style="width: 34px; height: 34px;">
+          <i class="ti ti-chevron-right"></i>
+        </a>
+        <?php $targetDate = ($month == date('m') && $year == date('Y')) ? date('Y-m-d') : "$year-$month-01"; ?>
+        <a href="puantaj?date=<?php echo $targetDate; ?>" class="btn btn-icon btn-light rounded-circle shadow-sm ms-1" style="width: 34px; height: 34px;" title="Puantaj Giriş Sayfasına Git">
+          <i class="ti ti-external-link text-primary"></i>
+        </a>
+      </div>
+    </div>
 
+    <div class="mobile-card p-3.5 shadow-sm mb-3" style="border-radius: 20px;">
       <div class="calendar-grid">
-        <div class="calendar-day-header">Pzt</div>
-        <div class="calendar-day-header">Sal</div>
-        <div class="calendar-day-header">Çar</div>
-        <div class="calendar-day-header">Per</div>
-        <div class="calendar-day-header">Cum</div>
-        <div class="calendar-day-header">Cmt</div>
-        <div class="calendar-day-header text-danger">Paz</div>
+        <div class="calendar-day-header">Pt</div>
+        <div class="calendar-day-header">Sa</div>
+        <div class="calendar-day-header">Ça</div>
+        <div class="calendar-day-header">Pe</div>
+        <div class="calendar-day-header">Cu</div>
+        <div class="calendar-day-header">Ct</div>
+        <div class="calendar-day-header text-danger">Pa</div>
 
         <?php
         $daysInMonth = Date::daysInMonth($month, $year);
@@ -507,40 +513,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
             $pData = $puantajMap[$currentDateYmd] ?? null;
             $class = "";
             $style = "";
-            $displayContent = $day;
+            $code = "-";
+            $title = "";
+
+            $isSunday = (date('N', strtotime("$year-$month-$day")) == 7);
+            $isToday = (date('Y-m-d') == sprintf("%s-%s-%02d", $year, $month, $day));
+
             if ($pData) {
-                // Puantaj türüne göre renk
+                // Puantaj türüne göre renk ve kod
                 $turu = $puantajModel->getPuantajTuruById($pData->puantaj_id);
                 if ($turu) {
-                    $style = "background-color: {$turu->ArkaPlanRengi}; color: {$turu->FontRengi};";
+                    $bgColor = !empty($turu->ArkaPlanRengi) ? $turu->ArkaPlanRengi : '#206bc4';
+                    $textColor = !empty($turu->FontRengi) ? $turu->FontRengi : '#ffffff';
+                    $style = "background-color: {$bgColor} !important; color: {$textColor} !important;";
                     $class = "has-puantaj";
-                    $displayContent = htmlspecialchars($turu->PuantajKod);
+                    $code = htmlspecialchars($turu->PuantajKod ?: '-');
+                    $title = htmlspecialchars($turu->PuantajTuru ?? $turu->PuantajKod);
+                } else {
+                    $class = "has-puantaj bg-primary text-white";
+                    $code = "X";
                 }
+            } else if ($isSunday) {
+                $class = "is-holiday";
+                $code = "HT";
+                $style = "background-color: #fff3e0 !important; color: #e65100 !important;";
+            } else {
+                $style = "background-color: #f8fafc !important; color: #64748b !important;";
             }
-            $isSunday = (date('N', strtotime("$year-$month-$day")) == 7);
-            echo '<div class="calendar-day '.$class.' '.($isSunday ? 'text-danger' : '').'" style="'.$style.'">'.$displayContent.'</div>';
+
+            if ($isToday) {
+                $class .= " is-today";
+            }
+
+            echo '<div class="calendar-day '.$class.'" style="'.$style.'" title="'.$title.'">';
+            echo '  <span class="day-num">'.$day.'</span>';
+            echo '  <span class="day-code">'.$code.'</span>';
+            echo '</div>';
         }
         ?>
       </div>
 
-      <?php
-      $totalHours = 0;
-      $totalBalance = 0;
-      foreach ($personPuantaj as $p) {
-          $totalHours += $p->saat;
-          $totalBalance += $p->tutar;
-      }
-      ?>
+      <div class="d-flex justify-content-center gap-4 border-top pt-3 mt-2">
+        <div class="d-flex align-items-center gap-1.5">
+          <span class="rounded-circle d-inline-block bg-primary" style="width: 9px; height: 9px;"></span>
+          <span class="text-muted text-xs font-weight-bold" style="font-size: 0.72rem;">Çalışma</span>
+        </div>
+        <div class="d-flex align-items-center gap-1.5">
+          <span class="rounded-circle d-inline-block bg-danger" style="width: 9px; height: 9px; opacity: 0.7;"></span>
+          <span class="text-muted text-xs font-weight-bold" style="font-size: 0.72rem;">Tatil</span>
+        </div>
+      </div>
+    </div>
 
-      <div class="mt-4 pt-3 border-top d-flex justify-content-around">
-          <div class="text-center">
-              <div class="text-xs text-muted text-uppercase font-weight-bold mb-1">Toplam Mesai</div>
-              <div class="text-bold text-lg text-primary"><?php echo $totalHours; ?></div>
+    <?php
+    $totalHours = 0;
+    $totalBalance = 0;
+    foreach ($personPuantaj as $p) {
+        $totalHours += $p->saat;
+        $totalBalance += $p->tutar;
+    }
+    ?>
+
+    <!-- Alt İstatistik Kartları (Ana Sayfa Formatında) -->
+    <div class="row g-2 mb-3 px-0">
+      <div class="col-6">
+        <div class="mobile-card p-3 h-100 d-flex flex-column justify-content-between mb-0 shadow-sm" style="border-radius: 16px;">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted text-xs text-semibold">Toplam Mesai</span>
+            <span class="badge bg-blue-lt badge-pill p-1 d-inline-flex align-items-center justify-content-center" style="width: 26px; height: 26px; border-radius: 50%;">
+              <i class="ti ti-clock" style="font-size: 0.95rem; color: #206bc4;"></i>
+            </span>
           </div>
-          <div class="text-center">
-              <div class="text-xs text-muted text-uppercase font-weight-bold mb-1">Hakediş</div>
-              <div class="text-bold text-lg text-success"><?php echo Helper::formattedMoney($totalBalance); ?></div>
+          <div>
+            <h3 class="mb-0 text-bold text-primary" style="font-size: 1.3rem; letter-spacing: -0.5px;"><?php echo $totalHours; ?> <span style="font-size: 0.8rem; font-weight: 500;">Saat</span></h3>
+            <span class="text-muted text-xs opacity-75" style="font-size: 0.68rem;">Aylık Çalışma Süresi</span>
           </div>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="mobile-card p-3 h-100 d-flex flex-column justify-content-between mb-0 shadow-sm" style="border-radius: 16px;">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-muted text-xs text-semibold">Toplam Hakediş</span>
+            <span class="badge bg-green-lt badge-pill p-1 d-inline-flex align-items-center justify-content-center" style="width: 26px; height: 26px; border-radius: 50%;">
+              <i class="ti ti-cash" style="font-size: 0.95rem; color: #2fb344;"></i>
+            </span>
+          </div>
+          <div>
+            <h3 class="mb-0 text-bold text-green text-truncate" style="font-size: 1.3rem; letter-spacing: -0.5px;"><?php echo Helper::formattedMoney($totalBalance); ?></h3>
+            <span class="text-muted text-xs opacity-75" style="font-size: 0.68rem;">Aylık Brüt / Net Hakediş</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -628,37 +691,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
     });
     ?>
 
-    <!-- Özet Kartları (Yeni Tasarım) -->
-    <div class="row g-2 mb-4 px-1">
+    <!-- Özet Kartları (Ana Sayfa Kart Düzeninde) -->
+    <div class="row g-2 mb-3 px-1">
+      <!-- GELİR -->
       <div class="col-4">
-        <div class="mobile-card p-2 text-center border-0 shadow-sm" style="background: #e6f6ec; color: #2fb344; border-radius: 16px;">
-          <div class="text-xs font-weight-bold opacity-75 mb-1" style="font-size: 0.65rem; color: #2fb344;">GELİR</div>
-          <div class="text-bold small" style="font-size: 0.85rem;">₺ <?php echo Helper::formattedMoneyWithoutCurrency($total_income); ?></div>
+        <div class="mobile-card p-2.5 h-100 d-flex flex-column justify-content-between mb-0 shadow-sm" style="border-radius: 16px;">
+          <div class="d-flex align-items-center justify-content-between mb-1.5">
+            <span class="text-muted text-xs text-semibold" style="font-size: 0.68rem; letter-spacing: -0.2px;">GELİR</span>
+            <span class="badge bg-green-lt badge-pill p-1 d-inline-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%;">
+              <i class="ti ti-arrow-up-right" style="font-size: 0.85rem; color: #2fb344;"></i>
+            </span>
+          </div>
+          <div>
+            <h3 class="mb-0 text-bold text-green text-truncate" style="font-size: 0.95rem; letter-spacing: -0.4px;">
+              ₺<?php echo Helper::formattedMoneyWithoutCurrency($total_income); ?>
+            </h3>
+            <span class="text-muted text-xs d-block text-truncate" style="font-size: 0.65rem; opacity: 0.75;">Toplam Gelir</span>
+          </div>
         </div>
       </div>
+
+      <!-- GİDER -->
       <div class="col-4">
-        <div class="mobile-card p-2 text-center border-0 shadow-sm" style="background: #fbe9e9; color: #d63f3f; border-radius: 16px;">
-          <div class="text-xs font-weight-bold opacity-75 mb-1" style="font-size: 0.65rem; color: #d63f3f;">GİDER</div>
-          <div class="text-bold small" style="font-size: 0.85rem;">₺ <?php echo Helper::formattedMoneyWithoutCurrency($total_expense); ?></div>
+        <div class="mobile-card p-2.5 h-100 d-flex flex-column justify-content-between mb-0 shadow-sm" style="border-radius: 16px;">
+          <div class="d-flex align-items-center justify-content-between mb-1.5">
+            <span class="text-muted text-xs text-semibold" style="font-size: 0.68rem; letter-spacing: -0.2px;">GİDER</span>
+            <span class="badge bg-red-lt badge-pill p-1 d-inline-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%;">
+              <i class="ti ti-arrow-down-left" style="font-size: 0.85rem; color: #d63f3f;"></i>
+            </span>
+          </div>
+          <div>
+            <h3 class="mb-0 text-bold text-red text-truncate" style="font-size: 0.95rem; letter-spacing: -0.4px;">
+              ₺<?php echo Helper::formattedMoneyWithoutCurrency($total_expense); ?>
+            </h3>
+            <span class="text-muted text-xs d-block text-truncate" style="font-size: 0.65rem; opacity: 0.75;">Toplam Gider</span>
+          </div>
         </div>
       </div>
+
+      <!-- BAKİYE -->
       <div class="col-4">
-        <div class="mobile-card p-2 text-center border-0 shadow-sm" style="background: #e8f1f9; color: #206bc4; border-radius: 16px;">
-          <div class="text-xs font-weight-bold opacity-75 mb-1" style="font-size: 0.65rem; color: #206bc4;">BAKİYE</div>
-          <div class="text-bold small <?php echo $balance >= 0 ? 'text-green' : 'text-red'; ?>" style="font-size: 0.85rem;">₺ <?php echo Helper::formattedMoneyWithoutCurrency($balance); ?></div>
+        <div class="mobile-card p-2.5 h-100 d-flex flex-column justify-content-between mb-0 shadow-sm" style="border-radius: 16px;">
+          <div class="d-flex align-items-center justify-content-between mb-1.5">
+            <span class="text-muted text-xs text-semibold" style="font-size: 0.68rem; letter-spacing: -0.2px;">BAKİYE</span>
+            <span class="badge bg-blue-lt badge-pill p-1 d-inline-flex align-items-center justify-content-center" style="width: 24px; height: 24px; border-radius: 50%;">
+              <i class="ti ti-wallet" style="font-size: 0.85rem; color: #206bc4;"></i>
+            </span>
+          </div>
+          <div>
+            <h3 class="mb-0 text-bold text-truncate <?php echo $balance >= 0 ? 'text-green' : 'text-red'; ?>" style="font-size: 0.95rem; letter-spacing: -0.4px;">
+              ₺<?php echo Helper::formattedMoneyWithoutCurrency($balance); ?>
+            </h3>
+            <span class="text-muted text-xs d-block text-truncate" style="font-size: 0.65rem; opacity: 0.75;">Net Bakiye</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- İşlem Listesi (Kasa Tasarımı) -->
+    <!-- İşlem Listesi (Ana Sayfa Kart Düzeni) -->
     <div id="person-finance-list" class="px-1">
-      <div class="list-group list-group-mobile shadow-sm" style="border-radius: 20px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06);">
-        <?php if (empty($all_items)): ?>
-          <div class="p-5 text-center text-muted bg-white border-0">
-            <i class="ti ti-receipt-off fs-1 mb-2 opacity-20"></i>
-            <p class="mb-0 text-sm">Henüz finansal işlem bulunamadı.</p>
-          </div>
-        <?php else: ?>
+      <?php if (empty($all_items)): ?>
+        <div class="mobile-card p-5 text-center text-muted border-0 shadow-sm" style="border-radius: 18px;">
+          <i class="ti ti-receipt-off fs-1 mb-2 opacity-20"></i>
+          <p class="mb-0 text-sm">Henüz finansal işlem bulunamadı.</p>
+        </div>
+      <?php else: ?>
+        <div class="finance-items-container">
           <?php foreach ($all_items as $index => $item): 
             $is_hakedis = ($item->type === 'hakedis');
             $is_income = false;
@@ -669,7 +767,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
                 $is_income = ($type_info->type_id == 1);
             }
           ?>
-            <div class="person-item-wrapper <?php echo $index > 0 ? 'border-top' : ''; ?>" style="border-radius: 0; margin-bottom: 0; box-shadow: none;">
+            <div class="person-item-wrapper mobile-card p-0 mb-2 border border-0 shadow-sm overflow-hidden" style="border-radius: 16px; background: #ffffff;">
               <?php if (!$is_hakedis): ?>
                 <div class="person-item-actions">
                   <button class="btn-swipe-delete btn-delete-payment" data-id="<?php echo Security::encrypt($item->id); ?>" data-type="<?php echo $item->tablename ?? 'Diger'; ?>">
@@ -678,48 +776,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
                   </button>
                 </div>
               <?php endif; ?>
-              <div class="person-item-content <?php echo $is_hakedis ? 'btn-hakedis-detail' : 'btn-edit-payment'; ?>" 
+              <div class="person-item-content p-3 <?php echo $is_hakedis ? 'btn-hakedis-detail' : 'btn-edit-payment'; ?>" 
                    <?php if (!$is_hakedis): ?>data-id="<?php echo Security::encrypt($item->id); ?>"<?php endif; ?>
                    data-month="<?php echo $item->ay ?? ''; ?>" 
                    data-year="<?php echo $item->yil ?? ''; ?>"
-                   style="cursor: pointer;">
-                <div class="list-group-item border-0 py-3.5 px-3 w-100 bg-transparent d-flex align-items-center justify-content-between">
-                  <div class="d-flex align-items-center gap-3">
+                   style="cursor: pointer; width: 100%;">
+                <div class="d-flex align-items-center justify-content-between">
+                  
+                  <!-- Sol Taraf: İkon ve Bilgiler (Esnek min-width:0) -->
+                  <div class="d-flex align-items-center gap-2.5" style="min-width: 0; flex: 1;">
                     <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
-                         style="width: 40px; height: 40px; border: none; background: <?php echo $is_income ? 'rgba(47, 179, 68, 0.12)' : 'rgba(214, 63, 63, 0.12)'; ?>; color: <?php echo $is_income ? '#2fb344' : '#d63f3f'; ?>;">
-                      <i class="ti <?php echo $is_income ? 'ti-arrow-up-right' : 'ti-arrow-down-left'; ?>" style="font-size: 1.2rem;"></i>
+                         style="width: 38px; height: 38px; border: none; background: <?php echo $is_income ? 'rgba(47, 179, 68, 0.12)' : 'rgba(214, 63, 63, 0.12)'; ?>; color: <?php echo $is_income ? '#2fb344' : '#d63f3f'; ?>;">
+                      <i class="ti <?php echo $is_income ? 'ti-arrow-up-right' : 'ti-arrow-down-left'; ?>" style="font-size: 1.15rem;"></i>
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                      <div class="text-bold <?php echo $is_hakedis ? 'text-primary' : 'text-dark'; ?> text-truncate" style="font-size: 0.9rem; margin-bottom: 1px;">
-                        <?php echo htmlspecialchars($is_hakedis ? ($item->aciklama ?: 'Hakedişi') : ($item->turu ?: 'İşlem')); ?>
-                      </div>
-                      <div class="text-muted text-xs d-flex align-items-center gap-1">
-                        <span class="text-truncate" style="max-width: 140px;"><?php echo $is_hakedis ? 'Bordro İşlemi' : ($item->aciklama ?: 'İşlem Detayı'); ?></span>
-                        <span class="opacity-50">•</span>
-                        <span class="flex-shrink-0"><?php echo Date::dmY($item->gun); ?></span>
+                    <div style="min-width: 0; flex: 1;">
+                      <div class="d-flex align-items-center gap-1.5 mb-0.5" style="min-width: 0;">
+                        <span class="text-bold <?php echo $is_hakedis ? 'text-primary' : 'text-dark'; ?> text-truncate" style="font-size: 0.88rem; line-height: 1.2;">
+                          <?php echo htmlspecialchars($is_hakedis ? ($item->aciklama ?: 'Hakedişi') : ($item->turu ?: 'İşlem')); ?>
+                        </span>
                         <?php if ($is_hakedis): ?>
-                          <span class="ms-1 px-1.5 py-0.5 bg-primary-lt text-uppercase font-weight-bold flex-shrink-0" style="font-size: 0.55rem; border-radius: 4px; letter-spacing: 0.2px;">HAKEDİŞ</span>
+                          <span class="badge bg-primary-lt text-uppercase font-weight-bold flex-shrink-0" style="font-size: 0.55rem; padding: 2px 5px; border-radius: 4px; letter-spacing: 0.2px;">HAKEDİŞ</span>
                         <?php endif; ?>
                       </div>
+                      <div class="text-muted text-xs d-flex align-items-center gap-1 text-truncate" style="font-size: 0.72rem;">
+                        <span class="text-truncate"><?php echo $is_hakedis ? 'Bordro İşlemi' : ($item->aciklama ?: 'İşlem Detayı'); ?></span>
+                        <span class="opacity-40">•</span>
+                        <span class="flex-shrink-0"><?php echo Date::dmY($item->gun); ?></span>
+                      </div>
                     </div>
                   </div>
-                  <div class="text-end">
-                    <div class="text-bold <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 0.95rem; letter-spacing: -0.3px; line-height: 1.1;">
+
+                  <!-- Sağ Taraf: Tutar ve Yürüyen Bakiye (Kilitli flex-shrink-0) -->
+                  <div class="text-end flex-shrink-0 ms-2" style="min-width: fit-content;">
+                    <div class="text-bold <?php echo $is_income ? 'text-green' : 'text-red'; ?>" style="font-size: 0.92rem; letter-spacing: -0.3px; line-height: 1.1;">
                       <?php echo $is_income ? '+' : '-'; ?> ₺<?php echo Helper::formattedMoneyWithoutCurrency($item->tutar); ?>
                     </div>
-                    <div class="<?php echo $item->running_balance >= 0 ? 'text-green' : 'text-red'; ?>" style="font-size: 0.7rem; margin-top: 2px; font-weight: 500;">
-                      <span class="opacity-75" style="color: var(--tblr-muted);">Bakiye:</span> ₺<?php echo Helper::formattedMoneyWithoutCurrency($item->running_balance); ?>
+                    <div class="<?php echo $item->running_balance >= 0 ? 'text-green' : 'text-red'; ?>" style="font-size: 0.68rem; margin-top: 3px; font-weight: 500;">
+                      <span class="opacity-70" style="color: var(--tblr-muted);">Bakiye:</span> ₺<?php echo Helper::formattedMoneyWithoutCurrency($item->running_balance); ?>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
           <?php endforeach; ?>
-        <?php endif; ?>
-      </div>
+        </div>
+      <?php endif; ?>
     </div>
 
-    <!-- Floating Action Button for Finance (Moved higher to avoid overlap with Menu FAB) -->
+    <!-- Floating Action Button for Finance -->
     <button type="button" class="mobile-fab shadow-lg border-0" id="btn-add-person-transaction" data-bs-toggle="modal" data-bs-target="#add-person-transaction-modal" style="right: 1rem; bottom: 145px; background-color: #2fb344; box-shadow: 0 4px 16px rgba(47, 179, 68, 0.4); display: <?php echo $activeTab == 'finance' ? 'flex' : 'none'; ?>;">
       <i class="ti ti-plus"></i>
     </button>
@@ -1323,7 +1428,7 @@ $(document).ready(function() {
         var id = '<?php echo Security::encrypt($id); ?>';
 
         $('#payroll-detail-content').html('<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Yükleniyor...</p></div>');
-        $('#payroll-detail-modal').modal('show');
+        $('#payroll-detail-modal').appendTo('body').modal('show');
 
         // Yeni oluşturduğumuz mobil proxy API'sini kullanalım
         $.post('api/bordro/detail.php', { id: id, month: month, year: year }, function(html) {
@@ -1625,6 +1730,19 @@ $(document).ready(function() {
 </script>
 
 <style>
+/* Modal Backdrop & FAB Z-Index Fixes */
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+.modal {
+    z-index: 1060 !important;
+}
+body.modal-open .mobile-fab,
+body.modal-open .app-nav,
+body.modal-open .app-header {
+    z-index: 1000 !important;
+}
+
 /* Unified Swipe to Delete Styles matching personnel and todos */
 .person-item-wrapper {
     position: relative;
@@ -1681,39 +1799,56 @@ body[data-bs-theme="dark"] .person-item-content {
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 6px;
+    margin-bottom: 12px;
+    text-align: center;
 }
 
 .calendar-day-header {
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #94a3b8;
-    text-transform: uppercase;
-    padding-bottom: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    padding-bottom: 4px;
     text-align: center;
 }
 
 .calendar-day {
     aspect-ratio: 1 / 1;
+    min-height: 44px;
+    width: 100%;
+    margin: 0 auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border-radius: 12px;
-    background-color: #f8fafc;
-    color: #1d273b;
+    border-radius: 12px !important;
+    padding: 3px 2px;
     transition: all 0.2s ease;
+    user-select: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.calendar-day.has-puantaj {
-    font-weight: 700;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.calendar-day .day-num {
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-bottom: 2px;
+    opacity: 0.85;
+}
+
+.calendar-day .day-code {
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.calendar-day.is-today {
+    box-shadow: 0 0 0 2px #206bc4 !important;
 }
 
 .calendar-day.empty {
-    background-color: transparent;
+    background-color: transparent !important;
+    box-shadow: none !important;
 }
 
 .calendar-day.text-danger {

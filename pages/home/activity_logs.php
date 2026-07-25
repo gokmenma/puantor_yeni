@@ -48,7 +48,7 @@ $activities = $activityLogObj->getRecentActivities(15);
                                     <div class="text-reset d-block" style="font-size: 13px; font-weight: 500;">
                                         <?php echo htmlspecialchars($activity->description); ?>
                                     </div>
-                                    <div class="d-flex align-items-center mt-1" style="gap: 8px;">
+                                    <div class="d-flex align-items-center mt-1 flex-wrap" style="gap: 8px;">
                                         <small class="text-secondary" style="font-size: 11px;">
                                             <i class="ti ti-user me-1"></i>
                                             <?php echo htmlspecialchars($activity->user_name ?? 'Bilinmeyen'); ?>
@@ -57,6 +57,15 @@ $activities = $activityLogObj->getRecentActivities(15);
                                             <i class="ti ti-clock me-1"></i>
                                             <?php echo date('d.m.Y H:i', strtotime($activity->created_at)); ?>
                                         </small>
+                                        <?php
+                                            $platform = !empty($activity->platform) ? $activity->platform : 'Masaüstü';
+                                            $isMobile = (strpos(mb_strtolower($platform, 'UTF-8'), 'mobil') !== false);
+                                            $badgeColor = $isMobile ? 'azure' : 'secondary';
+                                            $badgeIcon = $isMobile ? 'device-mobile' : 'device-desktop';
+                                        ?>
+                                        <span class="badge bg-<?php echo $badgeColor; ?>-lt text-<?php echo $badgeColor; ?>" style="font-size: 9px; padding: 2px 5px;">
+                                            <i class="ti ti-<?php echo $badgeIcon; ?> me-1"></i><?php echo htmlspecialchars($platform); ?>
+                                        </span>
                                     </div>
                                 </div>
                             </div>

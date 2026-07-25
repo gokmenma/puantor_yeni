@@ -458,11 +458,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if(empty($bankData)): ?>
-                                    <tr>
-                                        <td colspan="7" class="text-center py-4 text-muted">Bu dönem için ödeme verisi bulunamadı.</td>
-                                    </tr>
-                                <?php else: ?>
+                                <?php if(!empty($bankData)): ?>
                                     <?php foreach($bankData as $b): ?>
                                     <tr>
                                         <td>
@@ -519,11 +515,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if(empty($personsForBordro)): ?>
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">Bu dönem için personel bulunamadı.</td>
-                                    </tr>
-                                <?php else: ?>
+                                <?php if(!empty($personsForBordro)): ?>
                                     <?php foreach($personsForBordro as $p_item): 
                                         $p = $personObj->find($p_item->id);
                                     ?>
@@ -631,11 +623,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if(empty($kesintiData)): ?>
-                                    <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted">Bu dönem için kesinti kaydı bulunamadı.</td>
-                                    </tr>
-                                <?php else: ?>
+                                <?php if(!empty($kesintiData)): ?>
                                     <?php foreach($kesintiData as $k): ?>
                                     <tr>
                                         <td>

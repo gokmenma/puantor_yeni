@@ -69,6 +69,8 @@ body[data-bs-theme="dark"] .ticket-card:active {
     border-radius: 30px;
     font-size: 0.7rem;
     font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 .form-floating > .form-control,
@@ -97,7 +99,7 @@ body[data-bs-theme="dark"] .form-floating > .form-control:focus {
 }
 </style>
 
-<div class="container px-0">
+<div class="container px-3">
     <div class="mb-4 d-flex align-items-center gap-2">
         <a href="more" class="btn btn-icon btn-sm btn-outline-secondary border-0 text-muted">
             <i class="ti ti-chevron-left" style="font-size: 1.5rem;"></i>
@@ -157,12 +159,12 @@ body[data-bs-theme="dark"] .form-floating > .form-control:focus {
                 $encrypted_id = Security::encrypt($support->id);
             ?>
                 <div class="ticket-card d-flex align-items-center justify-content-between" onclick="location.href='ticket-view?id=<?php echo $encrypted_id; ?>'">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: <?php echo $is_closed ? 'rgba(100, 116, 139, 0.12)' : 'rgba(79, 70, 229, 0.12)'; ?>; color: <?php echo $is_closed ? '#64748b' : '#4f46e5'; ?>;">
+                    <div class="d-flex align-items-center gap-3" style="min-width: 0; flex: 1;">
+                        <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background: <?php echo $is_closed ? 'rgba(100, 116, 139, 0.12)' : 'rgba(79, 70, 229, 0.12)'; ?>; color: <?php echo $is_closed ? '#64748b' : '#4f46e5'; ?>;">
                             <i class="ti <?php echo $is_closed ? 'ti-lock' : 'ti-message-dots'; ?>" style="font-size: 1.2rem;"></i>
                         </div>
-                        <div>
-                            <div class="text-bold text-sm" style="color: var(--support-text-main);"><?php echo htmlspecialchars($support->subject); ?></div>
+                        <div style="min-width: 0; flex: 1;">
+                            <div class="text-bold text-sm text-truncate" style="color: var(--support-text-main);"><?php echo htmlspecialchars($support->subject); ?></div>
                             <div class="text-muted text-xs d-flex align-items-center gap-2 mt-1">
                                 <span><?php echo Date::dmY($support->created_at); ?></span>
                                 <span>•</span>
@@ -170,7 +172,7 @@ body[data-bs-theme="dark"] .form-floating > .form-control:focus {
                             </div>
                         </div>
                     </div>
-                    <div>
+                    <div style="flex-shrink: 0; margin-left: 8px;">
                         <?php if ($is_closed): ?>
                             <span class="ticket-status-badge text-secondary bg-secondary-lt" style="background: rgba(100, 116, 139, 0.1) !important;">Kapatıldı</span>
                         <?php else: ?>

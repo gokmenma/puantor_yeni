@@ -62,7 +62,12 @@ try {
 
     } elseif ($action == 'update_status') {
         $id = $_POST['id'] ?? 0;
-        $status = $_POST['status'] ?? 0;
+        $status = intval($_POST['status'] ?? 0);
+        $admin_note = trim($_POST['admin_note'] ?? $_POST['red_aciklama'] ?? $_POST['aciklama'] ?? '');
+
+        if ($status == 2 && empty($admin_note)) {
+            $admin_note = 'Uygun Değildir.';
+        }
 
         $db->beginTransaction();
         
@@ -71,7 +76,7 @@ try {
         $request = $query->fetch(PDO::FETCH_OBJ);
 
         if (!$request) throw new Exception("Talep bulunamadı veya bu işlem için yetkiniz yok.");
-        if ($request->durum == $status) {
+        if ($request->durum == $status && ($status != 2 || $request->admin_note == $admin_note)) {
             $db->commit();
             if (ob_get_length()) ob_clean();
             echo json_encode(['status' => 'success', 'message' => 'Talep zaten güncellenmiş.'], JSON_UNESCAPED_UNICODE);
@@ -87,9 +92,9 @@ try {
         $db->prepare("DELETE FROM case_transactions WHERE person_id = ? AND description LIKE ?")
            ->execute([$request->person_id, "%" . $identifier . "%"]);
 
-        // Durumu ve işlemi yapan kullanıcıyı güncelle
-        $db->prepare("UPDATE personel_avans_talepleri SET durum = ?, processed_by = ?, updated_at = NOW() WHERE id = ? AND firm_id = ?")
-           ->execute([$status, $user_id, $id, $firm_id]);
+        // Durumu, red gerekçesini ve işlemi yapan kullanıcıyı güncelle
+        $db->prepare("UPDATE personel_avans_talepleri SET durum = ?, processed_by = ?, admin_note = ?, updated_at = NOW() WHERE id = ? AND firm_id = ?")
+           ->execute([$status, $user_id, $admin_note, $id, $firm_id]);
 
         // Aktivite logu
         $status_label = ($status == 1) ? 'onaylandı' : 'reddedildi';
@@ -132,7 +137,7 @@ try {
                 $baslik = $status == 1 ? 'Avans Talebiniz Onaylandı' : 'Avans Talebiniz Reddedildi';
                 $mesaj  = $status == 1
                     ? 'Avans talebiniz onaylandı. Tutar: ' . number_format($request->tutar, 2, ',', '.') . ' TL'
-                    : 'Avans talebiniz reddedildi. Tutar: ' . number_format($request->tutar, 2, ',', '.') . ' TL';
+                    : 'Avans talebiniz reddedildi. Açıklama: ' . ($admin_note ?: 'Uygun Değildir.') . ' (Tutar: ' . number_format($request->tutar, 2, ',', '.') . ' TL)';
 
                 (new \Service\PushBildirimService($db))->personeleGonder((int) $request->person_id, (int) $firm_id, $baslik, $mesaj, []);
                 (new PersonelBildirimModel($db))->kaydet((int) $request->person_id, (int) $firm_id, $baslik, $mesaj, 'advance');

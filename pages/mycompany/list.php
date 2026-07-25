@@ -203,16 +203,16 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
                         </div>
                     </div>
 
-                    <!-- Bölüm 3: Vergi ve Finansal Bilgiler -->
+                    <!-- Bölüm 3: Vergi Bilgileri -->
                     <div class="mb-4">
                         <div class="d-flex align-items-center mb-3">
                             <div class="bg-warning-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                <i class="ti ti-wallet text-warning fs-2"></i>
+                                <i class="ti ti-file-text text-warning fs-2"></i>
                             </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Vergi ve Finansal Bilgiler</h6>
+                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Vergi Bilgileri</h6>
                         </div>
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label">Vergi Dairesi</label>
                                 <div class="input-icon">
                                     <span class="input-icon-addon">
@@ -221,22 +221,13 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
                                     <input type="text" class="form-control" name="vergi_dairesi" id="vergi_dairesi" placeholder="Vergi dairesi">
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label">Vergi Numarası</label>
                                 <div class="input-icon">
                                     <span class="input-icon-addon">
                                         <i class="ti ti-file-text"></i>
                                     </span>
                                     <input type="text" class="form-control" name="vergi_no" id="vergi_no" placeholder="Vergi no">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Başlangıç Bütçesi</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-currency-lira"></i>
-                                    </span>
-                                    <input type="text" class="form-control money" name="start_budget" id="start_budget" placeholder="0,00">
                                 </div>
                             </div>
                         </div>

@@ -14,7 +14,7 @@ class MyFirmModel extends Model
     //all myfirms
     public function allByUser($user_id)
     {
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE user_id = :user_id");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE user_id = :user_id AND (deleted_at IS NULL OR deleted_at = '0' OR deleted_at = '')");
         $sql->execute(['user_id' => $user_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
@@ -23,7 +23,7 @@ class MyFirmModel extends Model
     {
         $parent_id = $_SESSION["user"]->parent_id ;
         if($parent_id == 0){
-            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE user_id = :user_id");
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE user_id = :user_id AND (deleted_at IS NULL OR deleted_at = '0' OR deleted_at = '')");
             $sql->execute(['user_id' => $_SESSION["user"]->id]);
             return $sql->fetchAll(PDO::FETCH_OBJ);
         }else{
@@ -37,7 +37,7 @@ class MyFirmModel extends Model
                                                 mf.created_at
                                         FROM $this->table mf
                                         LEFT JOIN users u ON u.firm_id = mf.id
-                                        WHERE u.email = :email");
+                                        WHERE u.email = :email AND (mf.deleted_at IS NULL OR mf.deleted_at = '0' OR mf.deleted_at = '') AND (u.deleted_at IS NULL OR u.deleted_at = '0' OR u.deleted_at = '')");
             $sql->execute(['email' => $_SESSION["user"]->email]);
             return $sql->fetchAll(PDO::FETCH_OBJ);
         }
@@ -48,10 +48,10 @@ class MyFirmModel extends Model
     public function getAuthorizedMyFirmsByEmail($email)
     {
         $sql = $this->db->prepare("SELECT DISTINCT id,firm_name FROM (
-                                        SELECT id, user_id, firm_name, '' AS email FROM myfirms 
+                                        SELECT id, user_id, firm_name, '' AS email FROM myfirms WHERE (deleted_at IS NULL OR deleted_at = '0' OR deleted_at = '')
                                         UNION ALL
                                     SELECT firm_id,u.id,firm_name,u.email FROM users u
-                                    LEFT JOIN myfirms mf ON mf.id = u.firm_id
+                                    LEFT JOIN myfirms mf ON mf.id = u.firm_id WHERE (mf.deleted_at IS NULL OR mf.deleted_at = '0' OR mf.deleted_at = '') AND (u.deleted_at IS NULL OR u.deleted_at = '0' OR u.deleted_at = '')
                                     ) AS authorize_firm
                                     WHERE email = :email;");
         $sql->execute(['email' => $email]);

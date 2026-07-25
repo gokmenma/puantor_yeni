@@ -40,7 +40,6 @@ $(document).on("click", ".mycompany-edit-btn", function(e) {
         $("#email").val(myfirm.email);
         $("#vergi_dairesi").val(myfirm.tax_office);
         $("#vergi_no").val(myfirm.tax_number);
-        $("#start_budget").val(myfirm.start_budget);
         $("#description").val(myfirm.description);
 
         if (myfirm.brand_logo) {
@@ -135,12 +134,80 @@ $(document).on("click", "#saveMyFirm", function (e) {
     });
 });
 
-$(document).on("click", ".delete-mycompany", function () {
-  let action = "deleteMyCompany";
-  let confirmMessage = "Firma silinecektir!";
-  let url = "/api/companies/mycompanies.php";
+$(document).on("click", ".delete-mycompany", function (e) {
+  e.preventDefault();
+  let id = $(this).data("id");
 
-  deleteRecord(this, action, confirmMessage, url);
+  Swal.fire({
+    title: "Firma Silme Onayı",
+    html: `
+      <div class="text-start mb-2">
+        <p class="text-danger fw-bold mb-2"><i class="ti ti-alert-triangle me-1"></i> Dikkat: Bu işlem firmayı ve bağlı tüm verilerini silecektir!</p>
+        <p class="text-secondary small mb-3">Bu firma ve firmaya bağlı tüm veriler <strong>(Personeller, Puantajlar, Projeler, Kasalar, İzin Talepleri, Görevler vb.)</strong> silinecektir.</p>
+        <label for="swal-firm-delete-password" class="form-label fw-bold text-dark">İşlemi onaylamak için hesap şifrenizi giriniz:</label>
+        <input type="password" id="swal-firm-delete-password" class="form-control" placeholder="Hesap şifreniz">
+      </div>
+    `,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Evet, Şifre ile Sil",
+    cancelButtonText: "İptal",
+    customClass: {
+      confirmButton: "btn btn-danger me-2",
+      cancelButton: "btn btn-secondary"
+    },
+    buttonsStyling: false,
+    preConfirm: () => {
+      const password = $("#swal-firm-delete-password").val();
+      if (!password) {
+        Swal.showValidationMessage("Lütfen şifrenizi giriniz!");
+        return false;
+      }
+      return password;
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      let password = result.value;
+      let formData = new FormData();
+      formData.append("action", "deleteMyCompany");
+      formData.append("id", id);
+      formData.append("password", password);
+
+      fetch("/api/companies/mycompanies.php", {
+        method: "POST",
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            Swal.fire({
+              title: "Başarılı!",
+              text: data.message,
+              icon: "success",
+              confirmButtonText: "Tamam"
+            }).then(() => {
+              location.reload();
+            });
+          } else {
+            Swal.fire({
+              title: "Hata!",
+              text: data.message,
+              icon: "error",
+              confirmButtonText: "Tamam"
+            });
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          Swal.fire({
+            title: "Hata!",
+            text: "Firma silinirken sunucu hatası oluştu.",
+            icon: "error",
+            confirmButtonText: "Tamam"
+          });
+        });
+    }
+  });
 });
 
 $(document).on("click", ".btn-new-firm-limit", function (e) {

@@ -330,45 +330,43 @@ try {
                     <div class="text-muted small">Döneme ait bordro hareketleri</div>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-vcenter payroll-finance-table mb-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 120px;">İşlem</th>
-                            <th>Kalem</th>
-                            <th class="text-end">Tutar</th>
-                            <?php if ($showTransactionActions): ?>
-                                <th class="text-end" style="width: 64px;">Sil</th>
-                            <?php endif; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $total_income = 0;
-                        $total_expense = 0;
-                        
-                        // Gelirleri Listele
-                        if (!empty($incomes)) {
-                            foreach ($incomes as $income) {
-                                $total_income += $income->tutar;
-                                $incomeNameRaw = (string) ($income->turu ?: 'Gelir');
-                                $income_name = htmlspecialchars($incomeNameRaw, ENT_QUOTES, 'UTF-8');
-                                $incomeDescription = trim((string) ($income->aciklama ?? ''));
-                                $incomeDescriptionHtml = '';
-                                if ($incomeDescription !== '' && $incomeDescription !== $incomeNameRaw) {
-                                    $incomeDescriptionHtml = "<div class='text-muted small mt-1'>" .
-                                        htmlspecialchars($incomeDescription, ENT_QUOTES, 'UTF-8') .
-                                        "</div>";
-                                }
-                                $incomeDeleteCell = '';
-                                if ($showTransactionActions) {
-                                    $canDeleteIncome = $canDeleteIncomeExpense
-                                        && ($income->tablename ?? '') === 'maas_gelir_kesinti'
-                                        && !in_array((int) ($income->kategori ?? 0), [14, 16, 17], true)
-                                        && !empty($income->id);
-                                    $incomeDeleteCell = '<td class="text-end">';
+            <div class="payroll-finance-scroll" style="max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+                <div class="list-group list-group-mobile border-0">
+                    <?php
+                    $total_income = 0;
+                    $total_expense = 0;
+                    
+                    // Gelirleri Listele
+                    if (!empty($incomes)) {
+                        foreach ($incomes as $income) {
+                            $total_income += $income->tutar;
+                            $incomeNameRaw = (string) ($income->turu ?: 'Gelir');
+                            $income_name = htmlspecialchars($incomeNameRaw, ENT_QUOTES, 'UTF-8');
+                            $incomeDescription = trim((string) ($income->aciklama ?? ''));
+                            $incomeDescriptionHtml = '';
+                            if ($incomeDescription !== '' && $incomeDescription !== $incomeNameRaw) {
+                                $incomeDescriptionHtml = "<div class='text-muted text-xs opacity-75 mt-0.5'>" . htmlspecialchars($incomeDescription, ENT_QUOTES, 'UTF-8') . "</div>";
+                            }
+                            
+                            $canDeleteIncome = $showTransactionActions && $canDeleteIncomeExpense
+                                && ($income->tablename ?? '') === 'maas_gelir_kesinti'
+                                && !in_array((int) ($income->kategori ?? 0), [14, 16, 17], true)
+                                && !empty($income->id);
+
+                            echo "<div class='list-group-item px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between'>
+                                <div class='d-flex align-items-center gap-2.5' style='min-width: 0; flex: 1;'>
+                                    <span class='badge bg-success-lt text-success rounded-circle p-1 d-flex align-items-center justify-content-center flex-shrink-0' style='width: 32px; height: 32px;'>
+                                        <i class='ti ti-plus' style='font-size: 0.9rem;'></i>
+                                    </span>
+                                    <div style='min-width: 0; flex: 1;'>
+                                        <div class='fw-bold text-dark text-truncate' style='font-size: 0.85rem;'>{$income_name}</div>
+                                        {$incomeDescriptionHtml}
+                                    </div>
+                                </div>
+                                <div class='d-flex align-items-center gap-2 flex-shrink-0 ms-2 text-end'>
+                                    <span class='fw-bold text-success' style='font-size: 0.9rem;'>+₺" . Helper::formattedMoneyWithoutCurrency($income->tutar) . "</span>";
                                     if ($canDeleteIncome) {
-                                        $incomeDeleteCell .= "<button type='button' class='btn btn-sm btn-ghost-danger btn-icon delete-payroll-transaction'
+                                        echo "<button type='button' class='btn btn-sm btn-ghost-danger btn-icon delete-payroll-transaction'
                                             data-id='" . htmlspecialchars(Security::encrypt($income->id), ENT_QUOTES, 'UTF-8') . "'
                                             data-source='maas_gelir_kesinti'
                                             data-month='" . (int) $ay . "'
@@ -378,52 +376,55 @@ try {
                                             <i class='ti ti-trash'></i>
                                         </button>";
                                     }
-                                    $incomeDeleteCell .= '</td>';
-                                }
-                                echo "<tr>
-                                    <td><span class='badge bg-success-lt text-success'><i class='ti ti-plus me-1'></i>Gelir</span></td>
-                                    <td><div class='fw-medium'>{$income_name}</div>{$incomeDescriptionHtml}</td>
-                                    <td class='text-end fw-bold text-success'>+₺" . Helper::formattedMoneyWithoutCurrency($income->tutar) . "</td>
-                                    {$incomeDeleteCell}
-                                </tr>";
-                            }
+                            echo "</div>
+                            </div>";
                         }
- 
-                        // Giderleri Listele
-                        if (!empty($expenses)) {
-                            foreach ($expenses as $expense) {
-                                $total_expense += $expense->tutar;
-                                $is_icra = (!empty($expense->turu) && strpos($expense->turu, 'İcra') !== false);
-                                if ($is_icra) {
-                                    $name = $expense->turu;
-                                    $badge = "<span class='badge bg-purple-lt text-purple'><i class='ti ti-scale me-1'></i>İcra Kesintisi</span>";
-                                } else {
-                                    $name = $expense->turu ?: $Defines->getTypeNameById($expense->kategori ?? 0);
-                                    $badge = "<span class='badge bg-danger-lt text-danger'><i class='ti ti-minus me-1'></i>Kesinti</span>";
-                                }
-                                $name = htmlspecialchars((string) ($name ?: 'Kesinti'), ENT_QUOTES, 'UTF-8');
-                                $description = trim((string) ($expense->aciklama ?? ''));
-                                $descriptionHtml = '';
-                                if ($description !== '' && $description !== html_entity_decode($name, ENT_QUOTES, 'UTF-8')) {
-                                    $descriptionHtml = "<div class='text-muted small mt-1'>" .
-                                        htmlspecialchars($description, ENT_QUOTES, 'UTF-8') .
-                                        "</div>";
-                                }
-                                $expenseDeleteCell = '';
-                                if ($showTransactionActions) {
-                                    $expenseCategory = (int) ($expense->kategori ?? 0);
-                                    $expenseSource = (string) ($expense->tablename ?? '');
-                                    $isSystemDeduction = $is_icra || in_array($expenseCategory, [14, 16, 17], true);
-                                    $hasDeletePermission = $expenseCategory === 7
-                                        ? $canDeletePayment
-                                        : $canDeleteIncomeExpense;
-                                    $canDeleteExpense = $hasDeletePermission
-                                        && in_array($expenseSource, ['maas_gelir_kesinti', 'case_transactions'], true)
-                                        && !$isSystemDeduction
-                                        && !empty($expense->id);
-                                    $expenseDeleteCell = '<td class="text-end">';
+                    }
+
+                    // Giderleri Listele
+                    if (!empty($expenses)) {
+                        foreach ($expenses as $expense) {
+                            $total_expense += $expense->tutar;
+                            $is_icra = (!empty($expense->turu) && strpos($expense->turu, 'İcra') !== false);
+                            if ($is_icra) {
+                                $name = $expense->turu;
+                                $iconClass = 'ti ti-scale';
+                                $badgeClass = 'bg-purple-lt text-purple';
+                            } else {
+                                $name = $expense->turu ?: $Defines->getTypeNameById($expense->kategori ?? 0);
+                                $iconClass = 'ti ti-minus';
+                                $badgeClass = 'bg-danger-lt text-danger';
+                            }
+                            $name = htmlspecialchars((string) ($name ?: 'Kesinti'), ENT_QUOTES, 'UTF-8');
+                            $description = trim((string) ($expense->aciklama ?? ''));
+                            $descriptionHtml = '';
+                            if ($description !== '' && $description !== html_entity_decode($name, ENT_QUOTES, 'UTF-8')) {
+                                $descriptionHtml = "<div class='text-muted text-xs opacity-75 mt-0.5'>" . htmlspecialchars($description, ENT_QUOTES, 'UTF-8') . "</div>";
+                            }
+                            
+                            $expenseCategory = (int) ($expense->kategori ?? 0);
+                            $expenseSource = (string) ($expense->tablename ?? '');
+                            $isSystemDeduction = $is_icra || in_array($expenseCategory, [14, 16, 17], true);
+                            $hasDeletePermission = $expenseCategory === 7 ? $canDeletePayment : $canDeleteIncomeExpense;
+                            $canDeleteExpense = $showTransactionActions && $hasDeletePermission
+                                && in_array($expenseSource, ['maas_gelir_kesinti', 'case_transactions'], true)
+                                && !$isSystemDeduction
+                                && !empty($expense->id);
+
+                            echo "<div class='list-group-item px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between'>
+                                <div class='d-flex align-items-center gap-2.5' style='min-width: 0; flex: 1;'>
+                                    <span class='badge {$badgeClass} rounded-circle p-1 d-flex align-items-center justify-content-center flex-shrink-0' style='width: 32px; height: 32px;'>
+                                        <i class='{$iconClass}' style='font-size: 0.9rem;'></i>
+                                    </span>
+                                    <div style='min-width: 0; flex: 1;'>
+                                        <div class='fw-bold text-dark text-truncate' style='font-size: 0.85rem;'>{$name}</div>
+                                        {$descriptionHtml}
+                                    </div>
+                                </div>
+                                <div class='d-flex align-items-center gap-2 flex-shrink-0 ms-2 text-end'>
+                                    <span class='fw-bold text-danger' style='font-size: 0.9rem;'>-₺" . Helper::formattedMoneyWithoutCurrency($expense->tutar) . "</span>";
                                     if ($canDeleteExpense) {
-                                        $expenseDeleteCell .= "<button type='button' class='btn btn-sm btn-ghost-danger btn-icon delete-payroll-transaction'
+                                        echo "<button type='button' class='btn btn-sm btn-ghost-danger btn-icon delete-payroll-transaction'
                                             data-id='" . htmlspecialchars(Security::encrypt($expense->id), ENT_QUOTES, 'UTF-8') . "'
                                             data-source='" . htmlspecialchars($expenseSource, ENT_QUOTES, 'UTF-8') . "'
                                             data-month='" . (int) $ay . "'
@@ -433,34 +434,23 @@ try {
                                             <i class='ti ti-trash'></i>
                                         </button>";
                                     }
-                                    $expenseDeleteCell .= '</td>';
-                                }
-                                echo "<tr>
-                                    <td>{$badge}</td>
-                                    <td><div class='fw-medium'>{$name}</div>{$descriptionHtml}</td>
-                                    <td class='text-end fw-bold text-danger'>-₺" . Helper::formattedMoneyWithoutCurrency($expense->tutar) . "</td>
-                                    {$expenseDeleteCell}
-                                </tr>";
-                            }
+                            echo "</div>
+                            </div>";
                         }
-                        
-                        if (empty($incomes) && empty($expenses)) {
-                            $emptyColspan = $showTransactionActions ? 4 : 3;
-                            echo "<tr><td colspan='{$emptyColspan}' class='text-center py-5 text-muted'><i class='ti ti-receipt-off d-block fs-1 mb-2'></i>Bu döneme ait hareket bulunamadı.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                    <?php if (!empty($incomes) || !empty($expenses)): ?>
-                        <tfoot class="bg-light">
-                            <tr>
-                                <td colspan="2" class="text-end fw-semibold">Net tutar</td>
-                                <td class="text-end fw-bold text-success">₺<?= Helper::formattedMoneyWithoutCurrency(max(0, $total_income - $total_expense)) ?></td>
-                                <?php if ($showTransactionActions): ?><td></td><?php endif; ?>
-                            </tr>
-                        </tfoot>
-                    <?php endif; ?>
-                </table>
+                    }
+
+                    if (empty($incomes) && empty($expenses)) {
+                        echo "<div class='text-center py-4 text-muted'><i class='ti ti-receipt-off d-block fs-1 mb-1'></i>Bu döneme ait hareket bulunamadı.</div>";
+                    }
+                    ?>
+                </div>
             </div>
+            <?php if (!empty($incomes) || !empty($expenses)): ?>
+                <div class="px-3 py-2.5 bg-light-lt border-top d-flex align-items-center justify-content-between">
+                    <span class="fw-semibold text-muted" style="font-size: 0.85rem;">Net tutar</span>
+                    <span class="fw-bold text-success" style="font-size: 1rem;">₺<?= Helper::formattedMoneyWithoutCurrency(max(0, $total_income - $total_expense)) ?></span>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -500,79 +490,88 @@ try {
             }
             ?>
             
-            <!-- LIST VIEW -->
+            <!-- LIST VIEW (Mobil Uyumlu Liste Elemanları) -->
             <div id="puantaj-list-view">
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 px-md-4 py-2 border-bottom no-print">
-                    <span class="text-muted small"><i class="ti ti-info-circle me-1"></i>Tutarın üzerine gelerek hesaplamayı görebilirsiniz.</span>
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 py-2 border-bottom no-print">
+                    <span class="text-muted text-xs"><i class="ti ti-info-circle me-1"></i>Tutarın üzerine dokunarak hesaplamayı görebilirsiniz.</span>
                     <label class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" id="show-recorded-days-only">
-                        <span class="form-check-label small">Yalnızca kayıtlı günler</span>
+                        <span class="form-check-label text-xs">Yalnızca kayıtlı günler</span>
                     </label>
                 </div>
-                <div class="table-responsive payroll-attendance-scroll">
-                <table class="table table-vcenter payroll-attendance-table mb-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 64px;" class="text-center">Gün</th>
-                            <th>Tarih</th>
-                            <th>Durum</th>
-                            <th class="text-end">Saat</th>
-                            <th class="text-end">Tutar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+
+                <!-- Dikey Kaydırılabilir Mobil Liste Container -->
+                <div class="payroll-attendance-scroll p-2" style="max-height: 380px; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+                    <div class="list-group list-group-mobile gap-1.5" id="puantaj-items-list">
                         <?php foreach ($dates as $dateStr): ?>
                             <?php
                             $pt = $puantaj_by_date[$dateStr] ?? null; 
                             $isWeekend = (date('N', strtotime($dateStr)) >= 6);
                             $dayNames = [1 => 'Pazartesi', 2 => 'Salı', 3 => 'Çarşamba', 4 => 'Perşembe', 5 => 'Cuma', 6 => 'Cumartesi', 7 => 'Pazar'];
                             $dayName = $dayNames[(int) date('N', strtotime($dateStr))];
+                            $dayNum = date('d', strtotime($dateStr));
+                            $formattedDate = date('d.m.Y', strtotime($dateStr));
                             ?>
-                            <tr class="<?= $isWeekend ? 'payroll-weekend-row' : '' ?> <?= $pt ? 'has-puantaj-record' : 'empty-puantaj-record' ?>">
-                                <td class="text-center"><span class="payroll-day-number"><?= date('d', strtotime($dateStr)) ?></span></td>
-                                <td>
-                                    <div class="fw-medium"><?= htmlspecialchars($dayName) ?></div>
-                                    <div class="text-muted small"><?= date('d.m.Y', strtotime($dateStr)) ?></div>
-                                </td>
-                                <td>
+                            
+                            <div class="list-group-item mobile-card p-2.5 mb-0 border-0 shadow-xs rounded-3 d-flex align-items-center justify-content-between <?= $isWeekend ? 'bg-light-lt' : '' ?> <?= $pt ? 'has-puantaj-record' : 'empty-puantaj-record' ?>">
+                                
+                                <!-- Sol Taraf: Gün Rozeti + Tarih & Gün İsmi -->
+                                <div class="d-flex align-items-center gap-2.5" style="min-width: 0; flex: 1;">
+                                    <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold" 
+                                         style="width: 36px; height: 36px; font-size: 0.85rem; background: <?= $isWeekend ? 'rgba(214, 63, 63, 0.08)' : 'rgba(32, 107, 196, 0.08)'; ?>; color: <?= $isWeekend ? '#d63f3f' : '#206bc4'; ?>;">
+                                        <?= $dayNum ?>
+                                    </div>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div class="fw-bold text-dark text-truncate" style="font-size: 0.85rem; line-height: 1.2;">
+                                            <?= htmlspecialchars($dayName) ?>
+                                        </div>
+                                        <div class="text-muted text-xs opacity-75" style="font-size: 0.7rem;">
+                                            <?= $formattedDate ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sağ Taraf: Durum Rozeti + Saat & Tutar -->
+                                <div class="text-end flex-shrink-0 ms-2" style="min-width: fit-content;">
+                                    <div class="mb-0.5">
+                                        <?php if ($pt): ?>
+                                            <?php
+                                            $bgColor = $pt['ArkaPlanRengi'] ?: '#d4edda';
+                                            $fontColor = $pt['FontRengi'] ?: '#155724';
+                                            ?>
+                                            <span class="badge" style="background-color: <?php echo $bgColor; ?> !important; color: <?php echo $fontColor; ?> !important; font-size: 0.7rem; padding: 3px 7px;">
+                                                <?php echo htmlspecialchars($pt['PuantajKod'] ?: $pt['puantaj_adi']); ?>
+                                            </span>
+                                        <?php elseif ($isWeekend): ?>
+                                            <span class="badge bg-secondary-lt text-secondary" style="font-size: 0.7rem; padding: 3px 7px;">Hafta tatili</span>
+                                        <?php else: ?>
+                                            <span class="text-muted text-xs" style="font-size: 0.72rem;">Kayıt yok</span>
+                                        <?php endif; ?>
+                                    </div>
+
                                     <?php if ($pt): ?>
                                         <?php
-                                        $bgColor = $pt['ArkaPlanRengi'] ?: '#d4edda';
-                                        $fontColor = $pt['FontRengi'] ?: '#155724';
-                                        ?>
-                                        <span class="badge" style="background-color: <?php echo $bgColor; ?> !important; color: <?php echo $fontColor; ?> !important;">
-                                            <?php echo htmlspecialchars($pt['PuantajKod'] ?: $pt['puantaj_adi']); ?>
-                                        </span>
-                                    <?php elseif ($isWeekend): ?>
-                                        <span class="badge bg-secondary-lt text-secondary">Hafta tatili</span>
-                                    <?php else: ?>
-                                        <span class="text-muted small">Kayıt yok</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-end">
-                                    <?php
-                                    if ($pt) {
                                         $saatVal = ($pt['pt_turu'] != 'Saatlik') ? $PuantajModel->getPuantajSaatiByfirm($pt['puantaj_id']) : $pt['saat'];
-                                        echo number_format($saatVal, 1, ',', '.');
-                                    } else {
-                                        echo '0,0';
-                                    }
-                                    ?>
-                                </td>
-                                <td class="text-end fw-bold">
-                                    <?php
-                                    if ($pt && floatval($pt['tutar']) > 0) {
-                                        $popoverContent = $buildPopoverContent($pt, $saatVal);
-                                        echo '<span class="text-primary cursor-pointer text-decoration-underline" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-html="true" data-bs-title="Tutar Hesaplaması" data-bs-content="' . htmlspecialchars($popoverContent) . '">₺' . Helper::formattedMoneyWithoutCurrency($pt['tutar']) . ' <i class="ti ti-info-circle ms-0.5 text-muted" style="font-size: 0.75rem;"></i></span>';
-                                    } else {
-                                        echo '₺0,00';
-                                    }
-                                    ?>
-                                </td>
-                            </tr>
+                                        $tutarVal = floatval($pt['tutar']);
+                                        ?>
+                                        <div class="d-flex align-items-center justify-content-end gap-1.5" style="font-size: 0.75rem;">
+                                            <span class="text-muted opacity-75"><?= number_format($saatVal, 1, ',', '.') ?> s</span>
+                                            <?php if ($tutarVal > 0): ?>
+                                                <span class="opacity-40">•</span>
+                                                <?php $popoverContent = $buildPopoverContent($pt, $saatVal); ?>
+                                                <span class="fw-bold text-primary cursor-pointer text-decoration-underline" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top" data-bs-html="true" data-bs-title="Tutar Hesaplaması" data-bs-content="<?= htmlspecialchars($popoverContent) ?>">
+                                                    ₺<?= Helper::formattedMoneyWithoutCurrency($tutarVal) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">₺0,00</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                            </div>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
+                    </div>
                 </div>
                 <div class="d-none text-center py-5 text-muted" id="puantaj-filter-empty">
                     <i class="ti ti-calendar-off d-block fs-1 mb-2"></i>Kayıtlı puantaj günü bulunamadı.
@@ -692,16 +691,17 @@ try {
 
     $('#show-recorded-days-only').on('change', function() {
         var recordedOnly = this.checked;
-        var $rows = $('.payroll-attendance-table tbody tr');
-        $rows.toggle(!recordedOnly);
-
+        var $items = $('#puantaj-items-list .list-group-item');
+        
         if (recordedOnly) {
-            $rows.filter('.has-puantaj-record').show();
+            $items.hide().filter('.has-puantaj-record').show();
+        } else {
+            $items.show();
         }
 
-        var hasVisibleRow = $rows.filter(':visible').length > 0;
-        $('.payroll-attendance-scroll').toggle(hasVisibleRow);
-        $('#puantaj-filter-empty').toggleClass('d-none', hasVisibleRow);
+        var hasVisibleItem = $items.filter(':visible').length > 0;
+        $('.payroll-attendance-scroll').toggle(hasVisibleItem);
+        $('#puantaj-filter-empty').toggleClass('d-none', hasVisibleItem);
     });
 
     $('#payroll-detail-content [data-bs-toggle="popover"]').each(function() {

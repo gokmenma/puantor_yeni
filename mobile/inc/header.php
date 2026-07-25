@@ -60,11 +60,11 @@ $toggle_theme = ($theme == 'dark') ? 'light' : 'dark';
         $_hdr_okunmamis = $_hdr_is_superadmin ? 0 : $_hdr_duyuru->getOkunmamisBildirimSayisi($_hdr_kullanici_id, $_hdr_firm_id, $_hdr_is_main_user);
     } catch (Exception $e) {}
     ?>
-    <a href="notifications" class="btn-active-scale text-reset text-decoration-none position-relative me-1">
-      <i class="ti ti-bell" style="font-size: 1.35rem; color: #626976;"></i>
+    <a href="notifications" class="btn-active-scale text-decoration-none position-relative me-1 d-inline-flex align-items-center justify-content-center" style="width: 34px; height: 34px; color: #626976;">
+      <i class="ti ti-bell" style="font-size: 1.35rem;"></i>
       <?php if ($_hdr_okunmamis > 0): ?>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.55rem; padding: 0.25em 0.45em; min-width: 14px; height: 14px; border: 1.5px solid var(--tblr-body-bg);">
-          <?= $_hdr_okunmamis ?>
+        <span class="position-absolute rounded-pill d-inline-flex align-items-center justify-content-center fw-bold" style="top: 0px; right: -2px; background-color: #d63939 !important; color: #ffffff !important; font-size: 0.6rem; min-width: 17px; height: 17px; padding: 0 3.5px; border: 2px solid var(--tblr-body-bg, #fff); box-shadow: 0 2px 4px rgba(214, 57, 57, 0.35); line-height: 1; z-index: 2;">
+          <?= $_hdr_okunmamis > 99 ? '99+' : $_hdr_okunmamis ?>
         </span>
       <?php endif; ?>
     </a>

@@ -2,8 +2,10 @@
 require_once "../../Database/db.php";
 require_once "../../Model/Company.php";
 require_once "../../Model/UserModel.php";
+require_once "../../App/Helper/helper.php";
 
 use App\Helper\Security;
+use App\Helper\Helper;
 use Database\Db;
 session_start();
 
@@ -42,7 +44,7 @@ if ($_POST["action"] == "saveMyCompany") {
         "creator" => $_SESSION["user"]->id,
         'tax_number' => $_POST['vergi_no'],
         'tax_office' => $_POST['vergi_dairesi'],
-        'start_budget' => $_POST['start_budget'],
+        'start_budget' => Helper::formattedMoneyToNumber($_POST['start_budget'] ?? 0),
         'yetkili_adi' => $_POST['yetkili_adi'],
     ];
 
@@ -138,52 +140,57 @@ if (isset($_POST["action"]) && $_POST["action"] == "getMyFirmDetails") {
 if ($_POST["action"] == "deleteMyCompany") {
     $user_id = $_SESSION["user"]->id;
     $id = $_POST["id"];
+    $password = $_POST["password"] ?? '';
 
-
-    //parent_id = 0 ise sil
+    // parent_id = 0 ise sil
     if ($_SESSION["user"]->parent_id != 0) {
-        $res = [
+        echo json_encode([
             "status" => "error",
             "message" => "Sadece ana kullanıcılar firma silebilir!",
-        ];
-        echo json_encode($res);
+        ]);
         exit;
     }
 
-    //eğer sadece bir firma varsa silmeyi engelle
-    if ($company->countMyFirms($user_id) == 1) {
-        $res = [
+    // Şifre boş mu kontrolü
+    if (empty($password)) {
+        echo json_encode([
             "status" => "error",
-            "message" => "Silmek için en az bir firma olmalıdır." ,
-        ];
-        echo json_encode($res);
+            "message" => "Lütfen şifrenizi giriniz!"
+        ]);
         exit;
     }
-    $old_brand_logo = $company->findMyFirmLogoName($id);
 
-    if ($old_brand_logo) {
-        $path = "../../uploads/";
-        $old_brand_logo_file = $path . $old_brand_logo->brand_logo;
-        if (is_file($old_brand_logo_file)) {
-            if (!unlink($old_brand_logo_file)) {
-                error_log("Dosya silinemedi: $old_brand_logo_file");
-            }
-        }
+    // Kullanıcının güncel şifresini veritabanından çek ve doğrula
+    $userRecord = $User->find($user_id);
+    if (!$userRecord || !Security::passwordControl($password, $userRecord->password)) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Girilen şifre hatalı!"
+        ]);
+        exit;
+    }
+
+    // eğer sadece bir aktif firma varsa silmeyi engelle
+    if ($company->countMyFirms($user_id) <= 1) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "Sistemde en az bir aktif firma kalmalıdır."
+        ]);
+        exit;
     }
 
     try {
         $company->deleteMyFirm($id);
         $status = "success";
-        $message = "Firma başarıyla silindi.!!!";
-    } catch (PDOException $e) {
+        $message = "Firma ve ilişkili tüm veriler başarıyla silindi (soft-delete).";
+    } catch (\Exception $e) {
         $status = "error";
         $message = $e->getMessage();
     }
 
-    $res = [
+    echo json_encode([
         "status" => $status,
         "message" => $message,
-    ];
-
-    echo json_encode($res);
+    ]);
+    exit;
 }

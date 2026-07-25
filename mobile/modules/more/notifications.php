@@ -32,9 +32,9 @@ try {
 }
 </style>
 
-<div class="container px-2">
+<div class="container px-3">
   <!-- Geri Dönüş ve Başlık -->
-  <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+  <div class="d-flex align-items-center justify-content-between mb-4 mt-2 px-1">
     <div class="d-flex align-items-center gap-2">
       <a href="javascript:history.back()" class="btn btn-icon btn-sm btn-outline-secondary border-0 btn-active-scale">
         <i class="ti ti-arrow-left" style="font-size: 1.35rem;"></i>
@@ -59,57 +59,55 @@ try {
     </div>
   <?php else: ?>
     <!-- Bildirim Listesi -->
-    <div class="mobile-card p-0 overflow-hidden mb-5" style="border-radius: 20px; background: #fff; border: 1px solid #eef2f7; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-      <div class="list-group list-group-flush divide-y" id="notifications-list-group">
-        <?php foreach ($duyurular as $d): 
-          $okundu = !$is_superadmin && !empty($d->okundu_at);
-          $oncelik_classes = [
-              'acil' => ['bg' => 'bg-red-lt', 'text' => 'text-red', 'dot' => 'bg-red'],
-              'onemli' => ['bg' => 'bg-orange-lt', 'text' => 'text-orange', 'dot' => 'bg-orange']
-          ];
-          $style_cfg = $oncelik_classes[$d->oncelik] ?? ['bg' => 'bg-blue-lt', 'text' => 'text-blue', 'dot' => 'bg-blue'];
-          
-          $is_avans = (trim($d->baslik) === 'Yeni Avans Talebi');
-        ?>
-          <div class="list-group-item notification-item-wrapper py-3 px-3 swipe-container" 
-               data-id="<?= \App\Helper\Security::encrypt($d->id) ?>" 
-               data-okundu="<?= $okundu ? '1' : '0' ?>"
-               data-is-avans="<?= $is_avans ? '1' : '0' ?>"
-               style="cursor: pointer; background: <?= $okundu ? 'transparent' : 'rgba(32, 107, 196, 0.02)' ?>; transition: background 0.2s ease;">
-            <div class="d-flex align-items-start gap-3">
-              <!-- Öncelik / Bildirim İkonu -->
-              <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 <?= $style_cfg['bg'] ?> <?= $style_cfg['text'] ?>" style="width: 40px; height: 40px; border: 1.5px solid rgba(0,0,0,0.02);">
-                <i class="ti <?= $is_avans ? 'ti-cash-banknote' : 'ti-bell' ?>" style="font-size: 1.25rem;"></i>
+    <div class="d-flex flex-column gap-2 mb-5" id="notifications-list-group">
+      <?php foreach ($duyurular as $d): 
+        $okundu = !$is_superadmin && !empty($d->okundu_at);
+        $oncelik_classes = [
+            'acil' => ['bg' => 'bg-red-lt', 'text' => 'text-red', 'dot' => 'bg-red'],
+            'onemli' => ['bg' => 'bg-orange-lt', 'text' => 'text-orange', 'dot' => 'bg-orange']
+        ];
+        $style_cfg = $oncelik_classes[$d->oncelik] ?? ['bg' => 'bg-blue-lt', 'text' => 'text-blue', 'dot' => 'bg-blue'];
+        
+        $is_avans = (trim($d->baslik) === 'Yeni Avans Talebi');
+      ?>
+        <div class="mobile-card notification-item-wrapper py-3 px-3.5 swipe-container" 
+             data-id="<?= \App\Helper\Security::encrypt($d->id) ?>" 
+             data-okundu="<?= $okundu ? '1' : '0' ?>"
+             data-is-avans="<?= $is_avans ? '1' : '0' ?>"
+             style="cursor: pointer; border-radius: 16px; margin-bottom: 0; background: <?= $okundu ? 'var(--tb-card-bg, #fff)' : 'rgba(32, 107, 196, 0.04)' ?>; border: 1px solid <?= $okundu ? 'rgba(0,0,0,0.06)' : 'rgba(32, 107, 196, 0.18)' ?>; transition: all 0.2s ease;">
+          <div class="d-flex align-items-start gap-3">
+            <!-- Öncelik / Bildirim İkonu -->
+            <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 <?= $style_cfg['bg'] ?> <?= $style_cfg['text'] ?>" style="width: 40px; height: 40px; border: 1.5px solid rgba(0,0,0,0.02);">
+              <i class="ti <?= $is_avans ? 'ti-cash-banknote' : 'ti-bell' ?>" style="font-size: 1.25rem;"></i>
+            </div>
+            
+            <div class="flex-1 min-w-0">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h4 class="mb-0 text-truncate text-bold <?= $okundu ? 'text-secondary fw-normal' : 'text-dark fw-bold' ?>" style="font-size: 0.9rem; line-height: 1.2;">
+                  <?= htmlspecialchars($d->baslik) ?>
+                </h4>
+                <!-- Öncelik Animasyonlu Noktası (Okunmadıysa) -->
+                <?php if (!$okundu): ?>
+                  <span class="status-dot status-dot-animated <?= $style_cfg['dot'] ?> flex-shrink-0"></span>
+                <?php endif; ?>
               </div>
               
-              <div class="flex-1 min-w-0">
-                <div class="d-flex align-items-center justify-content-between gap-2">
-                  <h4 class="mb-0 text-truncate text-bold <?= $okundu ? 'text-secondary fw-normal' : 'text-dark fw-bold' ?>" style="font-size: 0.9rem; line-height: 1.2;">
-                    <?= htmlspecialchars($d->baslik) ?>
-                  </h4>
-                  <!-- Öncelik Animasyonlu Noktası (Okunmadıysa) -->
-                  <?php if (!$okundu): ?>
-                    <span class="status-dot status-dot-animated <?= $style_cfg['dot'] ?> flex-shrink-0"></span>
-                  <?php endif; ?>
-                </div>
-                
-                <div class="notification-content text-xs mt-1 mb-2 <?= $okundu ? 'text-secondary opacity-75' : 'text-secondary' ?>" style="line-height: 1.4; word-break: break-word;">
-                  <?= $d->icerik ?>
-                </div>
-                
-                <div class="d-flex align-items-center justify-content-between">
-                  <span class="text-muted text-xxs"><?= date('d.m.Y H:i', strtotime($d->created_at)) ?></span>
-                  <?php if ($is_avans): ?>
-                    <span class="text-primary text-xxs text-semibold d-flex align-items-center gap-0.5">
-                      Talebi İncele <i class="ti ti-arrow-right" style="font-size: 0.75rem;"></i>
-                    </span>
-                  <?php endif; ?>
-                </div>
+              <div class="notification-content text-xs mt-1 mb-2 <?= $okundu ? 'text-secondary opacity-75' : 'text-secondary' ?>" style="line-height: 1.4; word-break: break-word;">
+                <?= $d->icerik ?>
+              </div>
+              
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="text-muted text-xxs"><?= date('d.m.Y H:i', strtotime($d->created_at)) ?></span>
+                <?php if ($is_avans): ?>
+                  <span class="text-primary text-xxs text-semibold d-flex align-items-center gap-0.5">
+                    Talebi İncele <i class="ti ti-arrow-right" style="font-size: 0.75rem;"></i>
+                  </span>
+                <?php endif; ?>
               </div>
             </div>
           </div>
-        <?php endforeach; ?>
-      </div>
+        </div>
+      <?php endforeach; ?>
     </div>
   <?php endif; ?>
 </div>

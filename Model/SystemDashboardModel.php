@@ -189,6 +189,7 @@ class SystemDashboardModel extends Model
                 a.action,
                 a.description,
                 a.created_at,
+                a.platform,
                 u.full_name AS user_name,
                 mf.firm_name
             FROM activity_logs a

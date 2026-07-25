@@ -68,10 +68,12 @@ body[data-bs-theme="dark"] .ticket-card:active {
     border-radius: 30px;
     font-size: 0.7rem;
     font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
 }
 </style>
 
-<div class="container px-0">
+<div class="container px-3">
     <div class="mb-4 d-flex align-items-center gap-2">
         <a href="more" class="btn btn-icon btn-sm btn-outline-secondary border-0 text-muted">
             <i class="ti ti-chevron-left" style="font-size: 1.5rem;"></i>

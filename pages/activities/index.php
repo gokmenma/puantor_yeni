@@ -603,11 +603,12 @@ function getSessionDuration($loginTime, $logoutTime) {
                                 <?php if ($is_superadmin): ?>
                                     <th>Firma</th>
                                 <?php endif; ?>
-                                <th style="width: 15%">Kullanıcı</th>
-                                <th style="width: 15%">Aktivite Türü</th>
-                                <th style="width: 15%">İşlem / Eylem</th>
+                                <th style="width: 13%">Kullanıcı</th>
+                                <th style="width: 12%">Cihaz / Platform</th>
+                                <th style="width: 12%">Aktivite Türü</th>
+                                <th style="width: 12%">İşlem / Eylem</th>
                                 <th>Açıklama</th>
-                                <th style="width: 15%">Tarih & Saat</th>
+                                <th style="width: 14%">Tarih & Saat</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -623,6 +624,11 @@ function getSessionDuration($loginTime, $logoutTime) {
                                         case 'todo': $icon = 'ti-checklist'; $color = 'bg-purple-lt'; break;
                                         case 'login': $icon = 'ti-key'; $color = 'bg-yellow-lt'; break;
                                     }
+
+                                    $plat = !empty($act->platform) ? $act->platform : 'Masaüstü';
+                                    $isMob = (strpos(mb_strtolower($plat, 'UTF-8'), 'mobil') !== false);
+                                    $badgeCol = $isMob ? 'azure' : 'secondary';
+                                    $badgeIco = $isMob ? 'device-mobile' : 'device-desktop';
                                 ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
@@ -636,6 +642,11 @@ function getSessionDuration($loginTime, $logoutTime) {
                                             </span>
                                             <span class="fw-medium"><?php echo htmlspecialchars($act->user_name ?? 'Bilinmeyen'); ?></span>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-<?php echo $badgeCol; ?>-lt text-<?php echo $badgeCol; ?>">
+                                            <i class="ti ti-<?php echo $badgeIco; ?> me-1"></i><?php echo htmlspecialchars($plat); ?>
+                                        </span>
                                     </td>
                                     <td>
                                         <span class="badge <?php echo $color; ?> d-inline-flex align-items-center gap-1">

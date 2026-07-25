@@ -798,3 +798,16 @@ input.flatpickr-input[type="date"]::-webkit-calendar-picker-indicator {
     max-height: 88vh !important;
 }
 
+/* Global Modal Backdrop & Stacking Context Fixes */
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+.modal {
+    z-index: 1060 !important;
+}
+body.modal-open .mobile-fab,
+body.modal-open .app-nav,
+body.modal-open .app-header {
+    z-index: 1000 !important;
+}
+

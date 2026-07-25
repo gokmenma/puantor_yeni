@@ -356,12 +356,21 @@ function systemDashboardDevice(?string $userAgent): array
                                         </span>
                                         <div class="flex-fill min-w-0">
                                             <div class="text-clamp"><?php echo htmlspecialchars($activity->description); ?></div>
-                                            <div class="text-secondary small mt-1">
+                                            <div class="text-secondary small mt-1 d-flex align-items-center flex-wrap gap-1">
                                                 <span class="fw-medium"><?php echo htmlspecialchars($activity->user_name ?? 'Sistem'); ?></span>
                                                 <?php if ($activity->firm_name): ?>
                                                     · <?php echo htmlspecialchars($activity->firm_name); ?>
                                                 <?php endif; ?>
                                                 · <?php echo date('d.m.Y H:i', strtotime($activity->created_at)); ?>
+                                                <?php
+                                                    $platform = !empty($activity->platform) ? $activity->platform : 'Masaüstü';
+                                                    $isMobile = (strpos(mb_strtolower($platform, 'UTF-8'), 'mobil') !== false);
+                                                    $badgeColor = $isMobile ? 'azure' : 'secondary';
+                                                    $badgeIcon = $isMobile ? 'device-mobile' : 'device-desktop';
+                                                ?>
+                                                <span class="badge bg-<?php echo $badgeColor; ?>-lt text-<?php echo $badgeColor; ?> ms-1" style="font-size: 10px; padding: 2px 6px;">
+                                                    <i class="ti ti-<?php echo $badgeIcon; ?> me-1"></i><?php echo htmlspecialchars($platform); ?>
+                                                </span>
                                             </div>
                                         </div>
                                         <span class="badge bg-secondary-lt align-self-start"><?php echo htmlspecialchars($activity->action); ?></span>

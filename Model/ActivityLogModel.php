@@ -12,17 +12,44 @@ class ActivityLogModel extends Model
     }
 
     /**
+     * Otomatik mobil / masaüstü cihaz tespiti yapar
+     */
+    public static function detectPlatform(): string
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+        if (strpos($uri, '/personel-pwa/') !== false || strpos($uri, '/mobile/') !== false) {
+            return 'Mobil';
+        }
+
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'com.puantor.app') {
+            return 'Mobil Uygulama';
+        }
+
+        if (!empty($userAgent) && preg_match('/(android|bb\d+|meego).+mobile|avail|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i', $userAgent)) {
+            return 'Mobil';
+        }
+
+        return 'Masaüstü';
+    }
+
+    /**
      * Aktivite kaydeder
      */
-    public static function log($activity_type, $action, $description)
+    public static function log($activity_type, $action, $description, $platform = null)
     {
         try {
             $db = (new Model())->getDb();
             $firm_id = $_SESSION['firm_id'] ?? 0;
             $user_id = $_SESSION['user']->id ?? 0;
 
-            $sql = $db->prepare("INSERT INTO activity_logs (firm_id, user_id, activity_type, action, description) VALUES (?, ?, ?, ?, ?)");
-            $result = $sql->execute([$firm_id, $user_id, $activity_type, $action, $description]);
+            if (empty($platform)) {
+                $platform = self::detectPlatform();
+            }
+
+            $sql = $db->prepare("INSERT INTO activity_logs (firm_id, user_id, activity_type, action, description, platform) VALUES (?, ?, ?, ?, ?, ?)");
+            $result = $sql->execute([$firm_id, $user_id, $activity_type, $action, $description, $platform]);
             
             if (!$result) {
                 error_log("Activity log INSERT failed: " . implode(" ", $sql->errorInfo()));

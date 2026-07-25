@@ -388,10 +388,6 @@ $firm_cases_count = count($firm_cases);
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="text-secondary fw-semibold py-2">Başlangıç Bütçesi:</td>
-                                    <td class="text-dark py-2"><?php echo Helper::formattedMoney($myfirm->start_budget ?? 0); ?> ₺</td>
-                                </tr>
-                                <tr>
                                     <td class="text-secondary fw-semibold py-2">Açıklama:</td>
                                     <td class="text-dark py-2"><?php echo htmlspecialchars($myfirm->description ?? 'Belirtilmemiş'); ?></td>
                                 </tr>

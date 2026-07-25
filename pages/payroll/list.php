@@ -97,6 +97,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
 
 $total_gelir = 0;
 $total_odeme = 0;
+$total_icra = 0;
 $total_persons = 0;
 
 foreach ($persons as $item) {
@@ -315,7 +316,7 @@ foreach ($persons as $item) {
 
     $total_gelir += ($res->gelir ?? 0);
     $total_odeme += (($res->odeme ?? 0) - $p_icra);
-    $total_icra = ($total_icra ?? 0) + $p_icra;
+    $total_icra += $p_icra;
     $total_persons++;
 }
 $total_kalan = $total_gelir - ($total_odeme + $total_icra);

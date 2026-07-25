@@ -3,6 +3,7 @@ window.app = {
     user: null,
     currentMonth: new Date().getMonth() + 1,
     currentYear: new Date().getFullYear(),
+    attendanceRequestToken: 0,
     modal: null,
     
     toast(message, type = 'info') {
@@ -573,6 +574,7 @@ window.app = {
             const response = await fetch('api/advance.php?action=list');
             const result = await response.json();
             if (result.status === 'success') {
+                this.currentAdvancesList = result.list || [];
                 // Track pending status
                 this.hasPendingAdvance = result.list.some(item => item.durum == 0);
                 
@@ -607,14 +609,12 @@ window.app = {
                         </div>
                     ` : '';
 
-                    const editAction = isPending 
-                        ? `onclick="if(!this.dataset.swiping) app.editAdvance('${item.id}', '${item.tutar}', '${encodeURIComponent(item.aciklama || '')}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')"`
-                        : 'onclick="app.toast(\'Sadece bekleyen talepler düzenlenebilir.\', \'warning\')"';
+                    const clickAction = `onclick="if(!this.dataset.swiping) app.showAdvanceDetail('${item.id}')"`;
 
                     return `
                         <div class="swipe-item" data-id="${item.id}">
                             ${swipeActions}
-                            <div ${editAction} class="swipe-content cursor-pointer">
+                            <div ${clickAction} class="swipe-content cursor-pointer">
                                 <div class="d-flex align-items-center justify-content-between w-100">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="avatar avatar-md rounded-circle ${iconBg} ${statusClass} border-0 shadow-none flex-shrink-0">
@@ -815,6 +815,88 @@ window.app = {
         });
     },
 
+    showAdvanceDetail(id) {
+        if (!this.currentAdvancesList) return;
+        const item = this.currentAdvancesList.find(i => i.id == id);
+        if (!item) return;
+
+        let statusClass = 'bg-warning-lt text-warning';
+        let statusText = 'Bekliyor';
+        if (item.durum == 1) {
+            statusClass = 'bg-success-lt text-success';
+            statusText = 'Onaylandı';
+        } else if (item.durum == 2) {
+            statusClass = 'bg-danger-lt text-danger';
+            statusText = 'Reddedildi';
+        }
+
+        const formattedTutar = parseFloat(item.tutar).toLocaleString('tr-TR', {minimumFractionDigits: 2});
+        const isPending = item.durum == 0;
+
+        let adminNoteHtml = '';
+        if (item.durum == 2) {
+            const noteText = this.escapeHtml(item.admin_note || 'Uygun Değildir.');
+            adminNoteHtml = `
+                <div class="alert alert-danger border-0 rounded-3 mb-3 p-3 text-start">
+                    <div class="fw-bold small mb-1"><i class="ti ti-info-circle me-1"></i>Red Gerekçesi (Yönetici Notu):</div>
+                    <div class="small">${noteText}</div>
+                </div>
+            `;
+        } else if (item.admin_note) {
+            adminNoteHtml = `
+                <div class="alert alert-info border-0 rounded-3 mb-3 p-3 text-start">
+                    <div class="fw-bold small mb-1"><i class="ti ti-info-circle me-1"></i>Yönetici Notu:</div>
+                    <div class="small">${this.escapeHtml(item.admin_note)}</div>
+                </div>
+            `;
+        }
+
+        let pendingActionsHtml = '';
+        if (isPending) {
+            pendingActionsHtml = `
+                <div class="d-flex gap-2 mt-4 pt-2 border-top">
+                    <button type="button" class="btn btn-outline-secondary w-50 py-2.5 fw-bold" onclick="app.hideModal(); app.editAdvance('${item.id}', '${item.tutar}', '${encodeURIComponent(item.aciklama || '')}', ${item.durum}, '${item.hedef_ay}', '${item.hedef_yil}')">
+                        <i class="ti ti-edit me-1"></i> Düzenle
+                    </button>
+                    <button type="button" class="btn btn-outline-danger w-50 py-2.5 fw-bold" onclick="app.hideModal(); app.deleteAdvance('${item.id}')">
+                        <i class="ti ti-trash me-1"></i> Talebi Sil
+                    </button>
+                </div>
+            `;
+        }
+
+        this.showModal('Avans Talebi Detayı', `
+            <div class="advance-detail-modal">
+                <div class="text-center mb-4">
+                    <span class="badge ${statusClass} px-3 py-1.5 rounded-pill uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">${statusText}</span>
+                    <h2 class="fw-bold text-dark mt-2 mb-0" style="font-size: 1.8rem;">₺ ${formattedTutar}</h2>
+                    <span class="text-muted small">Hedef Dönem: ${item.hedef_ay}/${item.hedef_yil}</span>
+                </div>
+
+                <div class="card border-0 bg-light rounded-3 p-3 mb-3 text-start">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Talep Tarihi:</span>
+                        <span class="fw-semibold small text-dark">${this.escapeHtml(item.created_at || '')}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Hedef Maaş Dönemi:</span>
+                        <span class="fw-semibold small text-dark">${item.hedef_ay}/${item.hedef_yil}</span>
+                    </div>
+                    <div class="mb-0">
+                        <span class="text-muted small d-block mb-1">Talep Açıklaması:</span>
+                        <div class="bg-white p-2.5 rounded-2 border text-dark small">
+                            ${item.aciklama ? this.escapeHtml(item.aciklama) : '<em class="text-muted">Açıklama girilmedi</em>'}
+                        </div>
+                    </div>
+                </div>
+
+                ${adminNoteHtml}
+
+                ${pendingActionsHtml}
+            </div>
+        `);
+    },
+
     editAdvance(id, tutar, aciklama, durum, ay, yil) {
         if (durum !== 0) return;
         aciklama = this.escapeHtml(decodeURIComponent(aciklama || ''));
@@ -884,28 +966,43 @@ window.app = {
         });
     },
 
-    async loadAttendance() {
+    async loadAttendance(preserveRequestedPeriod = false) {
         const m = this.currentMonth;
         const y = this.currentYear;
+        const requestToken = ++this.attendanceRequestToken;
         const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
         
         const label = document.getElementById('current-month-label');
-        if (label) label.textContent = `${monthNames[m-1]} ${y}`;
+        const hint = document.getElementById('attendance-calendar-hint');
+        if (label) label.textContent = `${monthNames[m-1]} ${y} Dönemi Puantaj Görünümü`;
+        if (hint) hint.textContent = 'Gün detayını görmek için güne dokunun.';
 
         // Show preloader
         const grid = document.getElementById('calendar-grid');
         if (grid) {
-            const weekdays = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pa'];
-            const headerHtml = weekdays.map(day => `<div class="small fw-bold text-muted">${day}</div>`).join('');
-            const skeletonItems = Array(35).fill('<div class="calendar-skeleton-item shimmer rounded-circle"></div>').join('');
+            const weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+            const headerHtml = weekdays.map(day => `<div class="calendar-weekday">${day}</div>`).join('');
+            const skeletonItems = Array(35).fill('<div class="calendar-skeleton-item shimmer rounded-2"></div>').join('');
             grid.innerHTML = headerHtml + skeletonItems;
         }
 
         try {
-            const response = await fetch(`api/summary.php?person_id=${this.user.id}&month=${m}&year=${y}`);
+            const preserveParam = preserveRequestedPeriod ? '&preserve_period=1' : '';
+            const response = await fetch(`api/summary.php?person_id=${this.user.id}&month=${m}&year=${y}${preserveParam}`);
             const result = await response.json();
+            if (requestToken !== this.attendanceRequestToken) return;
             if (result.status === 'success') {
-                this.renderCalendar(m, y, result.monthly);
+                const visibleMonth = Number(result.current_month || m);
+                const visibleYear = Number(result.current_year || y);
+                this.currentMonth = visibleMonth;
+                this.currentYear = visibleYear;
+                if (label) {
+                    label.textContent = `${monthNames[visibleMonth - 1]} ${visibleYear} Dönemi Puantaj Görünümü`;
+                }
+                if (hint && result.notice) {
+                    hint.textContent = result.notice;
+                }
+                this.renderCalendar(visibleMonth, visibleYear, result.monthly || []);
             }
         } catch (error) {
             console.error('Load attendance error:', error);
@@ -921,7 +1018,7 @@ window.app = {
             this.currentMonth = 12;
             this.currentYear--;
         }
-        this.loadAttendance();
+        this.loadAttendance(true);
     },
 
     renderCalendar(month, year, data) {
@@ -931,7 +1028,7 @@ window.app = {
         let startingDay = firstDay === 0 ? 6 : firstDay - 1;
         
         let html = `
-            <div class="small fw-bold text-muted">Pt</div><div class="small fw-bold text-muted">Sa</div><div class="small fw-bold text-muted">Ça</div><div class="small fw-bold text-muted">Pe</div><div class="small fw-bold text-muted">Cu</div><div class="small fw-bold text-muted">Ct</div><div class="small fw-bold text-muted text-danger">Pa</div>
+            <div class="calendar-weekday">Pzt</div><div class="calendar-weekday">Sal</div><div class="calendar-weekday">Çar</div><div class="calendar-weekday">Per</div><div class="calendar-weekday">Cum</div><div class="calendar-weekday">Cmt</div><div class="calendar-weekday">Paz</div>
         `;
         
         for (let i = 0; i < startingDay; i++) html += `<div></div>`;
@@ -940,32 +1037,46 @@ window.app = {
 
         for (let i = 1; i <= daysInMonth; i++) {
             const dayStr = `${year}${month.toString().padStart(2, '0')}${i.toString().padStart(2, '0')}`;
-            const record = data.find(r => r.gun === dayStr || r.gun === `${year}-${month.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`);
+            const dashedDayStr = `${year}-${month.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+            const record = data.find(r =>
+                (r.gun === dayStr || r.gun === dashedDayStr) &&
+                (r.PuantajKod || r.PuantajAdi || r.attendance_type)
+            );
             const isToday = new Date().toDateString() === new Date(year, month-1, i).toDateString();
-            const isSunday = new Date(year, month-1, i).getDay() === 0;
+            const weekDay = new Date(year, month-1, i).getDay();
+            const isWeekend = weekDay === 0 || weekDay === 6;
             
-            // Logic: Record data takes precedence over Sunday
-            let isHoliday = isSunday;
+            let isHoliday = isWeekend;
             let isWork = false;
             let customStyle = "";
+            let code = "-";
 
             if (record) {
-                // If it's a known work type, it's work
                 if (record.attendance_type === 'Normal Çalışma' || record.attendance_type === 'Saatlik') {
                     isWork = true;
                     isHoliday = false;
+                    code = record.PuantajKod || 'X';
                 } else if (record.attendance_type === 'Ücretsiz' || record.attendance_type === 'Ücretli İzin') {
                     isHoliday = true;
                     isWork = false;
+                    code = record.PuantajKod || 'İ';
+                } else {
+                    code = record.PuantajKod || (record.saat > 0 ? 'X' : '-');
                 }
                 
                 if (record.attendance_type === 'Fazla Çalışma') {
                     totalOvertime += parseFloat(record.EklenecekSaat || 0);
+                    code = record.PuantajKod || 'X2';
                 }
                 
                 if (record.ArkaPlanRengi) {
-                    customStyle = `style="background-color: ${record.ArkaPlanRengi}; color: ${record.FontRengi || '#fff'};"`;
+                    customStyle = `style="background-color: ${record.ArkaPlanRengi} !important; color: ${record.FontRengi || '#fff'} !important;"`;
                 }
+            } else if (isWeekend) {
+                code = "HT";
+                customStyle = `style="background-color: rgba(245, 158, 11, 0.1); color: #d97706;"`;
+            } else {
+                customStyle = `style="color: #94a3b8;"`;
             }
 
             if (isHoliday) totalHolidays++;
@@ -975,11 +1086,14 @@ window.app = {
             }
 
             let cls = "calendar-day";
-            if (isSunday && !isWork) cls += " weekend";
+            if (isWeekend && !record) cls += " weekend";
             if (isWork || (record && parseFloat(record.saat) > 0)) cls += " active";
             if (isToday) cls += " today";
             
-            html += `<div class="${cls}" ${customStyle} onclick="app.showDayDetails('${dayStr}', ${JSON.stringify(record || {}).replace(/"/g, '&quot;')})">${i}</div>`;
+            html += `<div class="${cls}" ${customStyle} role="button" tabindex="0" aria-label="${i}. gün: ${code}" onclick="app.showDayDetails('${dayStr}', ${JSON.stringify(record || {}).replace(/"/g, '&quot;')})" onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.click(); }">
+                        <span class="day-num">${i}</span>
+                        <span class="day-code">${code}</span>
+                     </div>`;
         }
         grid.innerHTML = html;
 
@@ -994,7 +1108,10 @@ window.app = {
         const today = new Date();
         let defaultDay = (today.getMonth() + 1 === month && today.getFullYear() === year) ? today.getDate() : 1;
         const defaultDayStr = `${year}${month.toString().padStart(2, '0')}${defaultDay.toString().padStart(2, '0')}`;
-        this.showDayDetails(defaultDayStr, data.find(r => r.gun === defaultDayStr));
+        this.showDayDetails(defaultDayStr, data.find(r =>
+            (r.gun === defaultDayStr || r.gun === `${year}-${month.toString().padStart(2, '0')}-${defaultDay.toString().padStart(2, '0')}`) &&
+            (r.PuantajKod || r.PuantajAdi || r.attendance_type)
+        ));
     },
 
     showDayDetails(dayStr, record) {
@@ -1006,7 +1123,7 @@ window.app = {
         const iconEl = document.getElementById('day-icon');
         const iconBgEl = document.getElementById('day-icon-bg');
         
-        const isSunday = date.getDay() === 0;
+        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
         const isWork = record && (record.attendance_type === 'Normal Çalışma' || record.attendance_type === 'Saatlik');
 
         if (record && record.PuantajAdi) {
@@ -1050,7 +1167,7 @@ window.app = {
             const codeEl = iconBgEl.querySelector('.day-code');
             if (codeEl) codeEl.style.display = 'none';
 
-            if (isSunday) {
+            if (isWeekend) {
                 statusEl.textContent = 'Hafta Tatili';
                 durationEl.textContent = '0 s';
                 iconEl.className = 'ti ti-sun';

@@ -38,3 +38,30 @@ Array
 )
 
 ====================
+Array
+(
+    [time] => 2026-07-25 20:38:05
+    [post] => Array
+        (
+            [action] => saveSupportTicket
+            [subject] => hata
+            [message] => burada bir hata var mı
+        )
+
+    [session_exists] => 
+    [session_user] => 
+    [session_firm] => 
+    [root] => /opt/lampp/htdocs/puantoryeni
+    [target] => /opt/lampp/htdocs/puantoryeni/mobile/api/supports/../../../api/supports/tickets.php
+    [target_exists] => 1
+    [exception] => Array
+        (
+            [message] => SMTP Error: The following recipients failed: destek@puantor.com.tr: SMTP AUTH is required for message submission on port 465
+mbeyazilim@gmail.com: 
+            [file] => /opt/lampp/htdocs/puantoryeni/vendor/phpmailer/phpmailer/src/PHPMailer.php
+            [line] => 2124
+        )
+
+)
+
+====================
