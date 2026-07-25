@@ -203,13 +203,14 @@ try {
         mailJson(['status' => 'error', 'message' => 'SMTP sunucu ayarları eksik. Sistem Ayarları > SMTP E-Posta ekranından ayarları kaydedin.'], 422);
     }
 
+    $storedBody = str_replace('{{KULLANICI_ADI}}', 'Değerli Kullanıcımız', $body);
     $sendId = $model->createSend(
         (int) $_SESSION['user']->id,
         $account,
         $senderEmail,
         $recipientType,
         $subject,
-        $body,
+        $storedBody,
         $recipients
     );
 
@@ -217,13 +218,35 @@ try {
     $failed = 0;
     $mailer->SMTPKeepAlive = true;
     $mailer->Subject = $subject;
-    $mailer->Body = $body;
-    $mailer->AltBody = trim(html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $body)), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    $logoPath = ROOT . '/static/png/puantor-email-logo.png';
+    if (is_file($logoPath)) {
+        $mailer->addEmbeddedImage($logoPath, 'puantor-logo', 'puantor-logo.png', 'base64', 'image/png');
+    }
 
     foreach ($recipients as $recipient) {
         try {
             $mailer->clearAddresses();
-            $mailer->addAddress($recipient['email'], (string) ($recipient['alici_adi'] ?? ''));
+            $recipientName = trim((string) ($recipient['alici_adi'] ?? ''));
+            $displayName = $recipientName !== '' ? $recipientName : 'Değerli Kullanıcımız';
+            $personalizedBody = str_replace(
+                '{{KULLANICI_ADI}}',
+                htmlspecialchars($displayName, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                $body
+            );
+            if (is_file($logoPath)) {
+                $personalizedBody = preg_replace(
+                    '~src=(["\'])[^"\']*puantor-email-logo\.png(?:\?[^"\']*)?\1~i',
+                    'src="cid:puantor-logo"',
+                    $personalizedBody
+                );
+            }
+            $mailer->Body = $personalizedBody;
+            $mailer->AltBody = trim(html_entity_decode(
+                strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $personalizedBody)),
+                ENT_QUOTES | ENT_HTML5,
+                'UTF-8'
+            ));
+            $mailer->addAddress($recipient['email'], $recipientName);
             $mailer->send();
             $model->markRecipient($sendId, $recipient['email'], true);
             $successful++;
