@@ -234,9 +234,25 @@ try {
                 $body
             );
             if (is_file($logoPath)) {
-                $personalizedBody = preg_replace(
-                    '~src=(["\'])[^"\']*puantor-email-logo\.(?:png|jpe?g)(?:\?[^"\']*)?\1~i',
-                    'src="cid:puantor-logo"',
+                $personalizedBody = preg_replace_callback(
+                    '~<img\b[^>]*>~i',
+                    static function (array $match): string {
+                        $img = $match[0];
+                        $isPuantorLogo = stripos($img, 'data-mail-logo="puantor"') !== false
+                            || stripos($img, "data-mail-logo='puantor'") !== false
+                            || stripos($img, 'alt="Puantor"') !== false
+                            || stripos($img, "alt='Puantor'") !== false
+                            || stripos($img, 'puantor-email-logo.') !== false;
+                        if (!$isPuantorLogo) {
+                            return $img;
+                        }
+                        return preg_replace(
+                            '~\bsrc=(["\'])[^"\']*\1~i',
+                            'src="cid:puantor-logo"',
+                            $img,
+                            1
+                        ) ?? $img;
+                    },
                     $personalizedBody
                 );
             }

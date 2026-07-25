@@ -26,17 +26,21 @@ $giftEndDate = date('d.m.Y', strtotime('+1 month'));
 $requestHost = preg_replace('/[^a-zA-Z0-9.:-]/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'www.puantor.com.tr'));
 $requestScheme = function_exists('puantorIsHttps') && puantorIsHttps() ? 'https' : 'http';
 $requestBaseUrl = $requestScheme . '://' . $requestHost;
+$emailLogoPath = ROOT . '/static/png/puantor-email-logo.jpg';
+$emailLogoSrc = is_file($emailLogoPath)
+    ? 'data:image/jpeg;base64,' . base64_encode((string) file_get_contents($emailLogoPath))
+    : $requestBaseUrl . '/static/png/puantor-email-logo.jpg';
 $giftTemplateHtml = str_replace(
     [
         '{{BASLANGIC_TARIHI}}',
         '{{BITIS_TARIHI}}',
-        'https://www.puantor.com.tr/static/png/puantor-email-logo.jpg',
+        '{{PUANTOR_LOGO_SRC}}',
         'https://www.puantor.com.tr/sign-in.php',
     ],
     [
         $giftStartDate,
         $giftEndDate,
-        $requestBaseUrl . '/static/png/puantor-email-logo.jpg',
+        $emailLogoSrc,
         $requestBaseUrl . '/sign-in.php',
     ],
     $giftTemplateHtml
