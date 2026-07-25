@@ -218,9 +218,9 @@ try {
     $failed = 0;
     $mailer->SMTPKeepAlive = true;
     $mailer->Subject = $subject;
-    $logoPath = ROOT . '/static/png/puantor-email-logo.png';
+    $logoPath = ROOT . '/static/png/puantor-email-logo.jpg';
     if (is_file($logoPath)) {
-        $mailer->addEmbeddedImage($logoPath, 'puantor-logo', 'puantor-logo.png', 'base64', 'image/png');
+        $mailer->addEmbeddedImage($logoPath, 'puantor-logo', 'puantor-logo.jpg', 'base64', 'image/jpeg', 'inline');
     }
 
     foreach ($recipients as $recipient) {
@@ -235,7 +235,7 @@ try {
             );
             if (is_file($logoPath)) {
                 $personalizedBody = preg_replace(
-                    '~src=(["\'])[^"\']*puantor-email-logo\.png(?:\?[^"\']*)?\1~i',
+                    '~src=(["\'])[^"\']*puantor-email-logo\.(?:png|jpe?g)(?:\?[^"\']*)?\1~i',
                     'src="cid:puantor-logo"',
                     $personalizedBody
                 );

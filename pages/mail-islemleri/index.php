@@ -30,13 +30,13 @@ $giftTemplateHtml = str_replace(
     [
         '{{BASLANGIC_TARIHI}}',
         '{{BITIS_TARIHI}}',
-        'https://www.puantor.com.tr/static/png/puantor-email-logo.png',
+        'https://www.puantor.com.tr/static/png/puantor-email-logo.jpg',
         'https://www.puantor.com.tr/sign-in.php',
     ],
     [
         $giftStartDate,
         $giftEndDate,
-        $requestBaseUrl . '/static/png/puantor-email-logo.png',
+        $requestBaseUrl . '/static/png/puantor-email-logo.jpg',
         $requestBaseUrl . '/sign-in.php',
     ],
     $giftTemplateHtml
