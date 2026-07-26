@@ -1,14 +1,8 @@
 <!-- <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script> -->
 
-
 <?php
 
-
-
-
 $page = isset($_GET['p']) ? $_GET['p'] : '';
-
-
 
 if (
     $page == 'companies/list' ||
@@ -47,13 +41,11 @@ if (
     $page == 'mail-islemleri/index' ||
     $page == 'supports/tickets' || $page == 'supports/ticket-view' ||
     $page == 'supports/admin-tickets' || $page == 'supports/admin-ticket-view' ||
-    $page == 'persons/icra-list'
+    $page == 'persons/icra-list' ||
+    strpos($page, 'kvkk/') === 0 || $page == 'kvkk/index' || $page == 'kvkk/ihlaller' || $page == 'kvkk/talepler'
 ) {
     echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
 }
-
-
-
 
 //Summernote eklenecek sayfalar
 if (
@@ -217,21 +209,9 @@ if ($page == 'defines/project-status/list' || $page == 'defines/project-status/m
 if ($page == 'gorevler/list') {
     echo '<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>';
     echo '<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>';
-    echo '<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">';
+    echo '<link rel="stylesheet" type="type/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">';
     echo '<script src="pages/gorevler/js/gorevler.js?v=' . time() . '"></script>';
 }
-
-
-?>
-
-
-
-
-
-
-
-<?php
-
 
 if ($page == 'home') {
     //echo '<script src="./dist/libs/apexcharts/dist/apexcharts.min.js" defer></script>';
@@ -263,8 +243,6 @@ if ($page == 'activities/index' || $page == 'admin-home') {
 <script src="./dist/js/tabler.min.js?1692870487"></script>
 <!-- <script src="./dist/js/demo.min.js?1692870487"></script> -->
 <script src="./src/jquery.inputmask.js"></script>
-
-
 
 <script src="./src/app.js?v=<?php echo time(); ?>" defer></script>
 <?php 

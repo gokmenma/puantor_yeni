@@ -397,27 +397,34 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
       var api = this.api();
       var tableId = settings.sTableId;
 
+      var defaultSkipTitles = ['işlem', 'işlemler', 'seç', 'aksiyon', 'aksiyonlar'];
       api.columns().every(function () {
         let column = this;
         let colIdx = column.index();
         // orderCellsTop:true ile column.header() ilk satırı döndürür
         let title = $(column.header()).text().trim();
+        let titleLower = title.toLowerCase();
 
         if (
-          title !== "İşlem" &&
-          title !== "Seç" &&
+          title &&
+          defaultSkipTitles.indexOf(titleLower) === -1 &&
           $(column.header()).find('input[type="checkbox"]').length === 0
         ) {
           let input = document.createElement("input");
+          input.type = "search";
           input.placeholder = title;
           input.classList.add("form-control");
           input.classList.add("form-control-sm");
-          input.setAttribute("autocomplete", "off");
+          input.setAttribute("autocomplete", "search");
+          input.setAttribute("name", "dt_filter_" + tableId + "_" + colIdx);
+          input.setAttribute("data-lpignore", "true");
+          input.setAttribute("data-1p-ignore", "true");
+          input.setAttribute("data-bwignore", "true");
 
           // Mevcut arama satırındaki doğru hücreye yerleştir
           $("#" + tableId + " .search-input-row th:eq(" + colIdx + ")").html(input);
 
-          $(input).on("keyup change", function () {
+          $(input).on("keyup change search", function () {
             if (column.search() !== this.value) {
               column.search(this.value).draw();
             }
@@ -1596,7 +1603,8 @@ window.createDataTable = function (selector, userOptions) {
     var $table = $(selector);
     if (!$table.length || !$.fn.DataTable) return null;
 
-    var skipTitles    = userOptions.skipSearch || ['İşlem', 'Seç'];
+    var skipTitles    = userOptions.skipSearch || ['İşlem', 'İşlemler', 'Seç', 'Aksiyon', 'Aksiyonlar'];
+    var skipTitlesLower = skipTitles.map(function(s) { return s.toLowerCase(); });
     var userInitDone  = userOptions.initComplete || null;
 
     var $thead = $table.find('thead');
@@ -1632,13 +1640,19 @@ window.createDataTable = function (selector, userOptions) {
             var colIdx     = column.index();
             var $headerTh  = $($table.find('thead tr:first th').get(colIdx));
             var title      = $headerTh.text().trim();
+            var titleLower = title.toLowerCase();
 
-            if (!title || skipTitles.indexOf(title) !== -1 || $headerTh.find('input[type="checkbox"]').length > 0) return;
+            if (!title || skipTitles.indexOf(title) !== -1 || skipTitlesLower.indexOf(titleLower) !== -1 || $headerTh.find('input[type="checkbox"]').length > 0) return;
 
             var input = document.createElement('input');
+            input.type = 'search';
             input.placeholder = title;
             input.classList.add('form-control', 'form-control-sm');
-            input.setAttribute('autocomplete', 'off');
+            input.setAttribute('autocomplete', 'search');
+            input.setAttribute('name', 'dt_filter_' + tableId + '_' + colIdx);
+            input.setAttribute('data-lpignore', 'true');
+            input.setAttribute('data-1p-ignore', 'true');
+            input.setAttribute('data-bwignore', 'true');
 
             var $searchTh = $('#' + tableId + ' .search-input-row th:eq(' + colIdx + ')');
             $searchTh.html(input);
@@ -1652,7 +1666,7 @@ window.createDataTable = function (selector, userOptions) {
             // Force input to fill 100% of the cell width and allow shrinking (min-width: 0)
             input.setAttribute('style', 'width: 100% !important; min-width: 0 !important; max-width: 100% !important;');
 
-            $(input).on('keyup change', function () {
+            $(input).on('keyup change search', function () {
                 if (column.search() !== this.value) {
                     column.search(this.value).draw();
                 }

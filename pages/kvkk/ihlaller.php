@@ -67,7 +67,7 @@ $bekleyenler = $Model->getBekleyenBildirimler($firma_id);
             </div>
         </div>
         <div class="table-responsive">
-            <table class="table card-table table-hover datatable" id="ihlalTable">
+            <table class="table card-table table-hover" id="ihlalTable">
                 <thead>
                     <tr>
                         <th>#</th>

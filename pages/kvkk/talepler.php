@@ -111,7 +111,7 @@ $durum_etiketler = [
             </div>
         </div>
         <div class="table-responsive">
-            <table class="table card-table table-hover datatable" id="kvkkTalepTable">
+            <table class="table card-table table-hover" id="kvkkTalepTable">
                 <thead>
                     <tr>
                         <th>#</th>

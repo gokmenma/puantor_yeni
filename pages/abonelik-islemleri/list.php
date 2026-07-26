@@ -214,89 +214,93 @@ $subscribers = $abonelerModel->getSubscribers();
 <div class="modal modal-blur fade" id="clearDataModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-danger-lt">
-                <h5 class="modal-title text-danger">
-                    <i class="ti ti-trash icon me-2 text-danger"></i>
-                    Abone Verilerini Temizle
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label text-muted">Seçili Aboneler</label>
-                    <div id="clear-recipients-display" class="p-2 border rounded bg-light" style="min-height:48px;"></div>
+            <form autocomplete="off" onsubmit="return false;">
+                <!-- Tarayıcı autofill yakalayıcı gizli alan -->
+                <input type="text" name="fake_username_autofill" style="display:none;" tabindex="-1" autocomplete="username">
+                <div class="modal-header bg-danger-lt">
+                    <h5 class="modal-title text-danger">
+                        <i class="ti ti-trash icon me-2 text-danger"></i>
+                        Abone Verilerini Temizle
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                
-                <div class="mb-3">
-                    <label class="form-label required">Temizlenecek Modüller</label>
-                    <div class="card p-3 bg-light-lt">
-                        <div class="mb-2">
-                            <label class="form-check m-0">
-                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="puantaj" checked>
-                                <span class="form-check-label">Puantaj Verileri <small class="text-muted">(Puantaj çalışma saatleri ve tutarları)</small></span>
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-check m-0">
-                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="personnel" checked>
-                                <span class="form-check-label">Personel Kayıtları <small class="text-muted">(Personel, izinler, avanslar, ücretler)</small></span>
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-check m-0">
-                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="finance" checked>
-                                <span class="form-check-label">Kasa Hareketleri <small class="text-muted">(Gelir ve gider işlemleri)</small></span>
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-check m-0">
-                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="companies" checked>
-                                <span class="form-check-label">Cari Firmalar <small class="text-muted">(Müşteri ve tedarikçi cari kartları)</small></span>
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-check m-0">
-                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="projects" checked>
-                                <span class="form-check-label">Projeler ve Görevler <small class="text-muted">(Projeler, proje görevleri ve gelir/gider)</small></span>
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-check m-0">
-                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="offers" checked>
-                                <span class="form-check-label">Teklifler <small class="text-muted">(Teklifler ve teklif kalemleri)</small></span>
-                            </label>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-check m-0">
-                                <input class="form-check-input clear-module-checkbox" type="checkbox" value="roles" checked>
-                                <span class="form-check-label">Yetki Grupları <small class="text-muted">(Tanımlanan kullanıcı rolleri ve yetkileri)</small></span>
-                            </label>
-                        </div>
-                        <div class="mb-0">
-                            <label class="form-check m-0 text-danger">
-                                <input class="form-check-input clear-module-checkbox border-danger" type="checkbox" value="myfirms">
-                                <span class="form-check-label font-weight-bold">Firmalarım <small class="text-danger">(Kendi tanımladığınız firmalar. UYARI: Sıfırlanır!)</small></span>
-                            </label>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Seçili Aboneler</label>
+                        <div id="clear-recipients-display" class="p-2 border rounded bg-light" style="min-height:48px;"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label required">Temizlenecek Modüller</label>
+                        <div class="card p-3 bg-light-lt">
+                            <div class="mb-2">
+                                <label class="form-check m-0">
+                                    <input class="form-check-input clear-module-checkbox" type="checkbox" value="puantaj" checked>
+                                    <span class="form-check-label">Puantaj Verileri <small class="text-muted">(Puantaj çalışma saatleri ve tutarları)</small></span>
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-check m-0">
+                                    <input class="form-check-input clear-module-checkbox" type="checkbox" value="personnel" checked>
+                                    <span class="form-check-label">Personel Kayıtları <small class="text-muted">(Personel, izinler, avanslar, ücretler)</small></span>
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-check m-0">
+                                    <input class="form-check-input clear-module-checkbox" type="checkbox" value="finance" checked>
+                                    <span class="form-check-label">Kasa Hareketleri <small class="text-muted">(Gelir ve gider işlemleri)</small></span>
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-check m-0">
+                                    <input class="form-check-input clear-module-checkbox" type="checkbox" value="companies" checked>
+                                    <span class="form-check-label">Cari Firmalar <small class="text-muted">(Müşteri ve tedarikçi cari kartları)</small></span>
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-check m-0">
+                                    <input class="form-check-input clear-module-checkbox" type="checkbox" value="projects" checked>
+                                    <span class="form-check-label">Projeler ve Görevler <small class="text-muted">(Projeler, proje görevleri ve gelir/gider)</small></span>
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-check m-0">
+                                    <input class="form-check-input clear-module-checkbox" type="checkbox" value="offers" checked>
+                                    <span class="form-check-label">Teklifler <small class="text-muted">(Teklifler ve teklif kalemleri)</small></span>
+                                </label>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-check m-0">
+                                    <input class="form-check-input clear-module-checkbox" type="checkbox" value="roles" checked>
+                                    <span class="form-check-label">Yetki Grupları <small class="text-muted">(Tanımlanan kullanıcı rolleri ve yetkileri)</small></span>
+                                </label>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-check m-0 text-danger">
+                                    <input class="form-check-input clear-module-checkbox border-danger" type="checkbox" value="myfirms">
+                                    <span class="form-check-label font-weight-bold">Firmalarım <small class="text-danger">(Kendi tanımladığınız firmalar. UYARI: Sıfırlanır!)</small></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label class="form-label required">Yönetici Şifreniz</label>
-                    <input type="password" id="admin-password" class="form-control" placeholder="İşlemi onaylamak için şifrenizi giriniz...">
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label required">Yönetici Şifreniz</label>
+                        <input type="password" id="admin-password" name="admin_password" class="form-control" placeholder="İşlemi onaylamak için şifrenizi giriniz..." autocomplete="current-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
+                    </div>
 
-                <div class="alert alert-warning mb-0">
-                    <h4 class="alert-title"><i class="ti ti-alert-triangle me-1"></i>Dikkat!</h4>
-                    <div class="text-muted">Seçtiğiniz veriler kalıcı olarak silinecektir ve bu işlem geri alınamaz.</div>
+                    <div class="alert alert-warning mb-0">
+                        <h4 class="alert-title"><i class="ti ti-alert-triangle me-1"></i>Dikkat!</h4>
+                        <div class="text-muted">Seçtiğiniz veriler kalıcı olarak silinecektir ve bu işlem geri alınamaz.</div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" id="btn-confirm-clear" class="btn btn-danger">
-                    <i class="ti ti-trash icon me-2"></i> Verileri Kalıcı Olarak Sil
-                </button>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" id="btn-confirm-clear" class="btn btn-danger">
+                        <i class="ti ti-trash icon me-2"></i> Verileri Kalıcı Olarak Sil
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

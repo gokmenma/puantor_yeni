@@ -2,7 +2,7 @@
 <html lang="tr">
 
 <head>
-    <meta name="csrf-token" content="<?php echo htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+  <meta name="csrf-token" content="<?php echo htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
@@ -15,12 +15,7 @@
   ?>
   <title><?php echo $title; ?></title>
 
-
   <link rel="icon" href="./static/favicon.ico" type="image/x-icon" />
-
-  <!-- Your code -->
-  <!-- CSS files -->
-  <!-- Meta Başlık -->
 
   <!-- Meta Açıklama -->
   <meta name="description"
@@ -30,19 +25,14 @@
   <meta name="keywords"
     content="puantaj yazılımı, maaş hesaplama aracı, proje takibi, gelir gider takibi, personel yönetimi, işletme yönetim yazılımı, verimli iş yönetimi" />
 
-    <!-- <link href="./dist/css/tabler.min.css?1692870487" rel="stylesheet" /> -->
-    <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
   <link href="./dist/css/style.css?v=<?php echo filemtime("./dist/css/style.css"); ?>" rel="stylesheet" />
   <link href="./dist/css/menu.css?v=<?php echo filemtime("./dist/css/menu.css"); ?>" rel="stylesheet" />
   <link href="./dist/libs/select2/css/select2.min.css?v=<?php echo filemtime("./dist/libs/select2/css/select2.min.css"); ?>" rel="stylesheet" />
 
-
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"> -->
   <link href="./dist/css/flatpickr.min.css?v=<?php echo filemtime("./dist/css/flatpickr.min.css"); ?>" rel="stylesheet" />
   <link href="./dist/css/flatpickr.monthSelect.css?v=<?php echo filemtime("./dist/css/flatpickr.monthSelect.css"); ?>" rel="stylesheet" />
-
 
   <!-- jQuery UI CSS -->
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -51,9 +41,6 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@event-calendar/build@3.7.2/event-calendar.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@event-calendar/build@3.7.2/event-calendar.min.js"></script>
-
-
-
 
   <?php
   $page = isset($_GET["p"]) ? $_GET["p"] : "";
@@ -66,10 +53,8 @@
     || $page == "duyurular/list"
     || $page == "mail-islemleri/index"
   ) {
-
     echo '<link href="./dist/libs/summernote/summernote-lite.min.css" rel="stylesheet">';
   }
-  ;
 
   if (
     $page == "companies/list" || $page == "offers/list" || $page == "reports/list"
@@ -88,10 +73,11 @@
     $page == 'abonelik-islemleri/list' || $page == 'abonelik-islemleri/paketler' || $page == 'abonelik-islemleri/satin-alma-islemleri' ||
     $page == 'bildirimler/push' || $page == 'mail-islemleri/index' || $page == 'izin/list' || $page == 'izin/hakedis' ||
     $page == 'supports/tickets' || $page == 'supports/admin-tickets' ||
-    $page == 'defines/icra-daireleri/list'
+    $page == 'defines/icra-daireleri/list' || $page == 'persons/icra-list' ||
+    strpos($page, 'kvkk/') === 0 || $page == 'kvkk/index' || $page == 'kvkk/ihlaller' || $page == 'kvkk/talepler'
   ) {
     echo '<link href="./dist/libs/datatable/datatables.min.css" rel="stylesheet" />';
-}
+  }
 
   if ($page == "supports/ticket-view" || $page == "supports/admin-ticket-view") {
     echo '<link href="./dist/css/tickets.css" rel="stylesheet" />';
@@ -141,9 +127,7 @@
       #home-gantt-container .pointer { display: none !important; }
     </style>';
   }
-
   ?>
-
 
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
   <style>
