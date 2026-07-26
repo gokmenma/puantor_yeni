@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/App/bootstrap.php';
+
 // Standalone Printable Leave Request Page
 session_start();
 if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {

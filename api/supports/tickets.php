@@ -145,7 +145,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'newTicketMessage') {
             $mail->send();
         } catch (Exception $e) {
             // E-posta gönderimindeki hatayı yut ama hata logu yaz
-            error_log("Destek talebi e-posta gönderimi başarısız: " . $e->getMessage());
+            system_log_exception($e, ['operation' => 'support_ticket_mail']);
         }
 
     } catch (PDOException $ex) {

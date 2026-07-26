@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             header('Location: superadmin-verify.php');
                             exit;
                         } catch (Throwable $e) {
-                            error_log('Mobile superadmin 2FA mail error: ' . $e->getMessage());
+                            system_log_exception($e, ['operation' => 'mobile_superadmin_2fa_mail']);
                             $error = 'Doğrulama kodu gönderilemedi. SMTP ayarlarını kontrol edin.';
                             goto mobile_login_complete;
                         }

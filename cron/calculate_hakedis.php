@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__) . '/App/bootstrap.php';
+
 // cron/calculate_hakedis.php
 if (php_sapi_name() !== 'cli') {
     die("Bu betik yalnızca komut satırından (CLI) çalıştırılabilir.\n");
@@ -36,6 +38,7 @@ try {
     echo "[" . date('Y-m-d H:i:s') . "] Cron başarıyla tamamlandı. Toplam {$toplam_hesaplanan} yeni hakediş kaydı eklendi.\n";
 
 } catch (\Throwable $e) {
+    system_log_exception($e, ['operation' => 'calculate_hakedis_cron']);
     echo "[" . date('Y-m-d H:i:s') . "] HATA: " . $e->getMessage() . "\n";
     exit(1);
 }

@@ -52,11 +52,11 @@ class ActivityLogModel extends Model
             $result = $sql->execute([$firm_id, $user_id, $activity_type, $action, $description, $platform]);
             
             if (!$result) {
-                error_log("Activity log INSERT failed: " . implode(" ", $sql->errorInfo()));
+                system_log_error("Activity log INSERT failed: " . implode(" ", $sql->errorInfo()), ['operation' => 'activity_log_insert']);
             }
             return $result;
         } catch (\Throwable $e) {
-            error_log("Activity log EXCEPTION: " . $e->getMessage());
+            system_log_exception($e, ['operation' => 'activity_log_insert']);
             return false;
         }
     }

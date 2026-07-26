@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+
 session_start();
 define('ROOT', dirname(__DIR__, 2));
 $autoload_path = ROOT . '/vendor/autoload.php';
@@ -51,6 +53,7 @@ foreach ($wages as $id => $wage) {
             $personObj->saveWithAttr($data);
             $successCount++;
         } catch (Exception $e) {
+            system_log_exception($e, ['operation' => 'bulk_wage_update', 'person_id' => $personId]);
             $errorCount++;
         }
     } else {

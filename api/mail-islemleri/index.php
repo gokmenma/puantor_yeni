@@ -88,7 +88,7 @@ try {
             $result = $inboxService->getInbox($account, $page, $perPage, $search);
             mailJson(['status' => 'success', 'account_email' => $inboxService->getAccountEmail($account)] + $result);
         } catch (RuntimeException $e) {
-            error_log('Mail inbox list error: ' . $e->getMessage());
+            system_log_exception($e, ['operation' => 'mail_inbox_list']);
             mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -103,7 +103,7 @@ try {
             $inboxService = new MailGelenKutuService(new SettingsModel());
             mailJson(['status' => 'success', 'message_data' => $inboxService->getMessage($account, $uid)]);
         } catch (RuntimeException $e) {
-            error_log('Mail inbox message error: ' . $e->getMessage());
+            system_log_exception($e, ['operation' => 'mail_inbox_message']);
             mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -122,7 +122,7 @@ try {
             ActivityLogModel::log('mail_islemleri', $seen ? 'mark_read' : 'mark_unread', "Gelen mail durumu güncellendi. Hesap: {$account}, UID: {$uid}.");
             mailJson(['status' => 'success']);
         } catch (RuntimeException $e) {
-            error_log('Mail inbox flag error: ' . $e->getMessage());
+            system_log_exception($e, ['operation' => 'mail_inbox_flag']);
             mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -140,7 +140,7 @@ try {
             ActivityLogModel::log('mail_islemleri', 'delete_inbox_message', "Gelen mail kalıcı olarak silindi. Hesap: {$account}, UID: {$uid}.");
             mailJson(['status' => 'success', 'message' => 'Mail silindi.']);
         } catch (RuntimeException $e) {
-            error_log('Mail inbox delete error: ' . $e->getMessage());
+            system_log_exception($e, ['operation' => 'mail_inbox_delete']);
             mailJson(['status' => 'error', 'message' => $e->getMessage()], 422);
         }
     }
@@ -241,7 +241,7 @@ try {
             $model->markRecipient($sendId, $recipient['email'], true);
             $successful++;
         } catch (Throwable $e) {
-            error_log('Mail operations send error: ' . $e->getMessage());
+            system_log_exception($e, ['operation' => 'mail_send']);
             if ($firstFailure === null) {
                 $firstFailure = trim((string) $e->getMessage());
             }
@@ -267,6 +267,6 @@ try {
         'send_id' => $sendId,
     ], $successful > 0 ? 200 : 502);
 } catch (Throwable $e) {
-    error_log('Mail operations API error: ' . $e->getMessage());
+    system_log_exception($e, ['operation' => 'mail_operations_api']);
     mailJson(['status' => 'error', 'message' => 'İşlem sırasında bir hata oluştu.'], 500);
 }

@@ -146,6 +146,8 @@ if ($action == 'list') {
 
         $formatted_files[] = [
             'id' => Security::encrypt($f->id),
+            'person_id' => Security::encrypt($person_id),
+            'raw_person_id' => (int)$person_id,
             'icra_sirasi' => (int)$f->icra_sirasi,
             'icra_dairesi' => htmlspecialchars($f->icra_dairesi, ENT_QUOTES, 'UTF-8'),
             'dosya_no' => htmlspecialchars($f->dosya_no, ENT_QUOTES, 'UTF-8'),
@@ -219,6 +221,7 @@ if ($action == 'firm_list') {
         $formatted_files[] = [
             'id' => Security::encrypt($f->id),
             'person_id' => Security::encrypt($f->person_id),
+            'raw_person_id' => (int)$f->person_id,
             'person_name' => htmlspecialchars($f->full_name ?? '', ENT_QUOTES, 'UTF-8'),
             'person_tc' => htmlspecialchars(Security::safeDecrypt($f->kimlik_no ?? ''), ENT_QUOTES, 'UTF-8'),
             'person_sicil' => htmlspecialchars($f->sigorta_no ?? '', ENT_QUOTES, 'UTF-8'),
@@ -420,7 +423,7 @@ if ($action == 'save') {
             'id' => $save_res
         ]);
     } catch (\Throwable $e) {
-        error_log("Icra save error: " . $e->getMessage());
+        system_log_exception($e, ['operation' => 'icra_save']);
         ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'İşlem kaydedilirken bir hata oluştu.']);
     }
@@ -460,7 +463,7 @@ if ($action == 'delete') {
         ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'İcra dosyası başarıyla silindi.']);
     } catch (\Throwable $e) {
-        error_log("Icra delete error: " . $e->getMessage());
+        system_log_exception($e, ['operation' => 'icra_delete']);
         ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Dosya silinirken bir hata oluştu.']);
     }
@@ -497,7 +500,7 @@ if ($action == 'toggle_payroll_deduction') {
         ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'Bordro kesinti ayarı başarıyla güncellendi.']);
     } catch (\Throwable $e) {
-        error_log("Icra toggle deduction error: " . $e->getMessage());
+        system_log_exception($e, ['operation' => 'icra_toggle_deduction']);
         ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Ayarlar güncellenirken bir hata oluştu.']);
     }
@@ -506,63 +509,69 @@ if ($action == 'toggle_payroll_deduction') {
 
 // 6. Kesintiler Geçmişi Detay Aksiyonu
 if ($action == 'deductions_history') {
-    $person_id_encrypted = $_POST['person_id'] ?? $_GET['person_id'] ?? '';
-    $person_id = !empty($person_id_encrypted) ? Security::decrypt($person_id_encrypted) : 0;
-    
-    $file_id_encrypted = $_POST['file_id'] ?? $_GET['file_id'] ?? '';
-    $file_id = !empty($file_id_encrypted) ? Security::decrypt($file_id_encrypted) : 0;
+    try {
+        $person_id_param = $_POST['person_id'] ?? $_GET['person_id'] ?? '';
+        $person_id = is_numeric($person_id_param) ? (int)$person_id_param : (!empty($person_id_param) ? (int)Security::decrypt($person_id_param) : 0);
+        
+        $file_id_param = $_POST['file_id'] ?? $_GET['file_id'] ?? '';
+        $file_id = is_numeric($file_id_param) ? (int)$file_id_param : (!empty($file_id_param) ? (int)Security::decrypt($file_id_param) : 0);
 
-    $dosya_no = null;
+        $dosya_no = null;
 
-    if ($file_id > 0) {
-        $icra_file = $PersonIcra->find($file_id);
-        if ($icra_file) {
-            $person_id = $icra_file->person_id;
-            $dosya_no = $icra_file->dosya_no;
+        if ($file_id > 0) {
+            $icra_file = $PersonIcra->find($file_id);
+            if ($icra_file) {
+                $person_id = (int)$icra_file->person_id;
+                $dosya_no = $icra_file->dosya_no;
+            }
         }
-    }
 
-    if (!$person_id) {
+        if (!$person_id) {
+            ob_clean();
+            echo json_encode(['status' => 'error', 'message' => 'Geçersiz personel veya dosya kimliği']);
+            exit;
+        }
+
+        $person = $Persons->find($person_id);
+        if (!$person || $person->firm_id != $_SESSION['firm_id']) {
+            ob_clean();
+            echo json_encode(['status' => 'error', 'message' => 'Personel bulunamadı veya yetkiniz yok']);
+            exit;
+        }
+
+        $history = $PersonIcra->getDeductionsHistory($person_id, $dosya_no);
+
+        $formatted = [];
+        $total_sum = 0.0;
+
+        foreach ($history as $h) {
+            $tutar = (float)$h->tutar;
+            $total_sum += $tutar;
+
+            $formatted[] = [
+                'id' => $h->id,
+                'donem' => sprintf('%02d/%04d', (int)$h->ay, (int)$h->yil),
+                'tutar' => Helper::formattedMoney($tutar),
+                'tutar_raw' => $tutar,
+                'turu' => htmlspecialchars($h->turu ?? 'İcra Kesintisi', ENT_QUOTES, 'UTF-8'),
+                'aciklama' => htmlspecialchars($h->aciklama ?? '', ENT_QUOTES, 'UTF-8'),
+                'created_at' => !empty($h->created_at) ? Date::dmYHis($h->created_at) : ''
+            ];
+        }
+
         ob_clean();
-        echo json_encode(['status' => 'error', 'message' => 'Geçersiz personel veya dosya kimliği']);
-        exit;
-    }
-
-    $person = $Persons->find($person_id);
-    if (!$person || $person->firm_id != $_SESSION['firm_id']) {
+        echo json_encode([
+            'status' => 'success',
+            'person_name' => htmlspecialchars($person->full_name, ENT_QUOTES, 'UTF-8'),
+            'dosya_no' => htmlspecialchars($dosya_no ?? 'Tüm Dosyalar', ENT_QUOTES, 'UTF-8'),
+            'total_amount' => Helper::formattedMoney($total_sum),
+            'history' => $formatted
+        ], JSON_UNESCAPED_UNICODE);
+    } catch (\Throwable $e) {
+        system_log_exception($e, ['operation' => 'icra_deductions_history']);
         ob_clean();
-        echo json_encode(['status' => 'error', 'message' => 'Personel bulunamadı veya yetkiniz yok']);
-        exit;
+        echo json_encode(['status' => 'error', 'message' => 'Kesinti geçmişi yüklenirken bir hata oluştu.']);
     }
-
-    $history = $PersonIcra->getDeductionsHistory($person_id, $dosya_no);
-
-    $formatted = [];
-    $total_sum = 0.0;
-
-    foreach ($history as $h) {
-        $tutar = (float)$h->tutar;
-        $total_sum += $tutar;
-
-        $formatted[] = [
-            'id' => $h->id,
-            'donem' => sprintf('%02d/%04d', (int)$h->ay, (int)$h->yil),
-            'tutar' => Helper::formattedMoney($tutar),
-            'tutar_raw' => $tutar,
-            'turu' => htmlspecialchars($h->turu ?? 'İcra Kesintisi', ENT_QUOTES, 'UTF-8'),
-            'aciklama' => htmlspecialchars($h->aciklama ?? '', ENT_QUOTES, 'UTF-8'),
-            'created_at' => !empty($h->created_at) ? Date::dmYHis($h->created_at) : ''
-        ];
-    }
-
-    ob_clean();
-    echo json_encode([
-        'status' => 'success',
-        'person_name' => htmlspecialchars($person->full_name, ENT_QUOTES, 'UTF-8'),
-        'dosya_no' => htmlspecialchars($dosya_no ?? 'Tüm Dosyalar', ENT_QUOTES, 'UTF-8'),
-        'total_amount' => Helper::formattedMoney($total_sum),
-        'history' => $formatted
-    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 

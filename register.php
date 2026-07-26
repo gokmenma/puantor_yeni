@@ -71,11 +71,11 @@ function notifySuperadmins($userDb, $subject, $bodyHtml)
 
                 $mail->send();
             } catch (Exception $e) {
-                error_log('Yönetici e-posta gönderim hatası (' . $admin->email . '): ' . $e->getMessage());
+                system_log_exception($e, ['operation' => 'admin_notification_mail', 'admin_email' => $admin->email]);
             }
         }
     } catch (Exception $e) {
-        error_log('Yönetici bildirimi hazırlanırken hata: ' . $e->getMessage());
+        system_log_exception($e, ['operation' => 'prepare_admin_notification']);
     }
 }
 ?>
@@ -529,7 +529,7 @@ function notifySuperadmins($userDb, $subject, $bodyHtml)
                             $mail->send();
                             echo alertdanger('Aktivasyon bağlantısı e-posta adresinize gönderildi.', "info", "Başarılı!");
                         } catch (Exception $e) {
-                            error_log($e->getMessage());
+                            system_log_exception($e, ['operation' => 'registration_activation_mail']);
                             echo alertdanger('E-posta gönderilemedi, lütfen daha sonra tekrar deneyiniz.');
                             notifySuperadmins(
                                 $User->getDb(),
@@ -560,7 +560,7 @@ function notifySuperadmins($userDb, $subject, $bodyHtml)
                         header('Location: register-success.php');
                     } catch (PDOException $exh) {
                         $db->rollBack();
-                        error_log($exh->getMessage());
+                        system_log_exception($exh, ['operation' => 'user_registration']);
                         if (($exh->errorInfo[1] ?? null) == 1062) {
                             echo alertdanger('Bu email adresi ile daha önce kayıt olunmuş.');
                         } else {

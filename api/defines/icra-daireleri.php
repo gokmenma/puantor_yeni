@@ -80,9 +80,9 @@ try {
     echo json_encode(['status' => 'error', 'message' => 'Geçersiz işlem']);
 
 } catch (Exception $e) {
-    error_log("icra-daireleri.php Exception: " . $e->getMessage());
+    system_log_exception($e, ['operation' => 'icra_daireleri_api']);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 } catch (Error $e) {
-    error_log("icra-daireleri.php Error: " . $e->getMessage());
+    system_log_exception($e, ['operation' => 'icra_daireleri_api']);
     echo json_encode(['status' => 'error', 'message' => 'Sistem hatası']);
 }

@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+
 session_start();
 ob_start();
 !defined("ROOT") ? define("ROOT", dirname(dirname(__DIR__))) : null;
@@ -40,6 +42,7 @@ if ($action == 'saveCari') {
         $cariModel->saveWithAttr($data);
         echo json_encode(['status' => 'success', 'message' => 'Cari başarıyla kaydedildi.']);
     } catch (Exception $e) {
+        system_log_exception($e, ['operation' => 'cari_save']);
         echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }
     exit;
@@ -64,6 +67,7 @@ if ($action == 'deleteCari') {
                 $cariModel->saveWithAttr($data);
                 echo json_encode(['status' => 'success', 'message' => 'Cari başarıyla silindi.']);
             } catch (Exception $e) {
+                system_log_exception($e, ['operation' => 'cari_delete']);
                 echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             }
         } else {
@@ -93,6 +97,7 @@ if ($action == 'saveMovement') {
         $moveModel->saveWithAttr($data);
         echo json_encode(['status' => 'success', 'message' => 'Hareket başarıyla kaydedildi.']);
     } catch (Exception $e) {
+        system_log_exception($e, ['operation' => 'cari_movement_save']);
         echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }
     exit;
@@ -117,6 +122,7 @@ if ($action == 'deleteMovement') {
                 $moveModel->saveWithAttr($data);
                 echo json_encode(['status' => 'success', 'message' => 'Hareket başarıyla silindi.']);
             } catch (Exception $e) {
+                system_log_exception($e, ['operation' => 'cari_movement_delete']);
                 echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             }
         } else {

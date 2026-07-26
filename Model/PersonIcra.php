@@ -76,7 +76,7 @@ class PersonIcra extends Model
             $res = $query->fetch(PDO::FETCH_OBJ);
             return (float)($res->total ?? 0.00);
         } catch (\Throwable $ex) {
-            error_log("Failed to fetch total deductions: " . $ex->getMessage());
+            system_log_exception($ex, ['operation' => 'icra_total_deductions']);
             return 0.00;
         }
     }
@@ -420,4 +420,3 @@ class PersonIcra extends Model
         return $query->fetchAll(PDO::FETCH_OBJ);
     }
 }
-

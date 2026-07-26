@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__) . '/App/bootstrap.php';
+
 if (php_sapi_name() !== 'cli') {
     die("Bu betik yalnızca komut satırından (CLI) çalıştırılabilir.\n");
 }

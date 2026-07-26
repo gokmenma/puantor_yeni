@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__DIR__) . '/bootstrap.php';
+
 function puantorIsHttps(): bool
 {
     return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')

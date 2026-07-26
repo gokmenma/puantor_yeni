@@ -251,7 +251,7 @@ class MailGelenKutuService
         $this->mailbox = @imap_open($mailboxName, $username, $password, 0, 1);
         if (!$this->mailbox) {
             $errors = imap_errors() ?: [];
-            error_log('IMAP connection error: ' . implode(' | ', $errors));
+            system_log_error('IMAP connection error: ' . implode(' | ', $errors), ['operation' => 'imap_connect']);
             throw new RuntimeException('Gelen kutusuna bağlanılamadı.');
         }
 

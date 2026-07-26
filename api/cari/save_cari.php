@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+
 session_start();
 require_once dirname(__DIR__, 2) . "/Model/Cari.php";
 require_once dirname(__DIR__, 2) . "/App/Helper/security.php";
@@ -30,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cariModel->saveWithAttr($data);
         echo json_encode(['status' => 'success', 'message' => 'Cari başarıyla kaydedildi.']);
     } catch (Exception $e) {
+        system_log_exception($e, ['operation' => 'cari_save']);
         echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }
 }

@@ -1,6 +1,5 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once dirname(__DIR__) . '/App/bootstrap.php';
 
 require_once "../Database/db.php";
 require_once "../Model/Offer.php";

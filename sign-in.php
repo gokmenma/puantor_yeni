@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
                         header('Location: superadmin-verify.php');
                         exit;
                     } catch (Throwable $e) {
-                        error_log('Superadmin 2FA mail error: ' . $e->getMessage());
+                        system_log_exception($e, ['operation' => 'superadmin_2fa_mail']);
                         $loginSecurity->event((int) $user->id, 'superadmin_2fa_delivery_failed', '2FA kodu gönderilemedi.');
                         $error = 'Doğrulama kodu gönderilemedi. SMTP ayarlarını kontrol edin.';
                         goto login_processing_complete;

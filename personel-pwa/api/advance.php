@@ -114,7 +114,7 @@ if ($action == 'list') {
 
         } catch (Exception $logEx) {
             // Log/Bildirim hatası ana işlemi durdurmasın diye sessizce loglayalım
-            error_log("Avans talebi bildirim/log hatası: " . $logEx->getMessage());
+            system_log_exception($logEx, ['operation' => 'advance_notification']);
         }
 
         echo json_encode(['status' => 'success', 'message' => 'Talep başarıyla oluşturuldu.']);

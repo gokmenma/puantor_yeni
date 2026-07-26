@@ -1,7 +1,8 @@
 <?php
 
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', getenv('APP_ENV') === 'development' ? '1' : '0');
+require_once __DIR__ . '/App/bootstrap.php';
 require_once __DIR__ . '/App/Helper/session_security.php';
 puantorStartSecureSession();
 

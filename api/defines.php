@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__) . '/App/bootstrap.php';
+
 
 require_once "../Database/db.php";
 require_once "../Model/DefinesModel.php";

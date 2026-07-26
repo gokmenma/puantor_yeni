@@ -6,8 +6,10 @@ if ((int) ($_SESSION['user']->superadmin ?? 0) !== 1) {
 }
 
 require_once ROOT . '/Model/SystemDashboardModel.php';
+require_once ROOT . '/Service/SystemLogService.php';
 
 $dashboardModel = new SystemDashboardModel();
+$systemLogService = new \Service\SystemLogService();
 $summary = $dashboardModel->getSummary();
 $monthlyTrend = $dashboardModel->getMonthlyTrend();
 $subscriptionStatuses = $dashboardModel->getSubscriptionStatuses();
@@ -15,6 +17,7 @@ $recentSubscribers = $dashboardModel->getRecentSubscribers();
 $recentActivities = $dashboardModel->getRecentActivities();
 $recentLogins = $dashboardModel->getRecentLogins();
 $securityEvents = $dashboardModel->getRecentSecurityEvents();
+$systemErrors = $systemLogService->getDashboardData(20);
 
 $statusLabels = [
     'aktif' => 'Aktif',
@@ -40,6 +43,20 @@ $activityIcons = [
     'todo' => ['checkbox', 'purple'],
     'auth' => ['shield-lock', 'yellow'],
     'kvkk' => ['lock', 'cyan'],
+];
+
+$errorLevelClasses = [
+    'critical' => 'bg-red text-white',
+    'error' => 'bg-danger-lt text-danger',
+    'warning' => 'bg-warning-lt text-warning',
+    'notice' => 'bg-azure-lt text-azure',
+];
+
+$errorLevelLabels = [
+    'critical' => 'Kritik',
+    'error' => 'Hata',
+    'warning' => 'Uyarı',
+    'notice' => 'Bilgi',
 ];
 
 function systemDashboardInitials(?string $name): string
@@ -325,6 +342,90 @@ function systemDashboardDevice(?string $userAgent): array
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr><td colspan="6" class="text-center text-secondary py-5">Henüz abone kaydı bulunmuyor.</td></tr>
+                                <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-deck row-cards mt-1">
+                <div class="col-12">
+                    <div class="card dashboard-card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">Sistem hataları</h3>
+                                <div class="text-secondary small mt-1">PHP ve uygulama katmanından merkezi olarak yakalanan son kayıtlar</div>
+                            </div>
+                            <div class="card-actions d-flex align-items-center gap-2">
+                                <span class="badge bg-red-lt text-red">Bugün <?php echo (int) $systemErrors['today']['critical']; ?> kritik</span>
+                                <span class="badge bg-danger-lt text-danger"><?php echo (int) $systemErrors['today']['error']; ?> hata</span>
+                                <span class="badge bg-warning-lt text-warning"><?php echo (int) $systemErrors['today']['warning']; ?> uyarı</span>
+                                <span class="badge bg-secondary-lt"><?php echo (int) $systemErrors['today']['total']; ?> toplam</span>
+                                <a href="index.php?p=activities/index&amp;tab=sistem-hatalari" class="btn btn-sm btn-outline-danger">Tümünü gör</a>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 110px;">Seviye</th>
+                                        <th>Hata</th>
+                                        <th>İstek</th>
+                                        <th>Kullanıcı / Firma</th>
+                                        <th>Zaman</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php if ($systemErrors['records']): ?>
+                                    <?php foreach ($systemErrors['records'] as $systemError): ?>
+                                        <?php
+                                        $errorLevel = (string) ($systemError['level'] ?? 'error');
+                                        $errorContext = is_array($systemError['context'] ?? null) ? $systemError['context'] : [];
+                                        $errorRequest = is_array($systemError['request'] ?? null) ? $systemError['request'] : [];
+                                        $errorActor = is_array($systemError['actor'] ?? null) ? $systemError['actor'] : [];
+                                        $sourceFile = !empty($errorContext['file']) ? basename((string) $errorContext['file']) : '';
+                                        $sourceLine = !empty($errorContext['line']) ? ':' . (int) $errorContext['line'] : '';
+                                        ?>
+                                        <tr>
+                                            <td>
+                                                <span class="badge <?php echo $errorLevelClasses[$errorLevel] ?? 'bg-secondary-lt'; ?>">
+                                                    <?php echo htmlspecialchars($errorLevelLabels[$errorLevel] ?? $errorLevel); ?>
+                                                </span>
+                                            </td>
+                                            <td style="min-width: 300px;">
+                                                <div class="fw-medium text-wrap"><?php echo htmlspecialchars((string) ($systemError['message'] ?? 'Bilinmeyen hata')); ?></div>
+                                                <div class="text-secondary small mt-1">
+                                                    <?php echo htmlspecialchars((string) ($systemError['type'] ?? 'application_error')); ?>
+                                                    <?php if ($sourceFile): ?>
+                                                        · <?php echo htmlspecialchars($sourceFile . $sourceLine); ?>
+                                                    <?php endif; ?>
+                                                    · Kod: <?php echo htmlspecialchars((string) ($systemError['request_id'] ?? '—')); ?>
+                                                </div>
+                                            </td>
+                                            <td class="text-nowrap">
+                                                <div><?php echo htmlspecialchars((string) ($errorRequest['method'] ?? '—')); ?></div>
+                                                <div class="text-secondary small"><?php echo htmlspecialchars((string) ($errorRequest['path'] ?? '—')); ?></div>
+                                            </td>
+                                            <td class="text-nowrap">
+                                                <div>Kullanıcı: <?php echo isset($errorActor['user_id']) && $errorActor['user_id'] !== null ? (int) $errorActor['user_id'] : '—'; ?></div>
+                                                <div class="text-secondary small">Firma: <?php echo isset($errorActor['firm_id']) && $errorActor['firm_id'] !== null ? (int) $errorActor['firm_id'] : '—'; ?></div>
+                                            </td>
+                                            <td class="text-nowrap">
+                                                <?php
+                                                $errorTimestamp = strtotime((string) ($systemError['timestamp'] ?? ''));
+                                                echo $errorTimestamp ? date('d.m.Y H:i:s', $errorTimestamp) : '—';
+                                                ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-secondary py-5">
+                                            <i class="ti ti-circle-check text-success me-1"></i>Henüz sistem hatası kaydedilmedi.
+                                        </td>
+                                    </tr>
                                 <?php endif; ?>
                                 </tbody>
                             </table>

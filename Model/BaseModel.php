@@ -1,6 +1,7 @@
 <?php
 //Root tanımlı değilse tanımla
 !defined("ROOT") ? define("ROOT", dirname(__DIR__)) : false;
+require_once ROOT . '/App/bootstrap.php';
 // require_once $_SERVER['DOCUMENT_ROOT'] . '/Database/db.php';
 require_once ROOT . '/Database/db.php';
 require_once ROOT . '/App/Helper/security.php';

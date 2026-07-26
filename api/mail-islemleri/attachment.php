@@ -34,7 +34,7 @@ try {
     ActivityLogModel::log('mail_islemleri', 'download_attachment', "Gelen mail eki indirildi. Hesap: {$account}, UID: {$uid}.");
     echo $attachment['data'];
 } catch (Throwable $e) {
-    error_log('Mail attachment error: ' . $e->getMessage());
+    system_log_exception($e, ['operation' => 'mail_attachment_download']);
     http_response_code(404);
     echo 'Ek indirilemedi.';
 }

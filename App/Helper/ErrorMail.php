@@ -156,7 +156,7 @@ class ErrorMail
             return true;
 
         } catch (\Throwable $e) {
-            error_log("ErrorMail notification failed: " . $e->getMessage());
+            system_log_exception($e, ['operation' => 'error_mail_notification']);
             return false;
         }
     }

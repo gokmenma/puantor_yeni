@@ -24,12 +24,14 @@ $supportsModel = new SupportsModel();
 $messagesModel = new SupportsMessagesModel();
 
 $support = $supportsModel->find($support_id);
-$messages = $messagesModel->getMessagesByTicketId($support_id);
 
-if (!$support) {
+if (!$support || (int)$support->user_id !== (int)($_SESSION['user']->id ?? 0)) {
     echo "<div class='alert alert-danger m-3'>Destek talebi bulunamadı.</div>";
     exit;
 }
+
+$supportsModel->markAsRead($support_id);
+$messages = $messagesModel->getMessagesByTicketId($support_id);
 
 $lastMessage = $messagesModel->getLastMessageByTicketId($support_id);
 $lastAuthor = $lastMessage->author ?? 0;

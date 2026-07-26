@@ -716,7 +716,15 @@ $(document).ready(function() {
                     </table>
                 </div>
             </div>
-            <div class="modal-footer py-2">
+            <div class="modal-footer py-2 d-flex justify-content-between">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary btn-sm me-1" id="btn-info-modal-print-deductions">
+                        <i class="ti ti-printer me-1"></i> Yazdır
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm me-1" id="btn-info-modal-excel-deductions">
+                        <i class="ti ti-file-spreadsheet me-1"></i> Excel'e İndir
+                    </button>
+                </div>
                 <button type="button" class="btn btn-secondary px-4 ms-auto" data-bs-dismiss="modal">Kapat</button>
             </div>
         </div>
@@ -725,11 +733,14 @@ $(document).ready(function() {
 
 <script>
 $(document).ready(function() {
+    let currentInfoDeductionsFileId = null;
+
     // 9. Kesintiler Geçmişi Detayı Tıklama
     $(document).on('click', '.btn-view-deductions', function(e) {
         e.preventDefault();
         const fileId = $(this).data('file-id') || '';
         const personId = $(this).data('person-id') || '';
+        currentInfoDeductionsFileId = fileId;
 
         $('#modal-deductions-person-name').text('Yükleniyor...');
         $('#modal-deductions-total').text('0,00 ₺');
@@ -777,6 +788,22 @@ $(document).ready(function() {
                 Swal.fire('Hata!', 'Sunucu hatası oluştu.', 'error');
             }
         });
+    });
+
+    $('#btn-info-modal-print-deductions').on('click', function() {
+        if (!currentInfoDeductionsFileId) {
+            Swal.fire('Uyarı', 'Lütfen önce bir icra dosyası seçiniz.', 'warning');
+            return;
+        }
+        window.open('print_icra.php?id=' + encodeURIComponent(currentInfoDeductionsFileId), '_blank');
+    });
+
+    $('#btn-info-modal-excel-deductions').on('click', function() {
+        if (!currentInfoDeductionsFileId) {
+            Swal.fire('Uyarı', 'Lütfen önce bir icra dosyası seçiniz.', 'warning');
+            return;
+        }
+        window.location.href = 'pages/persons/icra-export-xls.php?id=' + encodeURIComponent(currentInfoDeductionsFileId);
     });
 });
 </script>

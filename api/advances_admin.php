@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__) . '/App/bootstrap.php';
+
 // Legacy Proxy for Advances Admin API
 // Redirecting to the new unified API structure to avoid WAF/LiteSpeed security triggers.
 

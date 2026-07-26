@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+
 require_once "../../Database/db.php";
 require_once "../../Model/Company.php";
 require_once "../../Model/UserModel.php";
@@ -65,7 +67,7 @@ if ($_POST["action"] == "saveMyCompany") {
                 // Dosyayı silmeyi dene
                 if (!unlink($old_brand_logo_file)) {
                     // Hata yönetimi: Dosya silinemedi
-                    error_log("Dosya silinemedi: $old_brand_logo_file");
+                    system_log_error('Eski firma logosu silinemedi.', ['operation' => 'company_logo_delete', 'file' => $old_brand_logo_file]);
                 }
             }
         }

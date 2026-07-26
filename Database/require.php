@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__) . '/App/bootstrap.php';
+
 $_envFile = dirname(__DIR__) . '/.env';
 if (file_exists($_envFile)) {
     foreach (file($_envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $_line) {

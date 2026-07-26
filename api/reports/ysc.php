@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+
 require_once "../../Database/db.php";
 require_once "../../Model/Report.php";
 require_once "../../Model/ReportContent.php";

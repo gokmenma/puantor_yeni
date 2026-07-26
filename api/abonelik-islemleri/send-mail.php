@@ -56,7 +56,7 @@ try {
     $stmt->execute($user_ids);
     $recipients = $stmt->fetchAll(PDO::FETCH_OBJ);
 } catch (\Exception $e) {
-    error_log("Mail send database error: " . $e->getMessage());
+    system_log_exception($e, ['operation' => 'subscription_mail_recipients']);
     echo json_encode(['success' => false, 'message' => 'Veritabanı hatası.']);
     exit;
 }
@@ -80,12 +80,12 @@ try {
             $mail->send();
             $sent++;
         } catch (\Exception $e) {
-            error_log("Mail send error to {$recipient->email}: " . $e->getMessage());
+            system_log_exception($e, ['operation' => 'subscription_mail_send', 'recipient' => $recipient->email]);
             $errors[] = $recipient->email;
         }
     }
 } catch (\Exception $e) {
-    error_log("SMTP error: " . $e->getMessage());
+    system_log_exception($e, ['operation' => 'subscription_smtp']);
     echo json_encode(['success' => false, 'message' => 'SMTP hatası oluştu.']);
     exit;
 }
@@ -103,4 +103,3 @@ if (!empty($errors)) {
 }
 
 echo json_encode(['success' => true, 'message' => $message]);
-

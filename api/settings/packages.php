@@ -192,12 +192,16 @@ if (isset($_POST['action']) && $_POST['action'] == 'buyPackage') {
                         
                         $mail->send();
                     } catch (Exception $e) {
-                        error_log("E-posta gönderim hatası (Admin: " . $admin->email . "): " . $mail->ErrorInfo);
+                        system_log_error('Paket bildirimi e-postası gönderilemedi.', [
+                            'operation' => 'package_notification_mail',
+                            'admin_email' => $admin->email,
+                            'mailer_error' => $mail->ErrorInfo,
+                        ]);
                     }
                 }
             }
         } catch (Exception $mailEx) {
-            error_log("Superadmin e-posta listesi çekilirken veya e-posta gönderilirken hata oluştu: " . $mailEx->getMessage());
+            system_log_exception($mailEx, ['operation' => 'package_superadmin_notification']);
         }
         
         echo json_encode([

@@ -2,7 +2,7 @@
 require_once "BaseModel.php";
 
 class SupportsMessagesModel extends Model{
-    protected $table = 'mbeyazil_panel.supports_message';
+    protected $table = 'supports_message';
     public function __construct(){
         parent::__construct($this->table);
     }

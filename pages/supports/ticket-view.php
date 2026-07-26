@@ -16,6 +16,13 @@ $Supports = new SupportsModel();
 $SupportsMessages = new SupportsMessagesModel();
 
 $support = $Supports->find($support_id);
+$isTicketOwner = $support && (int)$support->user_id === (int)($_SESSION['user']->id ?? 0);
+if (!$isTicketOwner) {
+    echo '<div class="container-xl p-5 text-center">Destek talebi bulunamadı.</div>';
+    return;
+}
+
+$Supports->markAsRead($support_id);
 $messages = $SupportsMessages->getMessagesByTicketId($support_id);
 
 // Son mesajın author bilgisi boş ise bu mesajı kullanıcı göndermiştir ve destek ekibinin bu mesajı cevaplaması gerekmektedir.

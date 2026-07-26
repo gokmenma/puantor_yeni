@@ -156,6 +156,12 @@ $statuses = PersonIcra::getStatuses();
     border-color: var(--tblr-border-color, #334155) !important;
     color: var(--tblr-body-color, #f8fafc) !important;
 }
+
+/* Compact option padding for Select2 */
+.select2-container .select2-results__option {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
 </style>
 
 <div class="container-fluid px-4 py-3">
@@ -170,6 +176,12 @@ $statuses = PersonIcra::getStatuses();
             </div>
             <div class="col-auto ms-auto d-print-none">
                 <div class="btn-list">
+                    <button type="button" class="btn btn-outline-success shadow-sm px-3" id="btn-export-excel-list">
+                        <i class="ti ti-file-spreadsheet me-1 fs-3"></i> Excel'e Aktar
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary shadow-sm px-3" id="btn-print-list">
+                        <i class="ti ti-printer me-1 fs-3"></i> Yazdır
+                    </button>
                     <button type="button" class="btn btn-primary shadow-sm px-3" id="btn-open-add-modal">
                         <i class="ti ti-plus me-1 fs-3"></i> Yeni İcra Dosyası
                     </button>
@@ -301,12 +313,12 @@ $statuses = PersonIcra::getStatuses();
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label required font-weight-600">Personel</label>
-                            <select class="form-select select2-modal" name="person_id" id="modal-person-id" required style="width: 100%;">
+                            <select class="form-select" name="person_id" id="modal-person-id" required style="width: 100%;">
                                 <option value="">Personel Seçiniz...</option>
                                 <?php foreach ($firmPersons as $p): ?>
                                     <?php $decryptedKimlik = Security::safeDecrypt($p->kimlik_no ?? ''); ?>
-                                    <option value="<?= Security::encrypt($p->id); ?>">
-                                        <?= htmlspecialchars(($p->full_name ?? '') . ' (' . ($decryptedKimlik ?: 'TC Yok') . ')', ENT_QUOTES, 'UTF-8'); ?>
+                                    <option value="<?= Security::encrypt($p->id); ?>" data-person-id="<?= (int)$p->id; ?>" data-fullname="<?= htmlspecialchars($p->full_name ?? '', ENT_QUOTES, 'UTF-8'); ?>" data-tc="<?= htmlspecialchars($decryptedKimlik ?: 'TC Yok', ENT_QUOTES, 'UTF-8'); ?>">
+                                        <?= htmlspecialchars($p->full_name ?? '', ENT_QUOTES, 'UTF-8'); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -435,7 +447,15 @@ $statuses = PersonIcra::getStatuses();
                     </table>
                 </div>
             </div>
-            <div class="modal-footer py-2">
+            <div class="modal-footer py-2 d-flex justify-content-between">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary btn-sm me-1" id="btn-modal-print-deductions">
+                        <i class="ti ti-printer me-1"></i> Yazdır
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm me-1" id="btn-modal-excel-deductions">
+                        <i class="ti ti-file-spreadsheet me-1"></i> Excel'e İndir
+                    </button>
+                </div>
                 <button type="button" class="btn btn-secondary px-4 ms-auto" data-bs-dismiss="modal">Kapat</button>
             </div>
         </div>
@@ -505,6 +525,38 @@ $(document).ready(function() {
             theme: 'bootstrap-5',
             width: '100%',
             dropdownParent: $('#icraFileModal')
+        });
+
+        $('#modal-person-id').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#icraFileModal'),
+            templateResult: function(state) {
+                if (!state.id) return state.text;
+                const elem = $(state.element);
+                const fullname = elem.data('fullname') || state.text;
+                const tc = elem.data('tc');
+                if (!tc) return state.text;
+                return $(
+                    '<div style="line-height: 1.15; padding: 1px 0;">' +
+                        '<div class="fw-bold text-dark" style="font-size: 0.85rem;">' + fullname + '</div>' +
+                        '<div class="text-muted" style="font-size: 0.75rem; margin-top: 1px;">TC: ' + tc + '</div>' +
+                    '</div>'
+                );
+            },
+            templateSelection: function(state) {
+                if (!state.id) return state.text;
+                const elem = $(state.element);
+                const fullname = elem.data('fullname') || state.text;
+                const tc = elem.data('tc');
+                if (!tc) return state.text;
+                return $(
+                    '<div class="d-inline-flex align-items-center gap-2">' +
+                        '<span class="fw-bold">' + fullname + '</span>' +
+                        '<span class="badge bg-secondary-lt text-secondary" style="font-size: 0.72rem;">TC: ' + tc + '</span>' +
+                    '</div>'
+                );
+            }
         });
     }
 
@@ -683,7 +735,13 @@ $(document).ready(function() {
             $('#icra-file-id').val(f.id);
             $('#modal-icra-title').html('<i class="ti ti-edit me-2"></i>İcra Dosyası Güncelle');
 
-            $('#modal-person-id').val(f.person_id).trigger('change');
+            let targetPersonId = f.raw_person_id || f.person_id_raw;
+            let optionVal = $('#modal-person-id option[data-person-id="' + targetPersonId + '"]').val();
+            if (optionVal) {
+                $('#modal-person-id').val(optionVal).trigger('change');
+            } else {
+                $('#modal-person-id').val(f.person_id).trigger('change');
+            }
             $('#modal-icra-sirasi').val(f.icra_sirasi);
             $('#modal-icra-dairesi').val(f.icra_dairesi);
             $('#modal-dosya-no').val(f.dosya_no);
@@ -783,11 +841,14 @@ $(document).ready(function() {
         });
     });
 
+    let currentDeductionsFileId = null;
+
     // 10. Kesintiler Geçmişi Detayı Tıklama
     $(document).on('click', '.btn-view-deductions', function(e) {
         e.preventDefault();
         const fileId = $(this).data('file-id') || '';
         const personId = $(this).data('person-id') || '';
+        currentDeductionsFileId = fileId;
 
         $('#modal-deductions-person-name').text('Yükleniyor...');
         $('#modal-deductions-total').text('0,00 ₺');
@@ -835,6 +896,33 @@ $(document).ready(function() {
                 Swal.fire('Hata!', 'Sunucu hatası oluştu.', 'error');
             }
         });
+    });
+
+    // 11. Modal ve Liste İndirme / Yazdırma Butonları
+    $('#btn-modal-print-deductions').on('click', function() {
+        if (!currentDeductionsFileId) {
+            Swal.fire('Uyarı', 'Lütfen önce bir icra dosyası seçiniz.', 'warning');
+            return;
+        }
+        window.open('print_icra.php?id=' + encodeURIComponent(currentDeductionsFileId), '_blank');
+    });
+
+    $('#btn-modal-excel-deductions').on('click', function() {
+        if (!currentDeductionsFileId) {
+            Swal.fire('Uyarı', 'Lütfen önce bir icra dosyası seçiniz.', 'warning');
+            return;
+        }
+        window.location.href = 'pages/persons/icra-export-xls.php?id=' + encodeURIComponent(currentDeductionsFileId);
+    });
+
+    $('#btn-export-excel-list').on('click', function() {
+        const selectedStatuses = $('#icra-status-multiselect').val() || [];
+        window.location.href = 'pages/persons/icra-export-xls.php?status_filter=' + encodeURIComponent(selectedStatuses.join(','));
+    });
+
+    $('#btn-print-list').on('click', function() {
+        const selectedStatuses = $('#icra-status-multiselect').val() || [];
+        window.open('print_icra.php?status_filter=' + encodeURIComponent(selectedStatuses.join(',')), '_blank');
     });
 });
 </script>

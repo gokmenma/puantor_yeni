@@ -25,6 +25,7 @@ if (!$support) {
     return;
 }
 
+$Supports->markAsRead($support_id);
 $messages = $SupportsMessages->getMessagesByTicketId($support_id);
 $ticket_user = $UserModel->find($support->user_id);
 

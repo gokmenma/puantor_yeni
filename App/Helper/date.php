@@ -12,6 +12,14 @@ class Date
         return date($format, strtotime($date));
     }
 
+    public static function dmYHis($date = null, $format = 'd.m.Y H:i:s')
+    {
+        if ($date === null || $date === '') {
+            return '';
+        }
+        return date($format, strtotime($date));
+    }
+
     public static function Ymd($date, $format = 'Ymd')
     {
         if ($date == null) {

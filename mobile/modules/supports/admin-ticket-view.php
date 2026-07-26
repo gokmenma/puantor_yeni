@@ -36,6 +36,7 @@ if (!$support) {
     exit;
 }
 
+$supportsModel->markAsRead($support_id);
 $messages = $messagesModel->getMessagesByTicketId($support_id);
 $ticket_user = $userModel->find($support->user_id);
 

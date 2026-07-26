@@ -126,17 +126,24 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
                         require_once ROOT . '/Model/SupportsModel.php';
                         try {
                             $_topbar_supports_model = new SupportsModel();
-                            $_topbar_open_supports_count = $_topbar_supports_model->getOpenSupportsCount();
-                        } catch (Exception $e) {
-                            $_topbar_open_supports_count = 0;
+                            if (
+                                in_array($active_page ?? '', ['supports/ticket-view', 'supports/admin-ticket-view'], true)
+                                && !empty($_GET['id'])
+                            ) {
+                                $_topbar_support_id = \App\Helper\Security::decrypt($_GET['id']);
+                                $_topbar_supports_model->markAsRead($_topbar_support_id);
+                            }
+                            $_topbar_unread_supports_count = $_topbar_supports_model->getUnreadSupportsCount();
+                        } catch (\Throwable $e) {
+                            $_topbar_unread_supports_count = 0;
                         }
                     ?>
                     <a href="index.php?p=<?php echo $_topbar_is_superadmin ? 'supports/admin-tickets' : 'supports/tickets'; ?>" class="nav-link px-0 me-1"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Destek Talepleri" aria-label="Destek Talepleri">
                         <span class="position-relative d-inline-flex">
                             <i class="ti ti-headset" style="font-size:1.25rem;"></i>
-                            <?php if ($_topbar_open_supports_count > 0): ?>
-                            <span style="position:absolute;top:-5px;right:-7px;min-width:15px;height:15px;padding:0 3px;font-size:9px;line-height:15px;border-radius:8px;background:#2fb344;color:#fff;text-align:center;pointer-events:none;font-weight:600;"><?= $_topbar_open_supports_count ?></span>
+                            <?php if ($_topbar_unread_supports_count > 0): ?>
+                            <span style="position:absolute;top:-5px;right:-7px;min-width:15px;height:15px;padding:0 3px;font-size:9px;line-height:15px;border-radius:8px;background:#2fb344;color:#fff;text-align:center;pointer-events:none;font-weight:600;"><?= $_topbar_unread_supports_count ?></span>
                             <?php endif; ?>
                         </span>
                     </a>

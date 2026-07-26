@@ -4,6 +4,7 @@ require_once ROOT . "/Model/Auths.php";
 require_once ROOT . "/Model/Menus.php";
 require_once ROOT . "/Model/UserModel.php";
 require_once ROOT . "/App/Helper/helper.php";
+require_once ROOT . "/Service/SystemLogService.php";
 
 use App\Helper\Helper;
 
@@ -22,7 +23,7 @@ try {
         $db->exec("ALTER TABLE auths MODIFY parent_id INT(11) DEFAULT NULL");
     }
 } catch (Exception $e) {
-    error_log("Database patch error (auths id size change): " . $e->getMessage());
+    system_log_exception($e, ['operation' => 'auths_id_schema_patch']);
 }
 
 // 1. Yetki Kontrolü için Yetki Ekle
@@ -75,6 +76,11 @@ $authsObj->checkAuthorize("system_activities_view");
 
 // Yönetici (Superadmin) Kontrolü
 $is_superadmin = (isset($_SESSION['user']->superadmin) && $_SESSION['user']->superadmin == 1);
+$allowed_tabs = ['analiz', 'aktiviteler', 'girisler', 'kullanici-rapor'];
+if ($is_superadmin) {
+    $allowed_tabs[] = 'sistem-hatalari';
+}
+$active_tab = in_array($_GET['tab'] ?? '', $allowed_tabs, true) ? $_GET['tab'] : 'analiz';
 
 // Filtre Değişkenleri
 $firm_id = $_SESSION['firm_id'];
@@ -97,6 +103,31 @@ function parseDate($dateStr, $default) {
 $start_date_db = parseDate($start_date, date('Y-m-d', strtotime('-30 days')));
 $end_date_db = parseDate($end_date, date('Y-m-d'));
 
+$system_errors = [];
+$system_error_counts = ['total' => 0, 'critical' => 0, 'error' => 0, 'warning' => 0, 'notice' => 0];
+$system_error_levels = [
+    'critical' => ['Kritik', 'bg-red text-white'],
+    'error' => ['Hata', 'bg-danger-lt text-danger'],
+    'warning' => ['Uyarı', 'bg-warning-lt text-warning'],
+    'notice' => ['Bilgi', 'bg-azure-lt text-azure'],
+];
+if ($is_superadmin) {
+    $systemLogService = new \Service\SystemLogService();
+    $system_errors = $systemLogService->getRecordsBetween(
+        $start_date_db,
+        $end_date_db,
+        $user_id_filter !== '' ? (int) $user_id_filter : null,
+        $company_id_filter !== '' ? (int) $company_id_filter : null
+    );
+    foreach ($system_errors as $system_error_record) {
+        $system_error_level = (string) ($system_error_record['level'] ?? 'error');
+        $system_error_counts['total']++;
+        if (isset($system_error_counts[$system_error_level])) {
+            $system_error_counts[$system_error_level]++;
+        }
+    }
+}
+
 // Firma Listesi (Sadece Superadmin için)
 $all_companies = [];
 if ($is_superadmin) {
@@ -117,6 +148,15 @@ if ($is_superadmin) {
     }
 } else {
     $users = $userModel->getUsersByFirm($firm_id);
+}
+
+$activity_user_names = [];
+foreach ($users as $activity_user) {
+    $activity_user_names[(int) $activity_user->id] = (string) $activity_user->full_name;
+}
+$activity_company_names = [];
+foreach ($all_companies as $activity_company) {
+    $activity_company_names[(int) $activity_company->id] = (string) $activity_company->company_name;
 }
 
 // --- FİLTRE VE KOŞULLARIN DİNAMİK YAPILANDIRILMASI ---
@@ -356,6 +396,30 @@ function getSessionDuration($loginTime, $logoutTime) {
     $remMins = $mins % 60;
     return $hours . ' sa ' . $remMins . ' dk';
 }
+
+$tab_page_content = [
+    'analiz' => [
+        'title' => 'Sistem Aktiviteleri' . ($is_superadmin ? ' (Tüm Sistem Raporu)' : ''),
+        'description' => 'Aktivite, giriş ve kullanıcı kullanım istatistiklerinin genel görünümü.',
+    ],
+    'aktiviteler' => [
+        'title' => 'Kullanıcı Davranış & Aktivite Logları',
+        'description' => 'Seçili filtrelere göre kullanıcıların gerçekleştirdiği sistem işlemleri.',
+    ],
+    'girisler' => [
+        'title' => 'Sisteme Giriş & Çıkış Geçmişi',
+        'description' => 'Kullanıcıların oturum, cihaz ve IP bilgilerinin tarihsel görünümü.',
+    ],
+    'kullanici-rapor' => [
+        'title' => 'Kullanıcı Sistem Kullanım Özeti',
+        'description' => 'Giriş ve aktivite sayılarına göre kullanıcı kullanım istatistikleri.',
+    ],
+    'sistem-hatalari' => [
+        'title' => 'Merkezi Sistem Hata Kayıtları',
+        'description' => 'Seçili tarih, firma ve kullanıcı filtrelerine göre en fazla 5.000 kayıt gösterilir.',
+    ],
+];
+$active_page_content = $tab_page_content[$active_tab];
 ?>
 
 <div class="container-xl mt-3" data-id="activities-dashboard">
@@ -364,16 +428,28 @@ function getSessionDuration($loginTime, $logoutTime) {
         <div class="row align-items-center">
             <div class="col">
                 <div class="page-pretitle">Analiz & Raporlama</div>
-                <h2 class="page-title text-primary fw-bold">Sistem Aktiviteleri <?php echo $is_superadmin ? '(Tüm Sistem Raporu)' : ''; ?></h2>
+                <h2 class="page-title text-primary fw-bold" id="activitiesPageTitle"><?php echo htmlspecialchars($active_page_content['title']); ?></h2>
+                <div class="text-secondary mt-1" id="activitiesPageDescription"><?php echo htmlspecialchars($active_page_content['description']); ?></div>
             </div>
         </div>
     </div>
 
-    <!-- Filtre Kartı -->
-    <div class="card mb-4" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06);">
-        <div class="card-body p-3">
-            <form method="GET" action="index.php" id="filterForm">
+    <div class="accordion mb-3" id="activitiesFilterAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="activitiesFilterHeading">
+                <button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#activitiesFilterCollapse" aria-expanded="false" aria-controls="activitiesFilterCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="ti ti-filter text-primary"></i>
+                        <span class="fw-bold">Filtreler</span>
+                        <span class="badge bg-secondary-lt"><?php echo htmlspecialchars($start_date); ?> – <?php echo htmlspecialchars($end_date); ?></span>
+                    </span>
+                </button>
+            </h2>
+            <div id="activitiesFilterCollapse" class="accordion-collapse collapse" aria-labelledby="activitiesFilterHeading" data-bs-parent="#activitiesFilterAccordion">
+                <div class="accordion-body p-3">
+                    <form method="GET" action="index.php" id="filterForm">
                 <input type="hidden" name="p" value="activities/index">
+                <input type="hidden" name="tab" id="activeActivitiesTab" value="<?php echo htmlspecialchars($active_tab); ?>">
                 <div class="row g-2 align-items-end">
                     
                     <!-- Superadmin Firma Filtresi -->
@@ -441,12 +517,14 @@ function getSessionDuration($loginTime, $logoutTime) {
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="ti ti-filter me-1"></i> Filtrele
                         </button>
-                        <a href="index.php?p=activities/index" class="btn btn-outline-secondary" title="Sıfırla">
+                        <a href="index.php?p=activities/index&amp;tab=<?php echo urlencode($active_tab); ?>" class="btn btn-outline-secondary" title="Sıfırla">
                             <i class="ti ti-refresh"></i>
                         </a>
                     </div>
                 </div>
-            </form>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -456,94 +534,89 @@ function getSessionDuration($loginTime, $logoutTime) {
         <div class="card-header p-0">
             <ul class="nav nav-tabs card-header-tabs m-0" data-bs-toggle="tabs">
                 <li class="nav-item">
-                    <a href="#tab-analiz" class="nav-link active py-3 px-4 fw-bold" data-bs-toggle="tab">
+                    <a href="#tab-analiz" class="nav-link <?php echo $active_tab === 'analiz' ? 'active' : ''; ?> py-3 px-4 fw-bold" data-bs-toggle="tab" data-tab-name="analiz" data-page-title="<?php echo htmlspecialchars($tab_page_content['analiz']['title'], ENT_QUOTES, 'UTF-8'); ?>" data-page-description="<?php echo htmlspecialchars($tab_page_content['analiz']['description'], ENT_QUOTES, 'UTF-8'); ?>">
                         <i class="ti ti-chart-bar me-2 text-primary"></i> Analiz & Grafikler
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#tab-aktiviteler" class="nav-link py-3 px-4 fw-bold" data-bs-toggle="tab">
+                    <a href="#tab-aktiviteler" class="nav-link <?php echo $active_tab === 'aktiviteler' ? 'active' : ''; ?> py-3 px-4 fw-bold" data-bs-toggle="tab" data-tab-name="aktiviteler" data-page-title="<?php echo htmlspecialchars($tab_page_content['aktiviteler']['title'], ENT_QUOTES, 'UTF-8'); ?>" data-page-description="<?php echo htmlspecialchars($tab_page_content['aktiviteler']['description'], ENT_QUOTES, 'UTF-8'); ?>">
                         <i class="ti ti-activity me-2 text-success"></i> Aktivite Günlükleri
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#tab-girisler" class="nav-link py-3 px-4 fw-bold" data-bs-toggle="tab">
+                    <a href="#tab-girisler" class="nav-link <?php echo $active_tab === 'girisler' ? 'active' : ''; ?> py-3 px-4 fw-bold" data-bs-toggle="tab" data-tab-name="girisler" data-page-title="<?php echo htmlspecialchars($tab_page_content['girisler']['title'], ENT_QUOTES, 'UTF-8'); ?>" data-page-description="<?php echo htmlspecialchars($tab_page_content['girisler']['description'], ENT_QUOTES, 'UTF-8'); ?>">
                         <i class="ti ti-login me-2 text-warning"></i> Sisteme Girişler
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#tab-kullanici-rapor" class="nav-link py-3 px-4 fw-bold" data-bs-toggle="tab">
+                    <a href="#tab-kullanici-rapor" class="nav-link <?php echo $active_tab === 'kullanici-rapor' ? 'active' : ''; ?> py-3 px-4 fw-bold" data-bs-toggle="tab" data-tab-name="kullanici-rapor" data-page-title="<?php echo htmlspecialchars($tab_page_content['kullanici-rapor']['title'], ENT_QUOTES, 'UTF-8'); ?>" data-page-description="<?php echo htmlspecialchars($tab_page_content['kullanici-rapor']['description'], ENT_QUOTES, 'UTF-8'); ?>">
                         <i class="ti ti-users me-2 text-info"></i> Kullanıcı Özet Raporu
                     </a>
                 </li>
+                <?php if ($is_superadmin): ?>
+                    <li class="nav-item">
+                        <a href="#tab-sistem-hatalari" class="nav-link <?php echo $active_tab === 'sistem-hatalari' ? 'active' : ''; ?> py-3 px-4 fw-bold" data-bs-toggle="tab" data-tab-name="sistem-hatalari" data-page-title="<?php echo htmlspecialchars($tab_page_content['sistem-hatalari']['title'], ENT_QUOTES, 'UTF-8'); ?>" data-page-description="<?php echo htmlspecialchars($tab_page_content['sistem-hatalari']['description'], ENT_QUOTES, 'UTF-8'); ?>">
+                            <i class="ti ti-alert-triangle me-2 text-danger"></i> Sistem Hataları
+                        </a>
+                    </li>
+                <?php endif; ?>
             </ul>
         </div>
 
-        <div class="card-body tab-content p-4">
+        <div class="card-body tab-content p-3">
             <!-- TAB 1: ANALİZ & GRAFİKLER -->
-            <div class="tab-pane active show" id="tab-analiz">
+            <div class="tab-pane <?php echo $active_tab === 'analiz' ? 'active show' : ''; ?>" id="tab-analiz">
                 <!-- Özellik Widgetları -->
-                <div class="row row-cards mb-4">
-                    <!-- Widget 1: Aktif Kullanıcılar -->
+                <div class="row row-cards mb-3">
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card card-sm bg-blue-lt" style="border: none; border-radius: 10px;">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <span class="avatar bg-blue text-white rounded-circle"><i class="ti ti-users"></i></span>
-                                    </div>
-                                    <div class="col text-truncate">
-                                        <div class="font-weight-medium" style="font-size: 20px; font-weight: 700;"><?php echo $active_users_count; ?></div>
-                                        <div class="text-secondary small">Aktif Kullanıcılar</div>
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar bg-blue text-white me-3"><i class="ti ti-users"></i></span>
+                                    <div class="text-truncate">
+                                        <div class="fw-medium"><?php echo (int) $active_users_count; ?> Aktif Kullanıcı</div>
+                                        <div class="text-secondary small">Seçili dönemde giriş yapan</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Widget 2: Toplam Aktivite -->
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card card-sm bg-green-lt" style="border: none; border-radius: 10px;">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <span class="avatar bg-green text-white rounded-circle"><i class="ti ti-activity"></i></span>
-                                    </div>
-                                    <div class="col text-truncate">
-                                        <div class="font-weight-medium" style="font-size: 20px; font-weight: 700;"><?php echo $total_activities; ?></div>
-                                        <div class="text-secondary small">Toplam Aktivite</div>
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar bg-green text-white me-3"><i class="ti ti-activity"></i></span>
+                                    <div class="text-truncate">
+                                        <div class="fw-medium"><?php echo (int) $total_activities; ?> Aktivite</div>
+                                        <div class="text-secondary small">Kaydedilen toplam işlem</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Widget 3: Toplam Giriş -->
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card card-sm bg-yellow-lt" style="border: none; border-radius: 10px;">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <span class="avatar bg-yellow text-white rounded-circle"><i class="ti ti-login"></i></span>
-                                    </div>
-                                    <div class="col text-truncate">
-                                        <div class="font-weight-medium" style="font-size: 20px; font-weight: 700;"><?php echo $total_logins; ?></div>
-                                        <div class="text-secondary small">Sistem Girişleri</div>
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar bg-yellow text-white me-3"><i class="ti ti-login"></i></span>
+                                    <div class="text-truncate">
+                                        <div class="fw-medium"><?php echo (int) $total_logins; ?> Sistem Girişi</div>
+                                        <div class="text-secondary small">Kaydedilen oturumlar</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Widget 4: En Aktif Kullanıcı -->
                     <div class="col-sm-6 col-lg-3">
-                        <div class="card card-sm bg-purple-lt" style="border: none; border-radius: 10px;">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <span class="avatar bg-purple text-white rounded-circle"><i class="ti ti-trophy"></i></span>
-                                    </div>
-                                    <div class="col text-truncate">
-                                        <div class="font-weight-medium text-truncate" style="font-size: 15px; font-weight: 700;" title="<?php echo htmlspecialchars($most_active_user); ?>">
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar bg-purple text-white me-3"><i class="ti ti-trophy"></i></span>
+                                    <div class="text-truncate">
+                                        <div class="fw-medium text-truncate" title="<?php echo htmlspecialchars($most_active_user); ?>">
                                             <?php echo htmlspecialchars($most_active_user); ?>
                                         </div>
-                                        <div class="text-secondary small">Dönemin En Aktifi</div>
+                                        <div class="text-secondary small">Dönemin en aktif kullanıcısı</div>
                                     </div>
                                 </div>
                             </div>
@@ -588,9 +661,8 @@ function getSessionDuration($loginTime, $logoutTime) {
             </div>
 
             <!-- TAB 2: AKTİVİTE GÜNLÜKLERİ -->
-            <div class="tab-pane" id="tab-aktiviteler">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="card-title fw-bold m-0">Kullanıcı Davranış & Aktivite Logları</h3>
+            <div class="tab-pane <?php echo $active_tab === 'aktiviteler' ? 'active show' : ''; ?>" id="tab-aktiviteler">
+                <div class="d-flex justify-content-end mb-2">
                     <button class="btn btn-outline-success btn-sm" id="export_excel_activities">
                         <i class="ti ti-file-spreadsheet me-1"></i> Excel'e Aktar
                     </button>
@@ -665,9 +737,8 @@ function getSessionDuration($loginTime, $logoutTime) {
             </div>
 
             <!-- TAB 3: SİSTEME GİRİŞLER -->
-            <div class="tab-pane" id="tab-girisler">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="card-title fw-bold m-0">Sisteme Giriş & Çıkış Geçmişi</h3>
+            <div class="tab-pane <?php echo $active_tab === 'girisler' ? 'active show' : ''; ?>" id="tab-girisler">
+                <div class="d-flex justify-content-end mb-2">
                     <button class="btn btn-outline-success btn-sm" id="export_excel_logins">
                         <i class="ti ti-file-spreadsheet me-1"></i> Excel'e Aktar
                     </button>
@@ -745,9 +816,8 @@ function getSessionDuration($loginTime, $logoutTime) {
             </div>
 
             <!-- TAB 4: KULLANICI ÖZET RAPORU -->
-            <div class="tab-pane" id="tab-kullanici-rapor">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="card-title fw-bold m-0">Kullanıcı Sistem Kullanım Özet İstatistikleri</h3>
+            <div class="tab-pane <?php echo $active_tab === 'kullanici-rapor' ? 'active show' : ''; ?>" id="tab-kullanici-rapor">
+                <div class="d-flex justify-content-end mb-2">
                     <button class="btn btn-outline-success btn-sm" id="export_excel_user_summaries">
                         <i class="ti ti-file-spreadsheet me-1"></i> Excel'e Aktar
                     </button>
@@ -828,9 +898,180 @@ function getSessionDuration($loginTime, $logoutTime) {
                     </table>
                 </div>
             </div>
+
+            <?php if ($is_superadmin): ?>
+                <div class="tab-pane <?php echo $active_tab === 'sistem-hatalari' ? 'active show' : ''; ?>" id="tab-sistem-hatalari">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button class="btn btn-outline-success btn-sm" id="export_excel_system_errors">
+                            <i class="ti ti-file-spreadsheet me-1"></i> Excel'e Aktar
+                        </button>
+                    </div>
+
+                    <div class="row row-cards mb-3">
+                        <div class="col-sm-6 col-lg">
+                            <div class="card">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <span class="avatar bg-secondary text-white me-3"><i class="ti ti-list-details"></i></span>
+                                        <div>
+                                            <div class="fw-medium"><?php echo (int) $system_error_counts['total']; ?> Toplam Kayıt</div>
+                                            <div class="text-secondary small">Seçili tarih aralığında</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <span class="avatar bg-red text-white me-3"><i class="ti ti-alert-octagon"></i></span>
+                                        <div>
+                                            <div class="fw-medium"><?php echo (int) $system_error_counts['critical']; ?> Kritik</div>
+                                            <div class="text-secondary small">Acil müdahale gerektiren</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <span class="avatar bg-danger text-white me-3"><i class="ti ti-circle-x"></i></span>
+                                        <div>
+                                            <div class="fw-medium"><?php echo (int) $system_error_counts['error']; ?> Hata</div>
+                                            <div class="text-secondary small">Uygulama hataları</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <span class="avatar bg-warning text-white me-3"><i class="ti ti-alert-triangle"></i></span>
+                                        <div>
+                                            <div class="fw-medium"><?php echo (int) $system_error_counts['warning']; ?> Uyarı</div>
+                                            <div class="text-secondary small">Kontrol edilmesi gereken</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <span class="avatar bg-azure text-white me-3"><i class="ti ti-info-circle"></i></span>
+                                        <div>
+                                            <div class="fw-medium"><?php echo (int) $system_error_counts['notice']; ?> Bilgi</div>
+                                            <div class="text-secondary small">Düşük öncelikli kayıt</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="systemErrorsTable" class="table card-table text-nowrap datatable w-100">
+                            <thead>
+                                <tr>
+                                    <th>Sıra</th>
+                                    <th>Seviye</th>
+                                    <th>Hata</th>
+                                    <th>Kaynak</th>
+                                    <th>İstek</th>
+                                    <th>Kullanıcı / Firma</th>
+                                    <th>IP</th>
+                                    <th>Tarih & Saat</th>
+                                    <th>Detay</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($system_errors as $error_index => $system_error): ?>
+                                    <?php
+                                    $error_level = (string) ($system_error['level'] ?? 'error');
+                                    $error_level_data = $system_error_levels[$error_level] ?? [ucfirst($error_level), 'bg-secondary-lt'];
+                                    $error_context = is_array($system_error['context'] ?? null) ? $system_error['context'] : [];
+                                    $error_request = is_array($system_error['request'] ?? null) ? $system_error['request'] : [];
+                                    $error_actor = is_array($system_error['actor'] ?? null) ? $system_error['actor'] : [];
+                                    $error_user_id = isset($error_actor['user_id']) ? (int) $error_actor['user_id'] : 0;
+                                    $error_firm_id = isset($error_actor['firm_id']) ? (int) $error_actor['firm_id'] : 0;
+                                    $error_source = !empty($error_context['file']) ? basename((string) $error_context['file']) : '—';
+                                    $error_line = !empty($error_context['line']) ? ':' . (int) $error_context['line'] : '';
+                                    $error_timestamp = strtotime((string) ($system_error['timestamp'] ?? ''));
+                                    $error_detail = json_encode([
+                                        'request_id' => $system_error['request_id'] ?? null,
+                                        'type' => $system_error['type'] ?? null,
+                                        'request' => $error_request,
+                                        'context' => $error_context,
+                                    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+                                    ?>
+                                    <tr>
+                                        <td><?php echo $error_index + 1; ?></td>
+                                        <td><span class="badge <?php echo $error_level_data[1]; ?>"><?php echo htmlspecialchars($error_level_data[0]); ?></span></td>
+                                        <td class="text-wrap" style="min-width: 320px; max-width: 520px;">
+                                            <div class="fw-medium"><?php echo htmlspecialchars((string) ($system_error['message'] ?? 'Bilinmeyen hata')); ?></div>
+                                            <div class="text-secondary small mt-1">
+                                                <?php echo htmlspecialchars((string) ($system_error['type'] ?? 'application_error')); ?>
+                                                · Kod: <?php echo htmlspecialchars((string) ($system_error['request_id'] ?? '—')); ?>
+                                            </div>
+                                        </td>
+                                        <td><code><?php echo htmlspecialchars($error_source . $error_line); ?></code></td>
+                                        <td>
+                                            <div><?php echo htmlspecialchars((string) ($error_request['method'] ?? '—')); ?></div>
+                                            <div class="text-secondary small"><?php echo htmlspecialchars((string) ($error_request['path'] ?? '—')); ?></div>
+                                        </td>
+                                        <td>
+                                            <div><?php echo htmlspecialchars($activity_user_names[$error_user_id] ?? ($error_user_id ? 'Kullanıcı #' . $error_user_id : 'Sistem')); ?></div>
+                                            <div class="text-secondary small"><?php echo htmlspecialchars($activity_company_names[$error_firm_id] ?? ($error_firm_id ? 'Firma #' . $error_firm_id : 'Firma yok')); ?></div>
+                                        </td>
+                                        <td><code class="text-dark bg-light px-2 py-1 rounded"><?php echo htmlspecialchars((string) ($error_request['ip'] ?? '—')); ?></code></td>
+                                        <td class="text-secondary"><?php echo $error_timestamp ? date('d.m.Y H:i:s', $error_timestamp) : '—'; ?></td>
+                                        <td>
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-secondary system-error-detail"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#systemErrorDetailModal"
+                                                data-error-message="<?php echo htmlspecialchars((string) ($system_error['message'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                data-error-detail="<?php echo htmlspecialchars((string) $error_detail, ENT_QUOTES, 'UTF-8'); ?>"
+                                            >
+                                                <i class="ti ti-code me-1"></i>İncele
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
+
+<?php if ($is_superadmin): ?>
+    <div class="modal modal-blur fade" id="systemErrorDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <div class="text-secondary small">Sistem hatası teknik detayı</div>
+                        <h3 class="modal-title" id="systemErrorDetailTitle">Hata detayı</h3>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="systemErrorDetailContent" class="bg-dark text-light rounded p-3 mb-0" style="white-space: pre-wrap; overflow-wrap: anywhere;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <!-- ApexCharts Scriptleri -->
 <script>
@@ -1001,6 +1242,22 @@ document.addEventListener("DOMContentLoaded", function () {
     // Tab geçişlerinde grafiklerin yeniden çizilmesi (Responsive Resize)
     document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(tabLink) {
         tabLink.addEventListener('shown.bs.tab', function (e) {
+            var selectedTab = e.target.getAttribute('data-tab-name');
+            var activeTabInput = document.getElementById('activeActivitiesTab');
+            if (selectedTab && activeTabInput) {
+                activeTabInput.value = selectedTab;
+                var currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('tab', selectedTab);
+                window.history.replaceState({}, '', currentUrl);
+            }
+            var pageTitle = document.getElementById('activitiesPageTitle');
+            var pageDescription = document.getElementById('activitiesPageDescription');
+            if (pageTitle) {
+                pageTitle.textContent = e.target.getAttribute('data-page-title') || '';
+            }
+            if (pageDescription) {
+                pageDescription.textContent = e.target.getAttribute('data-page-description') || '';
+            }
             if (e.target.hash === '#tab-analiz') {
                 trendChart.windowResize();
                 typeChart.windowResize();
@@ -1026,6 +1283,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("export_excel_user_summaries").addEventListener("click", function() {
         exportTableToExcel("userSummaryTable", "Kullanici_Aktiflik_Ozet_Raporu");
+    });
+
+    var exportSystemErrors = document.getElementById("export_excel_system_errors");
+    if (exportSystemErrors) {
+        exportSystemErrors.addEventListener("click", function() {
+            exportTableToExcel("systemErrorsTable", "Sistem_Hatalari");
+        });
+    }
+
+    document.querySelectorAll('.system-error-detail').forEach(function(detailButton) {
+        detailButton.addEventListener('click', function() {
+            document.getElementById('systemErrorDetailTitle').textContent = detailButton.getAttribute('data-error-message') || 'Hata detayı';
+            document.getElementById('systemErrorDetailContent').textContent = detailButton.getAttribute('data-error-detail') || 'Teknik detay bulunamadı.';
+        });
     });
 });
 </script>

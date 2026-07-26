@@ -258,7 +258,7 @@ function alertdanger($message, $type = "danger", $title = "Hata!")
             $mail->send();
             echo alertdanger('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.', "info", "Başarılı!");
           } catch (Exception $e) {
-            error_log($e->getMessage());
+            system_log_exception($e, ['operation' => 'forgot_password_mail']);
             echo alertdanger('E-posta gönderilemedi, lütfen daha sonra tekrar deneyiniz.');
           }
 

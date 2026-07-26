@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+
 session_start();
 require_once dirname(__DIR__, 2) . "/Model/CariHareketleri.php";
 require_once dirname(__DIR__, 2) . "/App/Helper/security.php";

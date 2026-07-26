@@ -70,9 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .bg-blob-indigo{width:350px;height:350px;background:radial-gradient(circle,rgba(99,102,241,.15) 0%,rgba(99,102,241,0) 70%);right:-100px;bottom:-100px}
     .login-container{width:100%;max-width:400px;padding:3rem 2.25rem 2.5rem;background:rgba(255,255,255,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.8);border-radius:28px;box-shadow:0 20px 40px -15px rgba(0,0,0,.05),0 1px 3px rgba(0,0,0,.02);position:relative;z-index:10;animation:fadeIn .4s ease-out}
     @keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-    .brand-logo{height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem;filter:drop-shadow(0 4px 12px rgba(0,0,0,.03))}
-    .brand-logo svg,.brand-logo img{height:100px;width:auto;max-width:100%}
-    .login-title{font-size:1.6rem;font-weight:700;color:#1e293b;letter-spacing:-.5px}
+    .brand-logo{height:60px;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem;filter:drop-shadow(0 4px 12px rgba(0,0,0,.03))}
+    .brand-logo svg,.brand-logo img{height:60px;width:auto;max-width:100%}
+    .login-title{font-size:1.4rem;font-weight:600;color:#1e293b;letter-spacing:-.5px}
     .login-subtitle{font-size:.875rem;line-height:1.55;color:#64748b}
     .login-middle-form{margin:2.5rem 0 1.5rem}
     .form-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:.5rem}
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         ?>
       </div>
-      <h1 class="login-title mb-1">Sistem Yöneticisi Doğrulaması</h1>
+      <h3 class="login-title mb-1">İki Aşamalı Doğrulama</h3>
       <p class="login-subtitle mb-0">E-posta adresinize gönderilen 6 haneli kodu girin.<br>Kod 5 dakika geçerlidir.</p>
     </div>
     <div class="login-middle-form">

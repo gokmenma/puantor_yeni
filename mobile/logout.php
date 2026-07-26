@@ -8,7 +8,7 @@ if (!empty($_SESSION['user']->id)) {
     try {
         (new UserModel())->setMobileToken((int) $_SESSION['user']->id, bin2hex(random_bytes(32)));
     } catch (Throwable $e) {
-        error_log('Mobile logout token rotation error: ' . $e->getMessage());
+        system_log_exception($e, ['operation' => 'mobile_logout_token_rotation']);
     }
 }
 
