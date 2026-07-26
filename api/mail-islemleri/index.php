@@ -219,16 +219,6 @@ try {
     $firstFailure = null;
     $mailer->SMTPKeepAlive = true;
     $mailer->Subject = $subject;
-    $logoPath = ROOT . '/static/png/puantor-email-logo.jpg';
-    $requestScheme = function_exists('puantorIsHttps') && puantorIsHttps() ? 'https' : 'http';
-    $requestHost = preg_replace('/[^a-zA-Z0-9.:-]/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'www.puantor.com.tr'));
-    $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '/api/mail-islemleri/index.php'));
-    $apiSuffix = '/api/mail-islemleri/index.php';
-    $appBasePath = str_ends_with($scriptName, $apiSuffix)
-        ? substr($scriptName, 0, -strlen($apiSuffix))
-        : '';
-    $publicLogoUrl = $requestScheme . '://' . $requestHost . $appBasePath
-        . '/static/png/puantor-email-logo.jpg?v=' . (is_file($logoPath) ? filemtime($logoPath) : time());
 
     foreach ($recipients as $recipient) {
         try {
@@ -240,29 +230,6 @@ try {
                 htmlspecialchars($displayName, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                 $body
             );
-            if (is_file($logoPath)) {
-                $personalizedBody = preg_replace_callback(
-                    '~<img\b[^>]*>~i',
-                    static function (array $match) use ($publicLogoUrl): string {
-                        $img = $match[0];
-                        $isPuantorLogo = stripos($img, 'data-mail-logo="puantor"') !== false
-                            || stripos($img, "data-mail-logo='puantor'") !== false
-                            || stripos($img, 'alt="Puantor"') !== false
-                            || stripos($img, "alt='Puantor'") !== false
-                            || stripos($img, 'puantor-email-logo.') !== false;
-                        if (!$isPuantorLogo) {
-                            return $img;
-                        }
-                        return preg_replace(
-                            '~\bsrc=(["\'])[^"\']*\1~i',
-                            'src="' . htmlspecialchars($publicLogoUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '"',
-                            $img,
-                            1
-                        ) ?? $img;
-                    },
-                    $personalizedBody
-                );
-            }
             $mailer->Body = $personalizedBody;
             $mailer->AltBody = trim(html_entity_decode(
                 strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $personalizedBody)),
