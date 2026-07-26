@@ -219,13 +219,11 @@ try {
     $mailer->SMTPKeepAlive = true;
     $mailer->Subject = $subject;
     $logoPath = ROOT . '/static/png/puantor-email-logo.jpg';
-    if (is_file($logoPath)) {
-        $mailer->addEmbeddedImage($logoPath, 'puantor-logo', 'puantor-logo.jpg', 'base64', 'image/jpeg', 'inline');
-    }
 
     foreach ($recipients as $recipient) {
         try {
             $mailer->clearAddresses();
+            $mailer->clearAttachments();
             $recipientName = trim((string) ($recipient['alici_adi'] ?? ''));
             $displayName = $recipientName !== '' ? $recipientName : 'Değerli Kullanıcımız';
             $personalizedBody = str_replace(
@@ -248,7 +246,7 @@ try {
                         }
                         return preg_replace(
                             '~\bsrc=(["\'])[^"\']*\1~i',
-                            'src="cid:puantor-logo"',
+                            'src="static/png/puantor-email-logo.jpg"',
                             $img,
                             1
                         ) ?? $img;
@@ -256,12 +254,7 @@ try {
                     $personalizedBody
                 );
             }
-            $mailer->Body = $personalizedBody;
-            $mailer->AltBody = trim(html_entity_decode(
-                strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $personalizedBody)),
-                ENT_QUOTES | ENT_HTML5,
-                'UTF-8'
-            ));
+            $mailer->msgHTML($personalizedBody, ROOT);
             $mailer->addAddress($recipient['email'], $recipientName);
             $mailer->send();
             $model->markRecipient($sendId, $recipient['email'], true);
