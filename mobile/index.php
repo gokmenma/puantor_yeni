@@ -423,6 +423,13 @@ include_once __DIR__ . "/inc/head.php";
     <script src="../dist/js/pull-to-refresh.js?v=<?php echo filemtime(ROOT . '/dist/js/pull-to-refresh.js'); ?>"></script>
     <script>
         jQuery(document).ready(function($) {
+            // Global fix for Bootstrap modals in PWA app-shell: append modal to body when showing to prevent backdrop z-index overlay
+            $(document).on('show.bs.modal', '.modal', function() {
+                if (!$(this).parent().is('body')) {
+                    $(this).appendTo('body');
+                }
+            });
+
             // Global Flatpickr initialization for mobile
             const initFlatpickr = () => {
                 if (typeof flatpickr !== 'undefined') {

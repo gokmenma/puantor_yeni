@@ -33,6 +33,43 @@ if(count($myFirms) == 1){
     header('Location: ' . $redirectUri);
     exit();
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['firm_id'])) {
+    $selectedFirmId = (int) $_POST['firm_id'];
+    $authorizedFirmIds = array_map(static function ($firm) {
+        return (int) $firm->id;
+    }, $myFirms);
+
+    if (in_array($selectedFirmId, $authorizedFirmIds, true)) {
+        $_SESSION['firm_id'] = $selectedFirmId;
+        $redirectUri = isset($_GET['returnUrl']) && !empty($_GET['returnUrl'])
+            ? $_GET['returnUrl']
+            : '/index.php?p=home';
+        header('Location: ' . $redirectUri);
+        exit();
+    }
+}
+
+function getFirmInitials($firmName)
+{
+    $words = preg_split('/\s+/u', trim((string) $firmName), -1, PREG_SPLIT_NO_EMPTY);
+    if (empty($words)) {
+        return 'F';
+    }
+
+    $firstLetter = static function ($word) {
+        return function_exists('mb_substr') ? mb_substr($word, 0, 1, 'UTF-8') : substr($word, 0, 1);
+    };
+
+    $initials = $firstLetter($words[0]);
+    if (count($words) > 1) {
+        $initials .= $firstLetter($words[count($words) - 1]);
+    }
+
+    return function_exists('mb_strtoupper')
+        ? mb_strtoupper($initials, 'UTF-8')
+        : strtoupper($initials);
+}
 ?>
 <!doctype html>
 <html lang="tr">
@@ -60,239 +97,316 @@ if(count($myFirms) == 1){
             font-feature-settings: "cv03", "cv04", "cv11";
         }
 
-        .list-item {
-            cursor: pointer;
+        .company-selection-page {
+            position: relative;
+            overflow: hidden;
+            min-height: calc(100vh - 57px);
         }
 
-        .list-item:hover {
-            background-color: rgba(var(--tblr-secondary-rgb), .08);
+        .company-selection-page::before,
+        .company-selection-page::after {
+            position: absolute;
+            z-index: 0;
+            width: 28rem;
+            height: 28rem;
+            border-radius: 50%;
+            content: "";
+            pointer-events: none;
+            filter: blur(1px);
+            opacity: .55;
+        }
+
+        .company-selection-page::before {
+            top: -16rem;
+            left: -12rem;
+            background: radial-gradient(circle, rgba(var(--tblr-primary-rgb), .16), transparent 70%);
+        }
+
+        .company-selection-page::after {
+            right: -13rem;
+            bottom: -17rem;
+            background: radial-gradient(circle, rgba(var(--tblr-azure-rgb), .14), transparent 70%);
+        }
+
+        .company-selection-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .selection-kicker {
+            display: inline-flex;
+            gap: .5rem;
+            align-items: center;
+            padding: .35rem .7rem;
+            color: var(--tblr-primary);
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            background: rgba(var(--tblr-primary-rgb), .08);
+            border: 1px solid rgba(var(--tblr-primary-rgb), .14);
+            border-radius: 999px;
+        }
+
+        .selection-kicker-dot {
+            width: .45rem;
+            height: .45rem;
+            background: var(--tblr-green);
+            border-radius: 50%;
+            box-shadow: 0 0 0 .2rem rgba(var(--tblr-green-rgb), .12);
+        }
+
+        .company-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 210px;
+            padding: 0;
+            overflow: hidden;
+            color: inherit;
+            font: inherit;
+            text-align: left;
+            background: var(--tblr-card-bg);
+            border: var(--tblr-border-width) solid var(--tblr-border-color);
+            border-radius: var(--tblr-border-radius-lg);
+            box-shadow: 0 .25rem .75rem rgba(24, 36, 51, .04);
+            cursor: pointer;
+            transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .company-card::before {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--tblr-primary), var(--tblr-azure));
+            content: "";
+            opacity: 0;
+            transition: opacity .2s ease;
+        }
+
+        .company-card:hover,
+        .company-card:focus-visible {
+            color: inherit;
+            text-decoration: none;
+            border-color: rgba(var(--tblr-primary-rgb), .45);
+            box-shadow: 0 .75rem 2rem rgba(24, 36, 51, .1);
+            transform: translateY(-4px);
+        }
+
+        .company-card:hover::before,
+        .company-card:focus-visible::before {
+            opacity: 1;
+        }
+
+        .company-card:focus-visible {
+            outline: .2rem solid rgba(var(--tblr-primary-rgb), .18);
+            outline-offset: 3px;
+        }
+
+        .company-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3.5rem;
+            height: 3.5rem;
+            color: var(--tblr-primary);
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -.02em;
+            background: rgba(var(--tblr-primary-rgb), .1);
+            border: 1px solid rgba(var(--tblr-primary-rgb), .14);
+            border-radius: 1rem;
+        }
+
+        .company-status {
+            display: inline-flex;
+            gap: .4rem;
+            align-items: center;
+        }
+
+        .company-status-dot {
+            width: .45rem;
+            height: .45rem;
+            background: var(--tblr-green);
+            border-radius: 50%;
+        }
+
+        .company-description {
+            min-height: 2.5rem;
+        }
+
+        .company-action {
+            display: inline-flex;
+            gap: .45rem;
+            align-items: center;
+            color: var(--tblr-primary);
+            font-weight: 600;
+        }
+
+        .company-action .icon {
+            transition: transform .2s ease;
+        }
+
+        .company-card:hover .company-action .icon {
+            transform: translateX(3px);
+        }
+
+        .selection-note {
+            background: rgba(var(--tblr-primary-rgb), .04);
+            border: 1px dashed rgba(var(--tblr-primary-rgb), .2);
+            border-radius: var(--tblr-border-radius-lg);
+        }
+
+        @media (max-width: 767.98px) {
+            .company-selection-page {
+                min-height: calc(100vh - 49px);
+            }
+
+            .company-card {
+                min-height: 185px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .company-card,
+            .company-action .icon {
+                transition: none;
+            }
         }
     </style>
 </head>
 
 <body>
-
-    <?php
-    if ($_POST && isset($_POST['firm_id'])) {
-        $firm_id = $_POST['firm_id'];
-        $_SESSION['firm_id'] = $firm_id;
-
-
-
-        // returnUrl parametresini kontrol edin ve varsayılan değeri ayarlayın
-        $redirectUri = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? $_GET['returnUrl'] : '/index.php?p=home';
-        header('Location: ' . $redirectUri);
-        exit();
-
-    }
-
-    ?>
     <script src="./dist/js/demo-theme.min.js?1692870487"></script>
     <div class="page">
-        <!-- Navbar -->
-
         <?php include_once "inc/topbar.php" ?>
 
-        <div class="page-wrapper">
-            <!-- Page header -->
-            <div class="page-header d-print-none">
+        <div class="page-wrapper company-selection-page">
+            <div class="page-body d-flex align-items-center py-4 py-md-6">
                 <div class="container-xl">
-                    <div class="row g-2 align-items-center">
+                    <main class="company-selection-content">
+                        <header class="text-center mb-4 mb-md-5">
+                            <div class="selection-kicker mb-3">
+                                <span class="selection-kicker-dot"></span>
+                                Çalışma alanı seçimi
+                            </div>
+                            <h1 class="display-6 fw-bold mb-2">Hoş geldiniz</h1>
+                            <p class="text-secondary fs-3 mb-0">
+                                Devam etmek istediğiniz firmayı seçin.
+                            </p>
+                        </header>
 
-                        <div class="col text-center">
-                            <h1 class="text-muted">
-                                Firma Seçiniz
-                            </h1>
-                        </div>
-                        <!-- Page title actions -->
-
-                    </div>
-                </div>
-            </div>
-            <style>
-                .img-fluid {
-                    max-width: 400px;
-                    height: auto;
-                }
-                .container {
-                    justify-content: center; /* Center horizontally */
-                    align-items: center; /* Center vertically */
-                }
-            </style>
-            <!-- Page body -->
-            <div class="page-body">
-                <div class="container">
-                    <div class="row g-4">
-                       
-                        <div class="col-md-12">
-                            <div class="row row-cards">
-                                <div class="space-y ">
-
+                        <?php if (!empty($myFirms)): ?>
+                            <div class="row row-cards justify-content-center">
+                                <?php foreach ($myFirms as $myfirm): ?>
                                     <?php
+                                    $firmName = (string) ($myfirm->firm_name ?? 'İsimsiz Firma');
+                                    $firmDescription = trim((string) ($myfirm->description ?? ''));
+                                    $firmPhone = trim((string) ($myfirm->phone ?? ''));
+                                    ?>
+                                    <div class="col-12 col-md-6">
+                                        <form action="" method="post" class="h-100">
+                                            <input type="hidden" name="firm_id" value="<?php echo (int) $myfirm->id; ?>">
+                                            <button type="submit" class="company-card" aria-label="<?php echo htmlspecialchars($firmName, ENT_QUOTES, 'UTF-8'); ?> firmasını seç">
+                                                <span class="card-body d-flex flex-column h-100 p-4">
+                                                    <span class="d-flex align-items-start justify-content-between gap-3 mb-4">
+                                                        <span class="company-avatar">
+                                                            <?php echo htmlspecialchars(getFirmInitials($firmName), ENT_QUOTES, 'UTF-8'); ?>
+                                                        </span>
+                                                        <span class="badge bg-green-lt company-status">
+                                                            <span class="company-status-dot"></span>
+                                                            Aktif
+                                                        </span>
+                                                    </span>
 
-                                    foreach ($myFirms as $myfirm) { 
-                                        
-                                        
-                                        ?>
-                                        <form action="#" method="post">
+                                                    <span class="d-block mb-3">
+                                                        <span class="h2 d-block mb-2"><?php echo htmlspecialchars($firmName, ENT_QUOTES, 'UTF-8'); ?></span>
+                                                        <span class="text-secondary d-block company-description">
+                                                            <?php echo htmlspecialchars($firmDescription !== '' ? $firmDescription : 'Puantor çalışma alanı', ENT_QUOTES, 'UTF-8'); ?>
+                                                        </span>
+                                                    </span>
 
-
-                                            <div class="card list-item" data-id="<?php echo $myfirm->id ?>">
-                                                <div class="row g-0">
-                                                    <div class="col-auto">
-                                                        <div class="card-body">
-                                                            <div class="avatar avatar-md"
-                                                                style="background-image: url(./static/jobs/job-1.jpg)">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col">
-                                                        <div class="card-body ps-0">
-                                                            <div class="row">
-                                                                <div class="col">
-                                                                    <input type="text" class="d-none" name="firm_id"
-                                                                        value="<?php echo $myfirm->id ?>">
-                                                                    <h3 class="mb-0">
-                                                                        <a><?php echo $myfirm->firm_name; ?></a>
-                                                                    </h3>
-                                                                </div>
-                                                            </div>
-                                                            <div class="row">
-                                                                <div class="col-md">
-                                                                    <div
-                                                                        class="mt-3 list-inline list-inline-dots mb-0 text-secondary d-sm-block d-none">
-                                                                        <div class="list-inline-item">
-                                                                            <!-- Download SVG icon from http://tabler-icons.io/i/building-community -->
-                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                width="24" height="24" viewBox="0 0 24 24"
-                                                                                fill="none" stroke="currentColor"
-                                                                                stroke-width="2" stroke-linecap="round"
-                                                                                stroke-linejoin="round"
-                                                                                class="icon icon-inline">
-                                                                                <path stroke="none" d="M0 0h24v24H0z"
-                                                                                    fill="none"></path>
-                                                                                <path
-                                                                                    d="M8 9l5 5v7h-5v-4m0 4h-5v-7l5 -5m1 1v-6a1 1 0 0 1 1 -1h10a1 1 0 0 1 1 1v17h-8">
-                                                                                </path>
-                                                                                <path d="M13 7l0 .01"></path>
-                                                                                <path d="M17 7l0 .01"></path>
-                                                                                <path d="M17 11l0 .01"></path>
-                                                                                <path d="M17 15l0 .01"></path>
-                                                                            </svg>
-                                                                        </div>
-                                                                        <div class="list-inline-item">
-                                                                            <!-- Download SVG icon from http://tabler-icons.io/i/license -->
-                                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                                width="24" height="24" viewBox="0 0 24 24"
-                                                                                fill="none" stroke="currentColor"
-                                                                                stroke-width="2" stroke-linecap="round"
-                                                                                stroke-linejoin="round"
-                                                                                class="icon icon-inline">
-                                                                                <path stroke="none" d="M0 0h24v24H0z"
-                                                                                    fill="none"></path>
-                                                                                <path
-                                                                                    d="M15 21h-9a3 3 0 0 1 -3 -3v-1h10v2a2 2 0 0 0 4 0v-14a2 2 0 1 1 2 2h-2m2 -4h-11a3 3 0 0 0 -3 3v11">
-                                                                                </path>
-                                                                                <path d="M9 7l4 0"></path>
-                                                                                <path d="M9 11l4 0"></path>
-                                                                            </svg>
-                                                                            <!-- <?php //echo $myCompany->description; ?> -->
-                                                                        </div>
-
-                                                                    </div>
-
-                                                                </div>
-                                                                <div class="col-md-auto">
-                                                                    <div class="mt-3 badges">
-                                                                        <a href="#"
-                                                                            class="badge badge-outline border-success text-secondary fw-normal badge-pill">
-                                                                            Aktif
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                    <span class="d-flex align-items-center justify-content-between gap-3 mt-auto">
+                                                        <span class="text-secondary small">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                                <?php if ($firmPhone !== ''): ?>
+                                                                    <path d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2"/>
+                                                                <?php else: ?>
+                                                                    <path d="M3 21l18 0"/>
+                                                                    <path d="M9 8l1 0"/>
+                                                                    <path d="M9 12l1 0"/>
+                                                                    <path d="M9 16l1 0"/>
+                                                                    <path d="M14 8l1 0"/>
+                                                                    <path d="M14 12l1 0"/>
+                                                                    <path d="M14 16l1 0"/>
+                                                                    <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16"/>
+                                                                <?php endif; ?>
+                                                            </svg>
+                                                            <?php echo $firmPhone !== '' ? htmlspecialchars($firmPhone, ENT_QUOTES, 'UTF-8') : 'Firma hesabı'; ?>
+                                                        </span>
+                                                        <span class="company-action">
+                                                            Seç
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                                <path d="M5 12l14 0"/>
+                                                                <path d="M15 8l4 4"/>
+                                                                <path d="M15 16l4 -4"/>
+                                                            </svg>
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                            </button>
                                         </form>
-                                    <?php } ?>
-                                    <div class="row justify-content-center">
-
-                                        <img src="static/illustrations/loading.avif" alt="Your Image Description"
-                                            class="img-fluid text-center">
                                     </div>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <div class="selection-note d-flex align-items-center justify-content-center gap-2 text-secondary small mt-4 p-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-primary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <path d="M12 3l8 4v5c0 5 -3.5 7.5 -8 9c-4.5 -1.5 -8 -4 -8 -9v-5l8 -4"/>
+                                    <path d="M9 12l2 2l4 -4"/>
+                                </svg>
+                                Yalnızca yetkili olduğunuz firmalar listelenir.
+                            </div>
+                        <?php else: ?>
+                            <div class="card text-center shadow-sm">
+                                <div class="card-body py-6">
+                                    <span class="avatar avatar-xl bg-primary-lt mb-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                            <path d="M3 21l18 0"/>
+                                            <path d="M9 8l1 0m-1 4l1 0m-1 4l1 0m4 -8l1 0m-1 4l1 0m-1 4l1 0"/>
+                                            <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16"/>
+                                        </svg>
+                                    </span>
+                                    <h2 class="mb-2">Firma bulunamadı</h2>
+                                    <p class="text-secondary mb-0">Hesabınıza tanımlı aktif bir firma bulunmuyor.</p>
                                 </div>
                             </div>
-                        </div>
-                       
+                        <?php endif; ?>
+                    </main>
+                </div>
+            </div>
+
+            <footer class="footer footer-transparent py-3">
+                <div class="container-xl">
+                    <div class="text-center text-secondary small">
+                        Puantor <span class="mx-1">·</span> Güvenli firma seçimi
                     </div>
-
-
                 </div>
-            </div>
+            </footer>
         </div>
     </div>
-    <footer class="footer footer-transparent d-print-none">
-        <div class="container-xl">
-            <div class="row text-center align-items-center flex-row-reverse">
-                <div class="col-lg-auto ms-lg-auto">
-                    <ul class="list-inline list-inline-dots mb-0">
-                        <li class="list-inline-item"><a href="https://tabler.io/docs" target="_blank"
-                                class="link-secondary" rel="noopener">Documentation</a></li>
-                        <li class="list-inline-item"><a href="./license.html" class="link-secondary">License</a></li>
-                        <li class="list-inline-item"><a href="https://github.com/tabler/tabler" target="_blank"
-                                class="link-secondary" rel="noopener">Source code</a></li>
-                        <li class="list-inline-item">
-                            <a href="https://github.com/sponsors/codecalm" target="_blank" class="link-secondary"
-                                rel="noopener">
-                                <!-- Download SVG icon from http://tabler-icons.io/i/heart -->
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-pink icon-filled icon-inline"
-                                    width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-                                    fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path
-                                        d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
-                                </svg>
-                                Sponsor
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-12 col-lg-auto mt-3 mt-lg-0">
-                    <ul class="list-inline list-inline-dots mb-0">
-                        <li class="list-inline-item">
-                            Copyright &copy; 2023
-                            <a href="." class="link-secondary">Tabler</a>.
-                            All rights reserved.
-                        </li>
-                        <li class="list-inline-item">
-                            <a href="./changelog.html" class="link-secondary" rel="noopener">
-                                v1.0.0-beta20
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </footer>
-    </div>
-    </div>
-    <!-- Libs JS -->
-    <!-- Tabler Core -->
+
     <script src="./dist/js/tabler.min.js?1692870487" defer></script>
     <script src="./dist/js/demo.min.js?1692870487" defer></script>
-    <script src="./dist/js/jquery.3.7.1.min.js"></script>
-    <script>
-        $(document).ready(function () {
-            $('.list-item').each(function () {
-                $(this).click(function () {
-                    $(this).closest("form").submit();
-                });
-            });
-        });
-    </script>
 </body>
 
 </html>

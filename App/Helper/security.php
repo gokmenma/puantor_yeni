@@ -2,6 +2,8 @@
 
 namespace App\Helper;
 
+require_once dirname(__DIR__) . '/bootstrap.php';
+
 class Security
 {
     public static function escape($data)

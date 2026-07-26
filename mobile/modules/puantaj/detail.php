@@ -237,7 +237,11 @@ function openCalendarModal(personId, personName) {
     const grid = document.getElementById('calendarGrid');
     grid.innerHTML = '<div class="text-center py-5 w-100" style="grid-column: span 7;"><div class="spinner-border text-primary" role="status"></div></div>';
     
-    const modal = new bootstrap.Modal(document.getElementById('calendarModal'));
+    const modalEl = document.getElementById('calendarModal');
+    if (modalEl && modalEl.parentNode !== document.body) {
+        document.body.appendChild(modalEl);
+    }
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 
     fetch(`modules/puantaj/api/get-person-monthly-puantaj.php?person_id=${personId}&month=${month}&year=${year}`)
