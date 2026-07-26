@@ -1,10 +1,10 @@
 <?php
 
 
-$host = getenv('DB_HOST') ?: "localhost";
-$user = getenv('DB_USER') ?: "root";
-$pass = getenv('DB_PASS') ?: "";
-$db = getenv('DB_NAME') ?: "mbeyazil_puantoryeni";
+$host = $_ENV['DB_HOST'] ?? 'localhost';
+$user = $_ENV['DB_USER'] ?? 'root';
+$pass = $_ENV['DB_PASS'] ?? '';
+$db = $_ENV['DB_NAME'] ?? 'mbeyazil_puantoryeni';
 // $host = "localhost";
 // $user = "root";
 // $pass = "";

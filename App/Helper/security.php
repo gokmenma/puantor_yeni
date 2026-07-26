@@ -42,24 +42,8 @@ class Security
 
 private static function encryptionKey(): string
 {
-    $key = getenv('ENCRYPTION_KEY');
-    if ($key === false || $key === '') {
-        $envFile = dirname(__DIR__, 2) . '/.env';
-        if (file_exists($envFile)) {
-            foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-                if (strpos(trim($line), '#') === 0) continue;
-                if (strpos($line, '=') !== false) {
-                    [$k, $v] = explode('=', $line, 2);
-                    if (trim($k) === 'ENCRYPTION_KEY') {
-                        putenv('ENCRYPTION_KEY=' . trim($v));
-                        $key = trim($v);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    if ($key === false || $key === '') {
+    $key = $_ENV['ENCRYPTION_KEY'] ?? '';
+    if ($key === '') {
         throw new \RuntimeException('ENCRYPTION_KEY ortam değişkeni tanımlı değil.');
     }
     return hash('sha256', $key, true);

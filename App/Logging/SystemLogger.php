@@ -123,8 +123,8 @@ final class SystemLogger
 
     public static function logDirectory(): string
     {
-        $configured = getenv('SYSTEM_LOG_PATH');
-        return $configured !== false && trim($configured) !== ''
+        $configured = $_ENV['SYSTEM_LOG_PATH'] ?? '';
+        return trim($configured) !== ''
             ? rtrim($configured, DIRECTORY_SEPARATOR)
             : dirname(__DIR__, 2) . '/storage/logs';
     }
