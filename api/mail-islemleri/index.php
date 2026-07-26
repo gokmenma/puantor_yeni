@@ -216,14 +216,23 @@ try {
 
     $successful = 0;
     $failed = 0;
+    $firstFailure = null;
     $mailer->SMTPKeepAlive = true;
     $mailer->Subject = $subject;
     $logoPath = ROOT . '/static/png/puantor-email-logo.jpg';
+    $requestScheme = function_exists('puantorIsHttps') && puantorIsHttps() ? 'https' : 'http';
+    $requestHost = preg_replace('/[^a-zA-Z0-9.:-]/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'www.puantor.com.tr'));
+    $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '/api/mail-islemleri/index.php'));
+    $apiSuffix = '/api/mail-islemleri/index.php';
+    $appBasePath = str_ends_with($scriptName, $apiSuffix)
+        ? substr($scriptName, 0, -strlen($apiSuffix))
+        : '';
+    $publicLogoUrl = $requestScheme . '://' . $requestHost . $appBasePath
+        . '/static/png/puantor-email-logo.jpg?v=' . (is_file($logoPath) ? filemtime($logoPath) : time());
 
     foreach ($recipients as $recipient) {
         try {
             $mailer->clearAddresses();
-            $mailer->clearAttachments();
             $recipientName = trim((string) ($recipient['alici_adi'] ?? ''));
             $displayName = $recipientName !== '' ? $recipientName : 'Değerli Kullanıcımız';
             $personalizedBody = str_replace(
@@ -234,7 +243,7 @@ try {
             if (is_file($logoPath)) {
                 $personalizedBody = preg_replace_callback(
                     '~<img\b[^>]*>~i',
-                    static function (array $match): string {
+                    static function (array $match) use ($publicLogoUrl): string {
                         $img = $match[0];
                         $isPuantorLogo = stripos($img, 'data-mail-logo="puantor"') !== false
                             || stripos($img, "data-mail-logo='puantor'") !== false
@@ -246,7 +255,7 @@ try {
                         }
                         return preg_replace(
                             '~\bsrc=(["\'])[^"\']*\1~i',
-                            'src="static/png/puantor-email-logo.jpg"',
+                            'src="' . htmlspecialchars($publicLogoUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '"',
                             $img,
                             1
                         ) ?? $img;
@@ -254,13 +263,21 @@ try {
                     $personalizedBody
                 );
             }
-            $mailer->msgHTML($personalizedBody, ROOT);
+            $mailer->Body = $personalizedBody;
+            $mailer->AltBody = trim(html_entity_decode(
+                strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $personalizedBody)),
+                ENT_QUOTES | ENT_HTML5,
+                'UTF-8'
+            ));
             $mailer->addAddress($recipient['email'], $recipientName);
             $mailer->send();
             $model->markRecipient($sendId, $recipient['email'], true);
             $successful++;
         } catch (Throwable $e) {
             error_log('Mail operations send error: ' . $e->getMessage());
+            if ($firstFailure === null) {
+                $firstFailure = trim((string) $e->getMessage());
+            }
             $model->markRecipient($sendId, $recipient['email'], false);
             $failed++;
         }
@@ -276,7 +293,10 @@ try {
 
     mailJson([
         'status' => $successful > 0 ? 'success' : 'error',
-        'message' => "{$successful} e-posta gönderildi, {$failed} e-posta gönderilemedi.",
+        'message' => $successful > 0
+            ? "{$successful} e-posta gönderildi, {$failed} e-posta gönderilemedi."
+            : 'E-posta gönderilemedi'
+                . ($firstFailure ? ': ' . mb_substr($firstFailure, 0, 220, 'UTF-8') : '.'),
         'send_id' => $sendId,
     ], $successful > 0 ? 200 : 502);
 } catch (Throwable $e) {
