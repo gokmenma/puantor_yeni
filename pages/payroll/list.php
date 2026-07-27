@@ -87,6 +87,8 @@ $salaryAndWageCutMap = $isPayrollCalculation
 $icraAmountMap = $isPayrollCalculation
     ? []
     : $bordro->getIcraAmounts($personIds, $month, $year);
+$personProjectMap = $projects->getProjectNamesByPersonIds($personIds, $firm_id);
+$payrollRows = [];
 
 // Set the default timezone to your local timezone
 
@@ -313,6 +315,13 @@ foreach ($persons as $item) {
         $res = $salaryAndWageCutMap[(int) $person->id] ?? (object) ['gelir' => null, 'odeme' => 0];
         $p_icra = $icraAmountMap[(int) $person->id] ?? 0;
     }
+
+    $payrollRows[(int) $person->id] = [
+        'person' => $person,
+        'gelir' => $res->gelir ?? 0,
+        'odeme' => $res->odeme ?? 0,
+        'icra' => $p_icra,
+    ];
 
     $total_gelir += ($res->gelir ?? 0);
     $total_odeme += (($res->odeme ?? 0) - $p_icra);
@@ -555,7 +564,7 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 
 
 
-                    <table class="table card-table table-responsive table-hover text-nowrap" id="bordroTable"
+                    <table class="table card-table table-responsive table-hover text-nowrap datatable" id="bordroTable"
                     >
                         <thead>
                             <tr>
@@ -579,7 +588,7 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 
                             <?php
                             $i = 1;
-                            foreach ([] as $item):
+                            foreach ($persons as $item):
 
 
                                 $payrollRow = $payrollRows[(int) $item->id] ?? null;
@@ -612,9 +621,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                                     <td><?php echo $person->job; ?></td>
                                     <td><?php echo $person->ekip ?: '-'; ?></td>
                                     <td><?php
-                                        $pIds = $personProjectMap[$person->id] ?? [];
-                                        $pNames = array_filter(array_map(fn($pid) => $projectMap[$pid] ?? '', $pIds));
-                                        echo $pNames ? implode(', ', $pNames) : '-';
+                                        $pNames = $personProjectMap[(int) $person->id] ?? [];
+                                        echo !empty($pNames) ? implode(', ', $pNames) : '-';
                                     ?></td>
                                     <td><?php echo Security::safeDecrypt($person->iban_number ?? '') ?: '-'; ?></td>
                                     <td><?php echo $person->job_start_date; ?></td>
@@ -769,33 +777,19 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 </div>
 
 <script>
-window.bordroServerSideOptions = {
-    processing: true,
-    serverSide: true,
+window.bordroOptions = {
     autoWidth: false,
     ordering: true,
-    searchDelay: 400,
     pageLength: 25,
     lengthMenu: [10, 25, 50, 100],
     order: [[1, 'asc']],
-    ajax: {
-        url: 'api/bordro/list.php',
-        type: 'POST',
-        data: function(data) {
-            data.month = <?php echo json_encode((int) $month); ?>;
-            data.year = <?php echo json_encode((int) $year); ?>;
-            data.project_id = <?php echo json_encode((int) $project_id); ?>;
-            data.team_id = <?php echo json_encode((string) $team_id, JSON_UNESCAPED_UNICODE); ?>;
-        }
-    },
     columnDefs: [
         { targets: 0, className: 'text-center' },
-        { targets: [8, 9, 10, 11, 12], className: 'text-end' },
-        { targets: 12, width: '110px', orderable: false, searchable: false, className: 'text-end no-export actions-column' }
+        { targets: [8, 9, 10, 11], className: 'text-end' },
+        { targets: 12, width: '110px', orderable: false, searchable: false, className: 'text-center no-export actions-column' }
     ],
     language: {
-        url: 'src/tr.json',
-        processing: '<span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...'
+        url: 'src/tr.json'
     }
 };
 </script>

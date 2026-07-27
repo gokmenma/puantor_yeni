@@ -254,11 +254,20 @@ $(document).on("click", "#print-detailed-payroll", function () {
 $(function () {
   if (!$('#bordroTable').length) return;
 
+  var opts = $.extend({
+    pageLength: 25,
+    order: [[1, 'asc']]
+  }, window.bordroOptions || window.bordroServerSideOptions || {});
+
+  delete opts.serverSide;
+  delete opts.ajax;
+  delete opts.processing;
+
   var table = $.fn.DataTable.isDataTable('#bordroTable')
     ? $('#bordroTable').DataTable()
     : (typeof window.createDataTable === 'function'
-        ? window.createDataTable('#bordroTable', window.bordroServerSideOptions || {})
-        : $('#bordroTable').DataTable(window.bordroServerSideOptions || {}));
+        ? window.createDataTable('#bordroTable', opts)
+        : $('#bordroTable').DataTable(opts));
 
   if (!table) return;
 
@@ -387,7 +396,6 @@ $(document).on('mouseenter', '[data-bs-toggle="popover"]', function () {
       });
       popover.show();
     }
-  }
   }
 });
 

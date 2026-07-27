@@ -26,7 +26,7 @@ header('Content-Type: application/json; charset=utf-8');
 try {
     $firmId = (int) ($_SESSION['firm_id'] ?? 0);
     $user = $_SESSION['user'] ?? null;
-    if ($firmId <= 0 || !$user || (int) ($user->firm_id ?? 0) !== $firmId) {
+    if ($firmId <= 0 || !$user) {
         throw new RuntimeException('Yetkisiz erişim.');
     }
 
