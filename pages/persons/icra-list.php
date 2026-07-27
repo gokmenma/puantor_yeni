@@ -191,59 +191,91 @@ $statuses = PersonIcra::getStatuses();
     </div>
 
     <!-- İstatistik Kartları (KPI) -->
-    <div class="row row-cards mb-4 align-items-stretch">
+    <div class="row row-cards mb-3">
         <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-primary-lt text-primary avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-files fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Toplam Dosya</div>
-                        <div class="h2 mb-0 font-weight-700" id="kpi-total-files"><?= number_format($stats['total_files']); ?></div>
-                        <div class="text-secondary small mt-1">Borç: <strong id="kpi-total-debt"><?= Helper::formattedMoney($stats['total_debt']); ?></strong></div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <i class="ti ti-files icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="kpi-total-files">
+                                <?= number_format($stats['total_files']); ?>
+                            </div>
+                            <div class="text-secondary">
+                                Toplam Dosya
+                                <div class="small text-muted mt-1">Borç: <strong id="kpi-total-debt"><?= Helper::formattedMoney($stats['total_debt']); ?></strong></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-success-lt text-success avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-scissors fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Kesilen (Aktif) Dosyalar</div>
-                        <div class="h2 mb-0 font-weight-700 text-success" id="kpi-active-files"><?= number_format($stats['active_files']); ?></div>
-                        <div class="text-secondary small mt-1">Mevcut Kesinti Yapılanlar</div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-green text-white avatar">
+                                <i class="ti ti-scissors icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="kpi-active-files">
+                                <?= number_format($stats['active_files']); ?>
+                            </div>
+                            <div class="text-secondary">
+                                Kesilen (Aktif) Dosyalar
+                                <div class="small text-muted mt-1">Mevcut Kesinti Yapılanlar</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-warning-lt text-warning avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-clock fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Bekleyen Dosyalar</div>
-                        <div class="h2 mb-0 font-weight-700 text-warning" id="kpi-pending-files"><?= number_format($stats['pending_files']); ?></div>
-                        <div class="text-secondary small mt-1">Sırada / Bekleyen</div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-warning text-white avatar">
+                                <i class="ti ti-clock icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="kpi-pending-files">
+                                <?= number_format($stats['pending_files']); ?>
+                            </div>
+                            <div class="text-secondary">
+                                Bekleyen Dosyalar
+                                <div class="small text-muted mt-1">Sırada / Bekleyen</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-danger-lt text-danger avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-wallet fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Kalan Toplam Borç</div>
-                        <div class="h2 mb-0 font-weight-700 text-danger" id="kpi-remaining-debt"><?= Helper::formattedMoney($stats['remaining_debt']); ?></div>
-                        <div class="text-secondary small mt-1">Kesilen: <strong class="text-success" id="kpi-total-deductions"><?= Helper::formattedMoney($stats['total_deductions']); ?></strong></div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-danger text-white avatar">
+                                <i class="ti ti-wallet icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="kpi-remaining-debt">
+                                <?= Helper::formattedMoney($stats['remaining_debt']); ?>
+                            </div>
+                            <div class="text-secondary">
+                                Kalan Toplam Borç
+                                <div class="small text-muted mt-1">Kesilen: <strong class="text-success" id="kpi-total-deductions"><?= Helper::formattedMoney($stats['total_deductions']); ?></strong></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

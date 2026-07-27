@@ -15,55 +15,71 @@ $person_id_encrypted = Security::encrypt($person->id);
 
 <div class="container-xl mt-3">
     <!-- İcra İstatistik Kartları -->
-    <div class="row row-cards mb-4 align-items-stretch">
+    <div class="row row-cards mb-3">
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-blue-lt text-blue avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-folder fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Toplam Dosya</div>
-                        <div class="h2 mb-0" id="stats-total-files">0</div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <i class="ti ti-files icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="stats-total-files">0</div>
+                            <div class="text-secondary">Toplam Dosya</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-success-lt text-success avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-circle-check fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Aktif Dosyalar</div>
-                        <div class="h2 mb-0" id="stats-active-files">0</div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-green text-white avatar">
+                                <i class="ti ti-scissors icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="stats-active-files">0</div>
+                            <div class="text-secondary">Aktif Dosyalar</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-warning-lt text-warning avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-coin fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Toplam Borç</div>
-                        <div class="h2 mb-0 text-warning" id="stats-total-debt">0,00 ₺</div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-warning text-white avatar">
+                                <i class="ti ti-clock icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="stats-total-debt">0,00 ₺</div>
+                            <div class="text-secondary">Toplam Borç</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
-            <div class="card card-sm shadow-sm border-0">
-                <div class="card-body d-flex align-items-center">
-                    <span class="bg-danger-lt text-danger avatar avatar-md border-0 shadow-sm me-3">
-                        <i class="ti ti-wallet fs-2"></i>
-                    </span>
-                    <div>
-                        <div class="font-weight-medium text-secondary text-uppercase fs-6 tracking-wide">Kalan Toplam Borç</div>
-                        <div class="h2 mb-0 text-danger" id="stats-remaining-debt">0,00 ₺</div>
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-danger text-white avatar">
+                                <i class="ti ti-wallet icon"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="stats-remaining-debt">0,00 ₺</div>
+                            <div class="text-secondary">Kalan Toplam Borç</div>
+                        </div>
                     </div>
                 </div>
             </div>
