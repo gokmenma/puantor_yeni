@@ -2,6 +2,9 @@
 require_once "App/Helper/financial.php";
 
 $financialHelper = new Financial();
+
+$month = $month ?? (isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m'));
+$year = $year ?? (isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y'));
 ?>
 
 

@@ -3,7 +3,9 @@ require_once "App/Helper/financial.php";
 
 $financialHelper = new Financial();
 
-// $case_id = $_POST['case_id'] ?? 0;
+$month = $month ?? (isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m'));
+$year = $year ?? (isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y'));
+$case_id = $case_id ?? 0;
 ?>
 
 
