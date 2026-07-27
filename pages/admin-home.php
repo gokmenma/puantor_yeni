@@ -160,91 +160,171 @@ function systemDashboardDevice(?string $userAgent): array
 
     <div class="page-body">
         <div class="container-xl">
-            <div class="row row-deck row-cards">
+            <div class="row row-cards mb-2">
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-blue-lt text-blue"><i class="ti ti-users-group"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->total_subscribers, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">Toplam abone</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-primary text-white avatar">
+                                        <i class="ti ti-users-group icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->total_subscribers, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        Toplam abone
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-success-lt text-success"><i class="ti ti-rosette-discount-check"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->active_subscriptions, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">Aktif abonelik</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-green text-white avatar">
+                                        <i class="ti ti-rosette-discount-check icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->active_subscriptions, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        Aktif abonelik
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-purple-lt text-purple"><i class="ti ti-building-community"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->total_firms, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">Kayıtlı firma</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-purple text-white avatar">
+                                        <i class="ti ti-building-community icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->total_firms, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        Kayıtlı firma
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-azure-lt text-azure"><i class="ti ti-user-check"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->active_users, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">Aktif kullanıcı</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-azure text-white avatar">
+                                        <i class="ti ti-user-check icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->active_users, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        Aktif kullanıcı
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-warning-lt text-warning"><i class="ti ti-clock-exclamation"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->expiring_subscriptions, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">7 günde bitecek</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-warning text-white avatar">
+                                        <i class="ti ti-clock-exclamation icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->expiring_subscriptions, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        7 günde bitecek
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-cyan-lt text-cyan"><i class="ti ti-hourglass"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->trial_subscribers, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">Deneme hesabı</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-cyan text-white avatar">
+                                        <i class="ti ti-hourglass icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->trial_subscribers, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        Deneme hesabı
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-orange-lt text-orange"><i class="ti ti-bolt"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->activities_today, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">Bugünkü işlem</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-orange text-white avatar">
+                                        <i class="ti ti-bolt icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->activities_today, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        Bugünkü işlem
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card metric-card">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="metric-icon bg-indigo-lt text-indigo"><i class="ti ti-login-2"></i></span>
-                            <div>
-                                <div class="metric-value"><?php echo number_format((int) $summary->users_logged_in_today, 0, ',', '.'); ?></div>
-                                <div class="text-secondary">Bugün giriş yapan</div>
+                    <div class="card card-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-indigo text-white avatar">
+                                        <i class="ti ti-login-2 icon"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">
+                                        <?php echo number_format((int) $summary->users_logged_in_today, 0, ',', '.'); ?>
+                                    </div>
+                                    <div class="text-secondary">
+                                        Bugün giriş yapan
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
