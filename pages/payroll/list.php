@@ -667,7 +667,10 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                                     $icra_month_amount = (float) $payrollRow['icra'];
                                     $odeme_haric_icra = max(0, $odeme - $icra_month_amount);
                                     ?>
-                                    <td class="text-end text-purple fw-semibold">
+                                    <td class="text-end text-purple fw-semibold btn-view-icra-deductions"
+                                        data-person-id="<?php echo $id; ?>"
+                                        role="button" tabindex="0" title="İcra kesintisi detayını görüntüle"
+                                        style="cursor: pointer;">
                                         <?php echo $icra_month_amount > 0 ? Helper::formattedMoney($icra_month_amount) : '0,00 ₺'; ?>
                                     </td>
 
@@ -805,6 +808,7 @@ window.bordroServerSideOptions = {
 <?php include_once 'content/bulk-income-modal.php'; ?>
 <?php include_once 'content/bulk-wage-cut-modal.php'; ?>
 <?php include_once 'content/bulk-wages-modal.php'; ?>
+<?php include_once 'content/icra-deductions-modal.php'; ?>
 
 
 <script>

@@ -81,20 +81,28 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
 
 
                             <?php 
+                            $default_firm_id = (int)($_SESSION['user']->default_firm_id ?? 0);
                             $i = 1;
                             foreach ($myfirms as $myfirm):
                             $id = Security::encrypt($myfirm->id);
+                            $isDefault = ((int)$myfirm->id === $default_firm_id);
                                 ?>
                                 <tr>
                                     <td class="text-center"><?php echo $i; ?></td>
-                                    <td><a class="btn route-link text-primary fw-bold" data-page="mycompany/manage&id=<?php echo $id ?>"
-                                            href="#">
-                                            <?php echo $myfirm->firm_name; ?>
-                                        </a></td>
-                                    <td class="text-start"><?php echo $myfirm->phone; ?></td>
-                                    <td><?php echo $myfirm->email; ?></td>
-                                    <td><?php echo $myfirm->description; ?></td>
-                                    <td><?php echo $myfirm->created_at; ?></td>
+                                    <td>
+                                        <a class="btn route-link text-primary fw-bold" data-page="mycompany/manage&id=<?php echo $id ?>" href="#">
+                                            <?php echo htmlspecialchars($myfirm->firm_name, ENT_QUOTES, 'UTF-8'); ?>
+                                        </a>
+                                        <?php if ($isDefault): ?>
+                                            <span class="badge bg-amber-lt text-amber fw-medium ms-2" title="Varsayılan Firma">
+                                                <i class="ti ti-star-filled text-warning me-1"></i> Varsayılan
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-start"><?php echo htmlspecialchars($myfirm->phone ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($myfirm->email ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($myfirm->description ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($myfirm->created_at ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td class="text-end">
                                         <div class="dropdown">
                                             <button class="btn dropdown-toggle align-text-top"
@@ -104,6 +112,17 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
                                                     data-page="mycompany/manage&id=<?php echo $id ?>" href="#">
                                                     <i class="ti ti-eye icon me-3"></i> Firma Detayları
                                                 </a>
+                                                <?php if ($isDefault): ?>
+                                                    <a class="dropdown-item btn-unset-default-firm text-muted"
+                                                        data-id="<?php echo $id ?>" href="#">
+                                                        <i class="ti ti-star-off icon me-3 text-secondary"></i> Varsayılanı Kaldır
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a class="dropdown-item btn-set-default-firm text-amber"
+                                                        data-id="<?php echo $id ?>" href="#">
+                                                        <i class="ti ti-star icon me-3 text-warning"></i> Varsayılan Yap
+                                                    </a>
+                                                <?php endif; ?>
                                                 <a class="dropdown-item mycompany-edit-btn"
                                                     data-id="<?php echo $id ?>" href="#">
                                                     <i class="ti ti-edit icon me-3"></i> Güncelle
@@ -120,6 +139,7 @@ $limitReached = !$isSuperadmin && ($current_firm_count >= $subDetails['firma_hak
                             <?php 
                             $i++;
                         endforeach; ?>
+
                         </tbody>
                     </table>
                 </div>

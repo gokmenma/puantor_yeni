@@ -220,3 +220,66 @@ $(document).on("click", ".btn-new-firm-limit", function (e) {
     confirmButtonText: "Tamam"
   });
 });
+
+$(document).on("click", ".btn-set-default-firm, .btn-unset-default-firm", function (e) {
+  e.preventDefault();
+  let isUnset = $(this).hasClass("btn-unset-default-firm");
+  let id = isUnset ? 0 : $(this).data("id");
+  let title = isUnset ? "Varsayılan Firma Kaldırma" : "Varsayılan Firma Seçimi";
+  let text = isUnset ? "Bu firmayı varsayılan firma tercihlerinizden çıkarmak istediğinize emin misiniz?" : "Bu firmayı varsayılan firma yapmak istediğinize emin misiniz?";
+
+  Swal.fire({
+    title: title,
+    text: text,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Evet",
+    cancelButtonText: "İptal",
+    customClass: {
+      confirmButton: "btn btn-primary me-2",
+      cancelButton: "btn btn-secondary"
+    },
+    buttonsStyling: false
+  }).then((result) => {
+    if (result.isConfirmed) {
+      let formData = new FormData();
+      formData.append("action", "setDefaultCompany");
+      formData.append("id", id);
+
+      fetch("/api/companies/mycompanies.php", {
+        method: "POST",
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            Swal.fire({
+              title: "Başarılı!",
+              text: data.message,
+              icon: "success",
+              confirmButtonText: "Tamam"
+            }).then(() => {
+              location.reload();
+            });
+          } else {
+            Swal.fire({
+              title: "Hata!",
+              text: data.message,
+              icon: "error",
+              confirmButtonText: "Tamam"
+            });
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          Swal.fire({
+            title: "Hata!",
+            text: "İşlem yapılırken bir hata oluştu.",
+            icon: "error",
+            confirmButtonText: "Tamam"
+          });
+        });
+    }
+  });
+});
+

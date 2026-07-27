@@ -524,6 +524,12 @@ if ($action == 'deductions_history') {
                 $person_id = (int)$icra_file->person_id;
                 $dosya_no = $icra_file->dosya_no;
             }
+        } elseif ($person_id > 0) {
+            $person_files = $PersonIcra->getByPersonId($person_id);
+            if (!empty($person_files)) {
+                $file_id = (int)$person_files[0]->id;
+                $dosya_no = $person_files[0]->dosya_no;
+            }
         }
 
         if (!$person_id) {
@@ -564,6 +570,7 @@ if ($action == 'deductions_history') {
             'status' => 'success',
             'person_name' => htmlspecialchars($person->full_name, ENT_QUOTES, 'UTF-8'),
             'dosya_no' => htmlspecialchars($dosya_no ?? 'Tüm Dosyalar', ENT_QUOTES, 'UTF-8'),
+            'file_id' => $file_id > 0 ? Security::encrypt($file_id) : '',
             'total_amount' => Helper::formattedMoney($total_sum),
             'history' => $formatted
         ], JSON_UNESCAPED_UNICODE);

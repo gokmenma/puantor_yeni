@@ -17,7 +17,7 @@ $db = $dbInstance->connect();
 
 $company = new Company();
 
-if ($_POST["action"] == "saveMyCompany") {
+if (isset($_POST["action"]) && $_POST["action"] == "saveMyCompany") {
     $id = Security::decrypt($_POST["id"]);
 
     $parent_id = $_SESSION["user"]->parent_id == 0 ? $_SESSION["user"]->id : $_SESSION["user"]->parent_id;
@@ -50,29 +50,31 @@ if ($_POST["action"] == "saveMyCompany") {
         'yetkili_adi' => $_POST['yetkili_adi'],
     ];
 
-    $brand_logo = $_FILES["brand_logo"];
-    $file_path = $brand_logo["tmp_name"];
-    $path = "../../uploads/";
-    $file_name = uniqid() . $brand_logo["name"];
+    $brand_logo = $_FILES["brand_logo"] ?? null;
+    if ($brand_logo && !empty($brand_logo["tmp_name"])) {
+        $file_path = $brand_logo["tmp_name"];
+        $path = "../../uploads/";
+        $file_name = uniqid() . $brand_logo["name"];
 
-    if (move_uploaded_file($file_path, $path . $file_name)) {
-        //Onceki yüklenen dosyayı bul 
-        $old_brand_logo = $company->findMyFirmLogoName($id);
+        if (move_uploaded_file($file_path, $path . $file_name)) {
+            // Onceki yüklenen dosyayı bul 
+            $old_brand_logo = $company->findMyFirmLogoName($id);
 
-        if ($old_brand_logo) {
-            // Dosya yolunu oluştur
-            $old_brand_logo_file = $path . $old_brand_logo->brand_logo;
-            // Eğer dosya varsa ve bir dosya ise
-            if (is_file($old_brand_logo_file)) {
-                // Dosyayı silmeyi dene
-                if (!unlink($old_brand_logo_file)) {
-                    // Hata yönetimi: Dosya silinemedi
-                    system_log_error('Eski firma logosu silinemedi.', ['operation' => 'company_logo_delete', 'file' => $old_brand_logo_file]);
+            if ($old_brand_logo) {
+                // Dosya yolunu oluştur
+                $old_brand_logo_file = $path . $old_brand_logo->brand_logo;
+                // Eğer dosya varsa ve bir dosya ise
+                if (is_file($old_brand_logo_file)) {
+                    // Dosyayı silmeyi dene
+                    if (!unlink($old_brand_logo_file)) {
+                        // Hata yönetimi: Dosya silinemedi
+                        system_log_error('Eski firma logosu silinemedi.', ['operation' => 'company_logo_delete', 'file' => $old_brand_logo_file]);
+                    }
                 }
             }
-        }
 
-        $data["brand_logo"] = $file_name;
+            $data["brand_logo"] = $file_name;
+        }
     }
 
     try {
@@ -122,6 +124,7 @@ if ($_POST["action"] == "saveMyCompany") {
     ];
 
     echo json_encode($res);
+    exit;
 }
 
 if (isset($_POST["action"]) && $_POST["action"] == "getMyFirmDetails") {
@@ -139,7 +142,7 @@ if (isset($_POST["action"]) && $_POST["action"] == "getMyFirmDetails") {
     exit;
 }
 
-if ($_POST["action"] == "deleteMyCompany") {
+if (isset($_POST["action"]) && $_POST["action"] == "deleteMyCompany") {
     $user_id = $_SESSION["user"]->id;
     $id = $_POST["id"];
     $password = $_POST["password"] ?? '';
@@ -194,5 +197,59 @@ if ($_POST["action"] == "deleteMyCompany") {
         "status" => $status,
         "message" => $message,
     ]);
+    exit;
+}
+
+if (isset($_POST["action"]) && $_POST["action"] == "setDefaultCompany") {
+    if (empty($_SESSION["user"])) {
+        echo json_encode(["status" => "error", "message" => "Oturum süreniz dolmuş."]);
+        exit;
+    }
+
+    $raw_id = $_POST["id"] ?? '';
+    $id = 0;
+    if ($raw_id !== '' && $raw_id !== '0') {
+        $decrypted = Security::decrypt($raw_id);
+        $id = $decrypted !== false ? (int)$decrypted : (int)$raw_id;
+    }
+
+    require_once "../../Model/MyFirmModel.php";
+    $myFirmModel = new MyFirmModel();
+    $authorizedFirms = $myFirmModel->getMyFirmByUserId();
+    $authorizedIds = array_map(function($f) { return (int)$f->id; }, $authorizedFirms);
+
+    if ($id > 0 && !in_array($id, $authorizedIds, true)) {
+        echo json_encode(["status" => "error", "message" => "Bu firmayı varsayılan olarak seçme yetkiniz bulunmuyor."]);
+        exit;
+    }
+
+    try {
+        $user_id = (int)$_SESSION["user"]->id;
+        $user_email = $_SESSION["user"]->email ?? null;
+
+        $User->setDefaultFirm($user_id, $id, $user_email);
+        $_SESSION["user"]->default_firm_id = $id;
+
+        require_once "../../Model/ActivityLogModel.php";
+        if ($id > 0) {
+            $firm_name = '';
+            foreach ($authorizedFirms as $af) {
+                if ((int)$af->id === $id) {
+                    $firm_name = $af->firm_name ?? '';
+                    break;
+                }
+            }
+            ActivityLogModel::log('mycompany', 'update', "Varsayılan firma seçildi: {$firm_name} (ID: {$id})");
+        } else {
+            ActivityLogModel::log('mycompany', 'update', "Varsayılan firma seçimi kaldırıldı");
+        }
+
+        echo json_encode([
+            "status" => "success",
+            "message" => $id > 0 ? "Varsayılan firma başarıyla güncellendi." : "Varsayılan firma tercihi kaldırıldı."
+        ]);
+    } catch (\Exception $e) {
+        echo json_encode(["status" => "error", "message" => "İşlem sırasında bir hata oluştu: " . $e->getMessage()]);
+    }
     exit;
 }

@@ -388,5 +388,97 @@ $(document).on('mouseenter', '[data-bs-toggle="popover"]', function () {
       popover.show();
     }
   }
+  }
 });
+
+// İcra Kesintileri Detay Modalı (Bordro Sayfası)
+let currentDeductionsFileId = null;
+let currentDeductionsPersonId = null;
+
+$(document).on('click', '.btn-view-icra-deductions', function(e) {
+    e.preventDefault();
+    const personId = $(this).data('person-id') || '';
+    const fileId = $(this).data('file-id') || '';
+    currentDeductionsFileId = fileId;
+    currentDeductionsPersonId = personId;
+
+    $('#modal-deductions-person-name').text('Yükleniyor...');
+    $('#modal-deductions-total').text('0,00 ₺');
+    $('#modal-deductions-table-body').html('<tr><td colspan="3" class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> Kesintiler yükleniyor...</td></tr>');
+    $('#deductionsHistoryModal').modal('show');
+
+    $.ajax({
+        url: 'api/persons/icra.php',
+        type: 'POST',
+        data: {
+            action: 'deductions_history',
+            file_id: fileId,
+            person_id: personId
+        },
+        dataType: 'json',
+        success: function(res) {
+            if (res.status === 'success') {
+                $('#modal-deductions-person-name').html(`<strong>${res.person_name}</strong> <span class="badge bg-secondary-lt ms-2">${res.dosya_no}</span>`);
+                $('#modal-deductions-total').text(res.total_amount || '0,00 ₺');
+                if (res.file_id) {
+                    currentDeductionsFileId = res.file_id;
+                }
+
+                const tbody = $('#modal-deductions-table-body');
+                tbody.empty();
+
+                if (!res.history || res.history.length === 0) {
+                    tbody.html('<tr><td colspan="3" class="text-center py-4 text-muted"><i class="ti ti-folder-off fs-1 d-block mb-1 text-secondary"></i>Bu personele ait icra kesintisi bulunamadı.</td></tr>');
+                } else {
+                    res.history.forEach((h) => {
+                        tbody.append(`
+                            <tr>
+                                <td class="ps-3 fw-bold">${h.donem}</td>
+                                <td>
+                                    <div class="font-weight-600">${h.aciklama || h.turu}</div>
+                                    <div class="small text-muted">${h.created_at || ''}</div>
+                                </td>
+                                <td class="text-end pe-3 text-success font-weight-700">${h.tutar}</td>
+                            </tr>
+                        `);
+                    });
+                }
+            } else {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Hata!', res.message || 'Kesintiler yüklenemedi.', 'error');
+                }
+            }
+        },
+        error: function() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Hata!', 'Sunucu hatası oluştu.', 'error');
+            }
+        }
+    });
+});
+
+$(document).on('click', '#btn-modal-print-deductions', function() {
+    if (currentDeductionsFileId) {
+        window.open('print_icra.php?id=' + encodeURIComponent(currentDeductionsFileId), '_blank');
+    } else if (currentDeductionsPersonId) {
+        window.open('print_icra.php?person_id=' + encodeURIComponent(currentDeductionsPersonId), '_blank');
+    } else {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Uyarı', 'Lütfen önce bir icra dosyası veya personel seçiniz.', 'warning');
+        }
+    }
+});
+
+$(document).on('click', '#btn-modal-excel-deductions', function() {
+    if (currentDeductionsFileId) {
+        window.location.href = 'pages/persons/icra-export-xls.php?id=' + encodeURIComponent(currentDeductionsFileId);
+    } else if (currentDeductionsPersonId) {
+        window.location.href = 'pages/persons/icra-export-xls.php?person_id=' + encodeURIComponent(currentDeductionsPersonId);
+    } else {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Uyarı', 'Lütfen önce bir icra dosyası veya personel seçiniz.', 'warning');
+        }
+    }
+});
+
 

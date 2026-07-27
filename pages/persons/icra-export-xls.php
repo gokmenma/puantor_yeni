@@ -39,6 +39,15 @@ $PersonIcra = new PersonIcra();
 
 $id_param = $_GET['id'] ?? $_GET['file_id'] ?? '';
 $file_id = is_numeric($id_param) ? (int)$id_param : (!empty($id_param) ? (int)Security::decrypt($id_param) : 0);
+$person_id_param = $_GET['person_id'] ?? '';
+$person_id = is_numeric($person_id_param) ? (int)$person_id_param : (!empty($person_id_param) ? (int)Security::decrypt($person_id_param) : 0);
+
+if ($file_id <= 0 && $person_id > 0) {
+    $person_files = $PersonIcra->getByPersonId($person_id);
+    if (!empty($person_files)) {
+        $file_id = (int)$person_files[0]->id;
+    }
+}
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();

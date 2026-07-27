@@ -400,4 +400,17 @@ class UserModel extends Model
         }
         return parent::softDelete($id);
     }
+
+    public function setDefaultFirm($userId, $firmId, $userEmail = null)
+    {
+        $firmId = (int)$firmId;
+        $userId = (int)$userId;
+        if (!empty($userEmail)) {
+            $sql = $this->db->prepare("UPDATE {$this->table} SET default_firm_id = :firm_id WHERE email = :email AND deleted_at IS NULL");
+            return $sql->execute(['firm_id' => $firmId, 'email' => $userEmail]);
+        } else {
+            $sql = $this->db->prepare("UPDATE {$this->table} SET default_firm_id = :firm_id WHERE id = :user_id AND deleted_at IS NULL");
+            return $sql->execute(['firm_id' => $firmId, 'user_id' => $userId]);
+        }
+    }
 }

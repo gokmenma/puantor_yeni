@@ -31,7 +31,7 @@ function puantorExpireCookie(string $name): void
 function puantorEnforceSessionTimeout(): void
 {
     if (empty($_SESSION['user'])) return;
-    $timeout = (int) ($_SESSION['user']->superadmin ?? 0) === 1 ? 900 : 3600;
+    $timeout = 3600; // 1 saat (3600 saniye)
     if (time() - (int) ($_SESSION['last_activity_at'] ?? time()) > $timeout) {
         $_SESSION = [];
         puantorExpireCookie(session_name());

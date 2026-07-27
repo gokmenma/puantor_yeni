@@ -27,6 +27,23 @@ require_once "Model/MyFirmModel.php";
 $myFirmObj = new MyFirmModel();
 
 $myFirms = $myFirmObj->getMyFirmByUserId();
+
+$defaultFirmId = (int)($_SESSION['user']->default_firm_id ?? 0);
+$isExplicitSwitch = isset($_GET['switch']) || isset($_GET['change']) || isset($_GET['select']);
+
+if ($defaultFirmId > 0 && !$isExplicitSwitch) {
+    $authorizedFirmIds = array_map(static function ($firm) {
+        return (int) $firm->id;
+    }, $myFirms);
+
+    if (in_array($defaultFirmId, $authorizedFirmIds, true)) {
+        $_SESSION['firm_id'] = $defaultFirmId;
+        $redirectUri = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? $_GET['returnUrl'] : '/index.php?p=home';
+        header('Location: ' . $redirectUri);
+        exit();
+    }
+}
+
 if(count($myFirms) == 1){
     $_SESSION['firm_id'] = $myFirms[0]->id;
     $redirectUri = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? $_GET['returnUrl'] : '/index.php?p=home';
@@ -49,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['firm_id'])) {
         exit();
     }
 }
+
 
 function getFirmInitials($firmName)
 {
@@ -308,21 +326,31 @@ function getFirmInitials($firmName)
                                     $firmName = (string) ($myfirm->firm_name ?? 'İsimsiz Firma');
                                     $firmDescription = trim((string) ($myfirm->description ?? ''));
                                     $firmPhone = trim((string) ($myfirm->phone ?? ''));
+                                    $isCardDefault = ((int)$myfirm->id === $defaultFirmId);
                                     ?>
                                     <div class="col-12 col-md-6">
                                         <form action="" method="post" class="h-100">
                                             <input type="hidden" name="firm_id" value="<?php echo (int) $myfirm->id; ?>">
-                                            <button type="submit" class="company-card" aria-label="<?php echo htmlspecialchars($firmName, ENT_QUOTES, 'UTF-8'); ?> firmasını seç">
+                                            <button type="submit" class="company-card <?php echo $isCardDefault ? 'border-primary' : ''; ?>" aria-label="<?php echo htmlspecialchars($firmName, ENT_QUOTES, 'UTF-8'); ?> firmasını seç">
                                                 <span class="card-body d-flex flex-column h-100 p-4">
                                                     <span class="d-flex align-items-start justify-content-between gap-3 mb-4">
                                                         <span class="company-avatar">
                                                             <?php echo htmlspecialchars(getFirmInitials($firmName), ENT_QUOTES, 'UTF-8'); ?>
                                                         </span>
-                                                        <span class="badge bg-green-lt company-status">
-                                                            <span class="company-status-dot"></span>
-                                                            Aktif
+                                                        <span class="d-flex align-items-center gap-2">
+                                                            <?php if ($isCardDefault): ?>
+                                                                <span class="badge bg-amber-lt text-amber company-status fw-bold">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/></svg>
+                                                                    Varsayılan
+                                                                </span>
+                                                            <?php endif; ?>
+                                                            <span class="badge bg-green-lt company-status">
+                                                                <span class="company-status-dot"></span>
+                                                                Aktif
+                                                            </span>
                                                         </span>
                                                     </span>
+
 
                                                     <span class="d-block mb-3">
                                                         <span class="h2 d-block mb-2"><?php echo htmlspecialchars($firmName, ENT_QUOTES, 'UTF-8'); ?></span>

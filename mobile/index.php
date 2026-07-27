@@ -116,12 +116,26 @@ if (isset($_SESSION['firm_id']) && !empty($_SESSION['firm_id'])) {
 }
 
 if (!$has_active_access) {
-    if (!empty($myFirms)) {
-        $_SESSION['firm_id'] = $myFirms[0]->id;
-    } else {
-        $_SESSION['firm_id'] = $_SESSION['user']->firm_id ?? 0;
+    $default_firm_id = (int) ($_SESSION['user']->default_firm_id ?? 0);
+    $default_found = false;
+    if ($default_firm_id > 0 && !empty($myFirms)) {
+        foreach ($myFirms as $firm) {
+            if ((int)$firm->id === $default_firm_id) {
+                $_SESSION['firm_id'] = $default_firm_id;
+                $default_found = true;
+                break;
+            }
+        }
+    }
+    if (!$default_found) {
+        if (!empty($myFirms)) {
+            $_SESSION['firm_id'] = $myFirms[0]->id;
+        } else {
+            $_SESSION['firm_id'] = $_SESSION['user']->firm_id ?? 0;
+        }
     }
 }
+
 
 
 
