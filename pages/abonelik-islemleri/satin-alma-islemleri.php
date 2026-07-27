@@ -425,6 +425,11 @@ $(document).ready(function() {
             return;
         }
 
+        let submitBtn = $('#saveTransactionBtn');
+        let originalBtnHtml = submitBtn.html();
+
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Kaydediliyor...');
+
         let formData = new FormData(form[0]);
 
         fetch('/api/abonelik-islemleri/odemeler.php', {
@@ -447,6 +452,9 @@ $(document).ready(function() {
         })
         .catch(error => {
             Swal.fire("Hata", "İşlem sırasında bir hata oluştu: " + error, "error");
+        })
+        .finally(() => {
+            submitBtn.prop('disabled', false).html(originalBtnHtml);
         });
     });
 });

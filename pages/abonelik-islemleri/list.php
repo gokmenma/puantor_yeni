@@ -76,10 +76,13 @@ $subscribers = $abonelerModel->getSubscribers();
                                 $baslangic = $sub->baslangic_tarihi ? date('d.m.Y', strtotime($sub->baslangic_tarihi)) : '-';
                                 $bitis = $sub->bitis_tarihi ? date('d.m.Y', strtotime($sub->bitis_tarihi)) : '-';
 
-                                // Calculate remaining days if active and bitis_tarihi exists
+                                // Calculate remaining days and determine active status
                                 $kalan_gun_str = '-';
                                 $kalan_gun_class = 'text-secondary';
-                                if ($status == 'aktif' && $sub->bitis_tarihi) {
+                                $is_active = false;
+                                $has_package = !empty($paket_adi);
+
+                                if ($has_package && $sub->bitis_tarihi) {
                                     $today = new DateTime(date('Y-m-d'));
                                     $end_date = new DateTime($sub->bitis_tarihi);
                                     if ($today <= $end_date) {
@@ -92,26 +95,27 @@ $subscribers = $abonelerModel->getSubscribers();
                                             $kalan_gun_str = $days . ' gün kaldı';
                                             $kalan_gun_class = $days <= 5 ? 'badge bg-warning text-warning-fg' : 'badge bg-success text-success-fg';
                                         }
+                                        if ($status == 'aktif') {
+                                            $is_active = true;
+                                        }
                                     } else {
                                         $kalan_gun_str = 'Süresi doldu';
                                         $kalan_gun_class = 'badge bg-danger text-danger-fg';
+                                        $is_active = false;
+                                    }
+                                } elseif ($has_package) {
+                                    if ($status == 'aktif') {
+                                        $is_active = true;
                                     }
                                 }
 
                                 // Status Badge
-                                $status_badge = '';
-                                if ($status == 'aktif') {
-                                    $status_badge = '<span class="badge bg-success text-success-fg">Aktif</span>';
-                                } elseif ($status == 'sona_erdi') {
-                                    $status_badge = '<span class="badge bg-secondary text-secondary-fg">Sona Erdi</span>';
-                                } elseif ($status == 'iptal') {
-                                    $status_badge = '<span class="badge bg-danger text-danger-fg">İptal Edildi</span>';
-                                } elseif ($status == 'onay_bekliyor') {
-                                    $status_badge = '<span class="badge bg-warning text-warning-fg">Onay Bekliyor</span>';
-                                } elseif ($status == 'beklemede') {
-                                    $status_badge = '<span class="badge bg-info text-info-fg">Beklemede</span>';
-                                } else {
+                                if (!$has_package) {
                                     $status_badge = '<span class="badge bg-light text-secondary">Abonelik Yok</span>';
+                                } elseif ($is_active) {
+                                    $status_badge = '<span class="badge bg-success text-success-fg">Aktif</span>';
+                                } else {
+                                    $status_badge = '<span class="badge bg-danger text-danger-fg">Pasif</span>';
                                 }
                                 ?>
                                 <tr>

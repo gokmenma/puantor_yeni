@@ -399,8 +399,10 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
                     $kalan_gun_str = '-';
                     $kalan_gun_class = 'text-secondary';
                     $raw_days = -9999;
+                    $is_active = false;
+                    $has_package = !empty($sub->paket_adi);
 
-                    if ($sub->abonelik_durumu == 'aktif' && $sub->bitis_tarihi) {
+                    if ($has_package && $sub->bitis_tarihi) {
                         $today = new DateTime(date('Y-m-d'));
                         $end_date = new DateTime($sub->bitis_tarihi);
                         if ($today <= $end_date) {
@@ -414,32 +416,27 @@ body[data-bs-theme="dark"] .sub-clear-btn:hover {
                                 $kalan_gun_str = $days . ' gün kaldı';
                                 $kalan_gun_class = $days <= 5 ? 'badge bg-warning text-warning-fg' : 'badge bg-success text-success-fg';
                             }
+                            if ($sub->abonelik_durumu == 'aktif') {
+                                $is_active = true;
+                            }
                         } else {
                             $kalan_gun_str = 'Süresi doldu';
                             $kalan_gun_class = 'badge bg-danger text-danger-fg';
+                            $is_active = false;
+                        }
+                    } elseif ($has_package) {
+                        if ($sub->abonelik_durumu == 'aktif') {
+                            $is_active = true;
                         }
                     }
 
                     // Status Badge
-                    $status_badge = '';
-                    switch ($sub->abonelik_durumu) {
-                        case 'aktif':
-                            $status_badge = '<span class="badge bg-success text-success-fg">Aktif</span>';
-                            break;
-                        case 'sona_erdi':
-                            $status_badge = '<span class="badge bg-secondary text-secondary-fg">Sona Erdi</span>';
-                            break;
-                        case 'iptal':
-                            $status_badge = '<span class="badge bg-danger text-danger-fg">İptal</span>';
-                            break;
-                        case 'onay_bekliyor':
-                            $status_badge = '<span class="badge bg-warning text-warning-fg">Onay Bekliyor</span>';
-                            break;
-                        case 'beklemede':
-                            $status_badge = '<span class="badge bg-info text-info-fg">Beklemede</span>';
-                            break;
-                        default:
-                            $status_badge = '<span class="badge bg-light text-secondary">Abonelik Yok</span>';
+                    if (!$has_package) {
+                        $status_badge = '<span class="badge bg-light text-secondary">Abonelik Yok</span>';
+                    } elseif ($is_active) {
+                        $status_badge = '<span class="badge bg-success text-success-fg">Aktif</span>';
+                    } else {
+                        $status_badge = '<span class="badge bg-danger text-danger-fg">Pasif</span>';
                     }
                     ?>
                     <div class="mobile-card p-3"
