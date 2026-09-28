@@ -131,14 +131,16 @@ class Bordro extends Model
 
         $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
         $query = $this->db->prepare("
-            SELECT person_id, tutar
-            FROM maas_gelir_kesinti
-            WHERE person_id IN ($placeholders)
-              AND ay = ?
-              AND yil = ?
-              AND kategori = 15
-              AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')
-            ORDER BY person_id, id
+            SELECT m.person_id, m.tutar
+            FROM maas_gelir_kesinti m
+            INNER JOIN persons p ON p.id = m.person_id
+            WHERE m.person_id IN ($placeholders)
+              AND m.ay = ?
+              AND m.yil = ?
+              AND m.kategori = 15
+              AND (m.aciklama LIKE '%İcra%' OR m.aciklama LIKE '%icra%' OR m.turu = 'İcra Kesintisi')
+              AND p.icra_kesintisi_aktif = 1
+            ORDER BY m.person_id, m.id
         ");
         $query->execute(array_merge($person_ids, [(int) $month, (int) $year]));
 

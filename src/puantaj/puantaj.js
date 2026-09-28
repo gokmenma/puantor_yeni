@@ -57,9 +57,12 @@ function applyTypeToClickedCells(typeInfo) {
     let cellProj;
     if (current_projects.length === 1) {
       cellProj = current_projects[0];
-    } else {
-      // 0 or 2+ projects selected: use each person's default project from the row
+    } else if (current_projects.length > 1) {
+      // 2+ projects selected: use each person's default project from the row
       cellProj = rowDefaultProject || "0";
+    } else {
+      // 0 projects selected (no project chosen in filter): assign no project (0)
+      cellProj = "0";
     }
 
     // Resolve project name for tooltip

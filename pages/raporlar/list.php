@@ -12,8 +12,8 @@ use App\Helper\Date;
 use App\Helper\Helper;
 use App\Helper\Security;
 
-$year = isset($_REQUEST['year']) ? $_REQUEST['year'] : ($_COOKIE['p_year'] ?? date('Y'));
-$month = isset($_REQUEST['months']) ? $_REQUEST['months'] : ($_COOKIE['p_months'] ?? date('m'));
+$year = (int) ($_SESSION['period_year'] ?? date('Y'));
+$month = (int) ($_SESSION['period_month'] ?? date('m'));
 $firm_id = $_SESSION['firm_id'];
 $report_type = $_GET['report'] ?? '';
 
@@ -24,10 +24,6 @@ $lastDayStr = Date::lastDay($month, $year);
 // DB compatibility formats
 $startDate = date('Y-m-d', strtotime($firstDayStr));
 $endDate = date('Y-m-d', strtotime($lastDayStr));
-
-// Get personnel counts for context box
-$personList = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDayStr, $lastDayStr);
-$personCount = count($personList);
 
 $bordroObj = new Bordro();
 
@@ -83,16 +79,6 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
         transform: translateY(-5px);
         box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important;
     }
-    .sidebar-dark-header {
-        background: #232e3c;
-        color: #ffffff;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-    }
-    .bg-light-period {
-        background-color: #f8fafc;
-        border: 1px solid #edf2f7;
-    }
     .avatar.bg-primary-lt { background-color: #e0f2fe !important; color: #0284c7 !important; }
     .avatar.bg-success-lt { background-color: #dcfce7 !important; color: #15803d !important; }
     .avatar.bg-warning-lt { background-color: #fef3c7 !important; color: #b45309 !important; }
@@ -136,68 +122,8 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     </div>
 
     <div class="row g-4">
-        <?php if(empty($report_type)): ?>
-        <!-- Left Column: Periodic Settings -->
-        <div class="col-lg-3 col-md-4">
-            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
-                <div class="card-header sidebar-dark-header py-3 border-0">
-                    <h3 class="card-title mb-0 text-white d-flex align-items-center">
-                        <i class="ti ti-calendar-event me-2 fs-3"></i> Dönem Seçimi
-                    </h3>
-                </div>
-                <div class="card-body p-3">
-                    <form method="GET" action="index.php">
-                        <input type="hidden" name="p" value="raporlar/list">
-                        <?php if(!empty($report_type)): ?>
-                            <input type="hidden" name="report" value="<?= htmlspecialchars($report_type) ?>">
-                        <?php endif; ?>
-
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-bold"><i class="ti ti-calendar me-1"></i> Yıl Seçiniz</label>
-                            <?= Date::getYearsSelect('year', $year) ?>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold"><i class="ti ti-clock-hour-4 me-1"></i> Dönem Seçiniz</label>
-                            <?= Date::getMonthsSelect('months', $month) ?>
-                        </div>
-
-                        <button type="submit" class="btn btn-dark w-100 fw-bold mb-3 shadow-sm">
-                            <i class="ti ti-refresh me-2"></i> Verileri Yenile
-                        </button>
-                    </form>
-
-                    <div class="bg-light-period rounded-3 p-3">
-                        <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-light">
-                            <div class="bg-blue-lt p-2 rounded-circle me-2 d-flex align-items-center justify-content-center">
-                                <i class="ti ti-info-circle text-blue fs-4"></i>
-                            </div>
-                            <h4 class="mb-0 fw-bold text-uppercase tracking-wide" style="font-size: 13px;"><?= $displayMonth ?> <?= $year ?></h4>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-secondary small">Başlangıç:</span>
-                            <span class="small fw-bold"><?= date('d.m.Y', strtotime($startDate)) ?></span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-secondary small">Bitiş:</span>
-                            <span class="small fw-bold"><?= date('d.m.Y', strtotime($endDate)) ?></span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-secondary small">Personel:</span>
-                            <span class="small fw-bold text-success"><?= $personCount ?> kişi</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="text-secondary small">Durum:</span>
-                            <span class="badge bg-success-lt border border-success border-opacity-10 px-2 py-1 rounded-pill">Açık</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
-
         <!-- Right Column: Main Content -->
-        <div class="<?= empty($report_type) ? 'col-lg-9 col-md-8' : 'col-12' ?>">
+        <div class="col-12">
             <?php if($report_type == 'puantaj'): ?>
                 <!-- --- PUANTAJ REPORT RENDERING --- -->
                 <?php

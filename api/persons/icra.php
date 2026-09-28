@@ -494,6 +494,11 @@ if ($action == 'toggle_payroll_deduction') {
         $query = $Persons->getDb()->prepare($sql);
         $query->execute([$active, $person_id]);
 
+        if ($active === 0) {
+            $stmt_del = $Persons->getDb()->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
+            $stmt_del->execute([$person_id]);
+        }
+
         $log_desc = $active ? "Personel için icra bordro kesintisi aktif edildi." : "Personel için icra bordro kesintisi pasif edildi.";
         ActivityLogModel::log('icra', 'icra_kesintisi_toggle', $log_desc . " Personel: {$person->full_name}");
 

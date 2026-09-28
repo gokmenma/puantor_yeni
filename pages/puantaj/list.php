@@ -31,8 +31,8 @@ if ( isset( $Auths ) ) {
 
 $firm_id = ( int ) ( $_SESSION[ 'firm_id' ] ?? 0 );
 
-$year = ( int ) ( isset( $_REQUEST[ 'year' ] ) ? $_REQUEST[ 'year' ] : ( $_COOKIE[ 'p_year' ] ?? date( 'Y' ) ) );
-$month = ( int ) ( isset( $_REQUEST[ 'months' ] ) ? $_REQUEST[ 'months' ] : ( $_COOKIE[ 'p_months' ] ?? date( 'm' ) ) );
+$year = ( int ) ( $_SESSION['period_year'] ?? date('Y') );
+$month = ( int ) ( $_SESSION['period_month'] ?? date('m') );
 $last_day = Date::Ymd( Date::lastDay( $month, $year ) );
 $project_ids = [];
 if ( isset( $_REQUEST[ 'projects' ] ) ) {
@@ -1067,20 +1067,8 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                 <label for='projects' class='form-label'>Proje:</label>
                 <?php echo $projectHelper->getProjectSelectMultiple( 'projects', $valid_project_ids ); ?>
             </div>
-            <div class="col-md-2">
-                <label for="period_picker" class="form-label">Dönem:</label>
-                <div class="input-group input-group-flat rounded period-picker-group" style="height: 40px !important;">
-                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="prevPeriodBtn" title="Önceki Ay">
-                        <i class="ti ti-chevron-left icon m-0"></i>
-                    </button>
-                    <input type="text" class="form-control text-center fw-bold bg-transparent border-0 px-0 cursor-pointer h-100 shadow-none" id="period_picker" readonly placeholder="Dönem">
-                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="nextPeriodBtn" title="Sonraki Ay">
-                        <i class="ti ti-chevron-right icon m-0"></i>
-                    </button>
-                </div>
-                <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
-                <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
-            </div>
+            <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
+            <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
             <div class='col-md-2'>
                 <label for='job_groups' class='form-label'>Grup:</label>
                 <?php echo $jobsHelper->jobGroupsSelect( 'job_groups', $job_group );
@@ -1563,16 +1551,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                                         }
                                     }
                                 } else {
-                                    if (!empty($person_projects)) {
-                                        $default_project_id = $person_projects[0];
-                                    } else {
-                                        foreach ($personPuantaj as $dateKey => $puantajRecord) {
-                                            if (isset($puantajRecord->project_id) && $puantajRecord->project_id > 0) {
-                                                $default_project_id = (int)$puantajRecord->project_id;
-                                                break;
-                                            }
-                                        }
-                                    }
+                                    $default_project_id = 0;
                                 }
                                 ?>
                             <tr data-default-project="<?php echo $default_project_id; ?>">

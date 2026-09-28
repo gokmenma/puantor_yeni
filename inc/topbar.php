@@ -69,6 +69,37 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
 
             <div class="navbar-nav flex-row order-md-last ms-auto me-3">
 
+                <?php if (in_array($active_page ?? '', ['payroll/list', 'puantaj/list', 'raporlar/list'], true)): ?>
+                <div class="nav-item me-2 d-flex align-items-center">
+                    <form method="get" action="index.php" class="m-0" id="topbar-period-form">
+                        <?php
+                        foreach ($_GET as $_topbar_query_key => $_topbar_query_value) {
+                            if (in_array($_topbar_query_key, ['period', 'year', 'months', 'theme'], true) || is_array($_topbar_query_value)) {
+                                continue;
+                            }
+                            echo '<input type="hidden" name="' . htmlspecialchars($_topbar_query_key, ENT_QUOTES, 'UTF-8')
+                                . '" value="' . htmlspecialchars((string) $_topbar_query_value, ENT_QUOTES, 'UTF-8') . '">';
+                        }
+                        $_topbar_period_year = (int) ($_SESSION['period_year'] ?? date('Y'));
+                        $_topbar_period_month = (int) ($_SESSION['period_month'] ?? date('m'));
+                        $_topbar_month_names = [1 => 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+                        ?>
+                        <label for="topbar-period" class="visually-hidden">Dönem</label>
+                        <select name="period" id="topbar-period" class="form-select form-select-sm fw-semibold"
+                                aria-label="Dönem seçimi" onchange="this.form.submit()" style="min-width: 145px;">
+                            <?php for ($_topbar_y = 2030; $_topbar_y >= 2021; $_topbar_y--): ?>
+                                <?php for ($_topbar_m = 12; $_topbar_m >= 1; $_topbar_m--): ?>
+                                    <option value="<?= sprintf('%04d-%02d', $_topbar_y, $_topbar_m) ?>"
+                                        <?= $_topbar_y === $_topbar_period_year && $_topbar_m === $_topbar_period_month ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($_topbar_month_names[$_topbar_m] . ' ' . $_topbar_y, ENT_QUOTES, 'UTF-8') ?>
+                                    </option>
+                                <?php endfor; ?>
+                            <?php endfor; ?>
+                        </select>
+                    </form>
+                </div>
+                <?php endif; ?>
+
                 <div class="nav-item ms-auto me-1">
                     <?php
 

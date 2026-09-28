@@ -162,6 +162,36 @@ if (($user->superadmin ?? 0) == 1) {
 
 $active_page = isset($_GET["p"]) ? $_GET["p"] : "";
 
+// Bordro, puantaj ve rapor ekranları aynı dönemi kullanır. Seçimi oturumda
+// saklayarak sayfa yenilemelerinde ve bu ekranlar arasındaki geçişlerde koru.
+$period_pages = ['payroll/list', 'puantaj/list', 'raporlar/list'];
+if (in_array($active_page, $period_pages, true)) {
+    $selected_period = (string) ($_REQUEST['period'] ?? '');
+    $selected_year = null;
+    $selected_month = null;
+
+    if (preg_match('/^(20\d{2}|2100)-(0[1-9]|1[0-2])$/', $selected_period, $period_matches)) {
+        $selected_year = (int) $period_matches[1];
+        $selected_month = (int) $period_matches[2];
+    } elseif (isset($_REQUEST['year'], $_REQUEST['months'])) {
+        $request_year = filter_var($_REQUEST['year'], FILTER_VALIDATE_INT);
+        $request_month = filter_var($_REQUEST['months'], FILTER_VALIDATE_INT);
+        if ($request_year !== false && $request_year >= 2000 && $request_year <= 2100
+            && $request_month !== false && $request_month >= 1 && $request_month <= 12) {
+            $selected_year = (int) $request_year;
+            $selected_month = (int) $request_month;
+        }
+    }
+
+    if ($selected_year !== null && $selected_month !== null) {
+        $_SESSION['period_year'] = $selected_year;
+        $_SESSION['period_month'] = $selected_month;
+    }
+
+    $_SESSION['period_year'] = (int) ($_SESSION['period_year'] ?? date('Y'));
+    $_SESSION['period_month'] = (int) ($_SESSION['period_month'] ?? date('m'));
+}
+
 if (($user->superadmin ?? 0) == 1 && ($active_page === '' || $active_page === 'home')) {
     header('Location: index.php?p=admin-home');
     exit();

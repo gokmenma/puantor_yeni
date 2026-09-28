@@ -32,8 +32,8 @@ $Settings = new SettingsModel();
 $HolidayWorkService = new HolidayWorkService();
 $personIcra = new PersonIcra();
 
-$year = isset($_POST['year']) ? $_POST['year'] : date('Y');
-$month = isset($_POST['months']) ? $_POST['months'] : date('m');
+$year = (int) ($_SESSION['period_year'] ?? date('Y'));
+$month = (int) ($_SESSION['period_month'] ?? date('m'));
 $period_is_visible = $bordro->getPeriodVisibility($firm_id, $year, $month);
 // Ayın ilk gününü bulma (20240901) şeklinde döner
 $firstDay = Date::firstDay($month, $year);
@@ -304,16 +304,22 @@ foreach ($persons as $item) {
                 $personIcra->calculateAndApplyIcraDeduction($person->id, $month, $year, $earned_inc);
             }
         }
+    } else {
+        $personIcra->calculateAndApplyIcraDeduction($person->id, $month, $year, 0);
     }
 
     if ($isPayrollCalculation || !empty($person->icra_kesintisi_aktif)) {
         $res = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay);
-        $stmt_icra_calc = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
-        $stmt_icra_calc->execute([$person->id, $month, $year]);
-        $p_icra = (float)($stmt_icra_calc->fetchColumn() ?? 0);
+        if (!empty($person->icra_kesintisi_aktif)) {
+            $stmt_icra_calc = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
+            $stmt_icra_calc->execute([$person->id, $month, $year]);
+            $p_icra = (float)($stmt_icra_calc->fetchColumn() ?? 0);
+        } else {
+            $p_icra = 0;
+        }
     } else {
         $res = $salaryAndWageCutMap[(int) $person->id] ?? (object) ['gelir' => null, 'odeme' => 0];
-        $p_icra = $icraAmountMap[(int) $person->id] ?? 0;
+        $p_icra = !empty($person->icra_kesintisi_aktif) ? ($icraAmountMap[(int) $person->id] ?? 0) : 0;
     }
 
     $payrollRows[(int) $person->id] = [
@@ -438,20 +444,8 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                 <label for="team_id" class="form-label">Ekip:</label>
                 <?php echo $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler'); ?>
             </div>
-            <div class="col-2">
-                <label for="period_picker" class="form-label">Dönem:</label>
-                <div class="input-group input-group-flat rounded period-picker-group" style="height: 40px !important;">
-                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="prevPeriodBtn" title="Önceki Ay">
-                        <i class="ti ti-chevron-left icon m-0"></i>
-                    </button>
-                    <input type="text" class="form-control text-center fw-bold bg-transparent border-0 px-0 cursor-pointer h-100 shadow-none" id="period_picker" readonly placeholder="Dönem">
-                    <button type="button" class="btn btn-ghost-secondary btn-icon border-0 h-100 shadow-none" id="nextPeriodBtn" title="Sonraki Ay">
-                        <i class="ti ti-chevron-right icon m-0"></i>
-                    </button>
-                </div>
-                <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
-                <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
-            </div>
+            <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
+            <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
 
             <div class="col-auto ms-auto mt-auto d-flex align-items-center">
                 <?php if ($Auths->hasPermission('toggle_payroll_period_status')): ?>

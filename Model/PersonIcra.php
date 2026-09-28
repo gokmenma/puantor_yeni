@@ -118,6 +118,10 @@ class PersonIcra extends Model
      */
     public function calculateAndApplyIcraDeduction($person_id, $month, $year, $period_income)
     {
+        // Delete existing icra deduction entries for this month/year before recalculating or returning early
+        $stmt_del = $this->db->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
+        $stmt_del->execute([$person_id, $month, $year]);
+
         if ($period_income <= 0) {
             return 0.0;
         }
@@ -130,10 +134,6 @@ class PersonIcra extends Model
         if (!$person || (int)($person->icra_kesintisi_aktif ?? 0) !== 1) {
             return 0.0;
         }
-
-        // Delete existing icra deduction entries for this month/year before recalculating
-        $stmt_del = $this->db->prepare("DELETE FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
-        $stmt_del->execute([$person_id, $month, $year]);
 
         // Period date range
         $periodStart = sprintf('%04d-%02d-01', $year, $month);
