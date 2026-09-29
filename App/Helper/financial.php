@@ -75,7 +75,7 @@ class Financial extends Db
 
         foreach ($cases as $case) {
             $selectedAttr = $case_id == $case->id ? 'selected' : '';
-            $select .= "<option value=\"" . Security::encrypt($case->id) . "\" {$selectedAttr}>{$case->case_name}-{$case->bank_name}/{$case->branch_name}</option>";
+            $select .= "<option value=\"" . Security::encrypt($case->id) . "\" data-case-id=\"{$case->id}\" {$selectedAttr}>{$case->case_name}-{$case->bank_name}/{$case->branch_name}</option>";
         }
         $select .= '</select>';
         return $select;
@@ -96,7 +96,7 @@ class Financial extends Db
         $select .= "<option value='0'>Kasa Seçiniz</option>";
         foreach ($cases as $case) {
             $selectedAttr = $case_id == $case->id ? 'selected' : '';
-            $select .= "<option value=\"" . Security::encrypt($case->id) . "\" {$selectedAttr}>{$case->case_name}-{$case->bank_name}/{$case->branch_name}</option>";
+            $select .= "<option value=\"" . Security::encrypt($case->id) . "\" data-case-id=\"{$case->id}\" {$selectedAttr}>{$case->case_name}-{$case->bank_name}/{$case->branch_name}</option>";
         }
         $select .= '</select>';
         return $select;

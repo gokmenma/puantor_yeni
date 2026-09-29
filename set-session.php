@@ -15,7 +15,6 @@ if (empty($_SESSION['user'])) {
     exit;
 }
 
-$page = (string) ($_GET['p'] ?? 'home');
 $encryptedFirmId = (string) ($_GET['firm_id'] ?? '');
 $firmId = Security::decrypt($encryptedFirmId);
 
@@ -27,5 +26,18 @@ if ($firmId === false || !ctype_digit((string) $firmId) || (int) $firmId <= 0) {
 
 $_SESSION['firm_id'] = (int) $firmId;
 
-header('Location: index.php?' . http_build_query(['p' => $page]));
+$redirectParams = [];
+foreach ($_GET as $k => $v) {
+    if ($k === 'firm_id' || is_array($v)) {
+        continue;
+    }
+    $redirectParams[$k] = (string) $v;
+}
+if (empty($redirectParams['p'])) {
+    $redirectParams['p'] = 'home';
+}
+
+
+header('Location: index.php?' . http_build_query($redirectParams));
 exit;
+

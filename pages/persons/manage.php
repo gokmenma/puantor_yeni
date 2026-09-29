@@ -279,6 +279,13 @@ $(document).ready(function() {
     $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
         var target = $(e.target).attr("href");
         localStorage.setItem('active_personel_tab', target);
+        if (target) {
+            $(target).find('table.dataTable, table.data-table').each(function() {
+                if ($.fn.DataTable.isDataTable(this)) {
+                    $(this).DataTable().columns.adjust();
+                }
+            });
+        }
     });
 
     if ($.fn.select2) {

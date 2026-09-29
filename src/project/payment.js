@@ -3,17 +3,22 @@ $(document).on("click", ".add-payment", function () {
   if (!checkId(project_id, "Projeyi")) {
     return;
   }
-  $("#payment-modal").modal("show");
-  let project_name = $(this).closest("tr").find("td:eq(3)").text();
+  let project_name = $(this).closest("tr").find("td:eq(3)").text() || $(".page-title").text().trim();
+
+  let form = $("#payment_modalForm");
+  form.trigger("reset");
+  form.find('[name="payment_id"]').val(0);
   $("#payment_project_name").text(project_name);
   $("#payment_project_id").val(project_id);
+  $("#payment_addButton").text("Ödeme Ekle");
+
+  $("#payment-modal").modal("show");
 });
 
 $(document).on("click", "#payment_addButton", function () {
   var form = $("#payment_modalForm");
   var urlParams = new URLSearchParams(window.location.search);
   var page = urlParams.get("p");
-  var formData = new FormData(form[0]);
   addCustomValidationMethods(); //app.js içerisinde tanımlı(validNumber metodu)
   addCustomValidationValidValue(); //app.js içerisinde tanımlı(validValue metodu)
 
@@ -47,12 +52,13 @@ $(document).on("click", "#payment_addButton", function () {
     return;
   }
 
+  var isEdit = form.find('[name="payment_id"]').val() != "0" && form.find('[name="payment_id"]').val() != "";
+  var formData = new FormData(form[0]);
   formData.append("action", "add_payment");
   formData.append("page", page);
 
-  // for (var pair of formData.entries()) {
-  //   console.log(pair[0] + ", " + pair[1]);
-  // }
+  //preloader göster
+  $(".preloader").fadeIn();
 
   fetch("api/projects/payment.php", {
     method: "POST",
@@ -60,27 +66,37 @@ $(document).on("click", "#payment_addButton", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      /*
-        projects/manage sayfasında eklenen ödemenin verilerini tabloya eklemek ve 
-        özet bilgilerini sayfa yenilenmeden güncellemek için
-      */
+      $(".preloader").fadeOut();
       if (data.status == "success") {
         title = "Başarılı";
        
+        if (typeof closeProjectModalSafely === "function") {
+          closeProjectModalSafely("payment-modal");
+        } else {
+          $("#payment-modal").modal("hide");
+          $(".modal-backdrop").remove();
+          $("body").removeClass("modal-open").css({ overflow: "", paddingRight: "" });
+        }
+
         if (page == "projects/manage") {
-          console.log(data);
-
-          let payment = data.last_payment;
-          //Projenin gelir-gider, bakiye bilgilerini almak için
-          payment.project_id = $("#payment_project_id").val();
-          //gelen veriler ile birlikte tabloya satır ekleme
-          addDataToTable(payment);
-
           let summary = data.summary;
-          //Ödemelerin toplamını ve bakiyeyi güncelle
-          $("#total_payment").text(summary.gelir);
-          $("#balance").text(summary.balance);
-          $("#payment-modalForm").trigger("reset");
+          if (summary) {
+            $("#total_payment").text(summary.gelir || "0,00 TRY");
+            $("#balance").text(summary.balance || "0,00 TRY");
+          }
+
+          if (isEdit) {
+            setTimeout(() => { location.reload(); }, 1200);
+          } else {
+            let payment = data.last_payment;
+            if (payment) {
+              payment.project_id = $("#payment_project_id").val();
+              addDataToTable(payment);
+            }
+          }
+
+          form.trigger("reset");
+          form.find('[name="payment_id"]').val(0);
         }
       } else {
         title = "Hata";

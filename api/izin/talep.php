@@ -36,8 +36,19 @@ try {
             'bitis'       => $_GET['bitis'] ?? '',
         ];
         $liste = $model->getByFirma($firma_id, array_filter($filters));
+        foreach ($liste as &$item) {
+            $item->enc_id = Security::encrypt($item->id);
+            $item->enc_personel_id = Security::encrypt($item->personel_id);
+        }
         ob_clean();
         echo json_encode(['status' => 'success', 'list' => $liste], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($action === 'stats') {
+        $stats = $model->getIzinStats($firma_id);
+        ob_clean();
+        echo json_encode(['status' => 'success', 'stats' => $stats], JSON_UNESCAPED_UNICODE);
         exit;
     }
 

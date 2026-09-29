@@ -39,8 +39,41 @@ $enc_id = isset($_GET['id']) ? ($_GET['id']) : 0;
         display: grid;
         place-items: center;
     }
+
+    /* Tablo ve Kart kenar bosluklarini sikilastir (4px) */
+    #tabs-payment-3 .card-body,
+    #tabs-payment-3 .table-responsive {
+        padding: 4px !important;
+    }
+
+    #tabs-payment-3 .card-header {
+        padding: 8px 12px !important;
+    }
+
+    #tabs-payment-3 .row-cards {
+        margin-left: -4px !important;
+        margin-right: -4px !important;
+    }
+
+    #tabs-payment-3 .row-cards > [class*="col-"] {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+    }
+
+    #tabs-payment-3 .card-sm .card-body {
+        padding: 8px 10px !important;
+    }
+
+    #project_paymentTable_wrapper {
+        padding: 4px !important;
+    }
+
+    #project_paymentTable th,
+    #project_paymentTable td {
+        padding: 6px 8px !important;
+    }
 </style>
-<div class="container-xl mt-3">
+<div class="p-1">
     <div class="row row-deck row-cards">
         <div class="col-12">
             <div class="card">
@@ -83,12 +116,8 @@ $enc_id = isset($_GET['id']) ? ($_GET['id']) : 0;
 
 
                     <?php
-                    $budget = $project->budget ?? 0;
-                    if ($hakedis > $budget) {
-                        $range = 100;
-                    } else {
-                        $range = ($hakedis != 0) ? number_format(($hakedis / ($budget ?? 1)) * 100, 0) : 0;
-                    }
+                    $budget = floatval($project->budget ?? 0);
+                    $range = ($budget > 0) ? min(100, (int)round(($hakedis / $budget) * 100)) : 0;
                     ?>
                     <div class="row mt-3">
                         <div class="mb-1">
@@ -235,23 +264,25 @@ $enc_id = isset($_GET['id']) ? ($_GET['id']) : 0;
                                 $i++;
                                 $item_id = Security::encrypt($item->id);
                                 $project_id = Security::encrypt($item->project_id);
+                                $item_table = $item->tablename ?? 'project_gelir_gider';
+                                $tx_type = ($item->turu > 0) ? (int)$item->turu : (($item_table == 'case_transaction') ? 5 : 0);
                                 ?>
                                 <tr>
                                     <td><?php echo $i; ?></td>
                                     <td><?php echo Date::dmY($item->tarih); ?></td>
                                     <td><?php
                                     // İşlem türüne göre icon ve renk belirle
-                                    echo Helper::getIconWithColorByType($item->turu) ?? ''
-                                    ;
-                                    echo $financialHelper::getTransactionType($item->turu) ?? '';
-                                    ; ?></td>
+                                    echo Helper::getIconWithColorByType($tx_type) ?? '';
+                                    $type_text = $financialHelper::getTransactionType($tx_type);
+                                    echo $type_text ?: ($item_table == 'case_transaction' ? 'Kasa Hareketi (Gelir)' : 'Kayıt');
+                                    ?></td>
                                     <td><?php echo $item->ay; ?></td>
                                     <td><?php echo $item->yil; ?></td>
                                     <td><?php echo Helper::formattedMoney($item->tutar); ?></td>
-                                    <td data-tooltip="<?php echo $item->aciklama; ?>">
-                                        <?php echo Helper::short($item->aciklama,30); ?>
+                                    <td data-tooltip="<?php echo htmlspecialchars($item->aciklama ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                        <?php echo htmlspecialchars(Helper::short($item->aciklama ?? '', 30), ENT_QUOTES, 'UTF-8'); ?>
                                     </td>
-                                    <td><?php echo $item->created_at; ?></td>
+                                    <td><?php echo htmlspecialchars($item->created_at ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
 
                                     <td class="text-end">
                                         <div class="dropdown">
@@ -259,12 +290,21 @@ $enc_id = isset($_GET['id']) ? ($_GET['id']) : 0;
                                                 data-bs-toggle="dropdown">İşlem</button>
                                             <?php if ($item->turu != 14) { ?>
                                                 <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item route-link"
-                                                        data-page="reports/ysc&id=<?php echo $item->id ?>" href="#">
+                                                    <a class="dropdown-item edit-project-action" href="#"
+                                                        data-id="<?php echo $item_id ?>" 
+                                                        data-project="<?php echo $project_id ?>"
+                                                        data-type="<?php echo $tx_type ?>"
+                                                        data-amount="<?php echo htmlspecialchars($item->tutar ?? 0, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-date="<?php echo htmlspecialchars(Date::dmY($item->tarih), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-case="<?php echo (int)($item->case_id ?? 0); ?>"
+                                                        data-description="<?php echo htmlspecialchars($item->aciklama ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-table="<?php echo htmlspecialchars($item_table, ENT_QUOTES, 'UTF-8'); ?>">
                                                         <i class="ti ti-edit icon me-3"></i> Güncelle
                                                     </a>
                                                     <a class="dropdown-item delete-project-action" href="#"
-                                                        data-id="<?php echo $item_id ?>" data-project="<?php echo $project_id ?>">
+                                                        data-id="<?php echo $item_id ?>" 
+                                                        data-project="<?php echo $project_id ?>"
+                                                        data-table="<?php echo htmlspecialchars($item_table, ENT_QUOTES, 'UTF-8'); ?>">
                                                         <i class="ti ti-trash icon me-3"></i> Sil
                                                     </a>
                                                 </div>

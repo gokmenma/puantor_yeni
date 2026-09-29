@@ -80,10 +80,151 @@ try {
     $columnSearches = [];
     foreach (($_POST['columns'] ?? []) as $index => $column) {
         $value = trim((string) ($column['search']['value'] ?? ''));
+        $isRegex = filter_var($column['search']['regex'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if ($value !== '') {
-            $columnSearches[(int) $index] = $value;
+            $columnSearches[(int) $index] = ['value' => $value, 'regex' => $isRegex];
         }
     }
+
+    $matchColumnFilter = static function ($cellValue, $searchValue, $isRegex = false): bool {
+        $searchValue = trim((string) $searchValue);
+        if ($searchValue === '') {
+            return true;
+        }
+        $cellValueStr = trim((string) $cellValue);
+
+        // Check if JSON multi-rule definition
+        if (str_starts_with($searchValue, '{') && str_ends_with($searchValue, '}')) {
+            $parsedJson = json_decode($searchValue, true);
+            if (is_array($parsedJson)) {
+                $type = $parsedJson['type'] ?? 'text';
+                $logic = $parsedJson['logic'] ?? ($type === 'text' ? 'or' : 'and');
+                $rules = $parsedJson['rules'] ?? [];
+
+                if (!empty($rules)) {
+                    $results = [];
+                    foreach ($rules as $r) {
+                        $op = $r['operator'] ?? 'contains';
+                        $val = trim((string) ($r['value'] ?? ''));
+                        
+                        $passed = false;
+                        if ($op === 'empty') {
+                            $passed = ($cellValueStr === '' || $cellValueStr === '-');
+                        } elseif ($op === 'not_empty') {
+                            $passed = ($cellValueStr !== '' && $cellValueStr !== '-');
+                        } elseif ($type === 'number') {
+                            $cellNum = Helper::standardizeWage($cellValueStr);
+                            $targetNum = Helper::standardizeWage($val);
+                            if ($op === 'equals') $passed = abs($cellNum - $targetNum) < 0.01;
+                            elseif ($op === 'gt') $passed = $cellNum > $targetNum;
+                            elseif ($op === 'lt') $passed = $cellNum < $targetNum;
+                            elseif ($op === 'gte') $passed = $cellNum >= $targetNum;
+                            elseif ($op === 'lte') $passed = $cellNum <= $targetNum;
+                            elseif ($op === 'contains') $passed = Helper::searchContains($cellValueStr, $val);
+                        } elseif ($type === 'date') {
+                            $cellTimestamp = strtotime(str_replace('/', '-', $cellValueStr));
+                            $targetTimestamp = strtotime(str_replace('/', '-', $val));
+                            if ($cellTimestamp !== false && $targetTimestamp !== false) {
+                                $dCell = strtotime(date('Y-m-d', $cellTimestamp));
+                                $dTarget = strtotime(date('Y-m-d', $targetTimestamp));
+                                if ($op === 'equals') $passed = ($dCell === $dTarget);
+                                elseif ($op === 'after' || $op === 'gt') $passed = ($dCell > $dTarget);
+                                elseif ($op === 'before' || $op === 'lt') $passed = ($dCell < $dTarget);
+                                elseif ($op === 'gte') $passed = ($dCell >= $dTarget);
+                                elseif ($op === 'lte') $passed = ($dCell <= $dTarget);
+                            }
+                        } else {
+                            if ($op === 'equals') $passed = (Helper::normalizeSearchText($cellValueStr) === Helper::normalizeSearchText($val));
+                            elseif ($op === 'starts') $passed = str_starts_with(Helper::normalizeSearchText($cellValueStr), Helper::normalizeSearchText($val));
+                            elseif ($op === 'ends') $passed = str_ends_with(Helper::normalizeSearchText($cellValueStr), Helper::normalizeSearchText($val));
+                            elseif ($op === 'not_contains') $passed = !Helper::searchContains($cellValueStr, $val);
+                            else $passed = Helper::searchContains($cellValueStr, $val);
+                        }
+                        $results[] = $passed;
+                    }
+
+                    if ($logic === 'or') {
+                        return in_array(true, $results, true);
+                    } else {
+                        return !in_array(false, $results, true);
+                    }
+                }
+            }
+        }
+
+        // Empty / Not Empty
+        if ($searchValue === '^$') {
+            return $cellValueStr === '' || $cellValueStr === '-';
+        }
+        if ($searchValue === '^(?!$).+' || $searchValue === '^(?!$).*') {
+            return $cellValueStr !== '' && $cellValueStr !== '-';
+        }
+
+        // Date comparisons (> 01.01.2023, < 01.01.2023, >= 01.01.2023, <= 01.01.2023)
+        if (preg_match('/^(>=|<=|>|<|=)\s*(\d{1,4}[.\-\/]\d{1,2}[.\-\/]\d{1,4})$/', $searchValue, $dateMatches)) {
+            $op = $dateMatches[1];
+            $cellTimestamp = strtotime(str_replace('/', '-', $cellValueStr));
+            $targetTimestamp = strtotime(str_replace('/', '-', $dateMatches[2]));
+            if ($cellTimestamp !== false && $targetTimestamp !== false) {
+                $dCell = strtotime(date('Y-m-d', $cellTimestamp));
+                $dTarget = strtotime(date('Y-m-d', $targetTimestamp));
+                if ($op === '>') return $dCell > $dTarget;
+                if ($op === '<') return $dCell < $dTarget;
+                if ($op === '>=') return $dCell >= $dTarget;
+                if ($op === '<=') return $dCell <= $dTarget;
+                if ($op === '=') return $dCell === $dTarget;
+            }
+        }
+
+        // Numeric / Money comparisons (>, <, >=, <=, =)
+        if (preg_match('/^(>=|<=|>|<|=)\s*(.+)$/', $searchValue, $opMatches)) {
+            $op = $opMatches[1];
+            $targetVal = Helper::standardizeWage($opMatches[2]);
+            $currentVal = Helper::standardizeWage($cellValueStr);
+            if ($op === '>') return $currentVal > $targetVal;
+            if ($op === '<') return $currentVal < $targetVal;
+            if ($op === '>=') return $currentVal >= $targetVal;
+            if ($op === '<=') return $currentVal <= $targetVal;
+            if ($op === '=') return $currentVal == $targetVal;
+        }
+
+        // Regex / String conditions
+        $isRegexPattern = $isRegex || str_starts_with($searchValue, '^') || str_ends_with($searchValue, '$');
+        if ($isRegexPattern) {
+            $cleanSearch = $searchValue;
+            $isExact = false;
+            $isStart = false;
+            $isEnd = false;
+            if (str_starts_with($cleanSearch, '^') && str_ends_with($cleanSearch, '$')) {
+                $cleanSearch = substr($cleanSearch, 1, -1);
+                $isExact = true;
+            } elseif (str_starts_with($cleanSearch, '^')) {
+                $cleanSearch = substr($cleanSearch, 1);
+                $isStart = true;
+            } elseif (str_ends_with($cleanSearch, '$')) {
+                $cleanSearch = substr($cleanSearch, 0, -1);
+                $isEnd = true;
+            }
+
+            // Remove any regex escaping backslashes if present
+            $cleanSearch = stripslashes($cleanSearch);
+
+            $normCell = Helper::normalizeSearchText($cellValueStr);
+            $normSearch = Helper::normalizeSearchText($cleanSearch);
+
+            if ($isExact) {
+                return $normCell === $normSearch;
+            }
+            if ($isStart) {
+                return str_starts_with($normCell, $normSearch);
+            }
+            if ($isEnd) {
+                return str_ends_with($normCell, $normSearch);
+            }
+        }
+
+        return Helper::searchContains($cellValueStr, $searchValue);
+    };
 
     $orderColumn = (int) ($_POST['order'][0]['column'] ?? 1);
     $orderDirection = strtolower((string) ($_POST['order'][0]['dir'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
@@ -164,8 +305,8 @@ try {
                 continue;
             }
 
-            foreach ($columnSearches as $index => $value) {
-                if (!Helper::searchContains($searchable[$index] ?? '', $value)) {
+            foreach ($columnSearches as $index => $filterInfo) {
+                if (!$matchColumnFilter($searchable[$index] ?? '', $filterInfo['value'], $filterInfo['regex'])) {
                     $matches = false;
                     break;
                 }

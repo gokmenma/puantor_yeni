@@ -14,21 +14,21 @@ class Roles extends Model
     }
 
     public function getRolesByFirm($firm_id){
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = ? AND deleted_at IS NULL ORDER BY main_role DESC, id ASC");
         $sql->execute([$firm_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
     //Gelen id hariç diğer rolleri, firmaya göre getir
     public function getRolesByFirmExceptId($id){
-        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = ? AND id != ?");
+        $sql = $this->db->prepare("SELECT * FROM $this->table WHERE firm_id = ? AND id != ? AND deleted_at IS NULL ORDER BY roleName ASC");
         $sql->execute([$this->firm_id, $id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
     //Role grubunu say
     public function countRolesByFirm(){
-        $sql = $this->db->prepare("SELECT COUNT(*) as total FROM $this->table WHERE firm_id = ?");
+        $sql = $this->db->prepare("SELECT COUNT(*) as total FROM $this->table WHERE firm_id = ? AND deleted_at IS NULL");
         $sql->execute([$this->firm_id]);
         return $sql->fetch(PDO::FETCH_OBJ);
     }

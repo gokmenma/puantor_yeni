@@ -269,19 +269,73 @@ table#puantajTable.table {
     width: 100% !important;
     table-layout: auto !important;
     border-collapse: separate !important;
-    border-spacing: 2px !important;
+    border-spacing: 2px 3px !important;
     margin: 0 !important;
-    border: 1px solid var(--tblr-border-color) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: none !important;
 }
 
+/* Table tr & td */
 #puantajTable th,
 #puantajTable td {
-    border: 1px solid var(--tblr-border-color) !important;
-    padding: 8px 6px !important;
+    border: 1px solid var(--tblr-border-color, #e2e8f0) !important;
+    padding: 6px 4px !important;
     vertical-align: middle !important;
     white-space: nowrap !important;
     border-radius: 6px !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+}
+
+/* Standart hücre zemin rengi */
+#puantajTable tbody td {
+    --puantaj-cell-bg: var(--tblr-bg-surface, #ffffff);
+    background-color: var(--puantaj-cell-bg) !important;
+    background-image: none !important;
+}
+[data-bs-theme="dark"] #puantajTable tbody td {
+    --puantaj-cell-bg: #1e293b;
+}
+
+#puantajTable tbody tr,
+#puantajTable tbody td,
+#puantajTable tbody th {
+    transition: none !important;
+}
+
+/* Puantaj tablosunda satır hover vurgusunu kapat. */
+#puantajTable {
+    --tblr-table-hover-bg: transparent !important;
+    --tblr-table-accent-bg: transparent !important;
+    --tblr-table-bg-state: transparent !important;
+    --tblr-table-hover-color: inherit !important;
+    --dt-row-hover: 0, 0, 0, 0 !important;
+    --dt-row-stripe: 0, 0, 0, 0 !important;
+}
+
+#puantajTable > tbody > tr:hover,
+#puantajTable > tbody > tr:hover > * {
+    --tblr-table-bg-state: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+#puantajTable > tbody > tr:hover > td {
+    background-color: var(--puantaj-cell-bg) !important;
+}
+
+#puantajTable tbody td.unclicked {
+    background-color: var(--tblr-bg-surface, #ffffff) !important;
+    background-image: none !important;
+}
+
+#puantajTable tbody td.gun.clicked {
+    background-color: #FFED00 !important;
+    border-color: #eab308 !important;
 }
 
 /* First column greedy behavior */
@@ -293,6 +347,23 @@ table#puantajTable.table {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border-radius: 6px !important;
+}
+
+#puantajTable thead tr:nth-child(2) th {
+    padding: 3px 2px !important;
+    background-color: var(--tblr-bg-surface, #ffffff) !important;
+}
+
+#puantajTable thead tr:nth-child(2) th input.form-control,
+#puantajTable thead tr:nth-child(2) th input {
+    height: 30px !important;
+    font-size: 12px !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    margin: 0 !important;
 }
 
 #puantajTable th:nth-child(2),
@@ -301,63 +372,58 @@ table#puantajTable.table {
     min-width: 160px !important;
 }
 
-#puantajTable th,
-#puantajTable td {
-    box-sizing: border-box;
-}
-
 .table tbody tr td {
-    max-height: 45px !important;
-    height: 45px !important;
+    max-height: 42px !important;
+    height: 42px !important;
     padding: 4px !important;
     vertical-align: middle !important;
     text-align: center;
+    border-radius: 6px !important;
 }
 
-/* Gün hücrelerini her koşulda sabitle */
+/* Gün hücrelerini her koşulda sabitle ve köşelerini yuvarlak yap */
 .gunadi,
 .head-date {
-    width: 40px !important;
-    min-width: 40px !important;
-    max-width: 40px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
     padding: 4px 0 !important;
     text-align: center !important;
     overflow: hidden !important;
     white-space: nowrap !important;
     font-size: 13px !important;
+    font-family: inherit !important;
+    border-radius: 6px !important;
 }
 
 .gun {
-    width: 40px !important;
-    min-width: 40px !important;
-    max-width: 40px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
     padding: 4px 0 !important;
     text-align: center !important;
     white-space: nowrap !important;
     font-size: 13px !important;
-}
-
-.table tr td,
-.table th {
-    border: 1px solid var(--tblr-border-color) !important;
+    font-family: inherit !important;
+    border-radius: 6px !important;
 }
 
 .gun.clicked {
     background-color: #FFED00 !important;
+    border-color: #eab308 !important;
+    border-radius: 6px !important;
     cursor: pointer;
 }
 
 .gun.izin-kilitli {
     cursor: not-allowed !important;
     opacity: 0.85;
+    border-radius: 6px !important;
 }
 
 .unclicked {
     background-color: var(--tblr-bg-surface);
-}
-
-th:hover {
-    cursor: pointer;
+    border-radius: 6px !important;
 }
 
 th.ld {
@@ -529,7 +595,7 @@ table {
 .table-responsive {
     height: auto;
     overflow: auto !important;
-    border: 1px solid var(--tblr-border-color);
+    border: none !important;
 }
 
 /* Ayarlar dropdown stili */
@@ -551,7 +617,7 @@ table {
 }
 
 #puantajTable thead th.cursor-pointer:hover {
-    background-color: var(--tblr-bg-surface-secondary) !important;
+    background-color: var(--tblr-bg-surface) !important;
 }
 
 #puantajTable thead th.cursor-pointer {
@@ -638,16 +704,14 @@ table {
 .select2-container--default .select2-selection--multiple {
     border: 1px solid var(--tblr-border-color, #dadce0) !important;
     border-radius: 4px !important;
-    /* Matches standard Tabler border-radius */
     background-color: var(--tblr-bg-surface, #fff) !important;
     min-height: 40px !important;
-    /* Matches standard Tabler select2-selection--single height of 40px */
     height: 40px !important;
-    /* Matches standard Tabler select2-selection--single height of 40px */
     padding: 0 2rem 0 0.75rem !important;
-    /* Left-right padding, right padding room for arrow */
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
     background-repeat: no-repeat !important;
@@ -668,23 +732,31 @@ table {
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
     align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
     width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
     list-style: none !important;
-    gap: 0px !important;
+    gap: 4px !important;
     height: 100% !important;
 }
 
 .select2-container--default .select2-selection--multiple .select2-search--inline {
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field,
+.select2-container--default .select2-selection--multiple input.select2-search__field {
     margin: 0 !important;
     padding: 0 !important;
     background: transparent !important;
@@ -695,14 +767,24 @@ table {
     font-family: inherit !important;
     color: #495057 !important;
     height: 100% !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
     line-height: 40px !important;
     text-align: left !important;
+    text-indent: 0 !important;
 }
 
-.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
+.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder,
+.select2-container--default .select2-selection--multiple input.select2-search__field::placeholder,
+.select2-container .select2-search__field::placeholder,
+.select2-container .select2-selection__placeholder {
     color: #9ca3af !important;
     opacity: 1 !important;
     text-align: left !important;
+    justify-content: flex-start !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Force Select2 search text and placeholder alignment to left */
@@ -725,6 +807,14 @@ table {
 .select2-container--default .select2-selection--multiple:not( :has(.select2-selection__choice)) .select2-search--inline,
 .select2-container--default .select2-selection--multiple:not( :has(.select2-selection__choice)) .select2-search__field {
     width: 100% !important;
+}
+
+.form-selectgroup .form-selectgroup-label {
+    min-height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
 }
 
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
@@ -1048,170 +1138,39 @@ $is_period_closed = ($bordro_model->getPeriodVisibility($firm_id, $year, $month)
 <script>
 window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
 </script>
-
-<?php if ($is_period_closed): ?>
-<div class="container-xl mt-3">
-    <div class="alert alert-important alert-danger d-flex align-items-center mb-0 shadow-sm" role="alert">
+<div class='container-xl mt-2 mb-2'>
+    <?php if ($is_period_closed): ?>
+    <div class="alert alert-important alert-danger d-flex align-items-center mb-2 shadow-sm" role="alert">
         <i class="ti ti-lock icon me-2 fs-2"></i>
         <div>
             <strong>Dönem Kapatılmıştır!</strong> <?php echo Date::monthName($month) . ' ' . $year; ?> döneminin bordrosu kapatıldığı için bu ayın puantaj verileri kilitlenmiştir, değişiklik yapılamaz.
         </div>
     </div>
-</div>
-<?php endif; ?>
+    <?php endif; ?>
 
-<div class='container-xl mt-3'>
-    <form action='' method='post' id='puantajInfoForm'>
-        <div class='row g-2 align-items-center d-print-none'>
-            <div class='col-md-3'>
-                <label for='projects' class='form-label'>Proje:</label>
-                <?php echo $projectHelper->getProjectSelectMultiple( 'projects', $valid_project_ids ); ?>
-            </div>
-            <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
-            <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
-            <div class='col-md-2'>
-                <label for='job_groups' class='form-label'>Grup:</label>
-                <?php echo $jobsHelper->jobGroupsSelect( 'job_groups', $job_group );
-        ?>
-            </div>
-            <div class='col-md-2'>
-                <label for='team_id' class='form-label'>Ekip:</label>
-                <?php echo $teamsHelper->teamsSelect( 'team_id', $team_id );
-        ?>
-            </div>
-            <div class='col-md-3'>
-                <label class='form-label'>Personel Durumu:</label>
-                <div class='form-selectgroup'>
-                    <label class='form-selectgroup-item'>
-                        <input type='radio' name='person_status' value='all' class='form-selectgroup-input' <?php echo $person_status == 'all' ? 'checked' : '';
-        ?>>
-                        <span class='form-selectgroup-label'>
-                            <i class='ti ti-users icon me-1'></i> Tümü
-                        </span>
-                    </label>
-                    <label class='form-selectgroup-item'>
-                        <input type='radio' name='person_status' value='active' class='form-selectgroup-input' <?php echo $person_status == 'active' ? 'checked' : '';
-        ?>>
-                        <span class='form-selectgroup-label'>
-                            <i class='ti ti-user-check icon me-1 text-success'></i> Aktif
-                        </span>
-                    </label>
-                    <label class='form-selectgroup-item'>
-                        <input type='radio' name='person_status' value='passive' class='form-selectgroup-input' <?php echo $person_status == 'passive' ? 'checked' : '';
-        ?>>
-                        <span class='form-selectgroup-label'>
-                            <i class='ti ti-user-x icon me-1 text-danger'></i> Pasif
-                        </span>
-                    </label>
-                </div>
-            </div>
-        </div>
-        <div id='project-warning-bar' class='row d-none mt-2'>
-            <div class='col-12'>
-                <div class='alert alert-warning py-2 px-3 mb-0 d-flex align-items-center justify-content-between'
-                    style='font-size: 12px; line-height: 1.4; border-radius: 4px;'>
-                    <div class='d-flex align-items-center'>
-                        <i class='ti ti-alert-triangle me-2'></i>
-                        <span>Birden fazla proje seçildiğinde, yeni atamalar her personelin varsayılan projesine göre yapılacaktır.</span>
-                    </div>
-                    <button type='button' id='btn-clear-projects' class='btn btn-warning btn-sm py-1 px-2 border-0' style='font-size: 11px; font-weight: 600;'>
-                        <i class='ti ti-x me-1'></i> Projeleri Temizle
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div id='project-empty-warning-bar' class='row d-none mt-2'>
-            <div class='col-12'>
-                <div class='alert alert-warning alert-dismissible py-2 px-3 mb-0 d-flex align-items-center'
-                    style='font-size: 12px; line-height: 1.4; border-radius: 4px; background-color: #fff3cd; border-color: #ffecb5; color: #664d03;'>
-                    <i class='ti ti-alert-triangle me-2 fs-2' style='color: #664d03;'></i>
-                    <span><strong>Proje Seçilmedi!</strong> Proje seçmeden de puantaj girişi yapabilirsiniz. Verileri projeye göre filtrelemek için en az bir proje seçiniz.</span>
-                    <a class='btn-close' data-bs-dismiss='alert' aria-label='close' style='top: 50%; transform: translateY(-50%); padding: 0 1.25rem;'></a>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<div class='container-xl mt-3'>
     <div class='row row-deck row-cards'>
         <div class='col-12'>
             <div class='card'>
-                <div class='card-header'>
-                    <div class='accordion-item border-0 w-100' style='background: transparent;'>
-                        <h2 class='accordion-header' id='heading-1'>
-                            <button class='accordion-button collapsed' type='button' data-bs-toggle='collapse'
-                                data-bs-target='#collapse-1' aria-expanded='false'
-                                style='background: transparent; box-shadow: none; padding: 0.25rem 0; width: 100%;'>
-                                <div class='d-flex align-items-center'>
-                                    <span class='avatar avatar-sm bg-blue-lt text-blue rounded me-2 animate-pulse' style='width: 32px; height: 32px;'>
-                                        <i class='ti ti-info-circle fs-2'></i>
-                                    </span>
-                                    <div class='text-start'>
-                                        <div class='font-weight-medium' style='font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.2;'>Puantaj İpuçları & Kısayollar</div>
-                                        <div class='text-muted' style='font-size: 11px; line-height: 1.1; margin-top: 2px;'>Kullanım ipuçlarını ve kısayolları görmek için tıklayın!</div>
-                                    </div>
-                                </div>
-                            </button>
-                        </h2>
-                        <div id='collapse-1' class='accordion-collapse collapse' data-bs-parent='#heading-1'>
-                            <div class='accordion-body pt-3 pb-2 ps-2'
-                                style='font-size: 13px; line-height: 1.6; color: #475569;'>
-                                <div class='row g-3'>
-                                    <div class='col-md-6'>
-                                        <div class='mb-2 d-flex align-items-start'>
-                                            <i class='ti ti-pointer text-blue me-2 mt-1 fs-3'></i>
-                                            <span><strong>Tek Tek Seçim:</strong> İstediğiniz hücrenin üzerine tek
-                                                tıklayarak seçebilirsiniz.</span>
-                                        </div>
-                                        <div class='mb-2 d-flex align-items-start'>
-                                            <i class='ti ti-mouse text-blue me-2 mt-1 fs-3'></i>
-                                            <span><strong>Çoklu Seçim:</strong> Sol tıklayıp basılı tutarak fareyi
-                                                hücreler üzerinde sürükleyebilirsiniz.</span>
-                                        </div>
-                                        <div class='mb-2 d-flex align-items-start'>
-                                            <i class='ti ti-arrows-down text-blue me-2 mt-1 fs-3'></i>
-                                            <span><strong>Tüm Sütunu Seçme:</strong> En üstteki <strong>tarih
-                                                    sayısına</strong> veya <strong>gün adına</strong> tıklayarak tüm
-                                                personellerin o günkü hücresini seçebilirsiniz.</span>
-                                        </div>
-                                    </div>
-                                    <div class='col-md-6'>
-                                        <div class='mb-2 d-flex align-items-start'>
-                                            <i class='ti ti-keyboard text-purple me-2 mt-1 fs-3'></i>
-                                            <span><strong>Hızlı Menü ( Ctrl ):</strong> Seçim yaparken
-                                                <strong>Ctrl</strong> tuşunu basılı tutarsanız, seçimi bıraktığınızda
-                                                tür menüsü otomatik açılır.</span>
-                                        </div>
-                                        <div class='mb-2 d-flex align-items-start'>
-                                            <i class='ti ti-trash text-danger me-2 mt-1 fs-3'></i>
-                                            <span><strong>Puantaj Silme ( Delete ):</strong> İlgili hücreleri seçip
-                                                klavyeden <strong>Delete</strong> tuşuna basın ve ardından
-                                                <strong>Kaydet</strong> butonuna tıklayın.</span>
-                                        </div>
-                                        <div class='mb-2 d-flex align-items-start'>
-                                            <i class='ti ti-x text-warning me-2 mt-1 fs-3'></i>
-                                            <span><strong>Seçimleri Temizleme ( Esc ):</strong> Sarı renkli seçili
-                                                hücreleri iptal etmek için klavyeden <strong>ESC</strong> tuşuna
-                                                basabilirsiniz.</span>
-                                        </div>
-                                        <div class='mb-0 d-flex align-items-start'>
-                                            <i class='ti ti-device-floppy text-success me-2 mt-1 fs-3'></i>
-                                            <span><strong>Hızlı Kaydet ( Ctrl+S ):</strong> Çalışmalarınızı anında
-                                                kaydetmek için klavyeden <strong>Ctrl + S</strong> tuş kombinasyonunu
-                                                kullanabilirsiniz.</span>
-                                        </div>
-                                    </div>
-                                </div>
+                <div class='card-header d-flex flex-wrap align-items-center justify-content-between gap-2 py-2 px-3'>
+                    <div class='d-flex align-items-center gap-3 cursor-pointer user-select-none' data-bs-toggle='collapse' data-bs-target='#collapse-1' aria-expanded='false' title='İpuçları ve kısayolları açmak/kapatmak için tıklayın'>
+                        <div class='card-header-icon'>
+                            <i class='ti ti-calendar-event'></i>
+                        </div>
+                        <div>
+                            <div class='d-flex align-items-center gap-1'>
+                                <h4 class='card-title mb-0 fw-bold' style='font-size: 15px; letter-spacing: -0.2px;'>Puantaj Cetveli</h4>
+                                <i class='ti ti-bulb text-warning ms-1 fs-3' title='İpuçları'></i>
+                                <i class='ti ti-chevron-down text-muted fs-3'></i>
                             </div>
+                            <p class='text-muted mb-0 font-11' style='font-size: 11.5px; line-height: 1.2;'><?php echo Date::monthName( $month ) . ' ' . $year; ?> dönemi günlük devam ve puantaj takibi &bull; <span class='text-primary fw-medium'>İpuçları için tıklayın</span></p>
                         </div>
                     </div>
 
-                    <div class='col-auto ms-auto d-flex gap-2 align-items-center'>
-                        <div id='favorite-types-shortcuts' class='d-flex align-items-center gap-1 me-2'></div>
+                    <div class='d-flex gap-2 align-items-center flex-wrap ms-auto'>
+                        <div id='favorite-types-shortcuts' class='d-flex align-items-center gap-1 me-1'></div>
 
-                        <div id='selected-type-container' class='d-none align-items-center gap-2'>
-                            <span class='text-secondary' style='font-size: 13px; font-weight: 500;'>Seçili Tür:</span>
+                        <div id='selected-type-container' class='d-none align-items-center gap-2 me-1'>
+                            <span class='text-secondary' style='font-size: 12.5px; font-weight: 500;'>Seçili:</span>
                             <div class='selected-type-badge-wrapper cursor-pointer' id='selected-type-toggle'>
                                 <span id='selected-type-status-dot'
                                     style='width: 8px; height: 8px; border-radius: 50%; display: inline-block; background-color: #2fb344; box-shadow: 0 0 0 2px rgba(47, 179, 68, 0.2); transition: background-color 0.2s, box-shadow 0.2s; margin-left: 6px;'></span>
@@ -1223,22 +1182,19 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                             </div>
                         </div>
 
-                        <a href='#' class='btn' data-bs-toggle='modal' data-bs-target='#modal-default'>
-                            <i class='ti ti-plus icon me-2'></i> Puantaj Türleri
+                        <button type='button' class='btn btn-sm btn-outline-secondary' id='btn-toggle-filter-panel'
+                            title='Filtre Alanını Gizle/Göster' style='height: 32px; padding: 4px 10px; font-size: 12.5px;'>
+                            <i class='ti ti-adjustments-horizontal me-1' id='filter-toggle-icon'></i> Filtre
+                        </button>
+
+                        <a href='#' class='btn btn-sm btn-outline-secondary' data-bs-toggle='modal' data-bs-target='#modal-default' style='height: 32px; padding: 4px 10px; font-size: 12.5px;'>
+                            <i class='ti ti-plus me-1'></i> Türler
                         </a>
 
-                        <?php if ( $Auths->hasPermission( 'puantaj_data_entry' ) ) {
-            ?>
-                        <button type='button' class='btn btn-primary float-end' onclick='puantaj_olustur()' <?php echo $is_period_closed ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : ''; ?>>
-                            <i class='ti ti-device-floppy icon me-2'></i> Kaydet
-                        </button>
-                        <?php }
-            ?>
-
                         <div class='dropdown'>
-                            <button type='button' class='btn btn-outline-secondary dropdown-toggle'
-                                data-bs-toggle='dropdown' aria-haspopup='true' aria-expanded='false' title='İşlemler'>
-                                <i class='ti ti-settings icon me-1'></i> İşlemler
+                            <button type='button' class='btn btn-sm btn-outline-secondary dropdown-toggle'
+                                data-bs-toggle='dropdown' aria-haspopup='true' aria-expanded='false' title='İşlemler' style='height: 32px; padding: 4px 10px; font-size: 12.5px;'>
+                                <i class='ti ti-settings me-1'></i> İşlemler
                             </button>
                             <div class='dropdown-menu dropdown-menu-end dropdown-menu-settings dropdown-menu-column-selector'
                                 style='min-width: 260px;'>
@@ -1251,8 +1207,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                                     <i class='ti ti-printer text-primary me-2 fs-3'></i> Puantajı Yazdır
                                 </a>
 
-                                <?php if ( $Auths->hasPermission( 'puantaj_data_entry' ) ) {
-                ?>
+                                <?php if ( $Auths->hasPermission( 'puantaj_data_entry' ) ) { ?>
                                 <a class='dropdown-item cursor-pointer' data-bs-toggle='modal'
                                     data-bs-target='#modal-statistics'>
                                     <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'
@@ -1269,6 +1224,11 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                                         <path d='M14.113 6.65l2.771 3.695' />
                                         <path d='M16 12.5l-5 2' />
                                     </svg> İstatistikler
+                                </a>
+                                <?php } ?>
+
+                                <a class='dropdown-item cursor-pointer' data-bs-toggle='collapse' data-bs-target='#collapse-1' href='#'>
+                                    <i class='ti ti-bulb text-warning me-2 fs-3'></i> İpuçları & Kısayollar
                                 </a>
 
                                 <div class='dropdown-divider'></div>
@@ -1318,11 +1278,130 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                                         <input class='form-check-input' type='checkbox'
                                             id='setting-only-active-project'>
                                         <span class='form-check-label' style='font-size: 13px;'>Sadece Aktif Proje
-                                            Günleri Topla</span>
+                                            Hesaplansın</span>
                                     </label>
                                 </div>
-                                <?php }
-                ?>
+                            </div>
+                        </div>
+
+                        <?php if ( $Auths->hasPermission( 'puantaj_data_entry' ) ) { ?>
+                        <button type='button' class='btn btn-sm btn-primary' onclick='puantaj_olustur()' <?php echo $is_period_closed ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : ''; ?> style='height: 32px; padding: 4px 12px; font-size: 12.5px;'>
+                            <i class='ti ti-device-floppy me-1'></i> Kaydet
+                        </button>
+                        <?php } ?>
+                    </div>
+                </div>
+
+                <!-- Integrated Filter Panel inside the card -->
+                <div id='puantaj-filter-container' class='border-bottom' style='background: var(--tblr-bg-surface-secondary, #f8fafc);'>
+                    <script>
+                        (function() {
+                            try {
+                                if (localStorage.getItem('puantaj_filter_panel_visible') === 'false') {
+                                    document.getElementById('puantaj-filter-container').style.display = 'none';
+                                }
+                            } catch(e) {}
+                        })();
+                    </script>
+                    <div class='p-3'>
+                        <form action='' method='post' id='puantajInfoForm' class='m-0'>
+                            <div class='row g-2 align-items-end d-print-none'>
+                                <div class='col-12 col-md-5 col-lg-4'>
+                                    <label for='projects' class='form-label fw-semibold text-secondary mb-1' style='font-size: 11.5px;'>
+                                        <i class='ti ti-building me-1 text-primary'></i> Proje
+                                    </label>
+                                    <?php echo $projectHelper->getProjectSelectMultiple( 'projects', $valid_project_ids ); ?>
+                                </div>
+                                <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
+                                <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
+                                <div class='col-6 col-md-3 col-lg-2'>
+                                    <label for='job_groups' class='form-label fw-semibold text-secondary mb-1' style='font-size: 11.5px;'>
+                                        <i class='ti ti-category me-1 text-primary'></i> Grup
+                                    </label>
+                                    <?php echo $jobsHelper->jobGroupsSelect( 'job_groups', $job_group ); ?>
+                                </div>
+                                <div class='col-6 col-md-4 col-lg-2'>
+                                    <label for='team_id' class='form-label fw-semibold text-secondary mb-1' style='font-size: 11.5px;'>
+                                        <i class='ti ti-users-group me-1 text-primary'></i> Ekip
+                                    </label>
+                                    <?php echo $teamsHelper->teamsSelect( 'team_id', $team_id ); ?>
+                                </div>
+                                <div class='col-12 col-md-12 col-lg-4'>
+                                    <label class='form-label fw-semibold text-secondary mb-1' style='font-size: 11.5px;'>
+                                        <i class='ti ti-user-check me-1 text-primary'></i> Personel Durumu
+                                    </label>
+                                    <div class='form-selectgroup w-100 d-flex'>
+                                        <label class='form-selectgroup-item flex-fill'>
+                                            <input type='radio' name='person_status' value='all' class='form-selectgroup-input' <?php echo $person_status == 'all' ? 'checked' : ''; ?>>
+                                            <span class='form-selectgroup-label w-100 justify-content-center py-1' style='min-height: 34px; font-size: 12.5px;'>
+                                                <i class='ti ti-users icon me-1'></i> Tümü
+                                            </span>
+                                        </label>
+                                        <label class='form-selectgroup-item flex-fill'>
+                                            <input type='radio' name='person_status' value='active' class='form-selectgroup-input' <?php echo $person_status == 'active' ? 'checked' : ''; ?>>
+                                            <span class='form-selectgroup-label w-100 justify-content-center py-1' style='min-height: 34px; font-size: 12.5px;'>
+                                                <i class='ti ti-user-check icon me-1 text-success'></i> Aktif
+                                            </span>
+                                        </label>
+                                        <label class='form-selectgroup-item flex-fill'>
+                                            <input type='radio' name='person_status' value='passive' class='form-selectgroup-input' <?php echo $person_status == 'passive' ? 'checked' : ''; ?>>
+                                            <span class='form-selectgroup-label w-100 justify-content-center py-1' style='min-height: 34px; font-size: 12.5px;'>
+                                                <i class='ti ti-user-x icon me-1 text-danger'></i> Pasif
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id='project-warning-bar' class='d-none mt-2'>
+                                <div class='alert alert-warning py-1 px-3 mb-0 d-flex align-items-center justify-content-between rounded-2 shadow-none'
+                                    style='font-size: 12px; background: rgba(245, 159, 0, 0.12); color: #92400e; border: 1px solid rgba(245, 159, 0, 0.25);'>
+                                    <div class='d-flex align-items-center'>
+                                        <i class='ti ti-alert-triangle me-2 fs-2 text-warning flex-shrink-0'></i>
+                                        <span>Birden fazla proje seçildiğinde, yeni atamalar her personelin varsayılan projesine göre yapılacaktır.</span>
+                                    </div>
+                                    <button type='button' id='btn-clear-projects' class='btn btn-warning btn-sm py-1 px-2 border-0 shadow-none' style='font-size: 11px; font-weight: 600;'>
+                                        <i class='ti ti-x me-1'></i> Projeleri Temizle
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id='collapse-1' class='collapse border-bottom' style='background-color: var(--tblr-bg-surface-secondary, #f8fafc);'>
+                    <div class='p-3' style='font-size: 13px; line-height: 1.6; color: #475569;'>
+                        <div class='row g-3'>
+                            <div class='col-md-6'>
+                                <div class='mb-2 d-flex align-items-start'>
+                                    <i class='ti ti-pointer text-blue me-2 mt-1 fs-3'></i>
+                                    <span><strong>Tek Tek Seçim:</strong> İstediğiniz hücrenin üzerine tek tıklayarak seçebilirsiniz.</span>
+                                </div>
+                                <div class='mb-2 d-flex align-items-start'>
+                                    <i class='ti ti-mouse text-blue me-2 mt-1 fs-3'></i>
+                                    <span><strong>Çoklu Seçim:</strong> Sol tıklayıp basılı tutarak fareyi hücreler üzerinde sürükleyebilirsiniz.</span>
+                                </div>
+                                <div class='mb-2 d-flex align-items-start'>
+                                    <i class='ti ti-arrows-down text-blue me-2 mt-1 fs-3'></i>
+                                    <span><strong>Tüm Sütunu Seçme:</strong> En üstteki <strong>tarih sayısına</strong> veya <strong>gün adına</strong> tıklayarak tüm personellerin o günkü hücresini seçebilirsiniz.</span>
+                                </div>
+                            </div>
+                            <div class='col-md-6'>
+                                <div class='mb-2 d-flex align-items-start'>
+                                    <i class='ti ti-keyboard text-purple me-2 mt-1 fs-3'></i>
+                                    <span><strong>Hızlı Menü (Ctrl):</strong> Seçim yaparken <strong>Ctrl</strong> tuşunu basılı tutarsanız, seçimi bıraktığınızda tür menüsü otomatik açılır.</span>
+                                </div>
+                                <div class='mb-2 d-flex align-items-start'>
+                                    <i class='ti ti-trash text-danger me-2 mt-1 fs-3'></i>
+                                    <span><strong>Puantaj Silme (Delete):</strong> İlgili hücreleri seçip klavyeden <strong>Delete</strong> tuşuna basın ve ardından <strong>Kaydet</strong> butonuna tıklayın.</span>
+                                </div>
+                                <div class='mb-2 d-flex align-items-start'>
+                                    <i class='ti ti-x text-warning me-2 mt-1 fs-3'></i>
+                                    <span><strong>Seçimleri Temizleme (Esc):</strong> Sarı renkli seçili hücreleri iptal etmek için klavyeden <strong>ESC</strong> tuşuna basabilirsiniz.</span>
+                                </div>
+                                <div class='mb-0 d-flex align-items-start'>
+                                    <i class='ti ti-device-floppy text-success me-2 mt-1 fs-3'></i>
+                                    <span><strong>Hızlı Kaydet (Ctrl+S):</strong> Çalışmalarınızı anında kaydetmek için klavyeden <strong>Ctrl + S</strong> tuş kombinasyonunu kullanabilirsiniz.</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1349,7 +1428,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                     </div>
                 </div>
 
-                <div class='table-responsive <?php echo $is_period_closed ? "period-closed-table" : ""; ?>'>
+                <div class='table-responsive <?php echo $is_period_closed ? "period-closed-table" : ""; ?>' style='padding: 4px !important;'>
                     <table id='puantajTable' class='table card-table text-nowrap datatable'>
                         <thead class='sticky'>
                             <tr>
@@ -1620,7 +1699,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                     $izinTitle = $holidayCellTitle !== ''
                         ? "Onaylı izin — düzenlenemez | {$holidayCellTitle}"
                         : 'Onaylı izin — düzenlenemez';
-                    echo "<td class='gun noselect izin-kilitli{$holidayCellClass}' data-izin-kilitli='1' data-change='false' data-project='0' data-id='{$izinBilgi->puantaj_turu_id}' title='{$izinTitle}' style='background:{$izinBilgi->arkaplan};color:{$izinBilgi->font};min-width:40px !important;'>{$izKod}</td>";
+                    echo "<td class='gun noselect izin-kilitli{$holidayCellClass}' data-izin-kilitli='1' data-change='false' data-project='0' data-id='{$izinBilgi->puantaj_turu_id}' title='{$izinTitle}' style='--puantaj-cell-bg:{$izinBilgi->arkaplan};color:{$izinBilgi->font};min-width:40px !important;'>{$izKod}</td>";
                 } elseif ( $puantaj_id >= 0 && $puantaj_id !== '' ) {
                     $puantaj_project = $puantajRecord->project_id ?? 0;
                     $puantajTuru = $allPuantajTurleri[$puantaj_id] ?? null;
@@ -1647,7 +1726,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                             }
                         }
                         $cellTooltip = $holidayCellTitle !== '' ? $tooltip . ' | ' . $holidayCellTitle : $tooltip;
-                        echo "<td class='gun noselect $selected{$holidayCellClass}' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " title='$cellTooltip' data-tooltip='$cellTooltip' style='background:" . $backcolor . ';color:' . $color . "; min-width: 40px !important;'>" . $puantajTuru->PuantajKod . '</td>';
+                        echo "<td class='gun noselect $selected{$holidayCellClass}' data-change='false' data-project='" . $puantaj_project . "' data-id=" . $puantajTuru->id . " style='--puantaj-cell-bg:" . $backcolor . ';color:' . $color . "; min-width: 40px !important;'>" . $puantajTuru->PuantajKod . '</td>';
                     } else {
                         echo "<td class='gun noselect{$holidayCellClass}' data-change='false' data-project='0' title='{$holidayCellTitle}' style='min-width: 40px !important;'></td>";
                     }
@@ -1655,7 +1734,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                     if ( Date::isWeekend( $date ) ) {
                         $weekendTuru = $allPuantajTurleri[ 53 ] ?? null;
                         if ( $weekendTuru ) {
-                            echo "<td class='gun noselect{$holidayCellClass}' data-tooltip='{$holidayCellTitle}' title='{$holidayCellTitle}' data-change='false' data-project='' data-id='53' style='background:" . $weekendTuru->ArkaPlanRengi . ';color:' . $weekendTuru->FontRengi . "; min-width: 40px !important;'>" . $weekendTuru->PuantajKod . '</td>';
+                            echo "<td class='gun noselect{$holidayCellClass}' data-tooltip='{$holidayCellTitle}' title='{$holidayCellTitle}' data-change='false' data-project='' data-id='53' style='--puantaj-cell-bg:" . $weekendTuru->ArkaPlanRengi . ';color:' . $weekendTuru->FontRengi . "; min-width: 40px !important;'>" . $weekendTuru->PuantajKod . '</td>';
                         } else {
                             echo "<td class='gun noselect{$holidayCellClass}' data-project='' title='{$holidayCellTitle}' style='min-width: 40px !important;'></td>";
                         }
@@ -1664,7 +1743,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                     }
                 }
             } else {
-                echo "<td class='noselect text-center{$holidayCellClass}' title='{$holidayCellTitle}' style='background:#ddd; min-width: 40px !important;'>---</td>";
+                echo "<td class='noselect text-center{$holidayCellClass}' title='{$holidayCellTitle}' style='--puantaj-cell-bg:#ddd; min-width: 40px !important;'>---</td>";
             }
             ?>
 

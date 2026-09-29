@@ -101,7 +101,9 @@ if (!$user) {
 $_SESSION["user"] = $user;
 
 if (($user->superadmin ?? 0) == 1) {
-    $_SESSION['firm_id'] = $user->firm_id ?? 0;
+    if (!isset($_SESSION['firm_id'])) {
+        $_SESSION['firm_id'] = $user->firm_id ?? 0;
+    }
 } else if ($_SESSION["user"]->parent_id != 0) {
         //kullanıcının kayıtlı mail adresi birden fazla ise seçili firmadaki bilgileri ile işlem yapılır
         $email = $_SESSION['user']->email ?? null;
@@ -265,8 +267,10 @@ if (($user->superadmin ?? 0) != 1) {
 
 if (isset($_GET['theme'])) {
     $_SESSION['theme'] = $_GET['theme'] == 'dark' ? 'dark' : 'light';
+    setcookie('app_theme', $_SESSION['theme'], time() + (86400 * 365), "/");
 }
-$theme = $_SESSION['theme'] ?? 'light';
+$theme = $_COOKIE['app_theme'] ?? $_SESSION['theme'] ?? 'light';
+$_SESSION['theme'] = $theme;
 
 if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
     $page = $active_page !== '' ? $active_page : 'home';
@@ -329,6 +333,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
 
         <!-- Preloader -->
         <div class="preloader">
+            <div class="preloader-backdrop-glow"></div>
             <div class="preloader-content">
                 <div class="preloader-card">
                     <div class="preloader-logo-container">
@@ -447,7 +452,10 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                         </svg>
                     </div>
                     <div class="preloader-text-wrapper">
-                        <div class="preloader-subtitle">Çalışma alanı hazırlanıyor...</div>
+                        <div class="preloader-subtitle">
+                            <span>Çalışma alanı hazırlanıyor</span>
+                            <span class="preloader-dots"><span>.</span><span>.</span><span>.</span></span>
+                        </div>
                     </div>
                     <div class="preloader-progress-container">
                         <div class="preloader-progress-bar"></div>
@@ -514,6 +522,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             }
             ?>
             <?php include "inc/footer.php" ?>
+            <?php include "inc/theme-customizer.php" ?>
         </div>
     </div>
 

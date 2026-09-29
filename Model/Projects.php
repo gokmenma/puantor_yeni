@@ -32,12 +32,20 @@ class Projects extends Model
 
     public function getProjectsByFirm($firm_id)
     {
-        $sql = "SELECT * FROM projects WHERE firm_id = ?";
-        $params = [$firm_id];
+        $user = $_SESSION['user'] ?? null;
+        $is_superadmin = (isset($user->superadmin) && (int)$user->superadmin === 1);
+        $firm_id = (int)$firm_id;
+
+        if ($is_superadmin && $firm_id <= 0) {
+            $sql = "SELECT * FROM projects WHERE (deleted_at IS NULL OR deleted_at = '0' OR deleted_at = '')";
+            $params = [];
+        } else {
+            $sql = "SELECT * FROM projects WHERE firm_id = ? AND (deleted_at IS NULL OR deleted_at = '0' OR deleted_at = '')";
+            $params = [$firm_id];
+        }
 
         // Yetki kontrolü: Kullanıcı ana kullanıcı değilse ve sorumlu olduğu projeler tanımlanmışsa filtrele
-        $user = $_SESSION['user'] ?? null;
-        $is_main_user = (isset($user->is_main_user) && $user->is_main_user == 1) || (isset($user->parent_id) && $user->parent_id == 0);
+        $is_main_user = $is_superadmin || (isset($user->is_main_user) && $user->is_main_user == 1) || (isset($user->parent_id) && $user->parent_id == 0);
         
         if ($user && !$is_main_user && !empty($user->responsible_projects)) {
             $project_ids = explode(',', $user->responsible_projects);
@@ -390,4 +398,73 @@ class Projects extends Model
         return $query->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function getProjectStatusSummary($firm_id)
+    {
+        $projects = $this->getProjectsByFirm($firm_id);
+        if (empty($projects)) {
+            return [
+                'total' => 0,
+                'active' => 0,
+                'completed' => 0,
+                'pending' => 0,
+                'total_budget' => 0,
+                'status_distribution' => [],
+                'projects' => []
+            ];
+        }
+
+        // Proje durum tanımlarını al
+        require_once __DIR__ . '/DefinesModel.php';
+        $definesObj = new DefinesModel();
+        $statusDefines = $definesObj->getProjectStatus();
+        $statusMap = [];
+        foreach ($statusDefines as $sd) {
+            $statusMap[$sd->id] = $sd->name;
+        }
+
+        $total = count($projects);
+        $active = 0;
+        $completed = 0;
+        $pending = 0;
+        $total_budget = 0;
+        $distCount = [];
+
+        foreach ($projects as $p) {
+            $total_budget += (float)($p->budget ?? 0);
+            $statusName = $statusMap[$p->status] ?? 'Belirtilmedi';
+            $distCount[$statusName] = ($distCount[$statusName] ?? 0) + 1;
+
+            $statusLower = mb_strtolower($statusName, 'UTF-8');
+            if (strpos($statusLower, 'tamamlan') !== false || strpos($statusLower, 'bitti') !== false) {
+                $completed++;
+            } elseif (strpos($statusLower, 'bekle') !== false || strpos($statusLower, 'plan') !== false) {
+                $pending++;
+            } else {
+                $active++;
+            }
+        }
+
+        $statusColors = ['#206bc4', '#2fb344', '#f59f00', '#d63939', '#6366f1', '#4299e1', '#17a2b8'];
+        $distList = [];
+        $idx = 0;
+        foreach ($distCount as $name => $count) {
+            $distList[] = [
+                'name' => $name,
+                'count' => $count,
+                'percentage' => round(($count / $total) * 100, 1),
+                'color' => $statusColors[$idx % count($statusColors)]
+            ];
+            $idx++;
+        }
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'completed' => $completed,
+            'pending' => $pending,
+            'total_budget' => $total_budget,
+            'status_distribution' => $distList,
+            'projects' => $projects
+        ];
+    }
 }

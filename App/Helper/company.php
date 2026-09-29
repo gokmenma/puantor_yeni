@@ -20,10 +20,20 @@ class CompanyHelper extends Db
     }
     public function getCompanySelect($name = 'companies', $id = null)
     {
-        $firm_id =$_SESSION['user']->id;
-        $query = $this->db->prepare('SELECT * FROM companies where user_id = ?');  // Tüm sütunları seç
-        $query->execute([$firm_id]);
-        $results = $query->fetchAll(PDO::FETCH_OBJ);  // Tüm sonuçları al
+        $userId = (int) ($_SESSION['user']->id ?? 0);
+        $firmId = (int) ($_SESSION['firm_id'] ?? 0);
+        $query = $this->db->prepare('
+            SELECT DISTINCT c.* 
+            FROM companies c 
+            WHERE c.user_id = :user_id 
+               OR (:firm_id > 0 AND c.user_id IN (SELECT mf.user_id FROM myfirms mf WHERE mf.id = :firm_id))
+            ORDER BY c.company_name ASC
+        ');
+        $query->execute([
+            ':user_id' => $userId,
+            ':firm_id' => $firmId
+        ]);
+        $results = $query->fetchAll(PDO::FETCH_OBJ);
 
         $select = '<select name="' . $name . '" class="form-select select2" id="' . $name . '" style="width:100%">';
         $select .= '<option value="0">Firma Seçiniz</option>';

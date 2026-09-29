@@ -56,10 +56,14 @@ class AdvanceRequest extends Model
     public function getStats($firm_id)
     {
         $sql = $this->db->prepare("SELECT 
+                                    COUNT(*) as total_count,
+                                    COALESCE(SUM(tutar), 0) as total_amount,
                                     SUM(CASE WHEN durum = 0 THEN 1 ELSE 0 END) as pending_count,
+                                    COALESCE(SUM(CASE WHEN durum = 0 THEN tutar ELSE 0 END), 0) as pending_amount,
                                     SUM(CASE WHEN durum = 1 THEN 1 ELSE 0 END) as approved_count,
-                                    SUM(CASE WHEN durum = 1 THEN tutar ELSE 0 END) as approved_amount,
-                                    SUM(CASE WHEN durum = 2 THEN 1 ELSE 0 END) as rejected_count
+                                    COALESCE(SUM(CASE WHEN durum = 1 THEN tutar ELSE 0 END), 0) as approved_amount,
+                                    SUM(CASE WHEN durum = 2 THEN 1 ELSE 0 END) as rejected_count,
+                                    COALESCE(SUM(CASE WHEN durum = 2 THEN tutar ELSE 0 END), 0) as rejected_amount
                                    FROM personel_avans_talepleri a
                                    JOIN persons p ON a.person_id = p.id
                                    WHERE p.firm_id = ?");

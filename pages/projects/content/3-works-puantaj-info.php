@@ -57,7 +57,7 @@ if (!$Auths->Authorize("person_page_puantaj_info")) {
         text-align: left !important;
     }
 </style>
-<div class="container-xl mt-3">
+<div class="p-1">
     <div class="row row-deck row-cards">
         <div class="col-12">
             <div class="card">

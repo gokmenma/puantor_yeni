@@ -46,7 +46,7 @@ class puantajHelper extends Db
                 <div class="user-block d-flex align-items-center justify-content-between w-100 p-2 border rounded" style="background: var(--tblr-bg-surface); min-height: 54px;">
                     <div class="d-flex align-items-center flex-grow-1">
                         <span class="avatar" data-tooltip="' . $puantaj_saati . ' Saat"  data-id="' . $result["id"] . '" style="background-color:' . htmlspecialchars($result["ArkaPlanRengi"])
-                . ';color:' . $result["FontRengi"] . '; width: 34px; height: 34px; line-height: 34px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">' . htmlspecialchars($result["PuantajKod"]) . '</span>
+                . ';color:' . $result["FontRengi"] . '; width: 34px; height: 34px; line-height: 34px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-family: inherit !important;">' . htmlspecialchars($result["PuantajKod"]) . '</span>
                         <div class="ms-2" style="line-height: 1.3;">
                             <span class="head-title d-block fw-semibold" style="font-size: 12.5px; color: var(--tblr-body-color);">' . htmlspecialchars($result["PuantajAdi"]) . '</span>
                             <span class="description text-muted" style="font-size: 10.5px;">' . htmlspecialchars($result["Turu"]) . '</span>

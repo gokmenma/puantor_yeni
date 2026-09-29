@@ -33,6 +33,7 @@ if ($_POST['action'] == "saveProject") {
         "id" => $id,
         "firm_id" => $_SESSION['firm_id'] ?? 0,
         "type" => $_POST['project_type'] ?? 1,
+        "account_id" => 0,
         'project_name' => Security::escape($_POST['project_name'] ?? ''),
         'start_date' => Security::escape($_POST['start_date'] ?? ''),
         'end_date' => Security::escape($_POST['end_date'] ?? ''),
@@ -59,8 +60,9 @@ if ($_POST['action'] == "saveProject") {
         $status = "success";
         $message = ($id > 0) ? "Proje başarıyla güncellendi" : "Proje başarıyla eklendi";
     } catch (PDOException $ex) {
+        error_log("Mobile save project error: " . $ex->getMessage());
         $status = "error";
-        $message = $ex->getMessage();
+        $message = "Proje kaydedilirken bir hata oluştu. Lütfen tekrar deneyiniz.";
     }
 
     echo json_encode(['status' => $status, 'message' => $message, 'lastInsertId' => $lastInsertId ?? 0]);

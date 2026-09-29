@@ -3,7 +3,7 @@ $enc_id = isset($_GET['id']) ? $_GET['id'] : 0;
 $project_int_id = $id > 0 ? $id : 0;
 ?>
 
-<div class="container-xl mt-3">
+<div class="p-1">
     <div class="row row-deck row-cards">
         <div class="col-12">
             <div class="card">

@@ -61,7 +61,10 @@ try {
              WHERE firm_id = ? AND deleted_at IS NULL"
         );
         $stmt->execute([$firma_id]);
-        $firmaToplamPersonel = (int) $stmt->fetchColumn();
+        $gonderilenScopeSql = $is_superadmin ? '' : ' WHERE firma_id = ?';
+        $stmt = $db->prepare("SELECT COUNT(*) FROM gonderilen_bildirimler{$gonderilenScopeSql}");
+        $stmt->execute($is_superadmin ? [] : [$firma_id]);
+        $toplamGonderilen = (int) $stmt->fetchColumn();
 
         ob_clean();
         echo json_encode([
@@ -71,6 +74,7 @@ try {
             'abone_degil'            => max(0, $total - $abone),
             'hedef_toplam_personel'  => $firmaToplamPersonel,
             'toplam_kullanici'       => $toplamKullanici,
+            'toplam_gonderilen'      => $toplamGonderilen,
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

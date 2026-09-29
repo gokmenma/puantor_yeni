@@ -71,29 +71,44 @@ if ($action == "saveTransaction") {
     $Auths->hasPermissionReturn("income_expense_add_update");
 
     $case_id = Security::decrypt($_POST["gm_case_id"]);
-    $project_id = $_POST["gm_project_id"];
-    $person_id = $_POST["gm_person_name"] != 0 ? Security::decrypt($_POST["gm_person_name"]) : 0 ;
-    $company_id = $_POST["gm_company"] != 0 ? Security::decrypt($_POST["gm_company"]) : 0 ;
+    $project_id = isset($_POST["gm_project_id"]) ? (int)$_POST["gm_project_id"] : 0;
+    $person_id = (!empty($_POST["gm_person_name"]) && $_POST["gm_person_name"] != 0) ? Security::decrypt($_POST["gm_person_name"]) : 0;
+    $company_id = (!empty($_POST["gm_company"]) && $_POST["gm_company"] != 0) ? Security::decrypt($_POST["gm_company"]) : 0;
     
     $users_type_id = $_POST["gm_incexp_type"] ?? 0;
+    $type_id = (int)($_POST["transaction_type"] ?? 1);
 
- 
+    // sub_type belirleme
+    $sub_type = 0;
+    if (isset($_POST["sub_type"]) && is_numeric($_POST["sub_type"]) && (int)$_POST["sub_type"] > 0) {
+        $sub_type = (int)$_POST["sub_type"];
+    } else {
+        if ($person_id > 0) {
+            $sub_type = ($type_id == 1) ? 1 : 7; // Gelir veya Personel Ödemesi
+        } elseif ($company_id > 0) {
+            $sub_type = ($type_id == 1) ? 1 : 8; // Gelir veya Firma Ödemesi
+        } elseif ($project_id > 0) {
+            $sub_type = ($type_id == 1) ? 5 : 6; // Projeden Alınan Ödeme veya Projeye Yapılan Ödeme
+        } else {
+            $sub_type = ($type_id == 1) ? 1 : 2; // Gelir veya Gider
+        }
+    }
+
     try {
         $data = [
             "id" => $id,
             "date" => Date::Ymd($_POST["transaction_date"]),
-            "type_id" => $_POST["transaction_type"],
+            "type_id" => $type_id,
+            "sub_type" => $sub_type,
             "project_id" => $project_id,
-            "person_id" => $person_id ,
-            "company_id" => $company_id ,
-            "users_type_id" => $users_type_id ,
+            "person_id" => $person_id,
+            "company_id" => $company_id,
+            "users_type_id" => $users_type_id,
             "case_id" =>  $case_id,
             "amount" => Helper::formattedMoneyToNumber($_POST["amount"]),
-            "amount_money" => $_POST["gm_amount_money"],
-            "description" => Security::escape($_POST["description"]),
+            "amount_money" => $_POST["gm_amount_money"] ?? 1,
+            "description" => Security::escape($_POST["description"] ?? ''),
         ];
-
-
 
         $lastInsertId = $ct->saveWithAttr($data);
         $status = "success";

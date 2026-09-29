@@ -73,13 +73,13 @@ $(function() {
         margin-top: 0 !important;
       }
 
-      /* Footer controls layout - Pinned to bottom of card */
+      /* Footer controls layout */
       div.dt-container .dt-layout-row:last-child,
       div.dt-container .dt-layout-row:has(.dt-paging),
       div.dt-container .dt-layout-row:has(.dt-info) {
-        margin-top: auto !important;
+        margin-top: 0 !important;
         flex-shrink: 0 !important;
-        position: relative !important;
+        position: static !important;
         z-index: 11 !important;
         display: flex !important;
         justify-content: space-between !important;
@@ -87,9 +87,10 @@ $(function() {
         flex-wrap: wrap !important;
         width: 100% !important;
         gap: 1rem !important;
-        padding: 0.5rem 1.25rem !important;
-        background-color: var(--tblr-bg-surface, #ffffff) !important;
-        border-top: 1px solid var(--tblr-border-color, #dadcde) !important;
+        padding: 0.65rem 1rem !important;
+        background-color: transparent !important;
+        border-top: none !important;
+        box-shadow: none !important;
         box-sizing: border-box !important;
       }
       div.dt-container .dt-layout-row:last-child .dt-layout-start,
@@ -144,10 +145,10 @@ $(function() {
         width: auto !important;
       }
 
-      /* Ensure table row bottom borders are always visible and distinct */
+      /* Ensure table row borders are clean with no double dividing line */
       table.dataTable > tbody > tr > td,
       table.dataTable > tbody > tr > th {
-        border-top: 1px solid rgba(98, 105, 118, 0.18) !important;
+        border-top: 1px solid rgba(98, 105, 118, 0.14) !important;
         border-bottom: none !important;
       }
       table.dataTable > tbody > tr:first-child > td,
@@ -156,27 +157,40 @@ $(function() {
       }
       table.dataTable > tbody > tr:last-child > td,
       table.dataTable > tbody > tr:last-child > th {
-        border-bottom: 1px solid rgba(98, 105, 118, 0.18) !important;
+        border-bottom: none !important;
       }
       table.dataTable > thead > tr > th,
       table.dataTable > thead > tr > td {
         border-bottom: 1px solid rgba(98, 105, 118, 0.14) !important;
       }
-      table.dataTable > thead > tr.search-input-row > th,
-      table.dataTable > thead > tr.search-input-row > td {
-        border-bottom: 1px solid rgba(98, 105, 118, 0.12) !important;
-        background-color: var(--tblr-bg-surface-secondary, #f8fafc) !important;
-        padding: 4px 6px !important;
+      /* Tablo başlıklarında arama kutuları kaldırıldı (Merkezi Popover Standardı) */
+      .search-input-row,
+      tr.search-input-row,
+      thead .search-input-row,
+      table.dataTable > thead > tr.search-input-row {
+        display: none !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        visibility: hidden !important;
       }
 
-      /* Ensure proper padding for first & last table columns in card tables so checkboxes & text are never clipped */
+      /* Compact and equal padding for first & last columns */
       table.dataTable > thead > tr > th:first-child,
       table.dataTable > tbody > tr > td:first-child {
-        padding-left: 1.25rem !important;
+        padding-left: 12px !important;
       }
       table.dataTable > thead > tr > th:last-child,
       table.dataTable > tbody > tr > td:last-child {
-        padding-right: 1.25rem !important;
+        padding-right: 12px !important;
+      }
+
+      /* Remove dropdown arrow/chevron from icon-only buttons */
+      .dropdown-toggle-no-caret::after,
+      .btn-icon.dropdown-toggle::after,
+      td .dropdown-toggle::after {
+        display: none !important;
+        content: none !important;
       }
 
       /*
@@ -197,12 +211,11 @@ $(function() {
         min-height: 0 !important;
       }
       .dt-container.dt-viewport-managed .dt-viewport-scroll {
-        height: var(--dt-viewport-body-height) !important;
         max-height: var(--dt-viewport-body-height) !important;
         overflow-y: auto !important;
         overflow-x: auto !important;
-        overscroll-behavior: contain;
-        scrollbar-gutter: stable;
+        overscroll-behavior-x: contain;
+        overscroll-behavior-y: auto;
       }
       .dt-container.dt-viewport-managed .dt-layout-row.dt-layout-table.dt-viewport-scroll {
         display: block !important;
@@ -214,11 +227,6 @@ $(function() {
         z-index: 12 !important;
         background-color: var(--dt-header-bg) !important;
       }
-      .dt-container.dt-viewport-managed .dt-viewport-scroll table.dataTable > thead > tr.search-input-row > th,
-      .dt-container.dt-viewport-managed .dt-viewport-scroll table.dataTable > thead > tr.search-input-row > td {
-        z-index: 13 !important;
-        background-color: var(--dt-search-header-bg) !important;
-      }
       .table-responsive.dt-viewport-host {
         overflow: hidden !important;
         min-height: 0 !important;
@@ -227,19 +235,16 @@ $(function() {
       /* Global DataTable empty state */
       table.dataTable > tbody > tr > td.dt-empty,
       table.dataTable > tbody > tr > td.dataTables_empty {
-        height: calc(var(--dt-viewport-body-height, 390px) - var(--dt-empty-header-offset, 76px)) !important;
-        min-height: 240px !important;
-        padding: 24px !important;
+        padding: 32px 16px !important;
         text-align: center !important;
         vertical-align: middle !important;
         background: transparent !important;
         border: 0 !important;
       }
       .dt-empty-state {
-        width: min(680px, calc(100% - 32px));
-        min-height: 340px;
+        width: min(580px, calc(100% - 32px));
         margin: 0 auto;
-        padding: 48px 40px;
+        padding: 28px 24px;
         border: 1px solid rgba(98, 105, 118, 0.08);
         border-radius: 14px;
         background: linear-gradient(180deg, #fafbfc 0%, #f7f8fa 100%);
@@ -320,7 +325,11 @@ $(function() {
 });
 
 if ($.fn && $.fn.dataTable) {
+  $.fn.dataTable.ext.errMode = 'none';
   $.extend(true, $.fn.dataTable.defaults, {
+    columnDefs: [
+      { targets: "_all", defaultContent: "" }
+    ],
     pagingType: "simple_numbers",
     layout: {
       bottomStart: ["info", "pageLength"],
@@ -338,47 +347,107 @@ if ($.fn && $.fn.dataTable) {
 
 if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankDataTable").length > 0) {
 
-  // DataTables 2.x: arama satırını init ÖNCE ekle ki header yönetimi bozulmasın
-  $(".datatable:not(#puantajTable)").each(function () {
-    var $thead = $(this).find("thead");
-    if ($thead.find(".search-input-row").length === 0) {
-      var colCount = $thead.find("tr:first th, tr:first td").length;
-      var $row = $('<tr class="search-input-row"></tr>');
-      for (var c = 0; c < colCount; c++) {
-        $row.append('<th class="search p-1"></th>');
-      }
-      $thead.append($row);
-    }
-  });
+  // Eski arama satırlarını thead'den temizle
+  $(".datatable").find("thead .search-input-row").remove();
 
   var table = $(".datatable:not(#puantajTable)").DataTable({
     autoWidth: false,
     order: [],
-    orderCellsTop: true,
     pagingType: "simple_numbers",
     language: {
       url: "src/tr.json"
     },
-    //dom: "Bfrtip",
     buttons: [
       {
         extend: "excelHtml5",
         className: "d-none",
-        title: "Personel Listesi",
-        messageTop: "Tarih: " + new Date().toLocaleDateString("tr-TR"),
+        title: function () {
+          var title = $(".card:has(table.datatable) .card-title, .card-title").first().text().trim();
+          return title || document.title || "Liste";
+        },
+        filename: function () {
+          var title = $(".card:has(table.datatable) .card-title, .card-title").first().text().trim();
+          var cleanTitle = (title || document.title || "liste").toLowerCase().replace(/[^a-z0-9ğüşıöç]/gi, '_').replace(/_+/g, '_');
+          return cleanTitle + '_' + new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+        },
+        messageTop: function () {
+          return "Tarih: " + new Date().toLocaleDateString("tr-TR");
+        },
         exportOptions: {
-          columns: ":visible:not(.no-export)"
+          columns: function (idx, data, node) {
+            var $th = $($(".datatable:not(#puantajTable)").find("thead tr:first th, thead tr:first td").get(idx));
+            if (!$th.length) return true;
+            if ($th.hasClass("no-export") || $th.hasClass("no-print") || $th.is(":hidden")) {
+              return false;
+            }
+            var title = $th.text().trim().toLowerCase();
+            var skipTitles = ['işlem', 'işlemler', 'seç', 'aksiyon', 'aksiyonlar', 'action', 'actions'];
+            if (skipTitles.indexOf(title) !== -1 || $th.find('input[type="checkbox"]').length > 0) {
+              return false;
+            }
+            return true;
+          },
+          format: {
+            body: function (data, row, column, node) {
+              if (typeof data === 'string') {
+                var $cell = $('<div>' + data + '</div>');
+                $cell.find('.dropdown, .dropdown-menu, .btn, button, .ti, i, script, style').remove();
+                var text = $cell.text().trim();
+                if (!text && data.trim()) {
+                  text = $('<div>' + data + '</div>').text().trim();
+                }
+                return text.replace(/\s+/g, ' ');
+              }
+              return data;
+            }
+          }
         }
       },
       {
         extend: "pdfHtml5",
         className: "d-none",
-        title: "Personel Listesi",
-        messageTop: "Tarih: " + new Date().toLocaleDateString("tr-TR"),
+        title: function () {
+          var title = $(".card:has(table.datatable) .card-title, .card-title").first().text().trim();
+          return title || document.title || "Liste";
+        },
+        filename: function () {
+          var title = $(".card:has(table.datatable) .card-title, .card-title").first().text().trim();
+          var cleanTitle = (title || document.title || "liste").toLowerCase().replace(/[^a-z0-9ğüşıöç]/gi, '_').replace(/_+/g, '_');
+          return cleanTitle + '_' + new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+        },
+        messageTop: function () {
+          return "Tarih: " + new Date().toLocaleDateString("tr-TR");
+        },
         orientation: "landscape",
         pageSize: "A4",
         exportOptions: {
-          columns: ":visible:not(.no-export)"
+          columns: function (idx, data, node) {
+            var $th = $($(".datatable:not(#puantajTable)").find("thead tr:first th, thead tr:first td").get(idx));
+            if (!$th.length) return true;
+            if ($th.hasClass("no-export") || $th.hasClass("no-print") || $th.is(":hidden")) {
+              return false;
+            }
+            var title = $th.text().trim().toLowerCase();
+            var skipTitles = ['işlem', 'işlemler', 'seç', 'aksiyon', 'aksiyonlar', 'action', 'actions'];
+            if (skipTitles.indexOf(title) !== -1 || $th.find('input[type="checkbox"]').length > 0) {
+              return false;
+            }
+            return true;
+          },
+          format: {
+            body: function (data, row, column, node) {
+              if (typeof data === 'string') {
+                var $cell = $('<div>' + data + '</div>');
+                $cell.find('.dropdown, .dropdown-menu, .btn, button, .ti, i, script, style').remove();
+                var text = $cell.text().trim();
+                if (!text && data.trim()) {
+                  text = $('<div>' + data + '</div>').text().trim();
+                }
+                return text.replace(/\s+/g, ' ');
+              }
+              return data;
+            }
+          }
         },
         customize: function (doc) {
           doc.styles.tableHeader.fillColor = '#206bc4';
@@ -395,53 +464,38 @@ if ($(".datatable").length > 0 || $("#puantajDataTable").length > 0 || $("#bankD
     },
     initComplete: function (settings, json) {
       var api = this.api();
-      var tableId = settings.sTableId;
-
-      var defaultSkipTitles = ['işlem', 'işlemler', 'seç', 'aksiyon', 'aksiyonlar'];
-      api.columns().every(function () {
-        let column = this;
-        let colIdx = column.index();
-        // orderCellsTop:true ile column.header() ilk satırı döndürür
-        let title = $(column.header()).text().trim();
-        let titleLower = title.toLowerCase();
-
-        if (
-          title &&
-          defaultSkipTitles.indexOf(titleLower) === -1 &&
-          $(column.header()).find('input[type="checkbox"]').length === 0
-        ) {
-          let input = document.createElement("input");
-          input.type = "search";
-          input.placeholder = title;
-          input.classList.add("form-control");
-          input.classList.add("form-control-sm");
-          input.setAttribute("autocomplete", "search");
-          input.setAttribute("name", "dt_filter_" + tableId + "_" + colIdx);
-          input.setAttribute("data-lpignore", "true");
-          input.setAttribute("data-1p-ignore", "true");
-          input.setAttribute("data-bwignore", "true");
-
-          // Mevcut arama satırındaki doğru hücreye yerleştir
-          $("#" + tableId + " .search-input-row th:eq(" + colIdx + ")").html(input);
-
-          $(input).on("keyup change search", function () {
-            if (column.search() !== this.value) {
-              column.search(this.value).draw();
-            }
-          });
-        }
-      });
+      var $tbl = $(this);
+      $tbl.find("thead .search-input-row").remove();
+      if (typeof window.initDataTableColumnFilters === 'function') {
+        window.initDataTableColumnFilters($tbl, api);
+      }
     }
   });
   //Tüm tablolar için excel dışa aktarım butonu
-  $("#export_excel").on("click", function (e) {
+  $(document).on("click", "#export_excel", function (e) {
     e.preventDefault();
-    table.button(".buttons-excel").trigger();
+    var $btn = $(this);
+    var $card = $btn.closest(".card");
+    var $targetTable = $card.length ? $card.find("table.dataTable, table.datatable") : $("table.dataTable, table.datatable");
+    if ($targetTable.length && $.fn.DataTable.isDataTable($targetTable[0])) {
+      var dt = $targetTable.DataTable();
+      dt.button(".buttons-excel").trigger();
+    } else if (table && table.button) {
+      table.button(".buttons-excel").trigger();
+    }
   });
 
-  $("#export_pdf").on("click", function (e) {
+  $(document).on("click", "#export_pdf", function (e) {
     e.preventDefault();
-    table.button(".buttons-pdf").trigger();
+    var $btn = $(this);
+    var $card = $btn.closest(".card");
+    var $targetTable = $card.length ? $card.find("table.dataTable, table.datatable") : $("table.dataTable, table.datatable");
+    if ($targetTable.length && $.fn.DataTable.isDataTable($targetTable[0])) {
+      var dt = $targetTable.DataTable();
+      dt.button(".buttons-pdf").trigger();
+    } else if (table && table.button) {
+      table.button(".buttons-pdf").trigger();
+    }
   });
 
   //Personelin çalışma bilgileri tablosu için
@@ -1526,16 +1580,18 @@ function addCustomValidationMethods() {
   );
 }
 
-//Jquery validate ile yapılan doğrulamalarda 0 olan değeri kabul etmemek için
+//Jquery validate ile yapılan doğrulamalarda 0 veya boş olan seçimi kabul etmemek için
 function addCustomValidationValidValue() {
   $.validator.addMethod(
     "validValue",
     function (value, element) {
-      return (
-        this.optional(element) || parseFloat(value.replace(",", ".")) !== 0
-      );
+      if (value === null || value === undefined) {
+        return false;
+      }
+      var str = String(value).trim();
+      return str !== "" && str !== "0" && str !== "NaN" && str !== "undefined" && str !== "null";
     },
-    "Lütfen geçerli bir değer girin"
+    "Lütfen bir seçim yapın"
   );
 }
 
@@ -1608,21 +1664,57 @@ window.createDataTable = function (selector, userOptions) {
     var userInitDone  = userOptions.initComplete || null;
 
     var $thead = $table.find('thead');
-    if ($thead.find('.search-input-row').length === 0) {
-        var colCount    = $thead.find('tr:first th, tr:first td').length;
-        var $searchRow  = $('<tr class="search-input-row"></tr>');
-        for (var c = 0; c < colCount; c++) {
-            $searchRow.append('<th class="search p-1"></th>');
-        }
-        $thead.append($searchRow);
-    }
+    $thead.find('.search-input-row').remove();
 
-    var config = $.extend({
+    var config = $.extend(true, {
         ordering:      false,
-        orderCellsTop: true,
         autoWidth:     false,
         pagingType:    'simple_numbers',
         language:      { url: 'src/tr.json' },
+        columnDefs: [
+            { targets: '_all', defaultContent: '' }
+        ],
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                className: 'd-none',
+                title: function () {
+                    var title = $table.closest('.card').find('.card-title').first().text().trim();
+                    return title || document.title || 'Liste';
+                },
+                filename: function () {
+                    var title = $table.closest('.card').find('.card-title').first().text().trim();
+                    var cleanTitle = (title || document.title || 'liste').toLowerCase().replace(/[^a-z0-9ğüşıöç]/gi, '_').replace(/_+/g, '_');
+                    return cleanTitle + '_' + new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+                },
+                messageTop: function () {
+                    return 'Tarih: ' + new Date().toLocaleDateString('tr-TR');
+                },
+                exportOptions: {
+                    columns: function (idx, data, node) {
+                        var $th = $($table.find('thead tr:first th, thead tr:first td').get(idx));
+                        if (!$th.length) return true;
+                        if ($th.hasClass('no-export') || $th.hasClass('no-print') || $th.is(':hidden')) return false;
+                        var title = $th.text().trim().toLowerCase();
+                        var skip = ['işlem', 'işlemler', 'seç', 'aksiyon', 'aksiyonlar', 'action', 'actions'];
+                        if (skip.indexOf(title) !== -1 || $th.find('input[type="checkbox"]').length > 0) return false;
+                        return true;
+                    },
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (typeof data === 'string') {
+                                var $cell = $('<div>' + data + '</div>');
+                                $cell.find('.dropdown, .dropdown-menu, .btn, button, .ti, i, script, style').remove();
+                                var text = $cell.text().trim();
+                                if (!text && data.trim()) text = $('<div>' + data + '</div>').text().trim();
+                                return text.replace(/\s+/g, ' ');
+                            }
+                            return data;
+                        }
+                    }
+                }
+            }
+        ],
         layout: {
             bottomStart: ['info', 'pageLength'],
             bottomEnd: 'paging',
@@ -1634,44 +1726,7 @@ window.createDataTable = function (selector, userOptions) {
     config.initComplete = function (settings, json) {
         var api     = this.api();
         var tableId = settings.sTableId;
-
-        api.columns().every(function () {
-            var column     = this;
-            var colIdx     = column.index();
-            var $headerTh  = $($table.find('thead tr:first th').get(colIdx));
-            var title      = $headerTh.text().trim();
-            var titleLower = title.toLowerCase();
-
-            if (!title || skipTitles.indexOf(title) !== -1 || skipTitlesLower.indexOf(titleLower) !== -1 || $headerTh.find('input[type="checkbox"]').length > 0) return;
-
-            var input = document.createElement('input');
-            input.type = 'search';
-            input.placeholder = title;
-            input.classList.add('form-control', 'form-control-sm');
-            input.setAttribute('autocomplete', 'search');
-            input.setAttribute('name', 'dt_filter_' + tableId + '_' + colIdx);
-            input.setAttribute('data-lpignore', 'true');
-            input.setAttribute('data-1p-ignore', 'true');
-            input.setAttribute('data-bwignore', 'true');
-
-            var $searchTh = $('#' + tableId + ' .search-input-row th:eq(' + colIdx + ')');
-            $searchTh.html(input);
-
-            // Copy style attributes (like width, max-width) from the header cell to search cell
-            var styleAttr = $headerTh.attr('style');
-            if (styleAttr) {
-                $searchTh.attr('style', styleAttr);
-            }
-
-            // Force input to fill 100% of the cell width and allow shrinking (min-width: 0)
-            input.setAttribute('style', 'width: 100% !important; min-width: 0 !important; max-width: 100% !important;');
-
-            $(input).on('keyup change search', function () {
-                if (column.search() !== this.value) {
-                    column.search(this.value).draw();
-                }
-            });
-        });
+        $table.find('thead .search-input-row').remove();
 
         // topStart/topEnd: null gibi tümüyle boş bırakılan layout satırlarını gizle
         // (DataTables bu satırları içerik olmasa da DOM'da bırakabiliyor, gereksiz boşluğa sebep oluyor)
@@ -1684,6 +1739,10 @@ window.createDataTable = function (selector, userOptions) {
                 $row.addClass('dt-empty-row');
             }
         });
+
+        if (typeof window.initDataTableColumnFilters === 'function') {
+            window.initDataTableColumnFilters($table, api);
+        }
 
         if (typeof userInitDone === 'function') {
             userInitDone.call(this, settings, json);

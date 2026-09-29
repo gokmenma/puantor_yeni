@@ -1,4 +1,4 @@
-$(document).on("click", "#btn-new-mycompany", function(e) {
+$(document).on("click", "#btn-new-mycompany, #btn-new-mycompany-header", function(e) {
   e.preventDefault();
 
   // Reset form

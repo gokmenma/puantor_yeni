@@ -588,6 +588,32 @@ class IzinTalep extends Model
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
 
+    public function getIzinStats(int $firma_id): array
+    {
+        $sql = $this->db->prepare(
+            "SELECT 
+                COUNT(*) AS total,
+                SUM(CASE WHEN durum = 'beklemede' THEN 1 ELSE 0 END) AS beklemede,
+                SUM(CASE WHEN durum = 'onaylandi' THEN 1 ELSE 0 END) AS onaylandi,
+                SUM(CASE WHEN durum = 'reddedildi' THEN 1 ELSE 0 END) AS reddedildi,
+                SUM(CASE WHEN durum = 'onaylandi' AND MONTH(baslangic_tarihi) = MONTH(CURDATE()) AND YEAR(baslangic_tarihi) = YEAR(CURDATE()) THEN gun_sayisi ELSE 0 END) AS bu_ay_gun,
+                SUM(CASE WHEN durum = 'onaylandi' THEN gun_sayisi ELSE 0 END) AS toplam_onayli_gun
+             FROM {$this->table}
+             WHERE firma_id = ?"
+        );
+        $sql->execute([$firma_id]);
+        $res = $sql->fetch(PDO::FETCH_ASSOC);
+
+        return [
+            'total'             => (int) ($res['total'] ?? 0),
+            'beklemede'         => (int) ($res['beklemede'] ?? 0),
+            'onaylandi'         => (int) ($res['onaylandi'] ?? 0),
+            'reddedildi'        => (int) ($res['reddedildi'] ?? 0),
+            'bu_ay_gun'         => (int) ($res['bu_ay_gun'] ?? 0),
+            'toplam_onayli_gun' => (int) ($res['toplam_onayli_gun'] ?? 0),
+        ];
+    }
+
     public function getBekleyenSayisi(int $firma_id): int
     {
         $sql = $this->db->prepare(

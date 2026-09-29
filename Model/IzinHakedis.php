@@ -254,6 +254,32 @@ class IzinHakedis extends Model
         return $list;
     }
 
+    public function getHakedisStats(int $firma_id): array
+    {
+        $list = $this->getByFirma($firma_id);
+        
+        $total_hakedilen = 0;
+        $total_kullanilan = 0;
+        $pids = [];
+        
+        foreach ($list as $item) {
+            $total_hakedilen += (int) ($item->gun_sayisi ?? 0);
+            $total_kullanilan += (int) ($item->kullanilan_gun ?? 0);
+            $pids[$item->personel_id] = true;
+        }
+        
+        $total_kalan = max(0, $total_hakedilen - $total_kullanilan);
+        $yaklasan = $this->getYaklasanHakedisler($firma_id);
+        
+        return [
+            'personel_count'       => count($pids),
+            'total_hakedilen_gun'  => $total_hakedilen,
+            'total_kullanilan_gun' => $total_kullanilan,
+            'total_kalan_gun'      => $total_kalan,
+            'yaklasan_count'       => count($yaklasan),
+        ];
+    }
+
     public function saveWithAttr($data)
     {
         $id = parent::saveWithAttr($data);

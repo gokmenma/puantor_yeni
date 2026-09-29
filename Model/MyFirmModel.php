@@ -18,10 +18,16 @@ class MyFirmModel extends Model
         $sql->execute(['user_id' => $user_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
-    //User'ın ,parent_id'si 0 ise kendi firmasını, 0 değilse email adresine göre firmasını getirir
     public function getMyFirmByUserId()
     {
-        $parent_id = $_SESSION["user"]->parent_id ;
+        $isSuperadmin = (int)($_SESSION["user"]->superadmin ?? 0) === 1;
+        if ($isSuperadmin) {
+            $sql = $this->db->prepare("SELECT * FROM $this->table WHERE (deleted_at IS NULL OR deleted_at = '0' OR deleted_at = '') ORDER BY firm_name ASC");
+            $sql->execute();
+            return $sql->fetchAll(PDO::FETCH_OBJ);
+        }
+
+        $parent_id = $_SESSION["user"]->parent_id ?? 0;
         if($parent_id == 0){
             $sql = $this->db->prepare("SELECT * FROM $this->table WHERE user_id = :user_id AND (deleted_at IS NULL OR deleted_at = '0' OR deleted_at = '')");
             $sql->execute(['user_id' => $_SESSION["user"]->id]);
@@ -41,8 +47,6 @@ class MyFirmModel extends Model
             $sql->execute(['email' => $_SESSION["user"]->email]);
             return $sql->fetchAll(PDO::FETCH_OBJ);
         }
-
-      
     }
 
     public function getAuthorizedMyFirmsByEmail($email)

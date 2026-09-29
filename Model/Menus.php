@@ -51,6 +51,12 @@ class Menus extends Model
         }
     }
 
+    public function resetUserMenuOrder($userId)
+    {
+        $sqlDelete = $this->db->prepare("DELETE FROM user_menu_order WHERE user_id = ?");
+        return $sqlDelete->execute([$userId]);
+    }
+
     public function getMenusByLink($page_link)
     {
         $sql = $this->db->prepare("SELECT id,page_name FROM menu where page_link = ?");

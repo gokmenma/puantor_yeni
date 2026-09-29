@@ -1,12 +1,37 @@
+:root {
+  --tblr-sidebar-width: 270px;
+}
+
+.topbar-left-wrapper {
+  margin-left: 270px;
+  padding-left: 20px;
+  display: flex;
+  align-items: center;
+  transition: margin-left 0.3s ease-in-out, padding-left 0.3s ease-in-out;
+}
+
+#navbar.collapsed + header .topbar-left-wrapper,
+#navbar.collapsed ~ header .topbar-left-wrapper {
+  margin-left: 65px;
+  padding-left: 20px;
+}
+
+@media (max-width: 991px) {
+  .topbar-left-wrapper {
+    margin-left: 15px !important;
+    padding-left: 0 !important;
+  }
+}
+
 .collapse-button {
-  display: inline-block;
+  display: inline-flex;
   cursor: pointer;
   width: 22px;
   height: 18px;
-  left: 250px;
-  top: 10px;
   position: relative;
   transition: all 0.3s ease-in-out;
+  flex-shrink: 0;
+  margin-right: 14px !important;
 }
 
 .collapse-button span {
@@ -19,8 +44,6 @@
   left: 0;
   transition: all 0.3s ease-in-out;
 }
-
-/* düzenleme */
 
 .collapse-button span:nth-child(1) {
   top: 0;
@@ -48,124 +71,589 @@
   top: 10px;
 }
 
-.collapse-button.active {
-  left: 60px;
-  transition: all 0.3s ease-in-out;
+/* ==============================================================
+   PROFESYONEL AYDINOĞULLARI STİLİ SIDEBAR (270PX)
+   ============================================================== */
+#navbar,
+aside#navbar,
+.navbar-vertical {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  width: 270px !important;
+  min-width: 270px !important;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+  overflow-y: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 1030;
+  display: flex !important;
+  flex-direction: column !important;
+  background-color: var(--sidebar-bg, #1e1e2d) !important;
 }
 
-#navbar {
-  /* width: 236px; */
-  transition: width 0.3s ease-in-out;
-  overflow: hidden;
+#navbar > .container-fluid {
+  height: 100% !important;
+  min-height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
 }
 
-.page-wrapper {
-  transition: width 0.3s ease, margin-left 0.3s ease;
+@media (min-width: 992px) {
+  .navbar-expand-lg.navbar-vertical ~ .page-wrapper,
+  body > .page > .page-wrapper {
+    margin-left: 270px !important;
+    transition: width 0.3s ease, margin-left 0.3s ease;
+  }
+
+  .navbar-expand-lg.navbar-vertical.collapsed ~ .page-wrapper,
+  body > .page > .page-wrapper.page-collapse {
+    margin-left: 65px !important;
+  }
+
+  /* Sayfa içerisindeki nested/iç içe page-wrapper'ların marjini sıfırlanır */
+  .page-wrapper .page-wrapper {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    width: 100% !important;
+  }
 }
 
 #navbar.collapsed {
-  width: 55px;
+  width: 65px !important;
+  min-width: 65px !important;
 }
 
 .nav-link-title {
   opacity: 1;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.25s ease-in-out;
   white-space: nowrap;
 }
 
 #navbar.collapsed .nav-link-title {
   opacity: 0;
-  transition: opacity 0.3s ease-in-out;
+  display: none !important;
 }
 
 #navbar.collapsed .navbar-brand {
-  justify-content: left !important;
-  width: 50px !important;
-  transition: width 0.3s ease-in-out;
-}
-
-.page-wrapper.page-collapse {
-  transition: width 0.3s ease, margin-left 0.3s ease;
-  margin-left: 55px !important;
-}
-#navbar .navbar-brand img {
-    max-width: 100%; 
-   
-}
-#navbar .icon{
-    font-size: 20px;
-    transition: font-size 0.3s ease-in-out;
-}
-#navbar.collapsed .icon{
-    font-size: 22px;
-    transition: font-size 0.3s ease-in-out;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 10px 0 !important;
 }
 
 #navbar.collapsed .navbar-brand img {
-    max-width: 150px !important; /* Collapsed olduğunda direkt 150px genişliğe düşecek */
-    margin-left: 12px; /* Gerekirse margin ayarla */
-}
-/* 576'dan küçükse #navbar width 100% olsun */
-@media (max-width: 576px) {
-  #navbar {
-    width: 100%;
-  }
+  max-width: 32px !important;
+  max-height: 32px !important;
+  margin: 0 auto;
 }
 
-/* Sidebar Search Box */
-#menu-search-container {
-  transition: opacity 0.3s ease, padding 0.3s ease;
-  opacity: 1;
-  padding: 8px 16px !important;
-  border-bottom: 1px solid rgba(32, 107, 196, 0.15) !important;
+#navbar.collapsed .nav-link {
+  padding: 0 !important;
+  justify-content: center !important;
+}
+
+#navbar.collapsed .nav-link-icon {
+  position: static !important;
+  transform: none !important;
+  margin: 0 auto !important;
+  font-size: 20px !important;
+}
+
+#navbar.collapsed .nav-link::after {
+  display: none !important;
 }
 
 #navbar.collapsed #menu-search-container {
   display: none !important;
 }
 
-#menu-search-input {
-  height: 32px !important;
-  background-color: rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid rgba(32, 107, 196, 0.2) !important;
-  color: #fff !important;
-  font-size: 0.825rem !important;
+/* Brand Logo Alanı */
+#navbar .navbar-brand {
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  padding: 0 16px !important;
+  margin: 0 !important;
+  border-bottom: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
 }
 
-#menu-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+#navbar .navbar-brand a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  text-decoration: none !important;
 }
 
-#menu-search-input:focus {
-  background-color: rgba(0, 0, 0, 0.25) !important;
-  border-color: rgba(32, 107, 196, 0.5) !important;
-  box-shadow: 0 0 0 0.15rem rgba(32, 107, 196, 0.2) !important;
+#navbar .navbar-brand img,
+#navbar .navbar-brand-image,
+#navbar .navbar-brand-svg {
+  max-height: 38px !important;
+  max-width: 175px !important;
+  width: auto !important;
+  height: 38px !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
+  transition: all 0.3s ease;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Sidebar Renkli Logo Renk Adaptasyonu */
+#navbar .navbar-brand-svg .s0 { fill: #ffffff !important; transition: fill 0.3s ease; }
+#navbar .navbar-brand-svg .s1 { fill: #00adee !important; }
+#navbar .navbar-brand-svg .s2 { fill: #38bdf8 !important; transition: fill 0.3s ease; }
+#navbar .navbar-brand-svg .s3 { fill: #f59e0b !important; }
+
+/* Açık renkli sidebar için koyu yazı ve lacivert detay */
+html[data-sidebar-theme="sade-beyaz"] #navbar .navbar-brand-svg .s0,
+html[data-sidebar-theme="slate-light"] #navbar .navbar-brand-svg .s0,
+html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s0,
+#navbar[data-sidebar-theme="sade-beyaz"] .navbar-brand-svg .s0,
+#navbar[data-sidebar-theme="slate-light"] .navbar-brand-svg .s0,
+#navbar[data-sidebar-theme="platin-gri"] .navbar-brand-svg .s0 {
+  fill: #1e293b !important;
+}
+
+html[data-sidebar-theme="sade-beyaz"] #navbar .navbar-brand-svg .s2,
+html[data-sidebar-theme="slate-light"] #navbar .navbar-brand-svg .s2,
+html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
+#navbar[data-sidebar-theme="sade-beyaz"] .navbar-brand-svg .s2,
+#navbar[data-sidebar-theme="slate-light"] .navbar-brand-svg .s2,
+#navbar[data-sidebar-theme="platin-gri"] .navbar-brand-svg .s2 {
+  fill: #1e3a8a !important;
+}
+
+#navbar.collapsed .navbar-brand-svg {
+  max-width: 32px !important;
+  max-height: 32px !important;
+}
+
+/* Sidebar Arama Kutusu ve Ayarlar Alanı (Üstte Sabit / Sticky) */
+.sidebar-search-wrap,
+#menu-search-container {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  background-color: var(--sidebar-bg, #1e1e2d) !important;
+  padding: 6px 14px 10px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.sidebar-search-wrap .sidebar-search {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+}
+
+
+.sidebar-search-wrap .sidebar-search i,
+.sidebar-search-wrap .sidebar-search .ti {
+  position: absolute !important;
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--sidebar-search-icon, #727586) !important;
+  font-size: 15px !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+}
+
+.sidebar-search-wrap .sidebar-search-input {
+  width: 100% !important;
+  height: 38px !important;
+  border: 1px solid var(--sidebar-input-border, rgba(255, 255, 255, 0.08)) !important;
+  border-radius: 8px !important;
+  background: var(--sidebar-input-bg, rgba(255, 255, 255, 0.07)) !important;
+  color: var(--sidebar-input-color, #ffffff) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  padding: 0 12px 0 36px !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.sidebar-search-wrap .sidebar-search-input::placeholder {
+  color: var(--sidebar-search-placeholder, #727586) !important;
+  font-size: 13px !important;
+}
+
+.sidebar-search-wrap .sidebar-search-input:focus {
+  border-color: var(--theme-primary, #206bc4) !important;
+  background: var(--sidebar-input-focus-bg, rgba(255, 255, 255, 0.12)) !important;
+  box-shadow: 0 0 0 2px var(--theme-primary-shadow, rgba(32, 107, 196, 0.25)) !important;
+}
+
+/* Menü Ayarları Dişli Butonu */
+.sidebar-menu-settings {
+  flex: 0 0 auto !important;
+  position: relative !important;
+}
+
+.sidebar-menu-settings .btn-menu-settings {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--sidebar-input-bg, rgba(255, 255, 255, 0.07)) !important;
+  border: 1px solid var(--sidebar-input-border, rgba(255, 255, 255, 0.08)) !important;
+  border-radius: 8px !important;
+  color: var(--sidebar-search-icon, #a2a5b9) !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.sidebar-menu-settings .btn-menu-settings:hover,
+.sidebar-menu-settings .btn-menu-settings[aria-expanded="true"] {
+  background: var(--sidebar-input-focus-bg, rgba(255, 255, 255, 0.14)) !important;
+  border-color: var(--theme-primary, #206bc4) !important;
+  color: var(--sidebar-input-color, #ffffff) !important;
+}
+
+.sidebar-menu-settings .dropdown-menu {
+  background: var(--sidebar-dropdown-bg, #252538) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  padding: 6px 0 !important;
+  min-width: 200px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35) !important;
+  z-index: 1050 !important;
+}
+
+.sidebar-menu-settings .dropdown-header {
+  color: #727586 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 6px 16px !important;
+}
+
+.sidebar-menu-settings .dropdown-item {
+  color: #cbd5e1 !important;
+  font-size: 13px !important;
+  padding: 8px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: background 0.15s ease !important;
+}
+
+.sidebar-menu-settings .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+/* Menü Öğeleri Listesi */
+#sortable-menu {
+  padding: 2px 0 24px 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  margin: 0 !important;
+  list-style: none !important;
+}
+
+#sortable-menu > li.nav-item {
+  margin: 1px 8px !important;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  list-style: none !important;
+}
+
+/* Ana Menü Link Butonları (Aydınoğulları Standardı) */
+#sortable-menu > li.nav-item > .nav-link,
+#navbar .nav-link,
+.navbar-vertical .nav-link {
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 32px 0 42px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: #a2a5b9 !important;
+  letter-spacing: -0.01em !important;
+  border-radius: 8px !important;
+  border: none !important;
+  border-left: none !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#sortable-menu > li.nav-item > .nav-link .nav-link-title,
+#navbar .nav-link-title,
+.navbar-vertical .nav-link-title {
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: inherit !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#sortable-menu > li.nav-item > .nav-link .nav-link-icon,
+#navbar .nav-link-icon,
+.navbar-vertical .nav-link-icon {
+  position: absolute !important;
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  font-size: 17px !important;
+  width: 20px !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #727586 !important;
+  transition: color 0.15s ease !important;
+  margin-right: 0 !important;
+}
+
+#sortable-menu > li.nav-item > .nav-link:hover,
+#navbar .nav-link:hover,
+.navbar-vertical .nav-link:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
+}
+
+#sortable-menu > li.nav-item > .nav-link:hover .nav-link-icon,
+#navbar .nav-link:hover .nav-link-icon,
+.navbar-vertical .nav-link:hover .nav-link-icon {
+  color: #ffffff !important;
+}
+
+/* Açık olan veya alt elemanı aktif olan ana dropdown menü kapsülü */
+#sortable-menu > li.nav-item.show > .nav-link,
+#sortable-menu > li.nav-item.dropdown.active > .nav-link,
+#navbar .nav-item.show > .nav-link,
+#navbar .nav-item.dropdown.active > .nav-link,
+.navbar-vertical .nav-item.show > .nav-link,
+.navbar-vertical .nav-item.dropdown.active > .nav-link {
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  border-left: none !important;
+}
+
+#sortable-menu > li.nav-item.show > .nav-link .nav-link-icon,
+#sortable-menu > li.nav-item.dropdown.active > .nav-link .nav-link-icon,
+#navbar .nav-item.show > .nav-link .nav-link-icon,
+#navbar .nav-item.dropdown.active > .nav-link .nav-link-icon,
+.navbar-vertical .nav-item.show > .nav-link .nav-link-icon,
+.navbar-vertical .nav-item.dropdown.active > .nav-link .nav-link-icon {
+  color: #ffffff !important;
+}
+
+/* Standalone (Dropdown olmayan) Tekil Aktif Ana Menü (Örn: Ana Sayfa) */
+#sortable-menu > li.nav-item:not(.dropdown).active > .nav-link,
+#sortable-menu > li.nav-item:not(.dropdown) > .nav-link.active,
+#navbar .nav-item:not(.dropdown).active > .nav-link,
+#navbar .nav-item:not(.dropdown) > .nav-link.active,
+.navbar-vertical .nav-item:not(.dropdown).active > .nav-link,
+.navbar-vertical .nav-item:not(.dropdown) > .nav-link.active {
+  background: var(--sidebar-active-bg, rgba(255, 255, 255, 0.18)) !important;
+  color: var(--sidebar-active-color, #ffffff) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  border-left: none !important;
+}
+
+#sortable-menu > li.nav-item:not(.dropdown).active > .nav-link .nav-link-title,
+#sortable-menu > li.nav-item:not(.dropdown) > .nav-link.active .nav-link-title,
+#navbar .nav-item:not(.dropdown).active > .nav-link .nav-link-title,
+#navbar .nav-item:not(.dropdown) > .nav-link.active .nav-link-title,
+.navbar-vertical .nav-item:not(.dropdown).active > .nav-link .nav-link-title,
+.navbar-vertical .nav-item:not(.dropdown) > .nav-link.active .nav-link-title {
+  color: var(--sidebar-active-color, #ffffff) !important;
+  font-weight: 600 !important;
+}
+
+#sortable-menu > li.nav-item:not(.dropdown).active > .nav-link .nav-link-icon,
+#sortable-menu > li.nav-item:not(.dropdown).active > .nav-link .nav-link-icon i,
+#sortable-menu > li.nav-item:not(.dropdown).active > .nav-link .nav-link-icon .ti,
+#sortable-menu > li.nav-item:not(.dropdown) > .nav-link.active .nav-link-icon,
+#sortable-menu > li.nav-item:not(.dropdown) > .nav-link.active .nav-link-icon i,
+#sortable-menu > li.nav-item:not(.dropdown) > .nav-link.active .nav-link-icon .ti,
+#navbar .nav-item:not(.dropdown).active > .nav-link .nav-link-icon,
+#navbar .nav-item:not(.dropdown).active > .nav-link .nav-link-icon i,
+#navbar .nav-item:not(.dropdown).active > .nav-link .nav-link-icon .ti,
+#navbar .nav-item:not(.dropdown) > .nav-link.active .nav-link-icon,
+#navbar .nav-item:not(.dropdown) > .nav-link.active .nav-link-icon i,
+#navbar .nav-item:not(.dropdown) > .nav-link.active .nav-link-icon .ti,
+.navbar-vertical .nav-item:not(.dropdown).active > .nav-link .nav-link-icon,
+.navbar-vertical .nav-item:not(.dropdown) > .nav-link.active .nav-link-icon {
+  color: var(--sidebar-active-color, #ffffff) !important;
+}
+
+/* Dropdown İnce Zarif Ok (Chevron) - Aydınoğulları Standardı */
+#sortable-menu > li.nav-item > .nav-link.dropdown-toggle::after,
+#navbar .nav-link.dropdown-toggle::after,
+#navbar .navbar-nav .dropdown-toggle::after,
+.navbar-vertical .navbar-nav .dropdown-toggle::after {
+  content: "" !important;
+  display: inline-block !important;
+  position: absolute !important;
+  right: 14px !important;
+  top: 50% !important;
+  width: 6px !important;
+  height: 6px !important;
+  border: none !important;
+  border-top: 1.5px solid #727586 !important;
+  border-right: 1.5px solid #727586 !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  transform: translateY(-50%) rotate(45deg) !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease !important;
+  background: transparent !important;
+  background-image: none !important;
+  margin: 0 !important;
+  vertical-align: middle !important;
+}
+
+#sortable-menu > li.nav-item.show > .nav-link.dropdown-toggle::after,
+#sortable-menu > li.nav-item > .nav-link.dropdown-toggle[aria-expanded="true"]::after,
+#navbar .nav-item.show > .nav-link.dropdown-toggle::after,
+#navbar .navbar-nav .nav-item.show > .nav-link.dropdown-toggle::after,
+.navbar-vertical .navbar-nav .show > .dropdown-toggle::after {
+  transform: translateY(-50%) rotate(135deg) !important;
+  border-color: #ffffff !important;
+}
+
+#sortable-menu > li.nav-item > .nav-link.no-arrow::after,
+#sortable-menu > li.nav-item > .nav-link:not(.dropdown-toggle)::after,
+#navbar .nav-link.no-arrow::after,
+#navbar .navbar-nav .nav-link.no-arrow::after,
+.navbar-vertical .navbar-nav .nav-link.no-arrow::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Alt Menü (Submenu) Ağaç Yapısı & Sol Kılavuz Çizgisi */
+#navbar .dropdown-menu,
+.navbar-vertical .dropdown-menu {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 3px 0 6px 0 !important;
+  margin: 0 !important;
+  position: static !important;
+  float: none !important;
+}
+
+#navbar .dropdown-menu-column,
+.navbar-vertical .dropdown-menu-column {
+  position: relative !important;
+  margin-left: 20px !important;
+  padding-left: 14px !important;
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+/* Sol dikey kılavuz çizgisi (Aydınoğulları Tree Line) */
+#navbar .dropdown-menu-column::before,
+.navbar-vertical .dropdown-menu-column::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 4px !important;
+  bottom: 8px !important;
+  width: 1px !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+#navbar .dropdown-item,
+.navbar-vertical .dropdown-item {
+  position: relative !important;
+  color: #9499ad !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  padding: 7px 12px !important;
+  border-radius: 6px !important;
+  border: none !important;
+  border-left: none !important;
+  background: transparent !important;
+  transition: all 0.15s ease !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em !important;
+}
+
+#navbar .dropdown-item:hover,
+.navbar-vertical .dropdown-item:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Aktif Alt Menü Öğesi (Aydınoğulları Vurgulu Beyaz Kapsül Stili) */
+#navbar .dropdown-item.active,
+#navbar .dropdown-item.active-link,
+.navbar-vertical .dropdown-item.active,
+.navbar-vertical .dropdown-item.active-link {
+  color: var(--sidebar-active-color, #ffffff) !important;
+  background: var(--sidebar-active-bg, rgba(255, 255, 255, 0.18)) !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-left: none !important;
+  margin: 1px 14px 1px 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
 }
 
 /* Sürükle-bırak menü sıralama stilleri */
-#sortable-menu > li.nav-item {
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-}
-#sortable-menu > li.nav-item:active {
-  cursor: grabbing;
-}
 .menu-sortable-ghost {
   opacity: 0.4;
   background-color: rgba(32, 107, 196, 0.1) !important;
-  border-left: 3px solid #206bc4 !important;
+  border-left: 3px solid var(--theme-primary, #206bc4) !important;
 }
 .menu-sortable-chosen {
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Menü elemanlarının dikey sığmama durumunda scroll çıkması */
+/* Menü Scrollbar (Sadece Üzerine Gelince Görünür) */
 #sidebar-menu {
+  flex: 1 1 auto !important;
   overflow-y: auto !important;
-  max-height: calc(100vh - 130px);
+  max-height: calc(100vh - 65px) !important;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.25s ease;
+}
+
+#navbar:hover #sidebar-menu,
+#sidebar-menu:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
 #sidebar-menu::-webkit-scrollbar {
@@ -177,15 +665,29 @@
 }
 
 #sidebar-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: transparent;
   border-radius: 4px;
+  transition: background-color 0.25s ease;
+}
+
+#navbar:hover #sidebar-menu::-webkit-scrollbar-thumb,
+#sidebar-menu:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 #sidebar-menu::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.45) !important;
 }
 
 #navbar.collapsed #sidebar-menu {
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 65px) !important;
 }
 
+@media (max-width: 576px) {
+  #navbar,
+  aside#navbar,
+  .navbar-vertical {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+}

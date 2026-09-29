@@ -104,7 +104,31 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                     <!-- HIDDEN ROW -->
 
                     <div class="col-md-12">
-                        <div class="card">
+                        <style>
+                            /* Proje Yönetim Sekmeleri ve Alt Kartlar Kompakt Boşluklar (4px) */
+                            .project-tabs-card > .card-body {
+                                padding: 4px !important;
+                            }
+                            .tab-content .card-header {
+                                padding: 8px 12px !important;
+                            }
+                            .tab-content .card-body {
+                                padding: 6px 8px !important;
+                            }
+                            .tab-content .table th,
+                            .tab-content .table td {
+                                padding: 6px 8px !important;
+                            }
+                            .tab-content .row-cards {
+                                margin-left: -4px !important;
+                                margin-right: -4px !important;
+                            }
+                            .tab-content .row-cards > [class*="col-"] {
+                                padding-left: 4px !important;
+                                padding-right: 4px !important;
+                            }
+                        </style>
+                        <div class="card project-tabs-card">
                             <div class="card-header">
                                 <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" role="tablist">
                                     <li class="nav-item" role="presentation">
@@ -128,7 +152,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                             aria-selected="false" tabindex="-1"
                                             role="tab">
                                             <i class="ti ti-calendar-month icon me-1"></i>
-                                            Çalışma/Puantaj Bilgileri
+                                             Çalışma/Puantaj Bilgileri
                                         </a>
                                     </li>
                                     <li class="nav-item" role="presentation">
@@ -149,7 +173,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                     </li>
                                 </ul>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-1">
                                 <div class="tab-content">
                                     <div class="tab-pane active show" id="tabs-summary-3" role="tabpanel">
                                         <?php include_once "content/4-project-summary.php" ?>

@@ -36,16 +36,12 @@ if ($_POST['action'] == "saveTransaction") {
     }
 
     $turu = intval($_POST['type']); // 5: Gelir, 12: Masraf, 14: Puantaj Çalışması
-    $kategori = "";
-    if ($turu == 5) $kategori = "Proje Alınan Ödeme";
-    else if ($turu == 12) $kategori = "Proje Masrafı";
-    else if ($turu == 14) $kategori = "Puantaj Çalışması";
-    else if ($turu == 6) $kategori = "Projeye Yapılan Ödeme";
-    else $kategori = "Diğer";
+    $kategori = 0;
 
     $data = [
         "id" => $id,
         "project_id" => $project_id,
+        "firm_id" => $_SESSION['firm_id'] ?? 0,
         "case_id" => isset($_POST['case_id']) ? Security::decrypt($_POST['case_id']) : 0,
         "tarih" => Date::Ymd($_POST['date']),
         "tutar" => Helper::formattedMoneyToNumber($_POST['amount']),

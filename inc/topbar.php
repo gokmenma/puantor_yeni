@@ -47,72 +47,99 @@ $new_url = $url_parts['path'] . '?' . $new_query_string;
 ?>
 
 
+<?php
+$_topbar_is_bordro_or_puantaj = (
+    in_array($active_page ?? '', ['payroll/list', 'puantaj/list', 'payroll/bordro', 'payroll/pay-slip', 'raporlar/list'], true) ||
+    str_starts_with($active_page ?? '', 'puantaj/') ||
+    str_starts_with($active_page ?? '', 'payroll/') ||
+    str_starts_with($active_page ?? '', 'raporlar/')
+);
+
+$_topbar_period_year = (int) ($_SESSION['period_year'] ?? date('Y'));
+$_topbar_period_month = (int) ($_SESSION['period_month'] ?? date('m'));
+$_topbar_month_names = [1 => 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+$_topbar_days_in_month = cal_days_in_month(CAL_GREGORIAN, $_topbar_period_month, $_topbar_period_year);
+$_topbar_month_name = $_topbar_month_names[$_topbar_period_month] ?? '';
+$_topbar_period_formatted = sprintf('%s %04d', $_topbar_month_name, $_topbar_period_year);
+
+require_once ROOT . '/Model/MyFirmModel.php';
+$_topbar_myFirmModel = new MyFirmModel();
+$_topbar_myFirms = $_topbar_myFirmModel->getMyFirmByUserId();
+
+$_topbar_current_firm_name = 'Firma Seçiniz';
+if ($firm_id > 0) {
+    foreach ($_topbar_myFirms as $f) {
+        if ((int)$f->id === (int)$firm_id) {
+            $_topbar_current_firm_name = $f->firm_name;
+            break;
+        }
+    }
+    if ($_topbar_current_firm_name === 'Firma Seçiniz') {
+        $_topbar_current_firm_name = $company->getFirmName($firm_id);
+    }
+} elseif (!empty($_topbar_myFirms)) {
+    $_topbar_current_firm_name = $_topbar_myFirms[0]->firm_name;
+}
+?>
+
+
 <header class="navbar-expand-md">
     <div class="collapse navbar-collapse" id="navbar-menu">
 
         <div class="navbar">
-        <div class="collapse-button text-muted" onclick="toggleNavbar()">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+            <div class="topbar-left-wrapper d-flex align-items-center">
+                <div class="collapse-button text-muted me-2" onclick="toggleNavbar()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <?php if (basename($_SERVER['PHP_SELF']) != 'company-list.php'): ?>
+                <div class="d-flex align-items-center flex-wrap" style="gap: 4px;">
+                    <!-- Firma Seçimi Dropdown -->
+                    <div class="dropdown topbar-firm-dropdown">
+                        <button class="btn btn-ghost-secondary text-body fw-bold py-1 px-2 text-decoration-none dropdown-toggle d-flex align-items-center border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="box-shadow:none; font-size: 0.92rem; border-radius: 6px;">
+                            <span class="text-truncate" style="max-width: 260px;"><?= htmlspecialchars($_topbar_current_firm_name, ENT_QUOTES, 'UTF-8') ?></span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-arrow shadow-sm py-1" style="min-width: 240px; max-height: 320px; overflow-y: auto;">
+                            <div class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 11px;">Firma Seçimi</div>
+                            <?php foreach ($_topbar_myFirms as $firmItem): ?>
+                                <?php $isCurrent = ((int)$firmItem->id === (int)$firm_id); ?>
+                                <a class="dropdown-item d-flex align-items-center justify-content-between py-2 <?= $isCurrent ? 'active fw-bold' : '' ?>" 
+                                   href="set-session.php?p=<?= urlencode($active_page) ?>&firm_id=<?= \App\Helper\Security::encrypt($firmItem->id) ?>">
+                                    <span class="text-truncate"><?= htmlspecialchars($firmItem->firm_name, ENT_QUOTES, 'UTF-8') ?></span>
+                                    <?php if ($isCurrent): ?>
+                                        <i class="ti ti-check ms-2 text-success"></i>
+                                    <?php endif; ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
 
-            <!-- <div class="col-auto align-bottom" style="margin-left:250px;">
+                    <?php if ($_topbar_is_bordro_or_puantaj): ?>
+                    <span class="text-secondary opacity-50 px-1" style="font-size: 1.1rem; font-weight: 300;">/</span>
 
-                 <button class="btn" type="button">
-                    <i class="ti ti-menu-2"></i>
-                </button> 
-
-            </div> -->
-
+                    <!-- Dönem Seçimi Flatpickr MonthSelect -->
+                    <div class="topbar-period-wrapper position-relative d-inline-flex align-items-center cursor-pointer py-1 px-2 rounded-2" id="topbar-period-container" title="Dönem Değiştir" style="transition: background-color 0.15s ease;">
+                        <span class="status-dot status-dot-animated bg-success me-2" style="width: 8px; height: 8px;"></span>
+                        <span class="fw-bold text-body me-1" id="topbar-period-display" style="font-size: 0.92rem; white-space: nowrap;"><?= htmlspecialchars($_topbar_period_formatted, ENT_QUOTES, 'UTF-8') ?></span>
+                        <i class="ti ti-chevron-down text-muted" style="font-size: 0.82rem;"></i>
+                        <input type="text" id="topbar-period-picker" class="position-absolute opacity-0" style="inset: 0; width: 100%; height: 100%; cursor: pointer; z-index: 5;" readonly aria-label="Dönem Seçimi" />
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
 
 
             <div class="navbar-nav flex-row order-md-last ms-auto me-3">
-
-                <?php if (in_array($active_page ?? '', ['payroll/list', 'puantaj/list', 'raporlar/list'], true)): ?>
-                <div class="nav-item me-2 d-flex align-items-center">
-                    <form method="get" action="index.php" class="m-0" id="topbar-period-form">
-                        <?php
-                        foreach ($_GET as $_topbar_query_key => $_topbar_query_value) {
-                            if (in_array($_topbar_query_key, ['period', 'year', 'months', 'theme'], true) || is_array($_topbar_query_value)) {
-                                continue;
-                            }
-                            echo '<input type="hidden" name="' . htmlspecialchars($_topbar_query_key, ENT_QUOTES, 'UTF-8')
-                                . '" value="' . htmlspecialchars((string) $_topbar_query_value, ENT_QUOTES, 'UTF-8') . '">';
-                        }
-                        $_topbar_period_year = (int) ($_SESSION['period_year'] ?? date('Y'));
-                        $_topbar_period_month = (int) ($_SESSION['period_month'] ?? date('m'));
-                        $_topbar_month_names = [1 => 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-                        ?>
-                        <label for="topbar-period" class="visually-hidden">Dönem</label>
-                        <select name="period" id="topbar-period" class="form-select form-select-sm fw-semibold"
-                                aria-label="Dönem seçimi" onchange="this.form.submit()" style="min-width: 145px;">
-                            <?php for ($_topbar_y = 2030; $_topbar_y >= 2021; $_topbar_y--): ?>
-                                <?php for ($_topbar_m = 12; $_topbar_m >= 1; $_topbar_m--): ?>
-                                    <option value="<?= sprintf('%04d-%02d', $_topbar_y, $_topbar_m) ?>"
-                                        <?= $_topbar_y === $_topbar_period_year && $_topbar_m === $_topbar_period_month ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($_topbar_month_names[$_topbar_m] . ' ' . $_topbar_y, ENT_QUOTES, 'UTF-8') ?>
-                                    </option>
-                                <?php endfor; ?>
-                            <?php endfor; ?>
-                        </select>
-                    </form>
-                </div>
-                <?php endif; ?>
-
-                <div class="nav-item ms-auto me-1">
-                    <?php
-
-
-                    // Sayfa adını ve superadmin durumunu kontrol et
-                    if (basename($_SERVER['PHP_SELF']) != 'company-list.php' && !$_topbar_is_superadmin) {
-                        echo $company->myCompanySelect("myFirm", $firm_id);
-                    }
-
-                    ?>
-                    
-                </div>
                 <div class="d-none d-md-flex align-items-center">
+
+                    <!-- Tema Özelleştirici Butonu -->
+                    <a href="javascript:void(0);" onclick="openThemeCustomizer();" class="nav-link px-0 me-2"
+                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tema Özelleştirici" aria-label="Tema Özelleştirici">
+                        <i class="ti ti-palette" style="font-size: 1.25rem;"></i>
+                    </a>
 
                     <a href="<?php echo htmlspecialchars($new_url); ?>" class="nav-link px-0 me-1 hide-theme-dark js-theme-toggle"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable dark mode"
@@ -293,4 +320,43 @@ $(document).on('click', '.topbar-duyuru-item', function () {
 
     $.post('pages/duyurular/api.php', { action: 'okundu', id: encId }).always(go);
 });
+
+$(document).ready(function () {
+    var pickerEl = document.getElementById('topbar-period-picker');
+    if (pickerEl && typeof flatpickr === 'function') {
+        var defaultYear = <?= (int)($_topbar_period_year ?? date('Y')) ?>;
+        var defaultMonth = <?= (int)($_topbar_period_month ?? date('m')) ?>;
+
+        flatpickr('#topbar-period-picker', {
+            locale: (typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.tr) ? flatpickr.l10ns.tr : 'tr',
+            defaultDate: new Date(defaultYear, defaultMonth - 1, 1),
+            dateFormat: "Y-m",
+            plugins: [
+                (typeof monthSelectPlugin === 'function') ? monthSelectPlugin({
+                    shorthand: false,
+                    dateFormat: "Y-m",
+                    altFormat: "F Y"
+                }) : null
+            ].filter(Boolean),
+            onChange: function (selectedDates, dateStr, instance) {
+                if (selectedDates && selectedDates.length > 0) {
+                    var d = selectedDates[0];
+                    var y = d.getFullYear();
+                    var m = (d.getMonth() + 1).toString().padStart(2, '0');
+                    var period = y + '-' + m;
+
+                    document.cookie = "p_months=" + m + "; path=/; max-age=31536000";
+                    document.cookie = "p_year=" + y + "; path=/; max-age=31536000";
+
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('period', period);
+                    url.searchParams.set('year', y);
+                    url.searchParams.set('months', m);
+                    window.location.href = url.toString();
+                }
+            }
+        });
+    }
+});
 </script>
+

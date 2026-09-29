@@ -62,6 +62,10 @@ try {
 
     } elseif ($action == 'update_status') {
         $id = $_POST['id'] ?? 0;
+        if (!is_numeric($id)) {
+            $id = Security::decrypt($id);
+        }
+        $id = intval($id);
         $status = intval($_POST['status'] ?? 0);
         $admin_note = trim($_POST['admin_note'] ?? $_POST['red_aciklama'] ?? $_POST['aciklama'] ?? '');
 
@@ -149,7 +153,11 @@ try {
         exit;
 
     } elseif ($action == 'add') {
-        $person_id = intval($_POST['person_id'] ?? 0);
+        $person_id = $_POST['person_id'] ?? 0;
+        if (!is_numeric($person_id)) {
+            $person_id = Security::decrypt($person_id);
+        }
+        $person_id = intval($person_id);
         $tutar     = floatval(str_replace(',', '.', $_POST['tutar'] ?? 0));
         $hedef_ay  = intval($_POST['hedef_ay'] ?? date('m'));
         $hedef_yil = intval($_POST['hedef_yil'] ?? date('Y'));

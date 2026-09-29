@@ -15,10 +15,15 @@ require_once 'Model/HolidayWorkService.php';
 require_once 'Model/PersonIcra.php';
 require_once 'App/Helper/teams.php';
 
+if (!isset($Auths)) {
+    require_once ROOT . '/Model/Auths.php';
+    $Auths = new Auths();
+}
+$Auths->checkAuthorize('payroll_page');
+
 use App\Helper\Security;
 use App\Helper\Date;
 use App\Helper\Helper;
-
 
 $Cases = new Cases();
 $projects = new Projects();
@@ -31,21 +36,24 @@ $wages = new Wages();
 $Settings = new SettingsModel();
 $HolidayWorkService = new HolidayWorkService();
 $personIcra = new PersonIcra();
+$Teams = new Teams();
 
+$firm_id = (int) ($_SESSION['firm_id'] ?? 0);
 $year = (int) ($_SESSION['period_year'] ?? date('Y'));
 $month = (int) ($_SESSION['period_month'] ?? date('m'));
 $period_is_visible = $bordro->getPeriodVisibility($firm_id, $year, $month);
-// Ayın ilk gününü bulma (20240901) şeklinde döner
+
+// Ayın ilk ve son gününü bulma
 $firstDay = Date::firstDay($month, $year);
 $last_day = Date::Ymd(Date::lastDay($month, $year));
-$project_id = isset($_POST['projects']) ? $_POST['projects'] : 0;
-$team_id = isset($_POST['team_id']) ? $_POST['team_id'] : '';
+$lastDay = Date::lastDay($month, $year);
+
+$project_id = isset($_POST['projects']) ? (int)$_POST['projects'] : 0;
+$team_id = isset($_POST['team_id']) ? trim((string)$_POST['team_id']) : '';
 $action = $_POST['action'] ?? '';
-$Teams = new Teams();
 
 // Personelleri Güncelle işlemi için auto-assignment mantığı
 if ($action == 'update_personnel' && $project_id > 0) {
-    // Bu dönemde bu projede puantajı olan ama projeye atanmamış personelleri bul ve ata
     $p_sql = "SELECT DISTINCT person FROM puantaj WHERE project_id = ? AND gun >= ? AND gun <= ?";
     $p_q = $personObj->getDb()->prepare($p_sql);
     $p_q->execute([$project_id, $firstDay, $last_day]);
@@ -62,13 +70,10 @@ if ($action == 'update_personnel' && $project_id > 0) {
     }
 }
 
-if ($project_id == 0 || $project_id == '') {
-    // Proje id boş ise Firma id'sine göre personelleri getirir
-    // Personelleri Güncelle veya Hesapla butonu tıklandıysa tüm personelleri getirir (yeni eklenenleri yakalamak veya hesaplamak için)
+if ($project_id == 0 || $project_id === '') {
     $show_all = ($action == 'update_personnel' || $action == 'payroll_calculate');
     $persons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDay, $last_day, $show_all, $team_id);
 } else {
-    // Proje id dolu ise projeye ait personelleri getirir
     $persons = $projects->getPersonIdByFromProjectCurrentMonth($project_id, $firstDay, $last_day, 0, $team_id, true);
 }
 
@@ -89,11 +94,6 @@ $icraAmountMap = $isPayrollCalculation
     : $bordro->getIcraAmounts($personIds, $month, $year);
 $personProjectMap = $projects->getProjectNamesByPersonIds($personIds, $firm_id);
 $payrollRows = [];
-
-// Set the default timezone to your local timezone
-
-// Ayın son gününü bulma (20240930) şeklinde döner
-$lastDay = Date::lastDay($month, $year);
 
 $case_id = $Cases->getDefaultCaseIdByFirm();
 
@@ -240,7 +240,7 @@ foreach ($persons as $item) {
                     }
                 }
 
-                // Resmi tatilde çalışılan günler için firma politikasına göre ayrı ilave gelir oluştur.
+                // Resmi tatilde çalışılan günler için ilave gelir hesaplama
                 $holidayWorkHour = (float) str_replace(',', '.', $Settings->getSettings("work_hour")->set_value ?? 8);
                 $holidayAttendanceRecords = $puantajObj->getPuantajByPersonAndDate($person->id, $firstDay, $lastDay);
                 foreach ($holidayAttendanceRecords as $holidayAttendance) {
@@ -337,297 +337,316 @@ foreach ($persons as $item) {
 $total_kalan = $total_gelir - ($total_odeme + $total_icra);
 ?>
 
-<div class="container-xl mt-2 mb-2">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-        <h2 class="page-title m-0">Bordro</h2>
-    </div>
+<script>
+(function() {
+    try {
+        document.documentElement.classList.toggle(
+            'payroll-summary-collapsed',
+            localStorage.getItem('payroll_summary_collapsed') === '1'
+        );
+    } catch (e) {}
+})();
+</script>
+<style>
+html.payroll-summary-collapsed #payrollSummaryCards {
+    max-height: 0 !important;
+    margin-bottom: 12px !important;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+}
+</style>
 
-    <!-- Özet Kartları -->
-    <div class="row row-cards mb-2">
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-primary text-white avatar">
-                                <i class="ti ti-download icon"></i>
-                            </span>
+<div class="container-xl mt-1" id="payrollPage">
+
+    <!-- Form Container for Filters & Actions -->
+    <form action="" method="post" id="bordroInfoForm" class="m-0">
+        <input type="hidden" name="months" id="months" value="<?= sprintf('%02d', $month) ?>">
+        <input type="hidden" name="year" id="year" value="<?= $year ?>">
+
+        <!-- Page Header (Hero Banner) -->
+        <div class="page-header d-print-none mb-3">
+            <div class="row g-2 align-items-center">
+                <div class="col">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-sm" style="width: 44px; height: 44px;">
+                            <i class="ti ti-calculator" style="font-size: 24px;"></i>
                         </div>
-                        <div class="col">
-                            <div class="font-weight-medium" id="payroll-total-income"
-                                data-amount="<?php echo htmlspecialchars((string) $total_gelir, ENT_QUOTES, 'UTF-8'); ?>">
-                                <?php echo Helper::formattedMoney($total_gelir); ?>
-                            </div>
-                            <div class="text-secondary">
-                                Toplam Brüt
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-orange text-white avatar">
-                                <i class="ti ti-cash-register icon"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium" id="payroll-total-expense"
-                                data-amount="<?php echo htmlspecialchars((string) $total_odeme, ENT_QUOTES, 'UTF-8'); ?>">
-                                <?php echo Helper::formattedMoney($total_odeme); ?>
-                            </div>
-                            <div class="text-secondary">
-                                Toplam Ödenen/Kesinti
+                        <div>
+                            <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                                Bordro Yönetimi
+                            </h2>
+                            <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                                <?= Date::monthName($month) . ' ' . $year ?> dönemi maaş, hakediş ve kesinti hesaplamaları
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-green text-white avatar">
-                                <i class="ti ti-credit-card-pay icon"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium" id="payroll-total-net"
-                                data-amount="<?php echo htmlspecialchars((string) $total_kalan, ENT_QUOTES, 'UTF-8'); ?>">
-                                <?php echo Helper::formattedMoney($total_kalan); ?>
-                            </div>
-                            <div class="text-secondary">
-                                Toplam Ödenecek
+                <!-- Primary Actions -->
+                <div class="col-auto ms-auto d-print-none">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <?php if ($Auths->hasPermission('toggle_payroll_period_status')): ?>
+                        <div class="d-flex align-items-center me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Dönem Durumu: <?= Date::monthName($month) . ' ' . $year ?> dönemi <?= $period_is_visible == 1 ? 'KAPALI (PWA Personellere Açık, Puantaj Kilitli)' : 'AÇIK (PWA Personellere Kapalı, Puantaj Düzenlenebilir)' ?>">
+                            <div class="form-check form-switch mb-0 p-0 d-flex align-items-center cursor-pointer">
+                                <input class="form-check-input cursor-pointer m-0 me-1" type="checkbox" id="pwa-visibility-toggle" data-year="<?= $year ?>" data-month="<?= $month ?>" <?= $period_is_visible == 1 ? 'checked' : '' ?>>
+                                <span id="pwa-visibility-status" class="badge <?= $period_is_visible == 1 ? 'bg-danger-lt text-danger' : 'bg-success-lt text-success' ?> cursor-pointer py-1 px-2">
+                                    <i class="ti <?= $period_is_visible == 1 ? 'ti-lock' : 'ti-lock-open' ?> icon me-1" id="pwa-visibility-icon"></i><span id="pwa-visibility-text"><?= $period_is_visible == 1 ? 'Dönem Kapalı' : 'Dönem Açık' ?></span>
+                                </span>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-azure text-white avatar">
-                                <i class="ti ti-users icon"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium">
-                                <?php echo $total_persons; ?>
-                            </div>
-                            <div class="text-secondary">
-                                Personel Sayısı
+                        <?php endif; ?>
+
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-icon payroll-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle" id="colvisDropdownBtn">
+                                <i class="ti ti-columns"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-2" id="bordroColvisMenu" style="min-width: 210px; max-height: 350px; overflow-y: auto;">
+                                <!-- Checkboxes will be rendered dynamically by JS -->
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Filtreler ve Butonlar -->
-    <form action="" method="post" id="bordroInfoForm">
-        <div class="row">
-            <div class="col-3">
-                <label for="projects" class="form-label">Proje:</label>
-                <?php echo $projectHelper->getProjectSelect('projects', $project_id, 'Tüm Projeler'); ?>
-            </div>
-            <div class="col-2">
-                <label for="team_id" class="form-label">Ekip:</label>
-                <?php echo $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler'); ?>
-            </div>
-            <input type="hidden" name="months" id="months" value="<?php echo sprintf('%02d', $month); ?>">
-            <input type="hidden" name="year" id="year" value="<?php echo $year; ?>">
-
-            <div class="col-auto ms-auto mt-auto d-flex align-items-center">
-                <?php if ($Auths->hasPermission('toggle_payroll_period_status')): ?>
-                <div class="d-flex align-items-center me-3" data-bs-toggle="tooltip" data-bs-placement="top" title="Dönem Durumu: <?php echo Date::monthName($month) . ' ' . $year; ?> dönemi <?php echo $period_is_visible == 1 ? 'KAPALI (PWA Personellere Açık, Puantaj Kilitli)' : 'AÇIK (PWA Personellere Kapalı, Puantaj Düzenlenebilir)'; ?>">
-                    <div class="form-check form-switch mb-0 p-0 d-flex align-items-center cursor-pointer">
-                        <input class="form-check-input cursor-pointer m-0 me-1" type="checkbox" id="pwa-visibility-toggle" data-year="<?php echo $year; ?>" data-month="<?php echo $month; ?>" <?php echo $period_is_visible == 1 ? 'checked' : ''; ?>>
-                        <span id="pwa-visibility-status" class="badge <?php echo $period_is_visible == 1 ? 'bg-danger-lt text-danger' : 'bg-success-lt text-success'; ?> cursor-pointer">
-                            <i class="ti <?php echo $period_is_visible == 1 ? 'ti-lock' : 'ti-lock-open'; ?> icon me-1" id="pwa-visibility-icon"></i><span id="pwa-visibility-text"><?php echo $period_is_visible == 1 ? 'Dönem Kapalı' : 'Dönem Açık'; ?></span>
-                        </span>
-                    </div>
-                </div>
-                <?php endif; ?>
-                <div class="dropdown me-2">
-                    <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" title="Sütunları Seç" id="colvisDropdownBtn">
-                        <i class="ti ti-columns icon"></i>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end p-2" id="bordroColvisMenu"
-                        style="min-width: 200px; max-height: 300px; overflow-y: auto;">
-                    </div>
-                </div>
-                <?php
-                if ($Auths->hasPermission('payroll_export_excel')) { ?>
-                    <label for=""></label>
-                    <a href="pages/payroll/xls/payroll-list.php?month=<?php echo urlencode((string) $month); ?>&year=<?php echo urlencode((string) $year); ?>&project_id=<?php echo urlencode((string) $project_id); ?>&team_id=<?php echo urlencode((string) $team_id); ?>"
-                        class="btn btn-icon me-2" data-tooltip="Excele Aktar">
-                        <i class="ti ti-file-excel icon"></i>
-                    </a>
-                <?php } ?>
-
-
-
-                <label for="" class="form-label"></label>
-
-                <div class="dropdown">
-                    <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">
-                        <i class="ti ti-list-details icon me-2"></i>
-                        İşlemler</button>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <?php if ($Auths->hasPermission('upload_payment_permission')) { ?>
-                            <a class="dropdown-item" href="#" data-bs-target="#load-payment-modal" data-bs-toggle="modal"
-                                data-tooltip="Personellere yapılan ödemeleri excelden yükleyin" data-tooltip-location="left">
-                                <i class="ti ti-table-import icon me-3 text-info"></i> Ödeme Yükle
-                            </a>
-                        <?php } ?>
-                        <?php if ($Auths->hasPermission('update_fees_permission')) { ?>
-                            <a class="dropdown-item" data-tooltip="Günlük Ücretleri güncelleyin"
-                                data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wages-modal">
-                                <i class="ti ti-user-dollar icon me-3"></i> Ücretleri Güncelle
-                            </a>
-                        <?php } ?>
-
-                        <?php if ($Auths->hasPermission('payroll_export_excel')) { ?>
-                            <a class="dropdown-item add-income"
-                                data-tooltip="Personellere yapılacak ödeme listesini indirin" data-tooltip-location="left"
-                                href="pages/payroll/xls/bank-list-for-payments.php">
-                                <i class="ti ti-checklist icon me-3"></i> Banka Listesi İndir
-                            </a>
-                        <?php } ?>
-                        <?php if ($Auths->hasPermission('income_expense_add_update')) { ?>
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-income-modal">
-                                <i class="ti ti-circle-plus icon me-3 text-success"></i> Toplu Gelir Ekle
-                            </a>
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#bulk-wage-cut-modal">
-                                <i class="ti ti-circle-minus icon me-3 text-danger"></i> Toplu Kesinti Ekle
-                            </a>
-                        <?php } ?>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#" id="update_personnel">
-                            <i class="ti ti-users-plus icon me-3"></i> Personelleri Güncelle
+                        <a href="#" class="btn btn-sm btn-dark shadow-sm payroll-header-action" id="payroll_calculate" style="background-color: #1e293b; border-color: #1e293b;">
+                            <i class="ti ti-calculator me-1"></i> Hesapla
                         </a>
+
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle payroll-header-action" data-bs-toggle="dropdown">
+                                <i class="ti ti-settings me-1"></i> İşlemler
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <?php if ($Auths->hasPermission('payroll_export_excel')): ?>
+                                    <a href="pages/payroll/xls/payroll-list.php?month=<?= urlencode((string) $month) ?>&year=<?= urlencode((string) $year) ?>&project_id=<?= urlencode((string) $project_id) ?>&team_id=<?= urlencode((string) $team_id) ?>" class="dropdown-item">
+                                        <i class="ti ti-file-excel icon me-2 text-success"></i> Excel'e Aktar
+                                    </a>
+                                    <a class="dropdown-item" href="pages/payroll/xls/bank-list-for-payments.php">
+                                        <i class="ti ti-checklist icon me-2 text-info"></i> Banka Listesi İndir
+                                    </a>
+                                <?php endif; ?>
+                                <?php if ($Auths->hasPermission('upload_payment_permission')): ?>
+                                    <a class="dropdown-item" href="#" data-bs-target="#load-payment-modal" data-bs-toggle="modal">
+                                        <i class="ti ti-table-import icon me-2 text-primary"></i> Ödeme Yükle
+                                    </a>
+                                <?php endif; ?>
+                                <?php if ($Auths->hasPermission('update_fees_permission')): ?>
+                                    <a class="dropdown-item" href="#" data-bs-target="#bulk-wages-modal" data-bs-toggle="modal">
+                                        <i class="ti ti-user-dollar icon me-2 text-warning"></i> Ücretleri Güncelle
+                                    </a>
+                                <?php endif; ?>
+                                <?php if ($Auths->hasPermission('income_expense_add_update')): ?>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#" data-bs-target="#bulk-income-modal" data-bs-toggle="modal">
+                                        <i class="ti ti-circle-plus icon me-2 text-success"></i> Toplu Gelir Ekle
+                                    </a>
+                                    <a class="dropdown-item" href="#" data-bs-target="#bulk-wage-cut-modal" data-bs-toggle="modal">
+                                        <i class="ti ti-circle-minus icon me-2 text-danger"></i> Toplu Kesinti Ekle
+                                    </a>
+                                <?php endif; ?>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" id="update_personnel">
+                                    <i class="ti ti-users-plus icon me-2 text-secondary"></i> Personelleri Güncelle
+                                </a>
+                                <a class="dropdown-item" href="#" id="btnPrintBulkPayrolls">
+                                    <i class="ti ti-printer icon me-2 text-dark"></i> Seçilenlerin Bordrolarını Yazdır
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <a class="btn btn-primary ms-2" href="#" id="payroll_calculate">
-                    <i class="ti ti-calculator icon me-2"></i> Hesapla
-                </a>
-
-
             </div>
         </div>
-    </form>
-</div>
 
+        <!-- KPI / İstatistik Özet Kartları -->
+        <div class="row row-cards g-3 mb-3" id="payrollSummaryCards">
+            <!-- Kart 1: Toplam Brüt -->
+            <div class="col-sm-6 col-xl-3">
+                <div class="card card-sm border payroll-summary-card" style="border-color: #e2e8f0 !important;">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM BRÜT</span>
+                            <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                                <i class="ti ti-download" style="font-size: 18px;"></i>
+                            </div>
+                        </div>
+                        <div class="h1 mb-2 fw-bold text-dark" id="payroll-total-income" data-amount="<?= htmlspecialchars((string) $total_gelir, ENT_QUOTES, 'UTF-8') ?>" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                            <?= Helper::formattedMoney($total_gelir) ?>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                            <span class="text-muted" style="font-size: 11.5px;">
+                                Hakediş + İlave Gelirler
+                            </span>
+                            <span class="badge bg-secondary-lt text-secondary fw-semibold" style="font-size: 10px; padding: 3px 8px;">Brüt Tutar</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<style>
-    .dropdown-menu {
-  position: absolute;
-  z-index: 9999;
-}
+            <!-- Kart 2: Toplam Ödenen / Kesinti -->
+            <div class="col-sm-6 col-xl-3">
+                <div class="card card-sm border payroll-summary-card" style="border-color: #e2e8f0 !important;">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">ÖDENEN / KESİNTİ</span>
+                            <div class="avatar avatar-sm rounded-2 bg-warning-lt text-warning" style="width: 32px; height: 32px;">
+                                <i class="ti ti-cash-register" style="font-size: 18px;"></i>
+                            </div>
+                        </div>
+                        <div class="h1 mb-2 fw-bold text-dark" id="payroll-total-expense" data-amount="<?= htmlspecialchars((string) $total_odeme, ENT_QUOTES, 'UTF-8') ?>" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                            <?= Helper::formattedMoney($total_odeme) ?>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                            <span class="text-muted" style="font-size: 11.5px;">
+                                İcra: <strong class="text-purple"><?= Helper::formattedMoney($total_icra) ?></strong>
+                            </span>
+                            <span class="badge bg-warning-lt text-warning fw-semibold" style="font-size: 10px; padding: 3px 8px;">Toplam Çıkış</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-</style>
-<style>
-#bordroTable th:last-child,
-#bordroTable td:last-child {
-    width: 110px !important;
-    min-width: 110px !important;
-    white-space: nowrap;
-}
+            <!-- Kart 3: Kalan Ödenecek -->
+            <div class="col-sm-6 col-xl-3">
+                <div class="card card-sm border payroll-summary-card" style="border-color: #e2e8f0 !important;">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KALAN ÖDENECEK</span>
+                            <div class="avatar avatar-sm rounded-2 bg-success-lt text-success" style="width: 32px; height: 32px;">
+                                <i class="ti ti-credit-card-pay" style="font-size: 18px;"></i>
+                            </div>
+                        </div>
+                        <div class="h1 mb-2 fw-bold text-dark" id="payroll-total-net" data-amount="<?= htmlspecialchars((string) $total_kalan, ENT_QUOTES, 'UTF-8') ?>" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                            <?= Helper::formattedMoney($total_kalan) ?>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                            <span class="text-muted" style="font-size: 11.5px;">
+                                Net Bakiye
+                            </span>
+                            <span class="badge <?= $total_kalan > 0 ? 'bg-success-lt text-success' : 'bg-secondary-lt text-secondary' ?> fw-semibold" style="font-size: 10px; padding: 3px 8px;">
+                                <?= $total_kalan > 0 ? 'Ödeme Bekleyen' : 'Tamamlandı' ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-#bordroTable td:last-child .dropdown,
-#bordroTable td:last-child .dropdown-toggle {
-    width: 100%;
-    min-width: 88px;
-}
-</style>
-<div class="container-xl mt-2">
-    <div class="row row-deck row-cards">
-        <div class="col-12">
-            <div class="card">
+            <!-- Kart 4: Personel Sayısı -->
+            <div class="col-sm-6 col-xl-3">
+                <div class="card card-sm border payroll-summary-card" style="border-color: #e2e8f0 !important;">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">BORDROLU PERSONEL</span>
+                            <div class="avatar avatar-sm rounded-2 bg-info-lt text-info" style="width: 32px; height: 32px;">
+                                <i class="ti ti-users" style="font-size: 18px;"></i>
+                            </div>
+                        </div>
+                        <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                            <?= number_format($total_persons, 0, ',', '.') ?>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                            <span class="text-muted" style="font-size: 11.5px;">
+                                Dönem: <strong><?= Date::monthName($month) . ' ' . $year ?></strong>
+                            </span>
+                            <span class="badge bg-info-lt text-info fw-semibold" style="font-size: 10px; padding: 3px 8px;">Bu Dönem</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Main Table Card -->
+        <div class="row row-cards">
+            <div class="col-12">
+                <div class="card payroll-table-card" style="border: 1px solid #dbe3ec !important; overflow: hidden; background: #ffffff;">
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">
+                                <i class="ti ti-calculator text-secondary" style="font-size: 18px;"></i>
+                            </div>
+                            <div>
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Bordro Listesi</h4>
+                                <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Anlık filtreleme, puantaj ve ödeme takibi</p>
+                            </div>
+                        </div>
 
+                        <!-- Filtre Seçimleri -->
+                        <div class="d-flex align-items-center flex-wrap gap-2 my-1 my-md-0">
+                            <div style="min-width: 170px;">
+                                <?= $projectHelper->getProjectSelect('projects', $project_id, 'Tüm Projeler') ?>
+                            </div>
+                            <div style="min-width: 150px;">
+                                <?= $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler') ?>
+                            </div>
+                        </div>
 
+                        <!-- Actions & Search -->
+                        <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
+                            <!-- Fast Instant Search -->
+                            <div class="input-icon payroll-search-wrap" style="min-width: 170px;">
+                                <span class="input-icon-addon">
+                                    <i class="ti ti-search text-muted"></i>
+                                </span>
+                                <input type="text" id="payroll-fast-search" class="form-control form-control-sm" placeholder="Arayın..." autocomplete="off">
+                                <button type="button" id="payroll-search-clear" class="payroll-search-clear d-none" aria-label="Aramayı temizle" title="Aramayı temizle">
+                                    <i class="ti ti-x"></i>
+                                </button>
+                            </div>
+                            <button type="button" id="togglePayrollSummary" class="btn btn-sm btn-outline-secondary btn-icon payroll-summary-toggle" title="Özet kartlarını gizle" aria-label="Özet kartlarını gizle" aria-expanded="true">
+                                <i class="ti ti-chevron-up"></i>
+                            </button>
+                        </div>
+                    </div>
 
-                    <table class="table card-table table-responsive table-hover text-nowrap datatable" id="bordroTable"
-                    >
-                        <thead>
-                            <tr>
-                                <th style="width:1%">Sıra</th>
-                                <th>Personel Adı</th>
-                                <th>Ücret Türü</th>
-                                <th>Görevi</th>
-                                <th>Ekip</th>
-                                <th>Proje</th>
-                                <th>IBAN</th>
-                                <th>İşe Başlama Tarihi</th>
-                                <th style="width:10%" class="text-center">Brüt Ücret</th>
-                                <th style="width:10%" class="text-center">İcra Kesintisi</th>
-                                <th style="width:10%" class="text-center">Ödenen/Kesinti</th>
-                                <th style="width:10%" class="text-center">Ödenecek</th>
-                                <th style="width:1%" class="text-center no-export">İşlem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-
-                            <?php
-                            $i = 1;
-                            foreach ($persons as $item):
-
-
-                                $payrollRow = $payrollRows[(int) $item->id] ?? null;
-                                if (!$payrollRow) {
-                                    continue;
-                                }
-                                $person = $payrollRow['person'];
-                                $person_id = Security::encrypt($person->id);
-                                $id = Security::encrypt($person->id);
-
-                                //personelin görevden ayrılma tarihi firstday'den küçükse (bu aydan önce ayrıldıysa) personeli getirme
-                                if ($person->job_end_date != null && $person->job_end_date != '') {
-                                    $job_end_date_ymd = Date::Ymd($person->job_end_date);
-                                    if ($job_end_date_ymd < $firstDay) {
+                    <!-- Table Responsive Container (Seamless inside card) -->
+                    <div class="table-responsive payroll-table-area" style="overflow-x: auto !important;">
+                        <table class="table data-table table-hover text-nowrap w-100 mb-0" id="bordroTable" style="width: 100% !important; margin: 0 !important;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; min-width: 40px;" class="text-center no-export" data-orderable="false">
+                                        <input type="checkbox" class="form-check-input select-all-payrolls" title="Tümünü Seç">
+                                    </th>
+                                    <th style="width: 50px; min-width: 50px;" class="text-center">Sıra</th>
+                                    <th>Personel Adı</th>
+                                    <th>Ücret Türü</th>
+                                    <th>Görevi</th>
+                                    <th>Ekip</th>
+                                    <th style="max-width: 135px; width: 125px;">Proje</th>
+                                    <th>IBAN</th>
+                                    <th>İşe Başlama Tarihi</th>
+                                    <th style="width:10%" class="text-end">Brüt Ücret</th>
+                                    <th style="width:10%" class="text-end">İcra Kesintisi</th>
+                                    <th style="width:10%" class="text-end">Ödenen/Kesinti</th>
+                                    <th style="width:10%" class="text-end">Ödenecek</th>
+                                    <th style="width: 95px; min-width: 95px;" class="text-end no-export" data-orderable="false">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $i = 1;
+                                foreach ($persons as $item):
+                                    $payrollRow = $payrollRows[(int) $item->id] ?? null;
+                                    if (!$payrollRow) {
                                         continue;
                                     }
-                                }
+                                    $person = $payrollRow['person'];
+                                    $person_id = Security::encrypt($person->id);
+                                    $id = Security::encrypt($person->id);
 
-                                $gelir = $payrollRow['gelir'];
-                                $odeme = $payrollRow['odeme'];
-                                $kalan = $gelir - $odeme;
+                                    if ($person->job_end_date != null && $person->job_end_date != '') {
+                                        $job_end_date_ymd = Date::Ymd($person->job_end_date);
+                                        if ($job_end_date_ymd < $firstDay) {
+                                            continue;
+                                        }
+                                    }
 
-                                ?>
-                                <tr>
-                                    <td class="text-center"><?php echo $i; ?></td>
-                                    <td> <a href="#" data-tooltip="Detay/Güncelle"
-                                            data-page="persons/manage&id=<?php echo $id ?>"
-                                            class="nav-item route-link"><?php echo $person->full_name; ?></a></td>
-                                    <td><?php echo $person->wage_type == 1 ? 'Beyaz Yaka' : 'Mavi Yaka'; ?></td>
-                                    <td><?php echo $person->job; ?></td>
-                                    <td><?php echo $person->ekip ?: '-'; ?></td>
-                                    <td><?php
-                                        $pNames = $personProjectMap[(int) $person->id] ?? [];
-                                        echo !empty($pNames) ? implode(', ', $pNames) : '-';
-                                    ?></td>
-                                    <td><?php echo Security::safeDecrypt($person->iban_number ?? '') ?: '-'; ?></td>
-                                    <td><?php echo $person->job_start_date; ?></td>
+                                    $gelir = $payrollRow['gelir'];
+                                    $odeme = $payrollRow['odeme'];
+                                    $kalan = $gelir - $odeme;
+                                    $icra_month_amount = (float) $payrollRow['icra'];
+                                    $odeme_haric_icra = max(0, $odeme - $icra_month_amount);
 
-                                    <!-- Gelir -->
-                                    <?php
                                     $wage_type_text = $person->wage_type == 1 ? 'Aylık' : 'Günlük';
                                     if ($person->wage_type == 1) {
                                         $monthly_wage = floatval($person->daily_wages ?? 0);
                                         $daily_wage = $monthly_wage / 30;
-                                        
                                         $monthly_wage_text = Helper::formattedMoney($monthly_wage);
                                         $daily_wage_text = Helper::formattedMoney($daily_wage);
                                     } else {
@@ -635,12 +654,12 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                                         $monthly_wage_text = '-';
                                         $daily_wage_text = Helper::formattedMoney($daily_wage);
                                     }
-                                    
+
                                     $popover_content = "
                                     <div class='p-1'>
                                       <div class='mb-2 pb-1 border-bottom d-flex justify-content-between align-items-center gap-4'>
                                         <span class='text-secondary small font-weight-medium'>Ücret Türü</span>
-                                        <span class='badge bg-blue-lite text-blue'>" . htmlspecialchars($wage_type_text, ENT_QUOTES, 'UTF-8') . "</span>
+                                        <span class='badge bg-blue-lt text-blue'>" . htmlspecialchars($wage_type_text, ENT_QUOTES, 'UTF-8') . "</span>
                                       </div>
                                       <div class='d-flex justify-content-between py-1 gap-4'>
                                         <span class='text-secondary'>Aylık Ücret:</span>
@@ -651,142 +670,362 @@ $total_kalan = $total_gelir - ($total_odeme + $total_icra);
                                         <span class='font-weight-bold text-dark'>" . htmlspecialchars($daily_wage_text, ENT_QUOTES, 'UTF-8') . "</span>
                                       </div>
                                     </div>";
-                                    ?>
+                                ?>
+                                <tr>
+                                    <td class="text-center">
+                                        <input type="checkbox" class="form-check-input payroll-row-check" value="<?= (int) $person->id ?>" data-enc-id="<?= $id ?>">
+                                    </td>
+                                    <td class="text-center text-muted small"><?= $i ?></td>
+                                    <td>
+                                        <a href="#" data-tooltip="Personel Detayı" data-page="persons/manage&id=<?= $id ?>" class="nav-item route-link fw-semibold text-dark">
+                                            <?= htmlspecialchars($person->full_name ?? '', ENT_QUOTES, 'UTF-8') ?>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge <?= $person->wage_type == 1 ? 'bg-blue-lt text-blue' : 'bg-secondary-lt text-secondary' ?>">
+                                            <?= $person->wage_type == 1 ? 'Beyaz Yaka' : 'Mavi Yaka' ?>
+                                        </span>
+                                    </td>
+                                    <td><?= htmlspecialchars($person->job ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars($person->ekip ?: '-', ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td class="text-truncate" style="max-width: 135px;" title="<?php $pNames = $personProjectMap[(int) $person->id] ?? []; echo htmlspecialchars(!empty($pNames) ? implode(', ', $pNames) : '-', ENT_QUOTES, 'UTF-8'); ?>"><?php
+                                        $pNames = $personProjectMap[(int) $person->id] ?? [];
+                                        echo htmlspecialchars(!empty($pNames) ? implode(', ', $pNames) : '-', ENT_QUOTES, 'UTF-8');
+                                    ?></td>
+                                    <td><code><?= htmlspecialchars(Security::safeDecrypt($person->iban_number ?? '') ?: '-', ENT_QUOTES, 'UTF-8') ?></code></td>
+                                    <td><?= htmlspecialchars($person->job_start_date ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+
+                                    <!-- Brüt Gelir -->
                                     <td class="text-end gross-salary-popover" 
                                         data-bs-toggle="popover" 
                                         data-bs-trigger="hover" 
                                         data-bs-html="true" 
                                         data-bs-placement="top"
                                         title="Ücret Bilgileri"
-                                        data-bs-content="<?php echo htmlspecialchars($popover_content, ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-bs-content="<?= htmlspecialchars($popover_content, ENT_QUOTES, 'UTF-8') ?>"
                                         style="cursor: pointer;">
-                                        <?php echo Helper::formattedMoney(($gelir) ?? 0) ?>
-                                        <i class="ti ti-download icon text-green"></i>
+                                        <span class="fw-semibold text-dark"><?= Helper::formattedMoney(($gelir) ?? 0) ?></span>
+                                        <i class="ti ti-download icon text-success ms-1"></i>
                                     </td>
 
                                     <!-- İcra Kesintisi -->
-                                    <?php
-                                    $icra_month_amount = (float) $payrollRow['icra'];
-                                    $odeme_haric_icra = max(0, $odeme - $icra_month_amount);
-                                    ?>
                                     <td class="text-end text-purple fw-semibold btn-view-icra-deductions"
-                                        data-person-id="<?php echo $id; ?>"
+                                        data-person-id="<?= $id ?>"
                                         role="button" tabindex="0" title="İcra kesintisi detayını görüntüle"
                                         style="cursor: pointer;">
-                                        <?php echo $icra_month_amount > 0 ? Helper::formattedMoney($icra_month_amount) : '0,00 ₺'; ?>
+                                        <?= $icra_month_amount > 0 ? Helper::formattedMoney($icra_month_amount) : '<span class="text-muted">0,00 ₺</span>' ?>
                                     </td>
 
                                     <!-- Ödenen / Kesinti (İcra Hariç) -->
                                     <td class="text-end view-payroll-detail"
-                                        data-id="<?php echo $id ?>"
-                                        data-month="<?php echo $month ?>"
-                                        data-year="<?php echo $year ?>"
+                                        data-id="<?= $id ?>"
+                                        data-month="<?= $month ?>"
+                                        data-year="<?= $year ?>"
                                         role="button" tabindex="0" title="Bordro detayını görüntüle"
                                         style="cursor: pointer;"
                                         data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
-                                        <?php echo Helper::formattedMoney($odeme_haric_icra ?? 0); ?>
-                                        <i class="ti ti-cash-register icon color-green"></i>
+                                        <span class="fw-semibold"><?= Helper::formattedMoney($odeme_haric_icra ?? 0) ?></span>
+                                        <i class="ti ti-cash-register icon text-warning ms-1"></i>
                                     </td>
 
-
-
-                                    <!-- Bakiye rengini belirle ve göster -->
-                                    <td class="text-end payroll-balance <?php echo Helper::balanceColor($kalan) ?> view-payroll-detail"
-                                        data-id="<?php echo $id ?>"
-                                        data-month="<?php echo $month ?>"
-                                        data-year="<?php echo $year ?>"
+                                    <!-- Ödenecek / Kalan Bakiye -->
+                                    <td class="text-end payroll-balance <?= Helper::balanceColor($kalan) ?> view-payroll-detail fw-bold"
+                                        data-id="<?= $id ?>"
+                                        data-month="<?= $month ?>"
+                                        data-year="<?= $year ?>"
                                         role="button" tabindex="0" title="Bordro detayını görüntüle"
                                         style="cursor: pointer;"
                                         data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
-                                        <!-- //Bakiyesini yazdır -->
-                                        <?php echo Helper::formattedMoney($kalan ?? 0); ?>
-                                        <i class="ti ti-credit-card-pay icon"></i>
+                                        <?= Helper::formattedMoney($kalan ?? 0) ?>
+                                        <i class="ti ti-credit-card-pay icon ms-1"></i>
                                     </td>
 
-
-                                    <td class="text-end">
+                                    <!-- İşlem Sütunu -->
+                                    <td class="text-end actions-column">
                                         <div class="dropdown">
-                                            <button class="btn dropdown-toggle"
-                                                data-bs-toggle="dropdown">İşlem</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" style="height: 28px; padding: 2px 8px; font-size: 12px;" data-bs-toggle="dropdown">
+                                                İşlem
+                                            </button>
                                             <div class="dropdown-menu dropdown-menu-end">
-                                                <?php if ($Auths->hasPermission('make_staff_payment')) { ?>
-                                                    <a class="dropdown-item add-payment" data-id="<?php echo $id ?>"
-                                                        data-balance="<?php echo htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8'); ?>" href="#"
+                                                <?php if ($Auths->hasPermission('make_staff_payment')): ?>
+                                                    <a class="dropdown-item add-payment" data-id="<?= $id ?>"
+                                                        data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>" href="#"
                                                         data-bs-toggle="modal" data-bs-target="#payment-modal">
-                                                        <i class="ti ti-cash-register icon me-3"></i> Ödeme Yap
+                                                        <i class="ti ti-cash-register icon me-2 text-success"></i> Ödeme Yap
                                                     </a>
-                                                <?php } ?>
+                                                <?php endif; ?>
 
-                                                <?php if ($Auths->hasPermission("income_expense_add_update")) {
-                                                    ; ?>
-                                                    <a class="dropdown-item add-wage-cut" data-id="<?php echo $id ?>"
-                                                        data-balance="<?php echo htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
-                                                        data-tooltip="Avans,Ceza veya Bes gibi" data-tooltip-location="left"
-                                                        href="#">
-                                                        <i class="ti ti-cut icon me-3"></i> Kesinti Ekle
+                                                <?php if ($Auths->hasPermission("income_expense_add_update")): ?>
+                                                    <a class="dropdown-item add-wage-cut" data-id="<?= $id ?>"
+                                                        data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>"
+                                                        data-tooltip="Avans, Ceza veya BES gibi" data-tooltip-location="left"
+                                                        href="#" data-bs-toggle="modal" data-bs-target="#wage_cut_modal">
+                                                        <i class="ti ti-cut icon me-2 text-danger"></i> Kesinti Ekle
                                                     </a>
 
-                                                    <a class="dropdown-item add-income" data-id="<?php echo $id ?>"
-                                                        data-balance="<?php echo htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
-                                                        data-tooltip="Prim,İkramiye veya Ödül gibi" data-tooltip-location="left"
+                                                    <a class="dropdown-item add-income" data-id="<?= $id ?>"
+                                                        data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>"
+                                                        data-tooltip="Prim, İkramiye veya Ödül gibi" data-tooltip-location="left"
                                                         href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
-                                                        <i class="ti ti-download icon me-3"></i> Gelir Ekle
+                                                        <i class="ti ti-download icon me-2 text-primary"></i> Gelir Ekle
                                                     </a>
-                                                <?php } ?>
+                                                <?php endif; ?>
 
                                                 <?php
-                                                $link =  $id . "&month=" . Security::encrypt($month) . "&year=" . Security::encrypt($year);
+                                                $link = $id . "&month=" . Security::encrypt($month) . "&year=" . Security::encrypt($year);
                                                 ?>
-
-                                                <a class="dropdown-item" target="_blank"
-                                                    href="index.php?p=payroll/pay-slip&id=<?php echo $link ?>">
-                                                    <i class="ti ti-file-dollar icon me-3"></i> Bordro Göster
+                                                <a class="dropdown-item" target="_blank" href="index.php?p=payroll/pay-slip&id=<?= $link ?>">
+                                                    <i class="ti ti-file-dollar icon me-2 text-info"></i> Bordro Pusulası
                                                 </a>
 
                                                 <div class="dropdown-divider"></div>
                                                 <a class="dropdown-item delete-monthly-payroll text-danger" 
-                                                   data-id="<?php echo $id ?>" 
-                                                   data-month="<?php echo $month ?>" 
-                                                   data-year="<?php echo $year ?>" 
-                                                   data-project-id="<?php echo $project_id ?>"
+                                                   data-id="<?= $id ?>" 
+                                                   data-month="<?= $month ?>" 
+                                                   data-year="<?= $year ?>" 
+                                                   data-project-id="<?= $project_id ?>"
                                                    href="#">
-                                                    <i class="ti ti-trash icon me-3"></i> Sil
+                                                    <i class="ti ti-trash icon me-2"></i> Bordrodan Çıkar
                                                 </a>
-
                                             </div>
                                         </div>
-
                                     </td>
                                 </tr>
                                 <?php
                                 $i++;
-                            endforeach; ?>
-                        </tbody>
-                    </table>
-                
+                                endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
 
+                </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
-<script>
-window.bordroOptions = {
-    autoWidth: false,
-    ordering: true,
-    pageLength: 25,
-    lengthMenu: [10, 25, 50, 100],
-    order: [[1, 'asc']],
-    columnDefs: [
-        { targets: 0, className: 'text-center' },
-        { targets: [8, 9, 10, 11], className: 'text-end' },
-        { targets: 12, width: '110px', orderable: false, searchable: false, className: 'text-center no-export actions-column' }
-    ],
-    language: {
-        url: 'src/tr.json'
-    }
-};
-</script>
+<style>
+.payroll-header-action {
+    height: 32px;
+    padding: 4px 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+.payroll-header-icon-action,
+.payroll-summary-toggle {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+}
+.payroll-header-icon-action i,
+.payroll-summary-toggle i {
+    margin: 0 !important;
+    font-size: 18px !important;
+}
+
+#payrollPage .payroll-summary-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+    overflow: hidden;
+}
+
+#payrollSummaryCards {
+    max-height: 1000px;
+    opacity: 1;
+    transform: translateY(0);
+    overflow: hidden;
+    transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
+}
+
+#payrollPage .payroll-table-card {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
+    overflow: hidden;
+}
+
+.payroll-table-card > .payroll-table-area {
+    width: calc(100% - 16px) !important;
+    margin: 0 8px 8px !important;
+    padding: 0 !important;
+}
+
+.payroll-table-card > .card-header {
+    border-bottom: 0 !important;
+}
+
+.payroll-search-wrap { position: relative; }
+#payroll-fast-search {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 4px 32px 4px 34px !important;
+    line-height: 1.25 !important;
+    font-size: 12.5px;
+    border-radius: 6px;
+}
+.payroll-search-wrap,
+.payroll-search-wrap.input-icon {
+    height: 32px !important;
+}
+.payroll-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    z-index: 3;
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 50%;
+    color: #64748b;
+    background: #f1f5f9;
+    cursor: pointer;
+}
+.payroll-search-clear:hover {
+    color: #1e293b;
+    background: #e2e8f0;
+}
+
+.table-responsive,
+#bordroTable_wrapper,
+div.dt-container,
+div.dt-container .dt-layout-row.dt-layout-table,
+div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
+    height: auto !important;
+    min-height: 0 !important;
+    min-height: unset !important;
+    max-height: none !important;
+    flex-grow: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+div.dt-container .dt-layout-row.dt-layout-table {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Tek Çerçeve (Kart ile Bütünleşik Tablo) */
+table#bordroTable.data-table,
+table#bordroTable.dataTable {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 1px solid #dbe3ec !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+}
+table#bordroTable.data-table tbody,
+table#bordroTable.dataTable tbody,
+table#bordroTable.data-table tbody tr:last-child,
+table#bordroTable.dataTable tbody tr:last-child,
+#bordroTable_wrapper .dt-layout-table,
+#bordroTable_wrapper .dt-layout-cell {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Eski Arama Satırını Gizle */
+#bordroTable .search-input-row,
+table.dataTable thead tr.search-input-row {
+    display: none !important;
+}
+
+/* Tablo Başlık Hücreleri */
+table#bordroTable.data-table thead th,
+table#bordroTable.dataTable thead th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 11.5px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 9px 12px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-top: none !important;
+    border-left: none !important;
+    vertical-align: middle !important;
+}
+table#bordroTable.data-table thead th:last-child,
+table#bordroTable.dataTable thead th:last-child {
+    border-right: none !important;
+}
+
+/* Gövde Satır ve Sütun Kenarlıkları */
+table#bordroTable.data-table tbody td,
+table#bordroTable.dataTable tbody td {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    color: #1e293b !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-top: none !important;
+    border-left: none !important;
+}
+table#bordroTable.data-table .form-check-input.select-all-payrolls,
+table#bordroTable.data-table .form-check-input.payroll-row-check {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
+    border-radius: 5px !important;
+}
+table#bordroTable.data-table td.actions-column {
+    width: 95px !important;
+    min-width: 95px !important;
+    text-align: right !important;
+    white-space: nowrap;
+    padding-right: 12px !important;
+}
+table#bordroTable.data-table tbody td:last-child {
+    border-right: none !important;
+}
+table#bordroTable.data-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+table#bordroTable.dataTable > tbody > tr:last-child > *,
+table#bordroTable.data-table > tbody > tr:last-child > * {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}
+table#bordroTable.data-table tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Tablo Altı Sayfalama ve Bilgi Alanı */
+#bordroTable_wrapper .dt-layout-row:last-child,
+div.dt-container .dt-layout-row:last-child,
+div#bordroTable_wrapper .dt-layout-row:has(.dt-paging),
+div#bordroTable_wrapper .dt-layout-row:has(.dt-info) {
+    margin: 0 !important;
+    margin-top: 0 !important;
+    padding: 10px 16px !important;
+    background: transparent !important;
+    border-top: none !important;
+    box-shadow: none !important;
+    position: static !important;
+    flex-shrink: 0 !important;
+}
+</style>
 
 <?php include_once 'content/wage_cut-modal.php'; ?>
 <?php include_once 'content/income-modal.php'; ?>
@@ -797,129 +1036,3 @@ window.bordroOptions = {
 <?php include_once 'content/bulk-wage-cut-modal.php'; ?>
 <?php include_once 'content/bulk-wages-modal.php'; ?>
 <?php include_once 'content/icra-deductions-modal.php'; ?>
-
-
-<script>
-$(document).ready(function() {
-    $(document).off('change.pwaVis').on('change.pwaVis', '#pwa-visibility-toggle', function() {
-        var isChecked = $(this).is(':checked') ? 1 : 0;
-        var year = $(this).data('year');
-        var month = $(this).data('month');
-        var $statusBadge = $('#pwa-visibility-status');
-        var $icon = $('#pwa-visibility-icon');
-        
-        $.ajax({
-            url: 'api/bordro/toggle_visibility.php',
-            type: 'POST',
-            data: { year: year, month: month, is_closed: isChecked },
-            dataType: 'json',
-            success: function(res) {
-                if (res.status === 'success') {
-                    if (isChecked === 1) {
-                        $statusBadge.removeClass('bg-success-lt text-success').addClass('bg-danger-lt text-danger');
-                        $icon.removeClass('ti-lock-open').addClass('ti-lock');
-                        $('#pwa-visibility-text').text('Dönem Kapalı');
-                    } else {
-                        $statusBadge.removeClass('bg-danger-lt text-danger').addClass('bg-success-lt text-success');
-                        $icon.removeClass('ti-lock').addClass('ti-lock-open');
-                        $('#pwa-visibility-text').text('Dönem Açık');
-                    }
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'success',
-                            title: res.message,
-                            showConfirmButton: false,
-                            timer: 2500
-                        });
-                    }
-                } else {
-                    $('#pwa-visibility-toggle').prop('checked', !isChecked);
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire('Yetkisiz Erişim', res.message || 'Bir hata oluştu.', 'error');
-                    }
-                }
-            },
-            error: function() {
-                $('#pwa-visibility-toggle').prop('checked', !isChecked);
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error');
-                }
-            }
-        });
-    });
-});
-</script>
-
-<script>
-$(document).ready(function() {
-    var currentMonth = parseInt($('#months').val()) || (new Date().getMonth() + 1);
-    var currentYear = parseInt($('#year').val()) || new Date().getFullYear();
-
-    var fp = flatpickr('#period_picker', {
-        locale: typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.tr ? flatpickr.l10ns.tr : 'tr',
-        defaultDate: new Date(currentYear, currentMonth - 1, 1),
-        dateFormat: "F Y",
-        plugins: [
-            typeof monthSelectPlugin === 'function' ? monthSelectPlugin({
-                shorthand: false,
-                dateFormat: "F Y",
-                altFormat: "F Y"
-            }) : null
-        ].filter(Boolean),
-        onChange: function(selectedDates, dateStr, instance) {
-            if (selectedDates.length > 0) {
-                var date = selectedDates[0];
-                var m = (date.getMonth() + 1).toString().padStart(2, '0');
-                var y = date.getFullYear();
-                $('#months').val(m);
-                $('#year').val(y);
-                if (typeof Route === 'function') {
-                    Route();
-                } else {
-                    $('#bordroInfoForm').submit();
-                }
-            }
-        }
-    });
-
-    $(document).off('click.prevP').on('click.prevP', '#prevPeriodBtn', function(e) {
-        e.preventDefault();
-        var m = parseInt($('#months').val());
-        var y = parseInt($('#year').val());
-        if (m === 1) {
-            m = 12;
-            y = y - 1;
-        } else {
-            m = m - 1;
-        }
-        $('#months').val(m.toString().padStart(2, '0'));
-        $('#year').val(y);
-        if (typeof Route === 'function') {
-            Route();
-        } else {
-            $('#bordroInfoForm').submit();
-        }
-    });
-
-    $(document).off('click.nextP').on('click.nextP', '#nextPeriodBtn', function(e) {
-        e.preventDefault();
-        var m = parseInt($('#months').val());
-        var y = parseInt($('#year').val());
-        if (m === 12) {
-            m = 1;
-            y = y + 1;
-        } else {
-            m = m + 1;
-        }
-        $('#months').val(m.toString().padStart(2, '0'));
-        $('#year').val(y);
-        if (typeof Route === 'function') {
-            Route();
-        } else {
-            $('#bordroInfoForm').submit();
-        }
-    });
-});
-</script>

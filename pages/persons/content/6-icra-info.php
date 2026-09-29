@@ -13,72 +13,72 @@ require_once "Model/PersonIcra.php";
 $person_id_encrypted = Security::encrypt($person->id);
 ?>
 
-<div class="container-xl mt-3">
+<div class="container-xl mt-2 mb-2">
     <!-- İcra İstatistik Kartları -->
-    <div class="row row-cards mb-3">
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
+    <div class="row row-cards mb-2">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-none border">
+                <div class="card-body py-2 px-3">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <span class="bg-primary text-white avatar">
-                                <i class="ti ti-files icon"></i>
+                            <span class="bg-primary-lt text-primary avatar avatar-md rounded-2">
+                                <i class="ti ti-file-invoice fs-2"></i>
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium" id="stats-total-files">0</div>
-                            <div class="text-secondary">Toplam Dosya</div>
+                            <div class="fw-bold fs-3 text-dark" id="stats-total-files">0</div>
+                            <div class="text-muted small" style="font-size: 11.5px;">Toplam Dosya</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-none border">
+                <div class="card-body py-2 px-3">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <span class="bg-green text-white avatar">
-                                <i class="ti ti-scissors icon"></i>
+                            <span class="bg-success-lt text-success avatar avatar-md rounded-2">
+                                <i class="ti ti-scissors fs-2"></i>
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium" id="stats-active-files">0</div>
-                            <div class="text-secondary">Aktif Dosyalar</div>
+                            <div class="fw-bold fs-3 text-dark" id="stats-active-files">0</div>
+                            <div class="text-muted small" style="font-size: 11.5px;">Aktif Dosyalar</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-none border">
+                <div class="card-body py-2 px-3">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <span class="bg-warning text-white avatar">
-                                <i class="ti ti-clock icon"></i>
+                            <span class="bg-warning-lt text-warning avatar avatar-md rounded-2">
+                                <i class="ti ti-clock fs-2"></i>
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium" id="stats-total-debt">0,00 ₺</div>
-                            <div class="text-secondary">Toplam Borç</div>
+                            <div class="fw-bold fs-3 text-dark" id="stats-total-debt">0,00 ₺</div>
+                            <div class="text-muted small" style="font-size: 11.5px;">Toplam Borç</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card card-sm">
-                <div class="card-body">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm shadow-none border">
+                <div class="card-body py-2 px-3">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <span class="bg-danger text-white avatar">
-                                <i class="ti ti-wallet icon"></i>
+                            <span class="bg-danger-lt text-danger avatar avatar-md rounded-2">
+                                <i class="ti ti-wallet fs-2"></i>
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium" id="stats-remaining-debt">0,00 ₺</div>
-                            <div class="text-secondary">Kalan Toplam Borç</div>
+                            <div class="fw-bold fs-3 text-dark" id="stats-remaining-debt">0,00 ₺</div>
+                            <div class="text-muted small" style="font-size: 11.5px;">Kalan Toplam Borç</div>
                         </div>
                     </div>
                 </div>
@@ -87,64 +87,73 @@ $person_id_encrypted = Security::encrypt($person->id);
     </div>
 
     <!-- Filtreler ve Tablo -->
-    <div class="card shadow-sm border-0">
-        <div class="card-header border-bottom py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <h3 class="card-title font-weight-700 mb-0">İcra Dosyaları</h3>
-            
-            <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
-                <!-- Bordro kesintisi yapılsın tetiği -->
-                <div class="form-check form-switch mb-0 me-3 pe-3 border-end border-light">
-                    <input class="form-check-input" type="checkbox" id="icra-kesintisi-toggle" data-person-id="<?= $person_id_encrypted; ?>">
-                    <label class="form-check-label fw-bold fs-5 mb-0" for="icra-kesintisi-toggle">Bordro kesintisi yapılsın</label>
-                </div>
+    <div class="row row-deck row-cards mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="card-header-icon">
+                            <i class="ti ti-file-invoice"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">İcra Dosyaları</h4>
+                                <a href="javascript:void(0)" class="btn-card-header-add" id="btn-add-icra-header" data-tooltip="Yeni İcra Dosyası Ekle">
+                                    <i class="ti ti-plus"></i>
+                                </a>
+                            </div>
+                            <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Personele ait icra kayıtları ve kesinti geçmişi</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+                        <!-- Bordro kesintisi yapılsın tetiği -->
+                        <div class="form-check form-switch mb-0 me-2 pe-2 border-end border-light d-flex align-items-center">
+                            <input class="form-check-input cursor-pointer m-0 me-2" type="checkbox" id="icra-kesintisi-toggle" data-person-id="<?= $person_id_encrypted; ?>">
+                            <label class="form-check-label fw-semibold fs-5 mb-0 cursor-pointer" for="icra-kesintisi-toggle" style="font-size: 13px;">Bordro kesintisi yapılsın</label>
+                        </div>
 
-                <!-- Durum Filtresi (Select2) -->
-                <div style="width: 200px;">
-                    <select class="form-select" id="icra-status-filter">
-                        <option value="">Tüm Durumlar</option>
-                        <?php foreach (PersonIcra::getStatuses() as $key => $stInfo): ?>
-                            <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($stInfo['title'], ENT_QUOTES, 'UTF-8'); ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                        <!-- Durum Filtresi (Select2) -->
+                        <div style="min-width: 170px; max-width: 200px;">
+                            <select class="form-select" id="icra-status-filter">
+                                <option value="">Tüm Durumlar</option>
+                                <?php foreach (PersonIcra::getStatuses() as $key => $stInfo): ?>
+                                    <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($stInfo['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Ekleme Butonu -->
+                        <button type="button" class="btn btn-sm btn-primary" id="btn-add-icra" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                            <i class="ti ti-plus me-1"></i> Yeni Dosya
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- Arama Kutusu -->
-                <div class="input-icon" style="width: 160px;">
-                    <span class="input-icon-addon">
-                        <i class="ti ti-search"></i>
-                    </span>
-                    <input type="text" class="form-control" placeholder="Dosya ara..." id="icra-search" style="height: 40px;">
+                <div class="table-responsive" style="padding: 4px !important;">
+                    <table class="table data-table table-hover text-nowrap w-100" id="icra-table" style="width: 100% !important;">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; min-width: 40px;" class="text-center no-export" data-orderable="false">#</th>
+                                <th>İcra Dairesi</th>
+                                <th>Dosya No</th>
+                                <th>Gelen Evrak</th>
+                                <th>Giden Evrak</th>
+                                <th class="text-center" style="width: 70px;">Belge</th>
+                                <th>Kesinti Tarihleri</th>
+                                <th class="text-end">Borç Tutarı</th>
+                                <th class="text-end">Yapılan Kesinti</th>
+                                <th class="text-end">Kalan Borç</th>
+                                <th class="text-center" style="width: 100px;">Durum</th>
+                                <th class="text-center no-export" style="width: 110px;" data-orderable="false">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="icra-table-body">
+                            <!-- Dinamik Yüklenir -->
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Ekleme Butonu -->
-                <button type="button" class="btn btn-primary px-3" id="btn-add-icra" style="height: 40px;">
-                    <i class="ti ti-plus icon me-1"></i> Yeni
-                </button>
             </div>
-        </div>
-        
-        <div class="table-responsive">
-            <table class="table table-vcenter card-table table-hover" id="icra-table" style="width: 100%;">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">Sıra</th>
-                        <th>İcra Dairesi</th>
-                        <th>Dosya No</th>
-                        <th>Gelen Evrak</th>
-                        <th>Giden Evrak</th>
-                        <th class="text-center" style="width: 70px;">Belge</th>
-                        <th>Kesinti Tarihleri</th>
-                        <th class="text-end">Borç Tutarı</th>
-                        <th class="text-end">Yapılan Kesinti</th>
-                        <th class="text-end">Kalan Borç</th>
-                        <th class="text-center" style="width: 100px;">Durum</th>
-                        <th class="text-end" style="width: 120px;">İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody id="icra-table-body">
-                    <!-- Dinamik Yüklenir -->
-                </tbody>
-            </table>
         </div>
     </div>
 </div>
@@ -823,3 +832,98 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<style>
+/* Tablonun etrafındaki eşit 4px dış boşluk */
+.card .table-responsive {
+    padding: 4px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+}
+
+#icra-table_wrapper {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Belirgin dış çerçeve, yuvarlak köşeler ve tam %100 genişlik */
+table#icra-table.data-table,
+table#icra-table.dataTable {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+}
+
+table#icra-table.data-table thead tr:first-child th:first-child { border-top-left-radius: 9px !important; }
+table#icra-table.data-table thead tr:first-child th:last-child { border-top-right-radius: 9px !important; }
+table#icra-table.data-table tbody tr:last-child td:first-child { border-bottom-left-radius: 9px !important; }
+table#icra-table.data-table tbody tr:last-child td:last-child { border-bottom-right-radius: 9px !important; }
+
+/* Başlık hücreleri ve iç kenarlıklar */
+table#icra-table.data-table thead th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 12px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-top: none !important;
+    border-left: none !important;
+    vertical-align: middle !important;
+}
+table#icra-table.data-table thead th:last-child {
+    border-right: none !important;
+}
+
+/* Gövde satırları */
+table#icra-table.data-table tbody td {
+    padding: 8px 12px !important;
+    font-size: 13.5px !important;
+    color: #1e293b !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-top: none !important;
+    border-left: none !important;
+}
+table#icra-table.data-table tbody td:last-child {
+    border-right: none !important;
+}
+table#icra-table.data-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+table#icra-table.data-table tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Dark Mode */
+[data-bs-theme="dark"] table#icra-table.data-table {
+    border-color: #334155 !important;
+}
+[data-bs-theme="dark"] table#icra-table.data-table thead th {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-bottom-color: #334155 !important;
+    border-right-color: #334155 !important;
+}
+[data-bs-theme="dark"] table#icra-table.data-table tbody td {
+    border-bottom-color: #334155 !important;
+    border-right-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+[data-bs-theme="dark"] table#icra-table.data-table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+</style>
+

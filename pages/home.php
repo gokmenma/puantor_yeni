@@ -2,23 +2,50 @@
 require_once ROOT . "/Model/Persons.php";
 require_once ROOT . "/Model/Projects.php";
 require_once ROOT . "/Model/CaseTransactions.php";
+require_once ROOT . "/Model/AdvanceRequest.php";
+require_once ROOT . "/Model/IzinTalep.php";
+require_once ROOT . "/Model/GorevModel.php";
+require_once ROOT . "/App/Helper/helper.php";
+
+use App\Helper\Helper;
+use App\Helper\Security;
 
 $personObj = new Persons();
 $projectObj = new Projects();
 $caseTransObj = new CaseTransactions();
+$advanceModel = new AdvanceRequest();
+$izinTalepModel = new IzinTalep();
+$gorevModel = new GorevModel();
 
 $firm_id = $_SESSION['firm_id'];
 
 // İstatistikleri çek
-$totalPersons = count($personObj->getPersonsByFirm($firm_id));
-$totalProjects = count($projectObj->getProjectsByFirm($firm_id));
-$balances = $caseTransObj->getFirmBalance($firm_id);
+$personStats = $personObj->getPersonnelStats($firm_id);
+$totalPersons = $personStats['total'] ?? 0;
+$activePersons = $personStats['active'] ?? 0;
+$passivePersons = $personStats['passive'] ?? 0;
 
+$projSummary = $projectObj->getProjectStatusSummary($firm_id);
+$totalProjects = $projSummary['total'] ?? 0;
+$activeProjects = $projSummary['active'] ?? 0;
+$completedProjects = $projSummary['completed'] ?? 0;
+
+$balances = $caseTransObj->getFirmBalance($firm_id);
 $totalIncome = $balances->total_income ?? 0;
 $totalExpense = $balances->total_expense ?? 0;
+$netBalance = $totalIncome - $totalExpense;
 
-require_once ROOT . "/App/Helper/helper.php";
-use App\Helper\Helper;
+// Bekleyen Operasyonlar
+$pendingAdvances = $advanceModel->getPendingRequestsByFirm($firm_id);
+$pendingAdvancesCount = count($pendingAdvances);
+$pendingAdvancesTotal = array_sum(array_map(function($a) { return (float)($a->tutar ?? 0); }, $pendingAdvances));
+
+$pendingLeavesCount = $izinTalepModel->getBekleyenSayisi($firm_id);
+$todayLeaves = $izinTalepModel->getBugunIzinliler($firm_id);
+$todayLeaveCount = count($todayLeaves);
+
+$upcomingTasks = $gorevModel->getYaklasanGorevler($firm_id, 50);
+$pendingTasksCount = count($upcomingTasks);
 ?>
 
 <style>
@@ -115,22 +142,21 @@ use App\Helper\Helper;
         <div class="container-xl">
             <div class="row g-2 align-items-center">
                 <div class="col">
-                    <!-- Page pre-title -->
                     <div class="page-pretitle">
-                        Genel Bakış
+                        Yönetim Paneli
                     </div>
                     <h2 class="page-title">
-                        Özet Bilgiler kontrol
+                        Genel Bakış ve Özet Bilgiler
                     </h2>
                 </div>
-                <!-- Action Buttons Here -->
+                <!-- Action Buttons -->
                 <div class="col-auto ms-auto d-print-none d-flex gap-2">
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle align-text-top" data-bs-toggle="dropdown">
                             <i class="ti ti-layout-dashboard me-2"></i> Kart Görünümü
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-3" id="dashboard-colvis-menu"
-                            style="min-width: 240px; max-height: 380px; overflow-y: auto;">
+                            style="min-width: 260px; max-height: 400px; overflow-y: auto;">
                             <!-- Dynamic checkboxes loaded via JS -->
                         </div>
                     </div>
@@ -141,13 +167,14 @@ use App\Helper\Helper;
             </div>
         </div>
     </div>
+
     <!-- Page body -->
     <div class="page-body">
         <div class="container-xl">
             <!-- Stats Cards Row -->
-            <div class="row row-deck row-cards" id="stats-sortable">
+            <div class="row row-cards" id="stats-sortable">
                 <?php if ($perm->hasPermission('personnel_page')): ?>
-                <div class="col-md-6 col-xl-3" data-id="stat-personel">
+                <div class="col-sm-6 col-xl-3" data-id="stat-personel">
                     <div class="card card-sm">
                         <div class="mac-titlebar">
                             <div class="mac-buttons">
@@ -161,116 +188,136 @@ use App\Helper\Helper;
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-auto">
-                                    <span class="bg-primary text-white avatar">
-                                        <i class="ti ti-users"></i>
+                                    <span class="bg-primary text-white avatar avatar-md rounded">
+                                        <i class="ti ti-users" style="font-size: 24px;"></i>
                                     </span>
                                 </div>
                                 <div class="col">
-                                    <div class="font-weight-medium"><?php echo number_format($totalPersons, 0, ',', '.'); ?></div>
-                                    <div class="text-secondary">Toplam Personel</div>
+                                    <div class="h2 mb-0 fw-bold"><?php echo number_format($totalPersons, 0, ',', '.'); ?></div>
+                                    <div class="text-secondary small">Toplam Personel</div>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <span class="badge bg-success-lt" style="font-size: 10px;"><?php echo $activePersons; ?> Aktif</span>
+                                        <?php if ($passivePersons > 0): ?>
+                                            <span class="badge bg-secondary-lt" style="font-size: 10px;"><?php echo $passivePersons; ?> Pasif</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <?php endif; ?>
-                <?php if ($perm->hasPermission('project_add_update')): ?>
-                <div class="col-md-6 col-xl-3" data-id="stat-proje">
-                    <div class="card card-sm">
-                        <div class="mac-titlebar">
-                            <div class="mac-buttons">
-                                <div class="mac-btn mac-close"></div>
-                                <div class="mac-btn mac-min"></div>
-                                <div class="mac-btn mac-max"></div>
-                            </div>
-                            <span class="mac-title">PROJE</span>
-                            <i class="ti ti-grid-dots drag-handle ms-auto text-muted"></i>
-                        </div>
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <span class="bg-warning text-white avatar">
-                                        <i class="ti ti-buildings"></i>
-                                    </span>
-                                </div>
-                                <div class="col">
-                                    <div class="font-weight-medium"><?php echo number_format($totalProjects, 0, ',', '.'); ?></div>
-                                    <div class="text-secondary">Toplam Proje</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-                <?php if ($perm->hasPermission('income_expense_operations')): ?>
-                <div class="col-md-6 col-xl-3" data-id="stat-gelir">
-                    <div class="card card-sm">
-                        <div class="mac-titlebar">
-                            <div class="mac-buttons">
-                                <div class="mac-btn mac-close"></div>
-                                <div class="mac-btn mac-min"></div>
-                                <div class="mac-btn mac-max"></div>
-                            </div>
-                            <span class="mac-title">GELİR</span>
-                            <i class="ti ti-grid-dots drag-handle ms-auto text-muted"></i>
-                        </div>
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <span class="bg-success text-white avatar">
-                                        <i class="ti ti-download"></i>
-                                    </span>
-                                </div>
-                                <div class="col">
-                                    <div class="font-weight-medium"><?php echo Helper::formattedMoney($totalIncome); ?> ₺</div>
-                                    <div class="text-secondary">Toplam Gelir</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-                <?php if ($perm->hasPermission('income_expense_operations')): ?>
-                <div class="col-md-6 col-xl-3" data-id="stat-gider">
-                    <div class="card card-sm">
-                        <div class="mac-titlebar">
-                            <div class="mac-buttons">
-                                <div class="mac-btn mac-close"></div>
-                                <div class="mac-btn mac-min"></div>
-                                <div class="mac-btn mac-max"></div>
-                            </div>
-                            <span class="mac-title">GİDER</span>
-                            <i class="ti ti-grid-dots drag-handle ms-auto text-muted"></i>
-                        </div>
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <span class="bg-danger text-white avatar">
-                                        <i class="ti ti-upload"></i>
-                                    </span>
-                                </div>
-                                <div class="col">
-                                    <div class="font-weight-medium"><?php echo Helper::formattedMoney($totalExpense); ?> ₺</div>
-                                    <div class="text-secondary">Toplam Gider</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-            </div>
 
-            <!-- Quick Actions Header -->
-            <div class="row g-2 align-items-center mt-4">
-                <div class="col">
-                    <h2 class="page-title">
-                        Hızlı İşlemler
-                    </h2>
+                <?php if ($perm->hasPermission('project_page') || $perm->hasPermission('project_add_update')): ?>
+                <div class="col-sm-6 col-xl-3" data-id="stat-proje">
+                    <div class="card card-sm">
+                        <div class="mac-titlebar">
+                            <div class="mac-buttons">
+                                <div class="mac-btn mac-close"></div>
+                                <div class="mac-btn mac-min"></div>
+                                <div class="mac-btn mac-max"></div>
+                            </div>
+                            <span class="mac-title">PROJE PORTFÖYÜ</span>
+                            <i class="ti ti-grid-dots drag-handle ms-auto text-muted"></i>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-warning text-white avatar avatar-md rounded">
+                                        <i class="ti ti-buildings" style="font-size: 24px;"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="h2 mb-0 fw-bold"><?php echo number_format($totalProjects, 0, ',', '.'); ?></div>
+                                    <div class="text-secondary small">Toplam Proje</div>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <span class="badge bg-primary-lt" style="font-size: 10px;"><?php echo $activeProjects; ?> Devam Eden</span>
+                                        <span class="badge bg-success-lt" style="font-size: 10px;"><?php echo $completedProjects; ?> Biten</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($perm->hasPermission('income_expense_operations')): ?>
+                <div class="col-sm-6 col-xl-3" data-id="stat-kasa">
+                    <div class="card card-sm">
+                        <div class="mac-titlebar">
+                            <div class="mac-buttons">
+                                <div class="mac-btn mac-close"></div>
+                                <div class="mac-btn mac-min"></div>
+                                <div class="mac-btn mac-max"></div>
+                            </div>
+                            <span class="mac-title">NET KASA BAKİYESİ</span>
+                            <i class="ti ti-grid-dots drag-handle ms-auto text-muted"></i>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="<?php echo $netBalance >= 0 ? 'bg-success' : 'bg-danger'; ?> text-white avatar avatar-md rounded">
+                                        <i class="ti ti-wallet" style="font-size: 24px;"></i>
+                                    </span>
+                                </div>
+                                <div class="col text-truncate">
+                                    <div class="h3 mb-0 fw-bold <?php echo $netBalance >= 0 ? 'text-success' : 'text-danger'; ?>" title="<?php echo Helper::formattedMoney($netBalance); ?> ₺">
+                                        <?php echo Helper::formattedMoney($netBalance); ?> ₺
+                                    </div>
+                                    <div class="text-secondary small">Net Kasa Durumu</div>
+                                    <div class="d-flex align-items-center gap-1 mt-1 text-truncate" style="font-size: 10px;">
+                                        <span class="text-success"><i class="ti ti-arrow-up"></i> <?php echo Helper::formattedMoney($totalIncome); ?></span>
+                                        <span class="text-muted">|</span>
+                                        <span class="text-danger"><i class="ti ti-arrow-down"></i> <?php echo Helper::formattedMoney($totalExpense); ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <div class="col-sm-6 col-xl-3" data-id="stat-operasyon">
+                    <div class="card card-sm">
+                        <div class="mac-titlebar">
+                            <div class="mac-buttons">
+                                <div class="mac-btn mac-close"></div>
+                                <div class="mac-btn mac-min"></div>
+                                <div class="mac-btn mac-max"></div>
+                            </div>
+                            <span class="mac-title">BEKLEYEN İŞLEMLER</span>
+                            <i class="ti ti-grid-dots drag-handle ms-auto text-muted"></i>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-azure text-white avatar avatar-md rounded">
+                                        <i class="ti ti-bell-ringing" style="font-size: 24px;"></i>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="h2 mb-0 fw-bold"><?php echo ($pendingAdvancesCount + $pendingLeavesCount + $pendingTasksCount); ?></div>
+                                    <div class="text-secondary small">Bekleyen Talep / Görev</div>
+                                    <div class="d-flex align-items-center gap-1 mt-1 flex-wrap" style="font-size: 10px;">
+                                        <?php if ($pendingAdvancesCount > 0): ?>
+                                            <span class="badge bg-orange-lt"><?php echo $pendingAdvancesCount; ?> Avans</span>
+                                        <?php endif; ?>
+                                        <?php if ($pendingLeavesCount > 0): ?>
+                                            <span class="badge bg-warning-lt"><?php echo $pendingLeavesCount; ?> İzin</span>
+                                        <?php endif; ?>
+                                        <?php if ($todayLeaveCount > 0): ?>
+                                            <span class="badge bg-green-lt"><?php echo $todayLeaveCount; ?> İzinli</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Quick Actions Buttons -->
-            <div class="row row-cards mt-2" id="quick-actions-sortable">
+            <div class="row row-cards mt-3" id="quick-actions-sortable">
                 <div class="col-12" data-id="quick-actions">
                     <div class="card resizable-card">
                         <div class="mac-titlebar">
@@ -279,7 +326,7 @@ use App\Helper\Helper;
                                 <div class="mac-btn mac-min"></div>
                                 <div class="mac-btn mac-max"></div>
                             </div>
-                            <span class="mac-title">İŞLEMLER</span>
+                            <span class="mac-title">HIZLI İŞLEMLER</span>
                             <i class="ti ti-grid-dots drag-handle ms-auto text-muted"></i>
                         </div>
                         <div class="card-body">
@@ -318,6 +365,16 @@ use App\Helper\Helper;
                                     <span>Görev Ekle</span>
                                 </a>
                                 <?php endif; ?>
+                                <?php if ($perm->hasPermission('avans_talepleri')): ?>
+                                <a href="index.php?p=avans-talepleri/list" class="btn btn-outline-warning p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
+                                    <i class="ti ti-wallet mb-1" style="font-size: 20px;"></i>
+                                    <span>Avans Talepleri</span>
+                                </a>
+                                <?php endif; ?>
+                                <a href="index.php?p=izin/list" class="btn btn-outline-info p-3 d-flex flex-column align-items-center" style="min-width: 120px;">
+                                    <i class="ti ti-beach mb-1" style="font-size: 20px;"></i>
+                                    <span>İzin Talepleri</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -326,11 +383,31 @@ use App\Helper\Helper;
 
             <!-- Widgets Row -->
             <div class="row row-cards mt-3" id="widgets-sortable">
+                <!-- Finansal Analiz & Nakit Akışı Grafiği (Yeni) -->
+                <?php include_once "home/finance_chart.php" ?>
+
+                <!-- Proje Durum Dağılımı (Yeni) -->
+                <?php include_once "home/project_overview.php" ?>
+
+                <!-- İK & Personel Bakışı (Yeni) -->
+                <?php include_once "home/personnel_summary.php" ?>
+
+                <!-- Proje Gantt Şeması -->
                 <?php include_once "home/project_gantt.php" ?>
+
+                <!-- Yaklaşan Görevler -->
                 <?php include_once "home/gorevler.php" ?>
+
+                <!-- Bekleyen Avans Talepleri -->
                 <?php include_once "home/avans_talepleri.php" ?>
+
+                <!-- Yıllık İzin Özeti -->
                 <?php include_once "home/izin_widget.php" ?>
+
+                <!-- Son Aktiviteler -->
                 <?php include_once "home/activity_logs.php" ?>
+
+                <!-- Son Giriş Kayıtları -->
                 <?php include_once "home/login_logs.php" ?>
             </div>
         </div>
@@ -401,11 +478,22 @@ document.addEventListener("DOMContentLoaded", function() {
                 title = titleEl.textContent.trim();
             }
             if (!title) {
-                if (id === 'stat-personel') title = 'PERSONEL';
-                else if (id === 'stat-proje') title = 'PROJE';
+                if (id === 'stat-personel') title = 'PERSONEL ÖZETİ';
+                else if (id === 'stat-proje') title = 'PROJE ÖZETİ';
+                else if (id === 'stat-kasa') title = 'NET KASA BAKİYESİ';
+                else if (id === 'stat-operasyon') title = 'BEKLEYEN İŞLEMLER';
                 else if (id === 'stat-gelir') title = 'GELİR';
                 else if (id === 'stat-gider') title = 'GİDER';
                 else if (id === 'quick-actions') title = 'HIZLI İŞLEMLER';
+                else if (id === 'widget-finance-chart') title = 'FİNANSAL ANALİZ GRAFİĞİ';
+                else if (id === 'widget-project-overview') title = 'PROJE DURUM DAĞILIMI';
+                else if (id === 'widget-personnel-summary') title = 'İK & PERSONEL BAKIŞI';
+                else if (id === 'widget-project-gantt') title = 'PROJE GANTT ŞEMASI';
+                else if (id === 'widget-gorevler') title = 'YAKLAŞAN GÖREVLER';
+                else if (id === 'widget-avans-talepleri') title = 'AVANS TALEPLERİ';
+                else if (id === 'widget-izin') title = 'YILLIK İZİN ÖZETİ';
+                else if (id === 'widget-activity-logs') title = 'SON AKTİVİTELER';
+                else if (id === 'widget-login-logs') title = 'SON GİRİŞ KAYITLARI';
                 else title = id.replace('widget-', '').replace('stat-', '').toUpperCase();
             }
 
@@ -484,17 +572,15 @@ document.addEventListener("DOMContentLoaded", function() {
                 };
                 localStorage.setItem('card_size_' + id, JSON.stringify(dimensions));
 
-                // fit-content ile Bootstrap gutter (padding) korunur, aralarda boşluk kalır
                 wrapper.style.width = 'fit-content';
                 wrapper.style.flex = '0 0 auto';
             }
         }
     });
 
-    document.querySelectorAll('.card').forEach(function(card) {
+    document.querySelectorAll('#widgets-sortable .card, #quick-actions-sortable .card').forEach(function(card) {
         var wrapper = card.closest(cardSelector);
         if (wrapper) {
-            // Add resizable class
             card.classList.add('resizable-card');
             
             // Restore saved size
@@ -521,6 +607,18 @@ document.addEventListener("DOMContentLoaded", function() {
             
             // Observe for future resizes
             resizeObserver.observe(card);
+        }
+    });
+
+    // Stat kartları için minimize durumunu geri yükle
+    document.querySelectorAll('#stats-sortable .card').forEach(function(card) {
+        var wrapper = card.closest(cardSelector);
+        if (wrapper) {
+            var id = wrapper.getAttribute('data-id');
+            var isMin = localStorage.getItem('card_min_' + id);
+            if (isMin === '1') {
+                card.classList.add('minimized-card');
+            }
         }
     });
 

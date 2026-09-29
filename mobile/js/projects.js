@@ -216,45 +216,6 @@ $(document).on("click", ".delete-project-action", async function () {
   }
 });
 
-$(document).ready(function () {
-  // DataTable'ı başlat
-  if ($("#projectTable").length > 0 && $.fn.DataTable) {
-    var table = $("#projectTable").DataTable();
-
-    // Radyo butonuna tıklama olayını dinle
-    $(".form-selectgroup-input").on("change", function () {
-      var type = $(this).attr("data-type");
-      //Eğer tümü ise tüm filtreleri kaldır
-      if (type == "Tümü") {
-        table.column(1).search("").draw();
-        return;
-      }
-      if (this.checked) {
-        // DataTable'da filtreleme yap
-        table.column(1).search(type).draw();
-      }
-    });
-
-    // Sayfa yüklendiğinde tabloyu filtrele
-    filterTableByCheckedRadio();
-
-    function filterTableByCheckedRadio() {
-      //tabloda 1'den fazla satır varsa
-      if (table.rows().count() > 0) {
-        var checkedRadio = $(".form-selectgroup-input:checked");
-        if (checkedRadio.length > 0) {
-          var type = checkedRadio.attr("data-type");
-          if (type == "Tümü") {
-            table.column(1).search("").draw();
-          } else {
-            table.column(1).search(type).draw();
-          }
-        }
-      }
-    }
-  }
-});
-
 // Search & Filter Logic
 $(document).ready(function() {
   $('#project-search').on('keyup', function() {

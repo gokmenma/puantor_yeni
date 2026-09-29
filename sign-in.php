@@ -242,12 +242,36 @@ login_processing_complete:
   
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
-  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-  
+  <link rel="stylesheet" href="./dist/css/premium-theme.css?v=<?php echo filemtime('./dist/css/premium-theme.css'); ?>" />
+  <script src="./dist/js/theme-manager.js?v=<?php echo filemtime('./dist/js/theme-manager.js'); ?>"></script>
+  <script>
+    (function() {
+      try {
+        var html = document.documentElement;
+        var savedPreset = localStorage.getItem('app_theme_preset') || 'ersan-gold';
+        html.setAttribute('data-theme-preset', savedPreset);
+        if (document.body) document.body.setAttribute('data-theme-preset', savedPreset);
+
+        var savedFont = localStorage.getItem('app_theme_font') || ((window.themePresetFonts && window.themePresetFonts[savedPreset]) ? window.themePresetFonts[savedPreset] : 'outfit');
+        html.setAttribute('data-theme-font', savedFont);
+
+        var savedWeight = localStorage.getItem('app_theme_weight') || '400';
+        html.setAttribute('data-theme-weight', savedWeight);
+
+        var savedPrimaryColor = localStorage.getItem('app_primary_color');
+        var savedPrimaryManual = localStorage.getItem('app_primary_manual');
+        if (savedPrimaryColor && savedPrimaryManual === 'true') {
+          html.style.setProperty('--theme-primary', savedPrimaryColor);
+          html.style.setProperty('--focus-color', savedPrimaryColor);
+          html.style.setProperty('--tblr-primary', savedPrimaryColor);
+        }
+      } catch(e) {}
+    })();
+  </script>
   <style>
     :root {
       --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, sans-serif;
-      --mobile-primary: #206bc4;
+      --mobile-primary: var(--theme-primary, #206bc4);
     }
 
     body {

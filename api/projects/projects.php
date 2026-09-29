@@ -2,6 +2,8 @@
 require_once "../../Database/require.php";
 require_once "../../Model/Projects.php";
 require_once "../../Model/ProjectIncomeExpense.php";
+require_once "../../Model/CaseTransactions.php";
+require_once "../../Model/ActivityLogModel.php";
 require_once "../../App/Helper/security.php";
 require_once "../../App/Helper/helper.php";
 
@@ -18,6 +20,7 @@ if ($_POST['action'] == "saveProject") {
         "id" => $id,
         "firm_id" => $_SESSION['firm_id'],
         "type" => $_POST['project_type'] ?? 1,
+        "account_id" => 0,
         'project_name' => Security::escape($_POST['project_name'] ?? ''),
         'start_date' => Security::escape($_POST['start_date'] ?? ''),
         'end_date' => Security::escape($_POST['end_date'] ?? ''),
@@ -59,8 +62,9 @@ if ($_POST['action'] == "saveProject") {
             $message = "Proje başarıyla eklendi";
         }
     } catch (PDOException $ex) {
+        error_log("Save project error: " . $ex->getMessage());
         $status = "error";
-        $message = $ex->getMessage();
+        $message = "Proje kaydedilirken bir hata oluştu. Lütfen tekrar deneyiniz.";
     }
 
     $res = [
@@ -104,23 +108,31 @@ if ($_POST['action'] == "deleteProject") {
     echo json_encode($res);
 }
 
-if ($_POST['action'] == "deleteProjectAction") {
-    //BaseModeldeki delete fonksiyonunda id decrypt edildiği için burada decrypt etmeye gerek yok
+if (isset($_POST['action']) && $_POST['action'] == "deleteProjectAction") {
     $id = Security::decrypt($_POST['id']);
-    $project_id = Security::decrypt($_GET['project_id']);
+    $project_id = Security::decrypt($_GET['project_id'] ?? $_POST['project_id'] ?? '');
+    $table = $_REQUEST['table'] ?? 'project_gelir_gider';
 
     try {
-        $ProjectIncExp->delete($_POST['id']);
+        if ($table === 'case_transaction' || $table === 'case_transactions') {
+            require_once ROOT . "/Model/CaseTransactions.php";
+            $ct = new CaseTransactions();
+            $ct->delete($_POST['id']);
+            ActivityLogModel::log('case_transactions', 'delete', "Proje ID: {$project_id} ilişkili kasa hareketi ID: {$id} silindi.");
+        } else {
+            $ProjectIncExp->delete($_POST['id']);
+            ActivityLogModel::log('project', 'delete_income_expense', "Proje ID: {$project_id} gelir/gider ID: {$id} silindi.");
+        }
         $status = "success";
         $message = "Proje Hareketi silindi";
         
         //Formatlanmış gelir gider - bakiye bilgileri
         $summary = $ProjectIncExp->sumAllIncomeExpenseFormatted($project_id);
 
-         //Projenin hakediş tamanlanma durumunu güncelle
-         $progress_range= $ProjectIncExp->getProgressPaymentRange($project_id);
+        //Projenin hakediş tamanlanma durumunu güncelle
+        $progress_range = $ProjectIncExp->getProgressPaymentRange($project_id);
       
-    } catch (PDOException $ex) {
+    } catch (\Throwable $ex) {
         $status = "error";
         $message = $ex->getMessage();
     }
@@ -128,11 +140,12 @@ if ($_POST['action'] == "deleteProjectAction") {
     $res = [
         'status' => $status,
         'message' => $message,
-        'summary' => $summary,
-        "progress" => $progress_range,
-
+        'summary' => $summary ?? null,
+        "progress" => $progress_range ?? 0,
     ];
+    header('Content-Type: application/json');
     echo json_encode($res);
+    exit;
 }
 
 if ($_POST['action'] == "getProject") {

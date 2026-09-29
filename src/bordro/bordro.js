@@ -1,16 +1,3 @@
-
-// $(document).on("click", "#wage_cut_addButton", function () {
-//   let form = $("#wage_cut_modalForm");
-//   addWageCutorIncome(form);
-// });
-// $(document).on("click", ".add-wage-cut", function () {
-//   let personel_id = $(this).data("id");
-//   let personel_name = $(this).closest("tr").find("td:eq(1)").text();
-//   $("#person_id_wage_cut").val(personel_id);
-//   $("#person_name_wage_cut").text(personel_name);
-// });
-
-
 $("#projects").on("change", function () {
   Route();
 });
@@ -19,12 +6,12 @@ $("#team_id").on("change", function () {
   Route();
 });
 
-//Yıl değiştiği zaman sayfayı yeniden yükle
+// Yıl değiştiği zaman sayfayı yeniden yükle
 $("#year").on("change", function () {
   Route();
 });
 
-//Ay değiştiği zaman sayfayı yeniden yükle
+// Ay değiştiği zaman sayfayı yeniden yükle
 $("#months").on("change", function () {
   Route();
 });
@@ -35,21 +22,110 @@ function Route() {
   form.submit();
 }
 
-
 // Bordro hesapla butonuna tıklandığında
-$(document).on("click", "#payroll_calculate", function () {
-  //POST işlemi için form oluşturuluyor
+$(document).on("click", "#payroll_calculate", function (e) {
+  e.preventDefault();
   let form = $("#bordroInfoForm");
+  form.find("input[name='action']").remove();
   form.append('<input type="hidden" name="action" value="payroll_calculate">');
   form.submit();
 });
 
 // Personelleri güncelle butonuna tıklandığında
-$(document).on("click", "#update_personnel", function () {
-  //POST işlemi için form oluşturuluyor
+$(document).on("click", "#update_personnel", function (e) {
+  e.preventDefault();
   let form = $("#bordroInfoForm");
+  form.find("input[name='action']").remove();
   form.append('<input type="hidden" name="action" value="update_personnel">');
   form.submit();
+});
+
+// Özet kartları daraltma/genişletme
+$(document).ready(function() {
+  var $summaryToggle = $('#togglePayrollSummary');
+
+  function syncSummaryToggle() {
+    var isCollapsed = document.documentElement.classList.contains('payroll-summary-collapsed');
+    $summaryToggle
+      .attr('aria-expanded', String(!isCollapsed))
+      .attr('aria-label', isCollapsed ? 'Özet kartlarını göster' : 'Özet kartlarını gizle')
+      .attr('title', isCollapsed ? 'Özet kartlarını göster' : 'Özet kartlarını gizle');
+    $summaryToggle.find('i')
+      .toggleClass('ti-chevron-up', !isCollapsed)
+      .toggleClass('ti-chevron-down', isCollapsed);
+  }
+
+  syncSummaryToggle();
+
+  $summaryToggle.on('click', function() {
+    var isCollapsed = document.documentElement.classList.toggle('payroll-summary-collapsed');
+    try {
+      localStorage.setItem('payroll_summary_collapsed', isCollapsed ? '1' : '0');
+    } catch (e) {}
+    syncSummaryToggle();
+  });
+});
+
+// Checkbox tümünü seç / kaldır
+$(document).on("change", ".select-all-payrolls", function () {
+  var checked = $(this).is(":checked");
+  $(".payroll-row-check").prop("checked", checked);
+});
+
+$(document).on("change", ".payroll-row-check", function () {
+  var total = $(".payroll-row-check").length;
+  var checked = $(".payroll-row-check:checked").length;
+  $(".select-all-payrolls").prop("checked", total > 0 && total === checked);
+});
+
+// Toplu bordro yazdırma
+function openBulkPrint(ids) {
+  var m = $("#months").val() || "";
+  var y = $("#year").val() || "";
+  window.open("index.php?p=raporlar/bordro-yazdir&ids=" + ids.join(",") + "&month=" + encodeURIComponent(m) + "&year=" + encodeURIComponent(y), "_blank");
+}
+
+$(document).on("click", "#btnPrintBulkPayrolls", function (e) {
+  e.preventDefault();
+  var selectedIds = [];
+  $(".payroll-row-check:checked").each(function () {
+    selectedIds.push($(this).val());
+  });
+
+  if (selectedIds.length === 0) {
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        title: "Toplu Bordro Yazdır",
+        text: "Hiçbir personel seçmediniz. Tüm listedeki personellerin bordrolarını yazdırmak istiyor musunuz?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#1e293b",
+        cancelButtonColor: "#64748b",
+        confirmButtonText: "Evet, Tümünü Yazdır",
+        cancelButtonText: "Vazgeç"
+      }).then(function (result) {
+        if (result.isConfirmed) {
+          var allIds = [];
+          $(".payroll-row-check").each(function () {
+            allIds.push($(this).val());
+          });
+          if (allIds.length === 0) {
+            Swal.fire("Uyarı", "Yazdırılacak personel bulunamadı.", "warning");
+            return;
+          }
+          openBulkPrint(allIds);
+        }
+      });
+    } else {
+      var allIds = [];
+      $(".payroll-row-check").each(function () {
+        allIds.push($(this).val());
+      });
+      if (allIds.length > 0) openBulkPrint(allIds);
+    }
+  } else {
+    openBulkPrint(selectedIds);
+  }
 });
 
 let payrollDetailRequest = null;
@@ -170,7 +246,7 @@ $(document).on("click", ".delete-payroll-transaction", async function () {
       return new Intl.NumberFormat("tr-TR", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-      }).format(amount) + " TRY";
+      }).format(amount) + " ₺";
     };
 
     const setPayrollSummaryAmount = function (selector, amount) {
@@ -250,59 +326,80 @@ $(document).on("click", "#print-detailed-payroll", function () {
   }, 500);
 });
 
-// Bordro sütun görünürlüğü
-$(function () {
+// Bordro DataTable ve Sütun Görünürlüğü
+$(document).ready(function () {
   if (!$('#bordroTable').length) return;
 
-  var opts = $.extend({
+  // Varsa eski arama satırlarını DOM'dan temizle
+  $('#bordroTable thead .search-input-row').remove();
+
+  var table = $('#bordroTable').DataTable({
+    autoWidth: false,
+    ordering: true,
     pageLength: 25,
-    order: [[1, 'asc']]
-  }, window.bordroOptions || window.bordroServerSideOptions || {});
+    lengthMenu: [10, 25, 50, 100],
+    order: [[1, 'asc']],
+    columnDefs: [
+      { targets: [0, 13], orderable: false, searchable: false },
+      { targets: [0, 1], className: 'text-center' },
+      { targets: 6, width: '125px', className: 'text-truncate' },
+      { targets: [9, 10, 11, 12], className: 'text-end' },
+      { targets: 13, width: '95px', className: 'text-end no-export actions-column' }
+    ],
+    language: {
+      url: 'src/tr.json'
+    },
+    initComplete: function () {
+      var api = this.api();
+      if (typeof window.initDataTableColumnFilters === 'function') {
+        window.initDataTableColumnFilters($('#bordroTable'), api);
+      }
+    },
+    drawCallback: function () {
+      $('.select-all-payrolls').prop('checked', false);
+    }
+  });
 
-  delete opts.serverSide;
-  delete opts.ajax;
-  delete opts.processing;
+  // Hızlı Genel Arama
+  var searchTimer = null;
+  $('#payroll-fast-search').on('input', function () {
+    var val = this.value;
+    $('#payroll-search-clear').toggleClass('d-none', val.length === 0);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      table.search(val).draw();
+    }, 300);
+  });
 
-  var table = $.fn.DataTable.isDataTable('#bordroTable')
-    ? $('#bordroTable').DataTable()
-    : (typeof window.createDataTable === 'function'
-        ? window.createDataTable('#bordroTable', opts)
-        : $('#bordroTable').DataTable(opts));
+  $('#payroll-search-clear').on('click', function () {
+    clearTimeout(searchTimer);
+    $('#payroll-fast-search').val('').trigger('focus');
+    $(this).addClass('d-none');
+    table.search('').draw();
+  });
 
-  if (!table) return;
-
-  function syncBordroSearchVisibility() {
-    table.columns().every(function (index) {
-      $('#bordroTable .search-input-row th[data-column-index="' + index + '"]')
-        .css('display', this.visible() ? '' : 'none');
-    });
-  }
-
-  table.on('column-visibility.dt draw.dt', syncBordroSearchVisibility);
-
-  // Sütun indeksleri (thead sırasına göre: 0=Sıra, 1=Personel, 2=ÜcretTürü, 3=Görevi, 4=Ekip, 5=Proje, 6=IBAN, 7=İşeBaşlama, 8=Brüt, 9=Ödenen, 10=Ödenecek, 11=İşlem)
+  // Sütun indeksleri (thead sırasına göre: 0=Checkbox, 1=Sıra, 2=Personel, 3=ÜcretTürü, 4=Görevi, 5=Ekip, 6=Proje, 7=IBAN, 8=İşeBaşlama, 9=Brüt, 10=İcra Kesintisi, 11=Ödenen, 12=Ödenecek, 13=İşlem)
   var columnConfig = {
-    2: { label: 'Ücret Türü',         default: true  },
-    3: { label: 'Görevi',              default: true  },
-    4: { label: 'Ekip',               default: false },
-    5: { label: 'Proje',              default: false },
-    6: { label: 'IBAN',               default: false },
-    7: { label: 'İşe Başlama Tarihi', default: true  }
+    3: { label: 'Ücret Türü',         default: true  },
+    4: { label: 'Görevi',              default: true  },
+    5: { label: 'Ekip',               default: true  },
+    6: { label: 'Proje',              default: true  },
+    7: { label: 'IBAN',               default: false },
+    8: { label: 'İşe Başlama Tarihi', default: true  },
+    10: { label: 'İcra Kesintisi',    default: true  }
   };
 
-  var savedVisibility = localStorage.getItem('bordro_column_visibility');
+  var savedVisibility = localStorage.getItem('bordro_column_visibility_v3');
   var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
 
   var menuHtml = '';
   $.each(columnConfig, function (idx, conf) {
     var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
     table.column(idx).visible(isVisible, false);
-    $('#bordroTable .search-input-row th[data-column-index="' + idx + '"]')
-      .css('display', isVisible ? '' : 'none');
     menuHtml += `
-      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1 px-3 rounded-2" style="font-size:0.85rem;">
+      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size:0.85rem;">
         <div class="form-check mb-0 w-100">
-          <input class="form-check-input bordro-col-trigger" type="checkbox" data-column="${idx}" ${isVisible ? 'checked' : ''}>
+          <input class="form-check-input bordro-col-trigger" type="checkbox" id="bordroColCheck_${idx}" data-column="${idx}" ${isVisible ? 'checked' : ''}>
           <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">${conf.label}</span>
         </div>
       </label>`;
@@ -310,15 +407,13 @@ $(function () {
 
   $('#bordroColvisMenu').html(menuHtml);
   table.columns.adjust();
-  syncBordroSearchVisibility();
 
   $(document).off('change.bordroCol').on('change.bordroCol', '.bordro-col-trigger', function () {
     var colIdx = parseInt($(this).data('column'));
     var isChecked = this.checked;
     table.column(colIdx).visible(isChecked);
-    syncBordroSearchVisibility();
     visibilityState[colIdx] = isChecked;
-    localStorage.setItem('bordro_column_visibility', JSON.stringify(visibilityState));
+    localStorage.setItem('bordro_column_visibility_v3', JSON.stringify(visibilityState));
   });
 
   $(document).off('click.bordroCol').on('click.bordroCol', '#bordroColvisMenu', function (e) {
@@ -488,5 +583,3 @@ $(document).on('click', '#btn-modal-excel-deductions', function() {
         }
     }
 });
-
-

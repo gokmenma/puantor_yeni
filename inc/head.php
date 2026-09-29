@@ -1,5 +1,19 @@
+<?php
+$initThemePreset = $_COOKIE['app_theme_preset'] ?? 'kode';
+$initThemeFont = $_COOKIE['app_theme_font'] ?? 'inter';
+$initThemeWeight = $_COOKIE['app_theme_weight'] ?? '400';
+$initThemeRadius = $_COOKIE['app_theme_radius'] ?? 'default';
+$initTableDensity = $_COOKIE['app_table_density'] ?? 'normal';
+$initFontScale = $_COOKIE['app_font_scale'] ?? '100';
+$initIconStroke = $_COOKIE['app_icon_stroke'] ?? '1.5';
+$initTopbarTheme = $_COOKIE['app_topbar_theme'] ?? 'beyaz';
+$initSidebarTheme = $_COOKIE['app_sidebar_theme'] ?? 'klasik-koyu';
+$initSidebarActive = $_COOKIE['app_sidebar_active_name'] ?? 'soft-white';
+$darkPresetsList = ['koyu-gece', 'gece-altini', 'cyber-neon', 'tokyo-gece', 'dracula-pro', 'midnight-sapphire'];
+$initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_COOKIE['app_theme'] ?? ($_COOKIE['theme'] ?? 'light'));
+?>
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-theme-preset="<?php echo htmlspecialchars($initThemePreset, ENT_QUOTES, 'UTF-8'); ?>" data-theme-font="<?php echo htmlspecialchars($initThemeFont, ENT_QUOTES, 'UTF-8'); ?>" data-theme-weight="<?php echo htmlspecialchars($initThemeWeight, ENT_QUOTES, 'UTF-8'); ?>" data-theme-radius="<?php echo htmlspecialchars($initThemeRadius, ENT_QUOTES, 'UTF-8'); ?>" data-table-density="<?php echo htmlspecialchars($initTableDensity, ENT_QUOTES, 'UTF-8'); ?>" data-font-size-scale="<?php echo htmlspecialchars($initFontScale, ENT_QUOTES, 'UTF-8'); ?>" data-icon-stroke="<?php echo htmlspecialchars($initIconStroke, ENT_QUOTES, 'UTF-8'); ?>" data-topbar-theme="<?php echo htmlspecialchars($initTopbarTheme, ENT_QUOTES, 'UTF-8'); ?>" data-sidebar-theme="<?php echo htmlspecialchars($initSidebarTheme, ENT_QUOTES, 'UTF-8'); ?>" data-sidebar-active="<?php echo htmlspecialchars($initSidebarActive, ENT_QUOTES, 'UTF-8'); ?>" data-bs-theme="<?php echo htmlspecialchars($initBsTheme, ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
   <meta name="csrf-token" content="<?php echo htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
@@ -25,10 +39,73 @@
   <meta name="keywords"
     content="puantaj yazılımı, maaş hesaplama aracı, proje takibi, gelir gider takibi, personel yönetimi, işletme yönetim yazılımı, verimli iş yönetimi" />
 
+  <!-- Early Theme Initialization (Zero Flicker) -->
+  <script src="./dist/js/theme-manager.js?v=<?php echo filemtime("./dist/js/theme-manager.js"); ?>"></script>
+  <script>
+    (function() {
+      try {
+        var html = document.documentElement;
+        var savedPreset = localStorage.getItem('app_theme_preset') || 'kode';
+        html.setAttribute('data-theme-preset', savedPreset);
+
+        var defaultMap = (window.presetTopbarSidebarMap && window.presetTopbarSidebarMap[savedPreset]) ? window.presetTopbarSidebarMap[savedPreset] : { topbar: 'beyaz', sidebar: 'klasik-koyu' };
+        var savedTopbar = localStorage.getItem('app_topbar_theme') || defaultMap.topbar;
+        var savedSidebar = localStorage.getItem('app_sidebar_theme') || defaultMap.sidebar;
+        html.setAttribute('data-topbar-theme', savedTopbar);
+        html.setAttribute('data-sidebar-theme', savedSidebar);
+
+        var savedSidebarActiveName = localStorage.getItem('app_sidebar_active_name') || 'soft-white';
+        var savedSidebarActiveBg = localStorage.getItem('app_sidebar_active_bg') || 'rgba(255, 255, 255, 0.18)';
+        var savedSidebarActiveColor = localStorage.getItem('app_sidebar_active_color') || '#ffffff';
+        html.setAttribute('data-sidebar-active', savedSidebarActiveName);
+        if (savedSidebarActiveBg) {
+          html.style.setProperty('--sidebar-active-bg', savedSidebarActiveBg);
+          html.style.setProperty('--sidebar-active-color', savedSidebarActiveColor);
+        }
+
+        var savedFont = localStorage.getItem('app_theme_font') || ((window.themePresetFonts && window.themePresetFonts[savedPreset]) ? window.themePresetFonts[savedPreset] : 'inter');
+        html.setAttribute('data-theme-font', savedFont);
+
+        var savedWeight = localStorage.getItem('app_theme_weight') || '400';
+        html.setAttribute('data-theme-weight', savedWeight);
+
+        var savedRadius = localStorage.getItem('app_theme_radius') || 'default';
+        html.setAttribute('data-theme-radius', savedRadius);
+
+        var savedDensity = localStorage.getItem('app_table_density') || 'normal';
+        html.setAttribute('data-table-density', savedDensity);
+
+        var savedScale = localStorage.getItem('app_font_scale') || '100';
+        html.setAttribute('data-font-size-scale', savedScale);
+
+        var savedStroke = localStorage.getItem('app_icon_stroke') || '1.5';
+        html.setAttribute('data-icon-stroke', savedStroke);
+
+        var darkPresets = ['koyu-gece', 'gece-altini', 'cyber-neon', 'tokyo-gece', 'dracula-pro', 'midnight-sapphire'];
+        var isDarkPreset = darkPresets.indexOf(savedPreset) !== -1;
+        var savedTheme = isDarkPreset ? 'dark' : (localStorage.getItem('theme') || 'light');
+        if (!isDarkPreset && localStorage.getItem('app_theme_preset') && localStorage.getItem('theme') !== 'dark') {
+          savedTheme = 'light';
+        }
+        html.setAttribute('data-bs-theme', savedTheme);
+
+        var savedPrimaryColor = localStorage.getItem('app_primary_color');
+        var savedPrimaryManual = localStorage.getItem('app_primary_manual');
+        if (savedPrimaryColor && savedPrimaryManual === 'true') {
+          html.style.setProperty('--theme-primary', savedPrimaryColor);
+          html.style.setProperty('--theme-primary-hover', savedPrimaryColor);
+          html.style.setProperty('--focus-color', savedPrimaryColor);
+          html.style.setProperty('--tblr-primary', savedPrimaryColor);
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
   <link href="./dist/css/style.css?v=<?php echo filemtime("./dist/css/style.css"); ?>" rel="stylesheet" />
   <link href="./dist/css/menu.css?v=<?php echo filemtime("./dist/css/menu.css"); ?>" rel="stylesheet" />
+  <link href="./dist/css/premium-theme.css?v=<?php echo filemtime("./dist/css/premium-theme.css"); ?>" rel="stylesheet" />
   <link href="./dist/libs/select2/css/select2.min.css?v=<?php echo filemtime("./dist/libs/select2/css/select2.min.css"); ?>" rel="stylesheet" />
 
   <link href="./dist/css/flatpickr.min.css?v=<?php echo filemtime("./dist/css/flatpickr.min.css"); ?>" rel="stylesheet" />
@@ -131,12 +208,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
   <style>
-    @import url('https://rsms.me/inter/inter.css');
-
-    :root {
-      --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
-    }
-
     body {
       font-feature-settings: "cv03", "cv04", "cv11";
     }

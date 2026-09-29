@@ -98,13 +98,18 @@ class ProjectIncomeExpense extends Model
     {
         //Projenin Proje bedelini getir
         $project = $this->Projects->find($project_id);
-        $budget = $project->budget;
+        $budget = floatval($project->budget ?? 0);
+
+        if ($budget <= 0) {
+            return 0;
+        }
 
         //Projenin hakediş toplamını getir
-        $hakedis = $this->sumAllIncomeExpense($project_id)->hakedis;
+        $summary = $this->sumAllIncomeExpense($project_id);
+        $hakedis = floatval($summary->hakedis ?? 0);
 
         //Progress statunun değerini oluştur
-        $progress = number_format($hakedis / $budget * 100, 0);
+        $progress = number_format(($hakedis / $budget) * 100, 0);
         //100'den büyük olamaz
         if ($progress > 100) {
             $progress = 100;

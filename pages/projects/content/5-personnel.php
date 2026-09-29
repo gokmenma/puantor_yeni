@@ -1,9 +1,10 @@
 <?php
 $persons = $projectObj->getPersontoProject($firm_id, $id);
 ?>
-<div class="row">
-    <input type="hidden" id="project_id" value="<?php echo $id ?>">
-    <div class="col-12">
+<div class="p-1">
+    <div class="row">
+        <input type="hidden" id="project_id" value="<?php echo $id ?>">
+        <div class="col-12">
         <div class="card border-0 shadow-none">
             <div class="card-header border-0 pb-0">
                 <h3 class="card-title">Proje Personel Listesi</h3>
@@ -55,4 +56,5 @@ $persons = $projectObj->getPersontoProject($firm_id, $id);
             </div>
         </div>
     </div>
+</div>
 </div>

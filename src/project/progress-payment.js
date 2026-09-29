@@ -3,13 +3,16 @@ $(document).on("click", ".add-progress-payment", function () {
   if (!checkId(project_id, "Projeyi")) {
     return;
   }
-  $("#progress-payment-modal").modal("show");
-console.log(project_id);
+  let project_name = $(this).closest("tr").find("td:eq(3)").text() || $(".page-title").text().trim();
 
-  let project_name = $(this).closest("tr").find("td:eq(3)").text();
-
+  let form = $("#progress_payment_modalForm");
+  form.trigger("reset");
+  form.find('[name="progress_payment_id"]').val(0);
   $("#progress_payment_project_name").text(project_name);
   $("#progress_payment_project_id").val(project_id);
+  $("#progress_payment_addButton").text("Hakediş Ekle");
+
+  $("#progress-payment-modal").modal("show");
 });
 
 $(document).on("click", "#progress_payment_addButton", function () {
@@ -52,6 +55,7 @@ $(document).on("click", "#progress_payment_addButton", function () {
     return;
   }
 
+  var isEdit = form.find('[name="progress_payment_id"]').val() != "0" && form.find('[name="progress_payment_id"]').val() != "";
   var formData = new FormData(form[0]);
   formData.append("page", page);
   formData.append("action", "add_progress_payment");
@@ -65,36 +69,51 @@ $(document).on("click", "#progress_payment_addButton", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      /*
-      @ projects/manage hakediş bilgileri alanında hakediş eklerken 
-      @ tabloya ekleme yapmak ve özet bilgileri sayfa yenilenmeden getirmek için 
-      */
+      $(".preloader").fadeOut();
       console.log(data);
       if (data.status == "success") {
         title = "Başarılı";
+        
+        if (typeof closeProjectModalSafely === "function") {
+          closeProjectModalSafely("progress-payment-modal");
+        } else {
+          $("#progress-payment-modal").modal("hide");
+          $(".modal-backdrop").remove();
+          $("body").removeClass("modal-open").css({ overflow: "", paddingRight: "" });
+        }
 
         if (page == "projects/manage") {
-          let progress_payment = data.progress_payment;
-          //Projenin gelir-gider, bakiye bilgilerini almak için
-          progress_payment.project_id = $("#progress_payment_project_id").val();
-          //gelen veriler ile birlikte tabloya satır ekleme
-          addDataToTable(progress_payment);
-
           let summary = data.summary;
-          $("#progress_payment_modalForm").trigger("reset");
-          $("#total_income").text(summary.hakedis);
-          $("#balance").text(summary.balance);
+          if (summary) {
+            $("#total_income").text(summary.hakedis || "0,00 TRY");
+            $("#balance").text(summary.balance || "0,00 TRY");
+          }
 
           //Progress Barı güncelle
           let progress = data.progress;
-          $("#progress-bar").text(progress + "%");
-          $(".progress-bar").css("width", progress + "%");
+          if (progress !== undefined && progress !== null) {
+            $("#progress-bar").text(progress + "%");
+            $(".progress-bar").css("width", progress + "%");
+          }
+
+          if (isEdit) {
+            // Guncelleme yapildiysa sayfayi yenile
+            setTimeout(() => { location.reload(); }, 1200);
+          } else {
+            let progress_payment = data.progress_payment;
+            if (progress_payment) {
+              progress_payment.project_id = $("#progress_payment_project_id").val();
+              addDataToTable(progress_payment);
+            }
+          }
+
+          form.trigger("reset");
+          form.find('[name="progress_payment_id"]').val(0);
         }
       } else {
         title = "Hata";
       }
-      //preloader gizle
-      $(".preloader").fadeOut();
+
       swal
         .fire({
           title: title,

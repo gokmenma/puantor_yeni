@@ -187,66 +187,33 @@ $(document).on("click", ".delete-project", function () {
 
 $(document).on("click", ".delete-project-action", async function () {
   //işlem türünü al,tablonun 2. sütununda bulunan veriyi al
-  let type = $(this).closest("tr").find("td:eq(2)").text();
+  let type = $(this).closest("tr").find("td:eq(2)").text().trim();
 
   //Tablo adı butonun içinde bulunduğu tablo
   let action = "deleteProjectAction";
-  let confirmMessage = type + " silinecektir!";
+  let confirmMessage = (type ? type + " silinecektir!" : "Bu kayıt silinecektir!");
   let project_id = $(this).attr("data-project");
-  let url = "/api/projects/projects.php?project_id=" + project_id;
+  let table = $(this).attr("data-table") || "project_gelir_gider";
+  let url = "/api/projects/projects.php?project_id=" + project_id + "&table=" + table;
 
   const result = await deleteRecordByReturn(this, action, confirmMessage, url);
 
   console.log(result);
 
-  if (result.status == "success") {
-    $("#total_income").text(result.summary.hakedis);
-    $("#total_payment").text(result.summary.gelir);
-    $("#total_expense").text(result.summary.kesinti);
-    $("#balance").text(result.summary.balance);
-    $("#progress-bar").text(result.progress + "%");
-    $(".progress-bar").css("width", result.progress + "%");
-  }
-});
-
-$(document).ready(function () {
-  // DataTable'ı başlat
-  if ($("#projectTable").length > 0 && $.fn.DataTable) {
-    var table = $("#projectTable").DataTable();
-
-    // Radyo butonuna tıklama olayını dinle
-    $(".form-selectgroup-input").on("change", function () {
-      var type = $(this).attr("data-type");
-      //Eğer tümü ise tüm filtreleri kaldır
-      if (type == "Tümü") {
-        table.column(1).search("").draw();
-        return;
-      }
-      if (this.checked) {
-        // DataTable'da filtreleme yap
-        table.column(1).search(type).draw();
-      }
-    });
-
-    // Sayfa yüklendiğinde tabloyu filtrele
-    filterTableByCheckedRadio();
-
-    function filterTableByCheckedRadio() {
-      //tabloda 1'den fazla satır varsa
-      if (table.rows().count() > 0) {
-        var checkedRadio = $(".form-selectgroup-input:checked");
-        if (checkedRadio.length > 0) {
-          var type = checkedRadio.attr("data-type");
-          if (type == "Tümü") {
-            table.column(1).search("").draw();
-          } else {
-            table.column(1).search(type).draw();
-          }
-        }
-      }
+  if (result && result.status == "success") {
+    if (result.summary) {
+      $("#total_income").text(result.summary.hakedis || "0,00 TRY");
+      $("#total_payment").text(result.summary.gelir || "0,00 TRY");
+      $("#total_expense").text(result.summary.kesinti || "0,00 TRY");
+      $("#balance").text(result.summary.balance || "0,00 TRY");
+    }
+    if (result.progress !== undefined) {
+      $("#progress-bar").text(result.progress + "%");
+      $(".progress-bar").css("width", result.progress + "%");
     }
   }
 });
+
 
 // Proje manage sayfasında aktif sekmeyi localStorage'a kaydet ve geri yükle
 $(document).ready(function () {
@@ -270,9 +237,107 @@ $(document).ready(function () {
   });
 });
 
+// Global Modal Kapatma Yardimcisi
+function closeProjectModalSafely(modalId) {
+  const modalEl = document.getElementById(modalId);
+  if (modalEl) {
+    if (window.bootstrap && window.bootstrap.Modal) {
+      const bsModal = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+      if (bsModal) {
+        bsModal.hide();
+      }
+    }
+    $(modalEl).modal("hide");
+  }
+  $(".modal-backdrop").remove();
+  $("body").removeClass("modal-open").css({ overflow: "", paddingRight: "" });
+}
+
+// Proje Hareketi Guncelleme Handler
+$(document).on("click", ".edit-project-action", function (e) {
+  e.preventDefault();
+  let id = $(this).attr("data-id");
+  let project_id = $(this).attr("data-project");
+  let type = parseInt($(this).attr("data-type"), 10);
+  let amount = $(this).attr("data-amount");
+  let date = $(this).attr("data-date");
+  let caseId = $(this).attr("data-case");
+  let description = $(this).attr("data-description");
+  let projectName = $(".page-title").text().trim();
+
+  function setProjectModalCaseValue(form, selectName, caseId) {
+    let selectEl = form.find('[name="' + selectName + '"]');
+    if (caseId && caseId !== '0' && caseId !== 0) {
+      let option = selectEl.find('option[data-case-id="' + caseId + '"]');
+      if (option.length) {
+        selectEl.val(option.val()).trigger('change');
+      } else {
+        selectEl.val(caseId).trigger('change');
+      }
+    } else {
+      selectEl.val('0').trigger('change');
+    }
+  }
+
+  // 10: Hakedis
+  if (type === 10) {
+    let modal = $("#progress-payment-modal");
+    let form = $("#progress_payment_modalForm");
+    $("#progress_payment_project_name").text(projectName);
+    form.find('[name="progress_payment_id"]').val(id);
+    form.find('[name="progress_payment_project_id"]').val(project_id);
+    form.find('[name="progress_payment_amount"]').val(amount);
+    form.find('[name="progress_payment_date"]').val(date);
+    setProjectModalCaseValue(form, 'progress_payment_cases', caseId);
+    form.find('[name="progress_payment_description"]').val(description);
+    $("#progress_payment_addButton").text("Hakediş Güncelle");
+    modal.modal("show");
+  } 
+  // 5: Odeme (Alinan Odeme / Odeme)
+  else if (type === 5 || type === 1) {
+    let modal = $("#payment-modal");
+    let form = $("#payment_modalForm");
+    $("#payment_project_name").text(projectName);
+    form.find('[name="payment_id"]').val(id);
+    form.find('[name="payment_project_id"]').val(project_id);
+    form.find('[name="payment_amount"]').val(amount);
+    form.find('[name="payment_date"]').val(date);
+    setProjectModalCaseValue(form, 'payment_cases', caseId);
+    form.find('[name="payment_description"]').val(description);
+    $("#payment_addButton").text("Ödeme Güncelle");
+    modal.modal("show");
+  } 
+  // 12: Kesinti
+  else if (type === 12) {
+    let modal = $("#deduction-modal");
+    let form = $("#deduction_modalForm");
+    $("#deduction_project_name").text(projectName);
+    form.find('[name="deduction_id"]').val(id);
+    form.find('[name="deduction_project_id"]').val(project_id);
+    form.find('[name="deduction_amount"]').val(amount);
+    form.find('[name="deduction_date"]').val(date);
+    setProjectModalCaseValue(form, 'deduction_cases', caseId);
+    form.find('[name="deduction_description"]').val(description);
+    $("#deduction_addButton").text("Kesinti Güncelle");
+    modal.modal("show");
+  } 
+  // 11: Masraf
+  else if (type === 11 || type === 2) {
+    let modal = $("#expense-modal");
+    let form = $("#expense_modalForm");
+    $("#expense_project_name").text(projectName);
+    form.find('[name="expense_id"]').val(id);
+    form.find('[name="expense_project_id"]').val(project_id);
+    form.find('[name="expense_amount"]').val(amount);
+    form.find('[name="expense_date"]').val(date);
+    setProjectModalCaseValue(form, 'expense_cases', caseId);
+    form.find('[name="expense_description"]').val(description);
+    $("#expense_addButton").text("Masraf Güncelle");
+    modal.modal("show");
+  }
+});
+
 //Project manage sayfasında Ödeme, hakediş gibi verileri ekledikten sonra tabloya eklemek için
-//expense.js ve progress-payment.js ve payment.js dosyalarında kullanılan addDataToTable fonksiyonu
-// deduction.js dosyasında kullanıldı
 function addDataToTable(data) {
   var table = $("#project_paymentTable").DataTable();
   table.row
@@ -280,20 +345,26 @@ function addDataToTable(data) {
       table.rows().count() + 1, // Sıra numarası
       data.tarih,
       data.turu,
-      data.ay,
-      data.yil,
+      data.ay || '',
+      data.yil || '',
       data.tutar,
-      data.aciklama,
-      data.created_at,
+      data.aciklama || '',
+      data.created_at || '',
       `<div class="dropdown">
                 <button class="btn dropdown-toggle align-text-top"
                     data-bs-toggle="dropdown">İşlem</button>
                 <div class="dropdown-menu dropdown-menu-end">
-                    <a class="dropdown-item edit-payment"
-                        data-id='${data.id}'>
+                    <a class="dropdown-item edit-project-action" href="#"
+                        data-id='${data.id}'
+                        data-project='${data.project_id}'
+                        data-type='10'
+                        data-amount='${data.tutar}'
+                        data-date='${data.tarih}'
+                        data-table='project_gelir_gider'
+                        data-description='${data.aciklama || ""}'>
                         <i class="ti ti-edit icon me-3"></i> Güncelle
                     </a>
-                    <a class="dropdown-item delete-project-action" href="#" data-id='${data.id}' data-project='${data.project_id}'>
+                    <a class="dropdown-item delete-project-action" href="#" data-id='${data.id}' data-project='${data.project_id}' data-table='project_gelir_gider'>
                         <i class="ti ti-trash icon me-3"></i> Sil
                     </a>
                 </div>

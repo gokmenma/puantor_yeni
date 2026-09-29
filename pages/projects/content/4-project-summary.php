@@ -169,22 +169,22 @@ $profit_json = json_encode($timeline_profit);
     }
 </style>
 
-<div class="container-xl mt-3">
+<div class="p-1">
     <!-- Top Stat Cards -->
-    <div class="row row-cards mb-4">
+    <div class="row row-cards mb-2">
         <!-- Card 1: Bütçe ve Hakediş -->
         <div class="col-sm-6 col-lg-3">
             <div class="card card-sm border-0 shadow-sm summary-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #0369a1;">
-                <div class="card-body p-3">
+                <div class="card-body p-2">
                     <div class="d-flex align-items-center">
-                        <span class="avatar rounded-circle me-3" style="background-color: rgba(3, 105, 161, 0.1); color: #0369a1; width: 44px; height: 44px;">
+                        <span class="avatar rounded-circle me-2" style="background-color: rgba(3, 105, 161, 0.1); color: #0369a1; width: 38px; height: 38px;">
                             <i class="ti ti-currency-lira fs-2"></i>
                         </span>
                         <div>
                             <div class="font-weight-medium text-uppercase-dist text-secondary opacity-75">PROJE BÜTÇESİ</div>
-                            <div class="h2 mb-1 font-weight-bold text-dark" style="font-size: 1.35rem;"><?php echo Helper::formattedMoney($budget); ?></div>
-                            <div style="font-size: 0.75rem; color: #0369a1;">
-                                Hakediş Toplamı: <strong class="text-dark"><?php echo Helper::formattedMoney($hakedis); ?></strong>
+                            <div class="h2 mb-0 font-weight-bold text-dark" style="font-size: 1.2rem;"><?php echo Helper::formattedMoney($budget); ?></div>
+                            <div style="font-size: 0.72rem; color: #0369a1;">
+                                Hakediş: <strong class="text-dark"><?php echo Helper::formattedMoney($hakedis); ?></strong>
                             </div>
                         </div>
                     </div>
@@ -195,16 +195,16 @@ $profit_json = json_encode($timeline_profit);
         <!-- Card 2: Toplam Maliyet -->
         <div class="col-sm-6 col-lg-3">
             <div class="card card-sm border-0 shadow-sm summary-card" style="background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%); color: #c92a2a;">
-                <div class="card-body p-3">
+                <div class="card-body p-2">
                     <div class="d-flex align-items-center">
-                        <span class="avatar rounded-circle me-3" style="background-color: rgba(201, 42, 42, 0.1); color: #c92a2a; width: 44px; height: 44px;">
+                        <span class="avatar rounded-circle me-2" style="background-color: rgba(201, 42, 42, 0.1); color: #c92a2a; width: 38px; height: 38px;">
                             <i class="ti ti-receipt fs-2"></i>
                         </span>
                         <div>
                             <div class="font-weight-medium text-uppercase-dist text-secondary opacity-75">TOPLAM MALİYET</div>
-                            <div class="h2 mb-1 font-weight-bold text-dark" style="font-size: 1.35rem;"><?php echo Helper::formattedMoney($total_cost); ?></div>
-                            <div style="font-size: 0.75rem; color: #c92a2a;">
-                                İşçilik: <strong class="text-dark"><?php echo Helper::formattedMoney($labor_cost); ?></strong> | Giderler: <strong class="text-dark"><?php echo Helper::formattedMoney($total_expense + $total_payment); ?></strong>
+                            <div class="h2 mb-0 font-weight-bold text-dark" style="font-size: 1.2rem;"><?php echo Helper::formattedMoney($total_cost); ?></div>
+                            <div style="font-size: 0.72rem; color: #c92a2a;">
+                                İşçilik: <strong class="text-dark"><?php echo Helper::formattedMoney($labor_cost); ?></strong> | Gider: <strong class="text-dark"><?php echo Helper::formattedMoney($total_expense + $total_payment); ?></strong>
                             </div>
                         </div>
                     </div>
@@ -221,16 +221,16 @@ $profit_json = json_encode($timeline_profit);
             $profit_icon = $is_profit ? 'ti ti-trending-up' : 'ti ti-trending-down';
             ?>
             <div class="card card-sm border-0 shadow-sm summary-card" style="background: <?php echo $bg_gradient; ?>; color: <?php echo $text_color; ?>;">
-                <div class="card-body p-3">
+                <div class="card-body p-2">
                     <div class="d-flex align-items-center">
-                        <span class="avatar rounded-circle me-3" style="background-color: rgba(43, 138, 62, 0.1); color: <?php echo $text_color; ?>; width: 44px; height: 44px;">
+                        <span class="avatar rounded-circle me-2" style="background-color: rgba(43, 138, 62, 0.1); color: <?php echo $text_color; ?>; width: 38px; height: 38px;">
                             <i class="<?php echo $profit_icon; ?> fs-2"></i>
                         </span>
                         <div>
                             <div class="font-weight-medium text-uppercase-dist text-secondary opacity-75">NET PROJE KÂRI</div>
-                            <div class="h2 mb-1 font-weight-bold text-dark" style="font-size: 1.35rem;"><?php echo Helper::formattedMoney($net_profit); ?></div>
-                            <div style="font-size: 0.75rem; color: <?php echo $text_color; ?>;">
-                                Kâr Marjı Oranı: <strong class="text-dark">%<?php echo $profit_margin; ?></strong>
+                            <div class="h2 mb-0 font-weight-bold text-dark" style="font-size: 1.2rem;"><?php echo Helper::formattedMoney($net_profit); ?></div>
+                            <div style="font-size: 0.72rem; color: <?php echo $text_color; ?>;">
+                                Kâr Marjı: <strong class="text-dark">%<?php echo $profit_margin; ?></strong>
                             </div>
                         </div>
                     </div>
@@ -241,16 +241,16 @@ $profit_json = json_encode($timeline_profit);
         <!-- Card 4: Tahsilat / Nakit Durumu -->
         <div class="col-sm-6 col-lg-3">
             <div class="card card-sm border-0 shadow-sm summary-card" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); color: #b45309;">
-                <div class="card-body p-3">
+                <div class="card-body p-2">
                     <div class="d-flex align-items-center">
-                        <span class="avatar rounded-circle me-3" style="background-color: rgba(180, 83, 9, 0.1); color: #b45309; width: 44px; height: 44px;">
+                        <span class="avatar rounded-circle me-2" style="background-color: rgba(180, 83, 9, 0.1); color: #b45309; width: 38px; height: 38px;">
                             <i class="ti ti-wallet fs-2"></i>
                         </span>
                         <div>
                             <div class="font-weight-medium text-uppercase-dist text-secondary opacity-75">TOPLAM TAHSİLAT</div>
-                            <div class="h2 mb-1 font-weight-bold text-dark" style="font-size: 1.35rem;"><?php echo Helper::formattedMoney($total_income); ?></div>
-                            <div style="font-size: 0.75rem; color: #b45309;">
-                                Kalan Alacak: <strong class="text-dark"><?php echo Helper::formattedMoney($hakedis - $total_income); ?></strong>
+                            <div class="h2 mb-0 font-weight-bold text-dark" style="font-size: 1.2rem;"><?php echo Helper::formattedMoney($total_income); ?></div>
+                            <div style="font-size: 0.72rem; color: #b45309;">
+                                Kalan: <strong class="text-dark"><?php echo Helper::formattedMoney($hakedis - $total_income); ?></strong>
                             </div>
                         </div>
                     </div>
@@ -263,29 +263,29 @@ $profit_json = json_encode($timeline_profit);
     <div class="row row-cards">
         <!-- Main Visualizations (Left: col-lg-8) -->
         <div class="col-lg-8 col-sm-12">
-            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 pt-4 px-4 pb-1">
-                    <h3 class="card-title font-weight-bold text-dark m-0" style="font-size: 1.1rem;">Finansal Performans Analizi</h3>
+            <div class="card border-0 shadow-sm" style="border-radius: 8px;">
+                <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 pt-2 px-3 pb-1">
+                    <h3 class="card-title font-weight-bold text-dark m-0" style="font-size: 1rem;">Finansal Performans Analizi</h3>
                     
                     <ul class="nav nav-tabs border-0 nav-tabs-summary" role="tablist">
                         <li class="nav-item">
-                            <a href="#summary-timeline-tab" class="nav-link active" data-bs-toggle="tab" role="tab">Zaman Serisi</a>
+                            <a href="#summary-timeline-tab" class="nav-link active py-1 px-2" data-bs-toggle="tab" role="tab">Zaman Serisi</a>
                         </li>
                         <li class="nav-item">
-                            <a href="#summary-overview-tab" class="nav-link" data-bs-toggle="tab" role="tab">Genel Bakış</a>
+                            <a href="#summary-overview-tab" class="nav-link py-1 px-2" data-bs-toggle="tab" role="tab">Genel Bakış</a>
                         </li>
                     </ul>
                 </div>
                 
-                <div class="card-body p-4">
+                <div class="card-body p-2">
                     <div class="tab-content">
                         <!-- Tab 1: Timeline -->
                         <div class="tab-pane active show" id="summary-timeline-tab" role="tabpanel">
-                            <div id="timeline_chart" style="min-height: 350px;"></div>
+                            <div id="timeline_chart" style="min-height: 320px;"></div>
                         </div>
                         <!-- Tab 2: Overview Grouped Column -->
                         <div class="tab-pane" id="summary-overview-tab" role="tabpanel">
-                            <div id="overview_chart" style="min-height: 350px;"></div>
+                            <div id="overview_chart" style="min-height: 320px;"></div>
                         </div>
                     </div>
                 </div>
@@ -294,35 +294,35 @@ $profit_json = json_encode($timeline_profit);
 
         <!-- Cost Breakdown & Metrics (Right: col-lg-4) -->
         <div class="col-lg-4 col-sm-12">
-            <div class="card border-0 shadow-sm" style="border-radius: 12px; height: 100%;">
-                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-1">
-                    <h3 class="card-title font-weight-bold text-dark m-0" style="font-size: 1.1rem;">Maliyet Dağılımı</h3>
+            <div class="card border-0 shadow-sm" style="border-radius: 8px; height: 100%;">
+                <div class="card-header bg-transparent border-0 pt-2 px-3 pb-1">
+                    <h3 class="card-title font-weight-bold text-dark m-0" style="font-size: 1rem;">Maliyet Dağılımı</h3>
                 </div>
-                <div class="card-body p-4 d-flex flex-column justify-content-between">
-                    <div id="cost_breakdown_chart" style="min-height: 250px;"></div>
+                <div class="card-body p-2 d-flex flex-column justify-content-between">
+                    <div id="cost_breakdown_chart" style="min-height: 220px;"></div>
                     
                     <!-- Business Intelligence Metrics List -->
-                    <div class="mt-4 pt-3 border-top">
+                    <div class="mt-2 pt-2 border-top">
                         <div class="bi-metric-item d-flex justify-content-between align-items-center">
                             <div>
-                                <div class="font-weight-medium text-dark" style="font-size: 0.85rem;">Bütçe Gerçekleşme Oranı</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">Hakediş / Toplam Proje Bütçesi</div>
+                                <div class="font-weight-medium text-dark" style="font-size: 0.8rem;">Bütçe Gerçekleşme Oranı</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Hakediş / Proje Bütçesi</div>
                             </div>
-                            <span class="badge bg-blue-lt px-2.5 py-1 text-uppercase-dist font-weight-bold">%<?php echo $budget_utilization; ?></span>
+                            <span class="badge bg-blue-lt px-2 py-0.5 text-uppercase-dist font-weight-bold">%<?php echo $budget_utilization; ?></span>
                         </div>
                         <div class="bi-metric-item d-flex justify-content-between align-items-center">
                             <div>
-                                <div class="font-weight-medium text-dark" style="font-size: 0.85rem;">İşçilik Yoğunluğu Oranı</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">İşçilik Maliyeti / Toplam Maliyet</div>
+                                <div class="font-weight-medium text-dark" style="font-size: 0.8rem;">İşçilik Yoğunluğu Oranı</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">İşçilik Maliyeti / Toplam Maliyet</div>
                             </div>
-                            <span class="badge bg-purple-lt px-2.5 py-1 text-uppercase-dist font-weight-bold">%<?php echo $labor_cost_ratio; ?></span>
+                            <span class="badge bg-purple-lt px-2 py-0.5 text-uppercase-dist font-weight-bold">%<?php echo $labor_cost_ratio; ?></span>
                         </div>
                         <div class="bi-metric-item d-flex justify-content-between align-items-center">
                             <div>
-                                <div class="font-weight-medium text-dark" style="font-size: 0.85rem;">Tahsilat Gerçekleşme Oranı</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">Alınan Ödeme / Hakediş Toplamı</div>
+                                <div class="font-weight-medium text-dark" style="font-size: 0.8rem;">Tahsilat Gerçekleşme Oranı</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Alınan Ödeme / Hakediş Toplamı</div>
                             </div>
-                            <span class="badge bg-green-lt px-2.5 py-1 text-uppercase-dist font-weight-bold">%<?php echo $collection_rate; ?></span>
+                            <span class="badge bg-green-lt px-2 py-0.5 text-uppercase-dist font-weight-bold">%<?php echo $collection_rate; ?></span>
                         </div>
                     </div>
                 </div>
@@ -331,66 +331,66 @@ $profit_json = json_encode($timeline_profit);
     </div>
 
     <!-- Detailed Summary Table Row -->
-    <div class="row row-cards mt-4">
+    <div class="row row-cards mt-2">
         <div class="col-12">
-            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
-                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-1">
-                    <h3 class="card-title font-weight-bold text-dark m-0" style="font-size: 1.1rem;">Detaylı Finansal Raporlama Tablosu</h3>
+            <div class="card border-0 shadow-sm" style="border-radius: 8px;">
+                <div class="card-header bg-transparent border-0 pt-2 px-3 pb-1">
+                    <h3 class="card-title font-weight-bold text-dark m-0" style="font-size: 1rem;">Detaylı Finansal Raporlama Tablosu</h3>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table card-table table-vcenter text-nowrap">
                             <thead>
                                 <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-                                    <th class="ps-4">Finansal Kalem</th>
-                                    <th>İlişkili Oran / Kategori</th>
-                                    <th class="text-end pe-4">Toplam Tutar</th>
+                                    <th class="ps-3 py-1">Finansal Kalem</th>
+                                    <th class="py-1">İlişkili Oran / Kategori</th>
+                                    <th class="text-end pe-3 py-1">Toplam Tutar</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="ps-4 font-weight-bold text-dark">
+                                    <td class="ps-3 py-1 font-weight-bold text-dark">
                                         <span class="badge bg-blue me-2">&nbsp;</span> Proje Bütçesi (Sözleşme Bedeli)
                                     </td>
-                                    <td>Bütçe Tavan Tutarı</td>
-                                    <td class="text-end pe-4 font-weight-bold text-dark"><?php echo Helper::formattedMoney($budget); ?></td>
+                                    <td class="py-1">Bütçe Tavan Tutarı</td>
+                                    <td class="text-end pe-3 py-1 font-weight-bold text-dark"><?php echo Helper::formattedMoney($budget); ?></td>
                                 </tr>
                                 <tr>
-                                    <td class="ps-4 font-weight-bold text-dark">
+                                    <td class="ps-3 py-1 font-weight-bold text-dark">
                                         <span class="badge bg-cyan me-2">&nbsp;</span> Toplam Hakediş Tutarı
                                         <span class="text-muted font-weight-normal ms-1" style="font-size: 0.75rem;">(Biten İş Değeri)</span>
                                     </td>
-                                    <td>Bütçenin %<?php echo $budget_utilization; ?> kadarı tamamlandı</td>
-                                    <td class="text-end pe-4 font-weight-bold text-dark"><?php echo Helper::formattedMoney($hakedis); ?></td>
+                                    <td class="py-1">Bütçenin %<?php echo $budget_utilization; ?> kadarı tamamlandı</td>
+                                    <td class="text-end pe-3 py-1 font-weight-bold text-dark"><?php echo Helper::formattedMoney($hakedis); ?></td>
                                 </tr>
                                 <tr>
-                                    <td class="ps-4 font-weight-bold text-dark">
+                                    <td class="ps-3 py-1 font-weight-bold text-dark">
                                         <span class="badge bg-orange me-2">&nbsp;</span> Toplam İşçilik Maliyeti
                                         <span class="text-muted font-weight-normal ms-1" style="font-size: 0.75rem;">(Puantaj Hak Ediş)</span>
                                     </td>
-                                    <td>Maliyetin %<?php echo $labor_cost_ratio; ?> kadarı işçilik</td>
-                                    <td class="text-end pe-4 font-weight-bold text-dark"><?php echo Helper::formattedMoney($labor_cost); ?></td>
+                                    <td class="py-1">Maliyetin %<?php echo $labor_cost_ratio; ?> kadarı işçilik</td>
+                                    <td class="text-end pe-3 py-1 font-weight-bold text-dark"><?php echo Helper::formattedMoney($labor_cost); ?></td>
                                 </tr>
                                 <tr>
-                                    <td class="ps-4 font-weight-bold text-dark">
+                                    <td class="ps-3 py-1 font-weight-bold text-dark">
                                         <span class="badge bg-yellow me-2">&nbsp;</span> Diğer Giderler &amp; Kesintiler
                                     </td>
-                                    <td>Maliyetin %<?php echo $other_expense_ratio; ?> kadarı diğer giderler</td>
-                                    <td class="text-end pe-4 font-weight-bold text-dark"><?php echo Helper::formattedMoney($total_expense + $total_payment); ?></td>
+                                    <td class="py-1">Maliyetin %<?php echo $other_expense_ratio; ?> kadarı diğer giderler</td>
+                                    <td class="text-end pe-3 py-1 font-weight-bold text-dark"><?php echo Helper::formattedMoney($total_expense + $total_payment); ?></td>
                                 </tr>
                                 <tr style="background-color: #fffaf0; font-weight: bold;">
-                                    <td class="ps-4 text-danger font-weight-bold">
+                                    <td class="ps-3 py-1 text-danger font-weight-bold">
                                         <span class="badge bg-red me-2">&nbsp;</span> Toplam Proje Maliyeti
                                     </td>
-                                    <td class="text-danger">Hakedişin %<?php echo $cost_ratio; ?> kadarı maliyet</td>
-                                    <td class="text-end pe-4 text-danger font-weight-bold"><?php echo Helper::formattedMoney($total_cost); ?></td>
+                                    <td class="py-1 text-danger">Hakedişin %<?php echo $cost_ratio; ?> kadarı maliyet</td>
+                                    <td class="text-end pe-3 py-1 text-danger font-weight-bold"><?php echo Helper::formattedMoney($total_cost); ?></td>
                                 </tr>
                                 <tr style="background-color: #f0fdf4; font-weight: bold; border-bottom: none;">
-                                    <td class="ps-4 text-success font-weight-bold">
+                                    <td class="ps-3 py-1 text-success font-weight-bold">
                                         <span class="badge bg-green me-2">&nbsp;</span> Net Finansal Kâr / Zarar
                                     </td>
-                                    <td class="text-success">Hakediş üzerinden %<?php echo $profit_margin; ?> kâr marjı</td>
-                                    <td class="text-end pe-4 text-success font-weight-bold"><?php echo Helper::formattedMoney($net_profit); ?></td>
+                                    <td class="py-1 text-success">Hakediş üzerinden %<?php echo $profit_margin; ?> kâr marjı</td>
+                                    <td class="text-end pe-3 py-1 text-success font-weight-bold"><?php echo Helper::formattedMoney($net_profit); ?></td>
                                 </tr>
                             </tbody>
                         </table>

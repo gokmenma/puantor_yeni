@@ -4,13 +4,17 @@ require_once ROOT . '/Model/IzinTur.php';
 require_once ROOT . '/Model/Persons.php';
 require_once ROOT . '/Model/Company.php';
 require_once ROOT . '/App/Helper/security.php';
+require_once ROOT . '/App/Helper/helper.php';
 
 use App\Helper\Security;
+use App\Helper\Helper;
 
 $perm->checkAuthorize('izin_talepler');
 $Auths->checkFirmReturn();
 
 $firma_id    = (int) ($_SESSION['firm_id'] ?? 0);
+$izinTalepModel = new IzinTalep();
+$stats       = $izinTalepModel->getIzinStats($firma_id);
 $turler      = (new IzinTur())->getPersonelTurler();
 $personeller = (new Persons())->getPersonsByFirm($firma_id);
 
@@ -24,107 +28,252 @@ if ($default_yetkili_adi === '0') {
 if ($default_firma_unvani === '0') {
     $default_firma_unvani = '';
 }
+
+$initial_durum = $_GET['durum'] ?? '';
 ?>
 
-<div class="page-header d-print-none mb-0">
-    <div class="container-xl">
+<script>
+(function() {
+    try {
+        document.documentElement.classList.toggle(
+            'izin-summary-collapsed',
+            localStorage.getItem('izin_summary_collapsed') === '1'
+        );
+    } catch (e) {}
+})();
+</script>
+<style>
+html.izin-summary-collapsed #izinSummaryCards {
+    max-height: 0 !important;
+    margin-bottom: 12px !important;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+}
+</style>
+
+<div class="container-xl mt-1" id="izinPage">
+
+    <!-- Page Header (Hero Banner) -->
+    <div class="page-header d-print-none mb-3">
         <div class="row g-2 align-items-center">
             <div class="col">
-                <h2 class="page-title">Yıllık İzin Talepleri</h2>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-sm" style="width: 44px; height: 44px;">
+                        <i class="ti ti-calendar-event" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                            İzin Talepleri
+                        </h2>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Personel izin talepleri, onay/red işlemleri ve izin formları
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-auto ms-auto">
-                <button class="btn btn-primary" id="btn-yeni-talep">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M12 5l0 14"></path>
-                        <path d="M5 12l14 0"></path>
-                    </svg>
-                    Yeni Talep
-                </button>
+            <!-- Primary Actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary btn-icon izin-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
+                            <i class="ti ti-columns"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-2" id="izinColvisMenu"
+                            style="min-width: 210px; max-height: 350px; overflow-y: auto;">
+                            <!-- Checkboxlar dinamik yüklenecek -->
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-dark shadow-sm izin-header-action" id="btn-header-yeni-talep" style="background-color: #1e293b; border-color: #1e293b;">
+                        <i class="ti ti-plus me-1"></i> Yeni Talep Ekle
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle izin-header-action" data-bs-toggle="dropdown">
+                            <i class="ti ti-settings me-1"></i> İşlemler
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a href="javascript:void(0)" class="dropdown-item" id="export_excel">
+                                <i class="ti ti-file-excel icon me-2 text-success"></i> Excel'e Aktar
+                            </a>
+                            <a href="javascript:void(0)" class="dropdown-item" id="export_pdf">
+                                <i class="ti ti-file-type-pdf icon me-2 text-danger"></i> PDF Raporu Al
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="page-body">
-    <div class="container-xl">
-
-        <!-- Filtreler -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label mb-1 small">Personel</label>
-                        <select id="filter-personel" class="form-select select2-filter">
-                            <option value="">Tüm Personel</option>
-                            <?php foreach ($personeller as $p): ?>
-                                <option value="<?= Security::encrypt($p->id) ?>"><?= htmlspecialchars($p->full_name) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+    <!-- Dörtlü KPI / İstatistik Özet Kartları -->
+    <div class="row row-cards g-3 mb-3" id="izinSummaryCards">
+        <!-- Kart 1: Toplam Talep -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM TALEP</span>
+                        <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-calendar-event" style="font-size: 18px;"></i>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1 small">Durum</label>
-                        <select id="filter-durum" class="form-select select2-filter">
-                            <option value="">Tüm Durumlar</option>
-                            <option value="beklemede">Beklemede</option>
-                            <option value="onaylandi">Onaylı</option>
-                            <option value="reddedildi">Reddedildi</option>
-                            <option value="iptal">İptal</option>
-                        </select>
+                    <div class="h1 mb-2 fw-bold text-dark" id="stat-total" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($stats['total'], 0, ',', '.') ?>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1 small">Başlangıç</label>
-                        <input type="text" id="filter-baslangic" class="form-control flatpickr-filter" placeholder="gg.aa.yyyy" autocomplete="off">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1 small">Bitiş</label>
-                        <input type="text" id="filter-bitis" class="form-control flatpickr-filter" placeholder="gg.aa.yyyy" autocomplete="off">
-                    </div>
-                    <div class="col-md-auto">
-                        <button class="btn btn-primary" id="btn-filtrele">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                                <path d="M21 21l-6 -6" />
-                            </svg>
-                            Filtrele
-                        </button>
-                        <button class="btn btn-outline-secondary ms-1" id="btn-temizle">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
-                                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
-                            </svg>
-                            Temizle
-                        </button>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            Onaylı: <strong class="text-dark" id="stat-toplam-gun"><?= $stats['toplam_onayli_gun'] ?> Gün</strong>
+                        </span>
+                        <label class="status-summary-filter mb-0" title="Tüm talepleri göster">
+                            <input type="radio" name="filter_durum_group" value="" class="filter-durum-radio" <?= empty($initial_durum) ? 'checked' : '' ?>>
+                            <span><i class="ti ti-list"></i> Tümü</span>
+                        </label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tablo -->
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-vcenter table-hover card-table" id="izin-table">
+        <!-- Kart 2: Bekleyen Talepler -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">BEKLEYEN TALEPLER</span>
+                        <div class="avatar avatar-sm rounded-2 bg-warning-lt text-warning" style="width: 32px; height: 32px;">
+                            <i class="ti ti-clock" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold text-dark" id="stat-beklemede" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($stats['beklemede'], 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            Onay Bekliyor
+                        </span>
+                        <label class="status-summary-filter mb-0" title="Bekleyen talepleri göster">
+                            <input type="radio" name="filter_durum_group" value="beklemede" class="filter-durum-radio" <?= $initial_durum === 'beklemede' ? 'checked' : '' ?>>
+                            <span><i class="ti ti-clock"></i> Beklemede</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 3: Onaylanan Talepler -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">ONAYLANAN TALEPLER</span>
+                        <div class="avatar avatar-sm rounded-2 bg-success-lt text-success" style="width: 32px; height: 32px;">
+                            <i class="ti ti-circle-check" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold text-dark" id="stat-onaylandi" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($stats['onaylandi'], 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            Bu Ay: <strong class="text-success" id="stat-bu-ay-gun"><?= $stats['bu_ay_gun'] ?> Gün</strong>
+                        </span>
+                        <label class="status-summary-filter mb-0" title="Onaylanan talepleri göster">
+                            <input type="radio" name="filter_durum_group" value="onaylandi" class="filter-durum-radio" <?= $initial_durum === 'onaylandi' ? 'checked' : '' ?>>
+                            <span><i class="ti ti-circle-check"></i> Onaylı</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 4: Reddedilen Talepler -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">REDDEDİLEN TALEPLER</span>
+                        <div class="avatar avatar-sm rounded-2 bg-danger-lt text-danger" style="width: 32px; height: 32px;">
+                            <i class="ti ti-circle-x" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold text-dark" id="stat-reddedildi" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($stats['reddedildi'], 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            İşlem Yapılan
+                        </span>
+                        <label class="status-summary-filter mb-0" title="Reddedilen talepleri göster">
+                            <input type="radio" name="filter_durum_group" value="reddedildi" class="filter-durum-radio" <?= $initial_durum === 'reddedildi' ? 'checked' : '' ?>>
+                            <span><i class="ti ti-circle-x"></i> Reddedildi</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="row row-cards">
+        <div class="col-12">
+            <div class="card izin-table-card" style="border: 1px solid #dbe3ec !important; overflow: hidden; background: #ffffff;">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">
+                            <i class="ti ti-list text-secondary" style="font-size: 18px;"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">İzin Talepleri Listesi</h4>
+                                <a href="javascript:void(0)" class="btn-card-header-add" id="btn-header-add" data-tooltip="Yeni Talep Ekle">
+                                    <i class="ti ti-plus"></i>
+                                </a>
+                            </div>
+                            <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Anlık arama, sütun filtreleme ve onay süreçleri</p>
+                        </div>
+                    </div>
+
+                    <!-- Actions & Search -->
+                    <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
+                        <!-- Fast Instant Search -->
+                        <div class="input-icon izin-search-wrap" style="min-width: 170px;">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-search text-muted"></i>
+                            </span>
+                            <input type="text" id="izin-fast-search" class="form-control form-control-sm" placeholder="Arayın..." autocomplete="off">
+                            <button type="button" id="izin-search-clear" class="izin-search-clear d-none" aria-label="Aramayı temizle" title="Aramayı temizle">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
+                        <button type="button" id="toggleIzinSummary" class="btn btn-sm btn-outline-secondary btn-icon izin-summary-toggle" title="Özet kartlarını gizle" aria-label="Özet kartlarını gizle" aria-expanded="true">
+                            <i class="ti ti-chevron-up"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Responsive Container (Seamless inside card) -->
+                <div class="table-responsive izin-table-area" style="overflow-x: auto !important;">
+                    <table class="table data-table table-hover text-nowrap w-100 mb-0" id="izin-table" style="width: 100% !important; margin: 0 !important;">
                         <thead>
                             <tr>
                                 <th>Personel</th>
                                 <th>İzin Türü</th>
                                 <th style="width: 95px; max-width: 95px;">Başlangıç</th>
                                 <th style="width: 95px; max-width: 95px;">Bitiş</th>
-                                <th class="text-center" style="width: 75px; max-width: 75px;">Toplam Gün</th>
-                                <th class="text-center" style="width: 75px; max-width: 75px;">Düşülecek Gün</th>
-                                <th class="text-center" style="width: 90px; max-width: 90px;">Durum</th>
+                                <th class="text-center" style="width: 80px; max-width: 80px;">Toplam Gün</th>
+                                <th class="text-center" style="width: 90px; max-width: 90px;">Düşülecek Gün</th>
+                                <th class="text-center" style="width: 95px; max-width: 95px;">Durum</th>
                                 <th style="width: 95px; max-width: 95px;">Talep Tarihi</th>
-                                <th class="text-center">İşlem</th>
+                                <th>Onaylayan</th>
+                                <th>Açıklama</th>
+                                <th class="text-end no-export" data-orderable="false" style="width: 105px; min-width: 105px;">İşlem</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                 </div>
+
             </div>
         </div>
-
     </div>
 </div>
 
@@ -133,21 +282,24 @@ if ($default_firma_unvani === '0') {
     <div class="modal-dialog modal-dialog-centered modal-md">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Yeni İzin Talebi</h5>
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="ti ti-calendar-plus text-primary fs-2"></i>
+                    Yeni İzin Talebi
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Personel</label>
+                    <label class="form-label required">Personel</label>
                     <select id="yeni-personel" class="form-select select2-modal">
                         <option value="">Seçiniz</option>
                         <?php foreach ($personeller as $p): ?>
-                            <option value="<?= Security::encrypt($p->id) ?>"><?= htmlspecialchars($p->full_name) ?></option>
+                            <option value="<?= Security::encrypt($p->id) ?>" data-person-id="<?= $p->id ?>"><?= htmlspecialchars($p->full_name) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">İzin Türü</label>
+                    <label class="form-label required">İzin Türü</label>
                     <select id="yeni-tur" class="form-select select2-modal">
                         <option value="">Seçiniz</option>
                         <?php foreach ($turler as $t): ?>
@@ -157,11 +309,11 @@ if ($default_firma_unvani === '0') {
                 </div>
                 <div class="row g-2">
                     <div class="col-6">
-                        <label class="form-label">Başlangıç Tarihi</label>
+                        <label class="form-label required">Başlangıç Tarihi</label>
                         <input type="text" id="yeni-baslangic" class="form-control flatpickr-modal" placeholder="gg.aa.yyyy" autocomplete="off">
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Bitiş Tarihi</label>
+                        <label class="form-label required">Bitiş Tarihi</label>
                         <input type="text" id="yeni-bitis" class="form-control flatpickr-modal" placeholder="gg.aa.yyyy" autocomplete="off">
                     </div>
                 </div>
@@ -177,28 +329,19 @@ if ($default_firma_unvani === '0') {
                 </div>
                 <div class="mb-3">
                     <label class="form-label" id="yeni-aciklama-label">Açıklama <span class="text-muted small">(opsiyonel)</span></label>
-                    <textarea id="yeni-aciklama" class="form-control" rows="6"></textarea>
+                    <textarea id="yeni-aciklama" class="form-control" rows="3" placeholder="Talep açıklaması..."></textarea>
                 </div>
                 <div class="mb-3" id="yeni-adres-container">
                     <label class="form-label">İznin Geçirileceği Adres</label>
-                    <textarea id="yeni-adres" class="form-control" rows="3" placeholder="İzninizi geçireceğiniz adres..."></textarea>
+                    <textarea id="yeni-adres" class="form-control" rows="2" placeholder="İzninizi geçireceğiniz adres..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M18 6l-12 12"></path>
-                        <path d="M6 6l12 12"></path>
-                    </svg>
-                    İptal
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i> İptal
                 </button>
                 <button type="button" class="btn btn-primary" id="btn-talep-kaydet">
-                    Kaydet
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-end icon-2">
-                        <path d="M5 12l14 0"></path>
-                        <path d="M13 18l6 -6"></path>
-                        <path d="M13 6l6 6"></path>
-                    </svg>
+                    <i class="ti ti-check me-1"></i> Kaydet
                 </button>
             </div>
         </div>
@@ -210,27 +353,22 @@ if ($default_firma_unvani === '0') {
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Red Notu</h5>
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="ti ti-x text-danger fs-2"></i>
+                    Red Notu
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <textarea id="red-not" class="form-control" rows="6" placeholder="Neden reddediliyor?"></textarea>
+                <textarea id="red-not" class="form-control" rows="4" placeholder="Neden reddediliyor?"></textarea>
                 <input type="hidden" id="red-talep-id">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M18 6l-12 12"></path>
-                        <path d="M6 6l12 12"></path>
-                    </svg>
-                    İptal
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i> İptal
                 </button>
                 <button type="button" class="btn btn-danger" id="btn-red-onayla">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M18 6l-12 12"></path>
-                        <path d="M6 6l12 12"></path>
-                    </svg>
-                    Reddet
+                    <i class="ti ti-circle-x me-1"></i> Reddet
                 </button>
             </div>
         </div>
@@ -242,7 +380,10 @@ if ($default_firma_unvani === '0') {
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Kısmi Onay</h5>
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="ti ti-calendar-check text-warning fs-2"></i>
+                    Kısmi Onay
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -260,7 +401,7 @@ if ($default_firma_unvani === '0') {
                 </div>
                 <hr class="my-2">
                 <div class="mb-3">
-                    <label class="form-label">Onaylanacak Bitiş Tarihi</label>
+                    <label class="form-label required">Onaylanacak Bitiş Tarihi</label>
                     <input type="text" id="kismi-bitis" class="form-control" placeholder="gg.aa.yyyy" autocomplete="off">
                     <div class="mt-2 p-2 bg-light rounded">
                         <span class="text-muted small">Onaylanacak gün: </span>
@@ -270,23 +411,11 @@ if ($default_firma_unvani === '0') {
                 <input type="hidden" id="kismi-talep-id">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path d="M18 6l-12 12"></path>
-                        <path d="M6 6l12 12"></path>
-                    </svg>
-                    İptal
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i> İptal
                 </button>
                 <button type="button" class="btn btn-warning" id="btn-kismi-onayla">
-                    Kısmi Onayla
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-end icon-2">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
-                        <path d="M16 3v4" />
-                        <path d="M8 3v4" />
-                        <path d="M4 11h16" />
-                        <path d="M9 15l2 2l4 -4" />
-                    </svg>
+                    <i class="ti ti-check me-1"></i> Kısmi Onayla
                 </button>
             </div>
         </div>
@@ -298,7 +427,10 @@ if ($default_firma_unvani === '0') {
     <div class="modal-dialog modal-dialog-centered modal-md">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">İzin Formu İmza Bilgileri</h5>
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="ti ti-printer text-primary fs-2"></i>
+                    İzin Formu İmza Bilgileri
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -360,26 +492,26 @@ if ($default_firma_unvani === '0') {
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i> İptal
+                </button>
                 <button type="button" class="btn btn-primary" id="btn-form-yazdir">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
-                        <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
-                        <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
-                    </svg>
-                    Yazdır
+                    <i class="ti ti-printer me-1"></i> Yazdır
                 </button>
             </div>
         </div>
     </div>
 </div>
+
 <!-- Modal: Ücretsiz İzin Dilekçesi Yazdır / İmza Modali -->
 <div class="modal modal-blur fade" id="modalYazdirUcretsiz" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-md">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Ücretsiz İzin Dilekçesi İmza Bilgileri</h5>
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="ti ti-printer text-primary fs-2"></i>
+                    Ücretsiz İzin Dilekçesi İmza Bilgileri
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -397,20 +529,312 @@ if ($default_firma_unvani === '0') {
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="ti ti-x me-1"></i> İptal
+                </button>
                 <button type="button" class="btn btn-primary" id="btn-ucretsiz-form-yazdir">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
-                        <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
-                        <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
-                    </svg>
-                    Yazdır
+                    <i class="ti ti-printer me-1"></i> Yazdır
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.izin-header-action {
+    height: 32px;
+    padding: 4px 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+.izin-header-icon-action,
+.izin-summary-toggle {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+}
+.izin-header-icon-action i,
+.izin-summary-toggle i {
+    margin: 0 !important;
+    font-size: 18px !important;
+}
+
+#izinPage .izin-summary-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+#izinSummaryCards {
+    max-height: 1000px;
+    opacity: 1;
+    transform: translateY(0);
+    overflow: hidden;
+    transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
+}
+
+#izinPage .izin-table-card {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
+    overflow: hidden;
+}
+
+.izin-table-card > .izin-table-area {
+    width: calc(100% - 16px) !important;
+    margin: 0 8px 8px !important;
+    padding: 0 !important;
+}
+
+.izin-table-card > .card-header {
+    border-bottom: 0 !important;
+}
+
+.status-summary-filter { cursor: pointer; }
+.status-summary-filter input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.status-summary-filter span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 2px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #64748b;
+    background: #fff;
+    font-size: 10.5px;
+    font-weight: 600;
+    transition: all .15s ease;
+}
+.status-summary-filter:hover span,
+.status-summary-filter input:focus-visible + span {
+    border-color: #94a3b8;
+    color: #334155;
+}
+.status-summary-filter input:checked + span {
+    border-color: #206bc4;
+    color: #206bc4;
+    background: rgba(32, 107, 196, .08);
+    box-shadow: 0 0 0 1px rgba(32, 107, 196, .08);
+}
+
+.izin-search-wrap { position: relative; }
+#izin-fast-search {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 4px 32px 4px 34px !important;
+    line-height: 1.25 !important;
+    font-size: 12.5px;
+    border-radius: 6px;
+}
+.izin-search-wrap,
+.izin-search-wrap.input-icon {
+    height: 32px !important;
+}
+.izin-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    z-index: 3;
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 50%;
+    color: #64748b;
+    background: #f1f5f9;
+    cursor: pointer;
+}
+.izin-search-clear:hover {
+    color: #1e293b;
+    background: #e2e8f0;
+}
+
+.table-responsive,
+#izin-table_wrapper,
+div.dt-container,
+div.dt-container .dt-layout-row.dt-layout-table,
+div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
+    height: auto !important;
+    min-height: 0 !important;
+    min-height: unset !important;
+    max-height: none !important;
+    flex-grow: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+div.dt-container .dt-layout-row.dt-layout-table {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Tek Çerçeve (Kart ile Bütünleşik Tablo) */
+table#izin-table.data-table,
+table#izin-table.dataTable {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 1px solid #dbe3ec !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+}
+table#izin-table.data-table tbody,
+table#izin-table.dataTable tbody,
+table#izin-table.data-table tbody tr:last-child,
+table#izin-table.dataTable tbody tr:last-child,
+#izin-table_wrapper .dt-layout-table,
+#izin-table_wrapper .dt-layout-cell {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Tablo Başlık Hücreleri */
+table#izin-table.data-table thead th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 11.5px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 9px 12px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-top: none !important;
+    border-left: none !important;
+    vertical-align: middle !important;
+}
+table#izin-table.data-table thead th:last-child {
+    border-right: none !important;
+}
+
+/* Gövde Satır ve Sütun Kenarlıkları */
+table#izin-table.data-table tbody td {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    color: #1e293b !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-top: none !important;
+    border-left: none !important;
+}
+table#izin-table.data-table td.actions-column .btn.btn-icon {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+table#izin-table.data-table td.actions-column .btn.btn-icon i {
+    font-size: 14px !important;
+    margin: 0 !important;
+}
+table#izin-table.data-table tbody td:last-child {
+    border-right: none !important;
+}
+table#izin-table.data-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+table#izin-table.dataTable > tbody > tr:last-child > *,
+table#izin-table.data-table > tbody > tr:last-child > * {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}
+table#izin-table.data-table tbody tr:hover td {
+    background-color: #f8fafc !important;
+}
+
+/* Tablo Altı Sayfalama ve Bilgi Alanı */
+#izin-table_wrapper .dt-layout-row:last-child,
+div.dt-container .dt-layout-row:last-child,
+div#izin-table_wrapper .dt-layout-row:has(.dt-paging),
+div#izin-table_wrapper .dt-layout-row:has(.dt-info) {
+    margin: 0 !important;
+    margin-top: 0 !important;
+    padding: 10px 16px !important;
+    background: transparent !important;
+    border-top: none !important;
+    box-shadow: none !important;
+    position: static !important;
+    flex-shrink: 0 !important;
+}
+
+#izin-table th:last-child,
+#izin-table td:last-child {
+    width: 105px !important;
+    min-width: 105px !important;
+    text-align: right !important;
+    white-space: nowrap;
+    padding-right: 12px !important;
+}
+
+/* Dark Mode */
+[data-bs-theme="dark"] table#izin-table.data-table thead th {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    border-bottom-color: #334155 !important;
+    border-right-color: #334155 !important;
+}
+[data-bs-theme="dark"] table#izin-table.data-table,
+[data-bs-theme="dark"] table#izin-table.dataTable {
+    border-color: #334155 !important;
+}
+[data-bs-theme="dark"] table#izin-table.data-table tbody td {
+    border-bottom-color: #334155 !important;
+    border-right-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+[data-bs-theme="dark"] table#izin-table.data-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+[data-bs-theme="dark"] table#izin-table.data-table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+[data-bs-theme="dark"] .status-summary-filter span {
+    color: #94a3b8;
+    background: #1e293b;
+    border-color: #334155;
+}
+[data-bs-theme="dark"] .status-summary-filter input:checked + span {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, .14);
+    border-color: #3b82f6;
+}
+[data-bs-theme="dark"] .izin-search-clear {
+    color: #94a3b8;
+    background: #334155;
+}
+[data-bs-theme="dark"] .izin-summary-card,
+[data-bs-theme="dark"] .izin-table-card {
+    background: #182433 !important;
+    border-color: #334155 !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
+}
+</style>
 
 <script>
 const CAN_DELETE_APPROVED = <?= $Auths->Authorize('onayli_izinleri_sil') ? 'true' : 'false' ?>;
@@ -419,13 +843,34 @@ $(document).ready(function() {
 
     const IZIN_API = 'api/izin/talep.php';
 
-    // ---------- Select2 ----------
-    $('.select2-filter').select2({ width: '100%', allowClear: true, placeholder: 'Seçiniz' });
+    // ---------- Summary Toggle Logic ----------
+    var $summaryToggle = $('#toggleIzinSummary');
+
+    function syncSummaryToggle() {
+        var isCollapsed = document.documentElement.classList.contains('izin-summary-collapsed');
+        $summaryToggle
+            .attr('aria-expanded', String(!isCollapsed))
+            .attr('aria-label', isCollapsed ? 'Özet kartlarını göster' : 'Özet kartlarını gizle')
+            .attr('title', isCollapsed ? 'Özet kartlarını göster' : 'Özet kartlarını gizle');
+        $summaryToggle.find('i')
+            .toggleClass('ti-chevron-up', !isCollapsed)
+            .toggleClass('ti-chevron-down', isCollapsed);
+    }
+
+    syncSummaryToggle();
+
+    $summaryToggle.on('click', function() {
+        var isCollapsed = document.documentElement.classList.toggle('izin-summary-collapsed');
+        try {
+            localStorage.setItem('izin_summary_collapsed', isCollapsed ? '1' : '0');
+        } catch (e) {}
+        syncSummaryToggle();
+    });
+
+    // ---------- Select2 & Flatpickr ----------
     $('.select2-modal').select2({ width: '100%', allowClear: true, placeholder: 'Seçiniz', dropdownParent: $('#modalYeniTalep') });
 
-    // ---------- Flatpickr ----------
     const fpOpts = { dateFormat: 'd.m.Y', locale: 'tr', allowInput: true };
-    flatpickr('.flatpickr-filter', fpOpts);
 
     let fpBaslangic, fpBitis;
     fpBaslangic = flatpickr('#yeni-baslangic', {
@@ -440,44 +885,9 @@ $(document).ready(function() {
         onChange: calcGun
     });
 
-    // ---------- DataTable ----------
-    const dt = window.createDataTable('#izin-table', {
-        data: [],
-        columns: [
-            { data: 'personel_adi' },
-            { data: 'tur_adi' },
-            { data: 'baslangic_tarihi', render: fmtDate },
-            { data: 'bitis_tarihi',     render: fmtDate },
-            { data: 'toplam_gun', className: 'text-center', width: '80px', render: d => `<strong>${d}</strong>` },
-            { data: 'gun_sayisi', className: 'text-center', width: '100px', render: d => `<strong>${d}</strong>` },
-            { data: 'durum', className: 'text-center', render: durumBadge },
-            { data: 'olusturma_tarihi', render: fmtDate },
-            { data: null, orderable: false, className: 'text-center', render: (d, t, row) => buildActions(row) }
-        ],
-        order: [[7, 'desc']],
-        pageLength: 25,
-        skipSearch: ['İşlem'],
-    });
-
-    function loadList() {
-        const baslangicRaw = $('#filter-baslangic').val();
-        const bitisRaw     = $('#filter-bitis').val();
-
-        const params = new URLSearchParams({
-            action:      'list',
-            personel_id: $('#filter-personel').val(),
-            durum:       $('#filter-durum').val(),
-            baslangic:   baslangicRaw ? parseTrDate(baslangicRaw) : '',
-            bitis:       bitisRaw     ? parseTrDate(bitisRaw)     : '',
-        });
-
-        $.get(IZIN_API + '?' + params.toString(), function(res) {
-            if (res.status !== 'success') return;
-            dt.clear().rows.add(res.list).draw();
-        });
-    }
-
+    // ---------- Helper Functions ----------
     function parseTrDate(str) {
+        if (!str) return '';
         const p = str.split('.');
         return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : str;
     }
@@ -488,80 +898,54 @@ $(document).ready(function() {
         return p.length >= 3 ? `${p[2]}.${p[1]}.${p[0]}` : d;
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return $('<div>').text(str).html();
+    }
+
     function durumBadge(d) {
         const map = {
-            beklemede:  ['bg-warning text-white', 'Beklemede'],
-            onaylandi:  ['bg-success text-white',  'Onaylı'],
-            reddedildi: ['bg-danger text-white',   'Reddedildi'],
-            iptal:      ['bg-secondary text-white','İptal'],
+            beklemede:  ['bg-warning-lt text-warning', '<i class="ti ti-clock icon me-1"></i>Beklemede'],
+            onaylandi:  ['bg-success-lt text-success', '<i class="ti ti-check icon me-1"></i>Onaylı'],
+            reddedildi: ['bg-danger-lt text-danger',   '<i class="ti ti-x icon me-1"></i>Reddedildi'],
+            iptal:      ['bg-secondary-lt text-secondary', 'İptal']
         };
-        const [cls, lbl] = map[d] || ['bg-secondary text-white', d];
-        return `<span class="badge ${cls}">${lbl}</span>`;
+        const [cls, lbl] = map[d] || ['bg-secondary-lt text-secondary', d];
+        return `<span class="badge ${cls} fw-semibold">${lbl}</span>`;
     }
 
     function buildActions(row) {
         let html = '';
-        const printBtn = `<button class="btn btn-icon btn-sm rounded-circle btn-outline-primary ms-1" onclick="openPrintModal('${row.id}', '${row.tur_kod}')" title="Formu Yazdır" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                <path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2" />
-                <path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4" />
-                <path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z" />
-            </svg>
+        const idVal = row.enc_id || row.id;
+        const printBtn = `<button type="button" class="btn btn-icon btn-sm rounded-circle btn-outline-primary" onclick="openPrintModal('${idVal}', '${row.tur_kod}')" title="Formu Yazdır">
+            <i class="ti ti-printer"></i>
         </button>`;
 
         if (row.durum === 'beklemede') {
-            html += `<button class="btn btn-icon btn-sm rounded-circle btn-outline-success me-1" onclick="onayla('${row.id}')" title="Onayla" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
-                    <path d="M5 12l5 5l10 -10"></path>
-                </svg>
+            html += `<button type="button" class="btn btn-icon btn-sm rounded-circle btn-outline-success" onclick="onayla('${idVal}')" title="Onayla">
+                <i class="ti ti-check"></i>
             </button>`;
-            html += `<button class="btn btn-icon btn-sm rounded-circle btn-outline-warning me-1" onclick="kismiOnaylaAc('${row.id}', '${row.baslangic_tarihi}', '${row.bitis_tarihi}', '${row.personel_adi}', ${row.gun_sayisi})" title="Kısmi Onayla" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                    <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
-                    <path d="M16 3v4" />
-                    <path d="M8 3v4" />
-                    <path d="M4 11h16" />
-                    <path d="M9 15l2 2l4 -4" />
-                </svg>
+            html += `<button type="button" class="btn btn-icon btn-sm rounded-circle btn-outline-warning" onclick="kismiOnaylaAc('${idVal}', '${row.baslangic_tarihi}', '${row.bitis_tarihi}', '${escapeHtml(row.personel_adi)}', ${row.gun_sayisi})" title="Kısmi Onayla">
+                <i class="ti ti-calendar-check"></i>
             </button>`;
-            html += `<button class="btn btn-icon btn-sm rounded-circle btn-outline-danger me-1" onclick="openRedModal('${row.id}')" title="Reddet" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
-                    <path d="M18 6l-12 12"></path>
-                    <path d="M6 6l12 12"></path>
-                </svg>
+            html += `<button type="button" class="btn btn-icon btn-sm rounded-circle btn-outline-danger" onclick="openRedModal('${idVal}')" title="Reddet">
+                <i class="ti ti-x"></i>
             </button>`;
             html += printBtn;
         } else if (row.durum === 'onaylandi') {
-            html += `<button class="btn btn-xs btn-outline-danger" onclick="openRedModal('${row.id}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.15rem 0.4rem; font-weight: 500; height: 20px; font-size: 11px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                    <path d="M9 14l-4 -4l4 -4" />
-                    <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
-                </svg>
-                Geri Al
+            html += `<button type="button" class="btn btn-xs btn-outline-warning" onclick="openRedModal('${idVal}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.2rem 0.5rem; font-weight: 500; font-size: 11.5px; border-radius: 4px;">
+                <i class="ti ti-rotate-left me-1"></i> Geri Al
             </button>`;
             if (CAN_DELETE_APPROVED) {
-                html += ` <button class="btn btn-xs btn-outline-danger me-1" onclick="talepSil('${row.id}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.15rem 0.4rem; font-weight: 500; height: 20px; font-size: 11px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
-                        <path d="M4 7h16"></path>
-                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
-                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
-                    </svg>
-                    Sil
+                html += ` <button type="button" class="btn btn-xs btn-outline-danger ms-1" onclick="talepSil('${idVal}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.2rem 0.5rem; font-weight: 500; font-size: 11.5px; border-radius: 4px;">
+                    <i class="ti ti-trash me-1"></i> Sil
                 </button>`;
             }
-            html += printBtn;
+            html += ` ${printBtn}`;
         } else if (row.durum === 'reddedildi') {
             if (CAN_DELETE_APPROVED) {
-                html += `<button class="btn btn-xs btn-outline-danger" onclick="talepSil('${row.id}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.15rem 0.4rem; font-weight: 500; height: 20px; font-size: 11px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1" style="margin: 0; pointer-events: none;">
-                        <path d="M4 7h16"></path>
-                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
-                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
-                    </svg>
-                    Sil
+                html += `<button type="button" class="btn btn-xs btn-outline-danger" onclick="talepSil('${idVal}')" style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0.2rem 0.5rem; font-weight: 500; font-size: 11.5px; border-radius: 4px;">
+                    <i class="ti ti-trash me-1"></i> Sil
                 </button>`;
             } else {
                 html = '<span class="text-muted">—</span>';
@@ -569,8 +953,146 @@ $(document).ready(function() {
         } else {
             html = '<span class="text-muted">—</span>';
         }
-        return `<div class="d-flex align-items-center justify-content-center gap-1 text-nowrap">${html}</div>`;
+        return `<div class="d-flex align-items-center justify-content-end gap-1 text-nowrap">${html}</div>`;
     }
+
+    // ---------- DataTable ----------
+    const dt = window.createDataTable('#izin-table', {
+        data: [],
+        columns: [
+            { data: 'personel_adi' },
+            { data: 'tur_adi' },
+            { data: 'baslangic_tarihi', render: fmtDate },
+            { data: 'bitis_tarihi',     render: fmtDate },
+            { data: 'toplam_gun', className: 'text-center', width: '80px', render: d => `<strong>${d ?? '—'}</strong>` },
+            { data: 'gun_sayisi', className: 'text-center', width: '90px', render: d => `<strong>${d ?? '—'}</strong>` },
+            { data: 'durum', className: 'text-center', render: durumBadge },
+            { data: 'olusturma_tarihi', render: fmtDate },
+            { data: 'onaylayan_adi', render: d => d || '<span class="text-muted">—</span>' },
+            { data: 'aciklama', render: d => d ? `<span class="text-truncate d-inline-block" style="max-width: 160px;" title="${escapeHtml(d)}">${escapeHtml(d)}</span>` : '<span class="text-muted">—</span>' },
+            { data: null, orderable: false, searchable: false, className: 'text-end no-export actions-column', render: (d, t, row) => buildActions(row) }
+        ],
+        order: [[7, 'desc']],
+        pageLength: 25,
+        lengthMenu: [10, 25, 50, 100],
+        skipSearch: ['İşlem']
+    });
+
+    // Sütunların varsayılan durumları ve etiketleri (Colvis)
+    var columnConfig = {
+        0: { label: 'Personel', default: true },
+        1: { label: 'İzin Türü', default: true },
+        2: { label: 'Başlangıç', default: true },
+        3: { label: 'Bitiş', default: true },
+        4: { label: 'Toplam Gün', default: true },
+        5: { label: 'Düşülecek Gün', default: true },
+        6: { label: 'Durum', default: true },
+        7: { label: 'Talep Tarihi', default: true },
+        8: { label: 'Onaylayan', default: false },
+        9: { label: 'Açıklama', default: false }
+    };
+
+    var savedVisibility = localStorage.getItem('izin_column_visibility');
+    var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+
+    var menuHtml = '';
+    $.each(columnConfig, function(idx, conf) {
+        var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
+        dt.column(idx).visible(isVisible, false);
+
+        menuHtml += `
+            <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
+                <div class="form-check mb-0 w-100">
+                    <input class="form-check-input izin-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
+                    <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+                        ${conf.label}
+                    </span>
+                </div>
+            </label>`;
+    });
+
+    $('#izinColvisMenu').html(menuHtml);
+    dt.columns.adjust();
+
+    $(document).on('change', '.izin-col-trigger', function() {
+        var colIdx = parseInt($(this).data('column'));
+        var isChecked = this.checked;
+        dt.column(colIdx).visible(isChecked);
+        visibilityState[colIdx] = isChecked;
+        localStorage.setItem('izin_column_visibility', JSON.stringify(visibilityState));
+    });
+
+    $(document).on('click', '#izinColvisMenu', function(e) {
+        e.stopPropagation();
+    });
+
+    function getSelectedDurum() {
+        return $('input[name="filter_durum_group"]:checked').val() || '';
+    }
+
+    function refreshStats() {
+        $.get(IZIN_API, { action: 'stats' }, function(res) {
+            if (res.status === 'success' && res.stats) {
+                $('#stat-total').text(new Intl.NumberFormat('tr-TR').format(res.stats.total));
+                $('#stat-beklemede').text(new Intl.NumberFormat('tr-TR').format(res.stats.beklemede));
+                $('#stat-onaylandi').text(new Intl.NumberFormat('tr-TR').format(res.stats.onaylandi));
+                $('#stat-reddedildi').text(new Intl.NumberFormat('tr-TR').format(res.stats.reddedildi));
+                $('#stat-toplam-gun').text(res.stats.toplam_onayli_gun + ' Gün');
+                $('#stat-bu-ay-gun').text(res.stats.bu_ay_gun + ' Gün');
+            }
+        });
+    }
+
+    function loadList() {
+        const params = new URLSearchParams({
+            action: 'list',
+            durum:  getSelectedDurum()
+        });
+
+        $.get(IZIN_API + '?' + params.toString(), function(res) {
+            if (res.status !== 'success') return;
+            dt.clear().rows.add(res.list).draw();
+        });
+    }
+
+    // Fast Instant Search
+    var searchTimer = null;
+    $('#izin-fast-search').on('input', function() {
+        var val = this.value;
+        $('#izin-search-clear').toggleClass('d-none', val.length === 0);
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function() {
+            dt.search(val).draw();
+        }, 300);
+    });
+
+    $('#izin-search-clear').on('click', function() {
+        clearTimeout(searchTimer);
+        $('#izin-fast-search').val('').trigger('focus');
+        $(this).addClass('d-none');
+        dt.search('').draw();
+    });
+
+    // Durum Filtresi Değişimi
+    $('.filter-durum-radio').on('change', function() {
+        loadList();
+    });
+
+    // Excel Export
+    $('#export_excel').off('click').on('click', function(e) {
+        e.preventDefault();
+        if (dt && dt.button) {
+            dt.button('.buttons-excel').trigger();
+        }
+    });
+
+    // PDF Export
+    $('#export_pdf').off('click').on('click', function(e) {
+        e.preventDefault();
+        if (dt && dt.button) {
+            dt.button('.buttons-pdf').trigger();
+        }
+    });
 
     // ---------- Gün hesaplama ----------
     let calcTimer = null;
@@ -629,7 +1151,7 @@ $(document).ready(function() {
         }
     });
 
-    $('#btn-yeni-talep').on('click', function() {
+    function openYeniTalepModal() {
         $('#yeni-personel').val(null).trigger('change');
         $('#yeni-aciklama').val('');
         $('#yeni-adres').val('');
@@ -639,7 +1161,9 @@ $(document).ready(function() {
         if (fpBaslangic) fpBaslangic.clear();
         if (fpBitis) fpBitis.clear();
         new bootstrap.Modal('#modalYeniTalep').show();
-    });
+    }
+
+    $('#btn-header-yeni-talep, #btn-header-add').on('click', openYeniTalepModal);
 
     $('#btn-talep-kaydet').on('click', function() {
         const data = {
@@ -649,7 +1173,7 @@ $(document).ready(function() {
             baslangic_tarihi: parseTrDate($('#yeni-baslangic').val()),
             bitis_tarihi:     parseTrDate($('#yeni-bitis').val()),
             aciklama:         $('#yeni-aciklama').val(),
-            adres:            $('#yeni-adres').val(),
+            adres:            $('#yeni-adres').val()
         };
         $.post(IZIN_API, data, function(res) {
             Swal.fire({
@@ -661,6 +1185,7 @@ $(document).ready(function() {
             if (res.status === 'success') {
                 bootstrap.Modal.getInstance('#modalYeniTalep').hide();
                 loadList();
+                refreshStats();
             }
         });
     });
@@ -685,7 +1210,10 @@ $(document).ready(function() {
                         icon: res.status === 'success' ? 'success' : 'error',
                         confirmButtonText: 'Tamam'
                     });
-                    if (res.status === 'success') loadList();
+                    if (res.status === 'success') {
+                        loadList();
+                        refreshStats();
+                    }
                 });
             }
         });
@@ -708,6 +1236,7 @@ $(document).ready(function() {
             if (res.status === 'success') {
                 bootstrap.Modal.getInstance('#modalRed').hide();
                 loadList();
+                refreshStats();
             }
         });
     });
@@ -770,6 +1299,7 @@ $(document).ready(function() {
             if (res.status === 'success') {
                 bootstrap.Modal.getInstance('#modalKismiOnay').hide();
                 loadList();
+                refreshStats();
             }
         });
     });
@@ -793,20 +1323,14 @@ $(document).ready(function() {
                         icon: res.status === 'success' ? 'success' : 'error',
                         confirmButtonText: 'Tamam'
                     });
-                    if (res.status === 'success') loadList();
+                    if (res.status === 'success') {
+                        loadList();
+                        refreshStats();
+                    }
                 });
             }
         });
     };
-
-    // ---------- Filtre ----------
-    $('#btn-filtrele').on('click', loadList);
-    $('#btn-temizle').on('click', function() {
-        $('#filter-personel, #filter-durum').val(null).trigger('change');
-        flatpickr('#filter-baslangic').clear();
-        flatpickr('#filter-bitis').clear();
-        loadList();
-    });
 
     // ---------- Signature Printing Modal Logic ----------
     let loadedOptions = { unvan: [], isim: [] };
@@ -831,7 +1355,7 @@ $(document).ready(function() {
             '<div class="d-flex justify-content-between align-items-center w-100">' +
                 '<span>' + state.text + '</span>' +
                 '<button type="button" class="btn btn-sm btn-ghost-danger p-0 delete-sig-opt" data-id="' + opt.id + '" style="line-height: 1; height: 18px; width: 18px; display: inline-flex; align-items: center; justify-content: center; border:none; background:transparent;">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-danger p-0 m-0"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>' +
+                    '<i class="ti ti-x text-danger fs-4"></i>' +
                 '</button>' +
             '</div>'
         );
@@ -905,7 +1429,6 @@ $(document).ready(function() {
                         });
                         s.html(html).val(val).trigger('change');
                     });
-                    // Restore the newly added value on the current select
                     selectEl.val(text).trigger('change');
                 }
             });
@@ -933,7 +1456,6 @@ $(document).ready(function() {
                 $('.select2-modal-signature').select2('close');
                 $.post('api/izin/form_onay_options.php', { action: 'delete', id: id }, function(res) {
                     if (res.status === 'success') {
-                        // Clear selected values that match the deleted option
                         $('.select2-modal-signature').each(function() {
                             if ($(this).val() === btn.parent().find('span').text()) {
                                 $(this).val('').trigger('change');
@@ -1002,6 +1524,79 @@ $(document).ready(function() {
             unvan: unvan
         });
         window.open('print_izin.php?' + params.toString(), '_blank');
+    });
+
+    // Tabloda Sağ Tık (Context Menu)
+    $(document).on('contextmenu', '#izin-table tbody tr', function(e) {
+        var $tr = $(this);
+        var rowData = dt.row($tr).data();
+        if (!rowData) return;
+
+        e.preventDefault();
+        $('#izin-table tbody tr').removeClass('context-menu-active');
+        $tr.addClass('context-menu-active');
+
+        var idVal = rowData.enc_id || rowData.id;
+        var personelAdi = rowData.personel_adi || 'İzin Talebi';
+        var durum = rowData.durum;
+
+        var $contextMenu = $('#customContextMenu');
+        if (!$contextMenu.length) {
+            $contextMenu = $('<div id="customContextMenu" class="custom-context-menu"></div>').appendTo('body');
+        }
+
+        var menuHtml = `
+            <div class="cm-header"><i class="ti ti-calendar me-1"></i> ${escapeHtml(personelAdi)}</div>
+            <a href="javascript:void(0)" onclick="openPrintModal('${idVal}', '${rowData.tur_kod}')"><i class="ti ti-printer"></i> Formu Yazdır</a>
+            ${durum === 'beklemede' ? `
+                <a href="javascript:void(0)" onclick="onayla('${idVal}')" class="text-success"><i class="ti ti-check"></i> Talebi Onayla</a>
+                <a href="javascript:void(0)" onclick="kismiOnaylaAc('${idVal}', '${rowData.baslangic_tarihi}', '${rowData.bitis_tarihi}', '${escapeHtml(rowData.personel_adi)}', ${rowData.gun_sayisi})" class="text-warning"><i class="ti ti-calendar-check"></i> Kısmi Onayla</a>
+                <a href="javascript:void(0)" onclick="openRedModal('${idVal}')" class="text-danger"><i class="ti ti-x"></i> Talebi Reddet</a>
+            ` : ''}
+            ${durum === 'onaylandi' ? `
+                <a href="javascript:void(0)" onclick="openRedModal('${idVal}')" class="text-warning"><i class="ti ti-rotate-left"></i> Onayı Geri Al</a>
+            ` : ''}
+            ${CAN_DELETE_APPROVED && (durum === 'onaylandi' || durum === 'reddedildi') ? `
+                <div class="cm-divider"></div>
+                <a href="javascript:void(0)" onclick="talepSil('${idVal}')" class="cm-danger"><i class="ti ti-trash"></i> Talebi Sil</a>
+            ` : ''}
+        `;
+
+        $contextMenu.html(menuHtml);
+        $contextMenu.css({ display: 'block', opacity: 0 });
+
+        var menuWidth = $contextMenu.outerWidth();
+        var menuHeight = $contextMenu.outerHeight();
+        var clickX = e.clientX;
+        var clickY = e.clientY;
+        var windowWidth = $(window).width();
+        var windowHeight = $(window).height();
+
+        var posX = (clickX + menuWidth > windowWidth) ? windowWidth - menuWidth - 10 : clickX;
+        var posY = (clickY + menuHeight > windowHeight) ? windowHeight - menuHeight - 10 : clickY;
+
+        $contextMenu.css({
+            top: posY + 'px',
+            left: posX + 'px',
+            opacity: 1
+        });
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#customContextMenu').length) {
+            $('#customContextMenu').hide();
+            $('#izin-table tbody tr').removeClass('context-menu-active');
+        }
+    });
+
+    $(document).on('click', '#customContextMenu a', function() {
+        $('#customContextMenu').hide();
+        $('#izin-table tbody tr').removeClass('context-menu-active');
+    });
+
+    $(window).on('scroll resize blur', function() {
+        $('#customContextMenu').hide();
+        $('#izin-table tbody tr').removeClass('context-menu-active');
     });
 
     loadList();

@@ -64,7 +64,7 @@ if (
 
 // Kullanıcı ekleme ve düzenleme sayfası
 if ($page == 'users/list' || $page == 'users/manage') {
-    echo '<script src="./src/users/users.js"></script>';
+    echo '<script src="./src/users/users.js?v=' . filemtime(ROOT . '/src/users/users.js') . '"></script>';
 }
 
 // Kullanıcı rolü ekleme ve düzenleme sayfası
@@ -112,11 +112,11 @@ if ($page == 'companies/list' || $page == 'companies/manage') {
 
 // Kasa (kasa ekleme ve düzenleme sayfası)
 if ($page == 'financial/case/list' || $page == 'financial/case/manage') {
-    echo '<script src="./src/financial/case.js"></script>';
+    echo '<script src="./src/financial/case.js?v=' . time() . '"></script>';
 }
 // Kasa İşlemleri(kasa ekleme ve düzenleme sayfası)
 if ($page == 'financial/transactions/list') {
-    echo '<script src="./src/financial/transactions.js"></script>';
+    echo '<script src="./src/financial/transactions.js?v=' . time() . '"></script>';
 }
 // Proje Ekleme,güncelleme ve listeleme sayfası
 if ($page == 'projects/list' || $page == 'projects/manage') {
@@ -214,7 +214,7 @@ if ($page == 'gorevler/list') {
 }
 
 if ($page == 'home') {
-    //echo '<script src="./dist/libs/apexcharts/dist/apexcharts.min.js" defer></script>';
+    echo '<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>';
     echo '<script src="./dist/libs/jsvectormap/dist/js/jsvectormap.min.js" defer></script>';
     echo '<script src="./dist/libs/jsvectormap/dist/maps/world.js" defer></script>';
     echo '<script src="./dist/libs/jsvectormap/dist/maps/world-merc.js" defer></script>';
@@ -243,7 +243,7 @@ if ($page == 'activities/index' || $page == 'admin-home') {
 <script src="./dist/js/tabler.min.js?1692870487"></script>
 <!-- <script src="./dist/js/demo.min.js?1692870487"></script> -->
 <script src="./src/jquery.inputmask.js"></script>
-
+<script src="./src/datatable-column-filter.js?v=<?php echo time(); ?>"></script>
 <script src="./src/app.js?v=<?php echo time(); ?>" defer></script>
 <?php 
 if ($page == 'puantaj/list') {

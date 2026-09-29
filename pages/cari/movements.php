@@ -121,7 +121,7 @@ $net_balance = $total_borc - $total_alacak;
     <div class="d-none d-print-block mb-4" style="border-bottom: 2px solid #000; padding-bottom: 10px;">
         <div class="row align-items-center">
             <div class="col-4">
-                <img src="./static/Logo-aiv5.svg" height="45" alt="Logo" style="filter: grayscale(1);">
+                <img src="./static/Logo.svg" height="45" alt="Logo" style="filter: grayscale(1);">
             </div>
             <div class="col-8 text-end">
                 <h2 class="mb-1" style="color: #333; font-weight: 700;"><?php echo htmlspecialchars($firm_name); ?></h2>

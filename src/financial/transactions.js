@@ -1,7 +1,10 @@
 var hasProcess = false;
+var transactionTable = null;
 
-//Genel Gelir-Gider Ekle
 $(document).ready(function () {
+  initTransactionDataTable();
+  initTransactionModals();
+
   addCustomValidationMethods();
   addCustomValidationValidValue();
 
@@ -40,6 +43,345 @@ $(document).ready(function () {
     }
   });
 });
+
+$(document).on("page:loaded content:loaded", function () {
+  initTransactionDataTable();
+  initTransactionModals();
+});
+
+/**
+ * DataTable Başlatma ve Sütun Yönetimi (ServerSide)
+ */
+function initTransactionDataTable() {
+  var $table = $("#transactionTable");
+  if (!$table.length) return;
+
+  if (typeof $ !== "undefined" && $.fn && $.fn.DataTable && $.fn.DataTable.isDataTable("#transactionTable")) {
+    transactionTable = $("#transactionTable").DataTable();
+    return;
+  }
+
+  var options = {
+    processing: true,
+    serverSide: true,
+    autoWidth: false,
+    searchDelay: 400,
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    order: [[2, "desc"]],
+    ajax: {
+      url: "api/financial/list.php",
+      type: "POST",
+      data: function (d) {
+        d.case_id = $("#firm_cases").val() || "";
+        d.transaction_type = $('input[name="transaction_type_filter"]:checked').val() || "";
+      }
+    },
+    columnDefs: [
+      { targets: [0, 2], className: "text-center" },
+      { targets: [5], className: "text-end" },
+      { targets: [7], orderable: false, searchable: false, className: "text-end no-export actions-column" }
+    ],
+    language: {
+      url: "src/tr.json",
+      processing: '<span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...'
+    },
+    initComplete: function () {
+      var api = this.api();
+      buildTransactionColvisMenu(api);
+      if (typeof window.initDataTableColumnFilters === "function") {
+        window.initDataTableColumnFilters($("#transactionTable"), api);
+      }
+    },
+    drawCallback: function (settings) {
+      if (settings && settings.json && settings.json.stats) {
+        updateTransactionSummaryCards(settings.json.stats);
+      }
+    }
+  };
+
+  $table.find("thead .search-input-row").remove();
+
+  transactionTable = $("#transactionTable").DataTable(options);
+}
+
+function updateTransactionSummaryCards(stats) {
+  if (!stats) return;
+  if ($("#kpiTotalTransactions").length) {
+    $("#kpiTotalTransactions").text(stats.formatted_total_count || "0");
+  }
+  if ($("#kpiTotalIncome").length) {
+    $("#kpiTotalIncome").text(stats.formatted_total_income || "0,00 ₺");
+  }
+  if ($("#kpiIncomeCount").length) {
+    $("#kpiIncomeCount").text((stats.income_count || 0) + " Adet");
+  }
+  if ($("#kpiTotalExpense").length) {
+    $("#kpiTotalExpense").text(stats.formatted_total_expense || "0,00 ₺");
+  }
+  if ($("#kpiExpenseCount").length) {
+    $("#kpiExpenseCount").text((stats.expense_count || 0) + " Adet");
+  }
+  if ($("#kpiNetBalance").length) {
+    var net = parseFloat(stats.net_balance) || 0;
+    $("#kpiNetBalance")
+      .text(stats.formatted_net_balance || "0,00 ₺")
+      .removeClass("text-success text-danger")
+      .addClass(net >= 0 ? "text-success" : "text-danger");
+  }
+  if ($("#kpiNetBalanceBadge").length) {
+    var net = parseFloat(stats.net_balance) || 0;
+    $("#kpiNetBalanceBadge")
+      .text(net >= 0 ? "+ Fazla" : "- Açık")
+      .removeClass("bg-success-lt text-success bg-danger-lt text-danger")
+      .addClass(net >= 0 ? "bg-success-lt text-success" : "bg-danger-lt text-danger");
+  }
+}
+
+/**
+ * Sütun Göster / Gizle Menüsü
+ */
+function buildTransactionColvisMenu(api) {
+  var $menu = $("#transactionColvisMenu");
+  if (!$menu.length || !api) return;
+
+  var columnConfig = {
+    1: { label: "Kasa", default: true },
+    2: { label: "Tarih", default: true },
+    3: { label: "İşlem Türü", default: true },
+    4: { label: "Hesap / Muhatap", default: true },
+    5: { label: "Tutar", default: true },
+    6: { label: "Açıklama", default: true }
+  };
+
+  var savedVisibility = localStorage.getItem("transactions_column_visibility");
+  var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+
+  var menuHtml = "";
+  $.each(columnConfig, function (idx, conf) {
+    var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
+    api.column(idx).visible(isVisible, false);
+
+    menuHtml += `
+      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
+        <div class="form-check mb-0 w-100">
+          <input class="form-check-input transactions-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
+          <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+            ${conf.label}
+          </span>
+        </div>
+      </label>`;
+  });
+
+  $menu.html(menuHtml);
+  api.columns.adjust();
+}
+
+// Sütun Görünürlüğü Değiştiğinde
+$(document).on("change", ".transactions-col-trigger", function () {
+  if (!transactionTable) {
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable("#transactionTable")) {
+      transactionTable = $("#transactionTable").DataTable();
+    }
+  }
+  if (!transactionTable) return;
+
+  var colIdx = parseInt($(this).data("column"));
+  var isChecked = this.checked;
+  transactionTable.column(colIdx).visible(isChecked);
+
+  var savedVisibility = localStorage.getItem("transactions_column_visibility");
+  var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+  visibilityState[colIdx] = isChecked;
+  localStorage.setItem("transactions_column_visibility", JSON.stringify(visibilityState));
+});
+
+$(document).on("click", "#transactionColvisMenu", function (e) {
+  e.stopPropagation();
+});
+
+// Tür Filtresi (Tümü / Gelir / Gider)
+$(document).on("change", ".type-filter", function () {
+  if (!transactionTable) {
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable("#transactionTable")) {
+      transactionTable = $("#transactionTable").DataTable();
+    }
+  }
+  if (transactionTable && transactionTable.ajax) {
+    transactionTable.ajax.reload(null, true);
+  } else if (transactionTable) {
+    var val = $(this).val();
+    transactionTable.column(3).search(val ? val : "").draw();
+  }
+});
+
+// Hızlı Genel Arama Inputu
+var searchTimer = null;
+$(document).on("input", "#transactions-fast-search", function () {
+  var val = this.value;
+  $("#transactions-search-clear").toggleClass("d-none", val.length === 0);
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function () {
+    if (!transactionTable) {
+      if ($.fn.DataTable && $.fn.DataTable.isDataTable("#transactionTable")) {
+        transactionTable = $("#transactionTable").DataTable();
+      }
+    }
+    if (transactionTable) {
+      transactionTable.search(val).draw();
+    }
+  }, 300);
+});
+
+$(document).on("click", "#transactions-search-clear", function () {
+  clearTimeout(searchTimer);
+  $("#transactions-fast-search").val("").trigger("focus");
+  $(this).addClass("d-none");
+  if (!transactionTable) {
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable("#transactionTable")) {
+      transactionTable = $("#transactionTable").DataTable();
+    }
+  }
+  if (transactionTable) {
+    transactionTable.search("").draw();
+  }
+});
+
+// Özet Kartları Daraltma/Genişletme Butonu
+function syncSummaryToggle() {
+  var $summaryToggle = $("#toggleTransactionSummary");
+  if (!$summaryToggle.length) return;
+  var isCollapsed = document.documentElement.classList.contains("transactions-summary-collapsed");
+  $summaryToggle
+    .attr("aria-expanded", String(!isCollapsed))
+    .attr("aria-label", isCollapsed ? "Özet kartlarını göster" : "Özet kartlarını gizle")
+    .attr("title", isCollapsed ? "Özet kartlarını göster" : "Özet kartlarını gizle");
+  $summaryToggle.find("i")
+    .toggleClass("ti-chevron-up", !isCollapsed)
+    .toggleClass("ti-chevron-down", isCollapsed);
+}
+
+$(document).ready(function () {
+  syncSummaryToggle();
+});
+
+$(document).on("click", "#toggleTransactionSummary", function () {
+  var isCollapsed = document.documentElement.classList.toggle("transactions-summary-collapsed");
+  try {
+    localStorage.setItem("transactions_summary_collapsed", isCollapsed ? "1" : "0");
+  } catch (e) {}
+  syncSummaryToggle();
+});
+
+// Tabloda Sağ Tık (Custom Context Menu)
+$(document).on("contextmenu", "#transactionTable tbody tr", function (e) {
+  var $tr = $(this);
+  var $editBtn = $tr.find(".edit-transactions");
+  var $deleteBtn = $tr.find(".delete-transaction");
+
+  if (!$editBtn.length && !$deleteBtn.length) return;
+
+  e.preventDefault();
+  $("#transactionTable tbody tr").removeClass("context-menu-active");
+  $tr.addClass("context-menu-active");
+
+  var rowTitle = $tr.find("td:eq(4)").text().trim() || $tr.find("td:eq(1)").text().trim() || "Kasa Hareketi";
+  var editId = $editBtn.attr("data-id") || "";
+  var deleteId = $deleteBtn.attr("data-id") || "";
+
+  var $contextMenu = $("#customContextMenu");
+  if (!$contextMenu.length) {
+    $contextMenu = $('<div id="customContextMenu" class="custom-context-menu"></div>').appendTo("body");
+  }
+
+  var menuHtml = `
+    <div class="cm-header"><i class="ti ti-arrows-diff me-1"></i> ${$("<div>").text(rowTitle).html()}</div>
+    ${editId ? `<a href="javascript:void(0);" class="cm-edit"><i class="ti ti-edit"></i> Güncelle / Detay</a>` : ""}
+    ${deleteId ? `<div class="cm-divider"></div><a href="javascript:void(0);" class="cm-danger cm-delete"><i class="ti ti-trash"></i> Hareketi Sil</a>` : ""}
+  `;
+
+  $contextMenu.html(menuHtml);
+  $contextMenu.css({ display: "block", opacity: 0 });
+
+  $contextMenu.find(".cm-edit").off("click").on("click", function () {
+    $editBtn.trigger("click");
+    $contextMenu.hide();
+  });
+
+  $contextMenu.find(".cm-delete").off("click").on("click", function () {
+    $deleteBtn.trigger("click");
+    $contextMenu.hide();
+  });
+
+  var menuWidth = $contextMenu.outerWidth();
+  var menuHeight = $contextMenu.outerHeight();
+  var clickX = e.clientX;
+  var clickY = e.clientY;
+  var windowWidth = $(window).width();
+  var windowHeight = $(window).height();
+
+  var posX = (clickX + menuWidth > windowWidth) ? windowWidth - menuWidth - 10 : clickX;
+  var posY = (clickY + menuHeight > windowHeight) ? windowHeight - menuHeight - 10 : clickY;
+
+  $contextMenu.css({
+    top: posY + "px",
+    left: posX + "px",
+    opacity: 1
+  });
+});
+
+$(document).on("click", function (e) {
+  if (!$(e.target).closest("#customContextMenu").length) {
+    $("#customContextMenu").hide();
+    $("#transactionTable tbody tr").removeClass("context-menu-active");
+  }
+});
+
+$(window).on("scroll resize blur", function () {
+  $("#customContextMenu").hide();
+  $("#transactionTable tbody tr").removeClass("context-menu-active");
+});
+
+/**
+ * Excel Dışa Aktarma Butonu
+ */
+$(document).on("click", "#btnExportTransactionExcel", function (e) {
+  e.preventDefault();
+  if (transactionTable && transactionTable.button) {
+    var dtBtn = transactionTable.button(".buttons-excel");
+    if (dtBtn && dtBtn.length) {
+      dtBtn.trigger();
+      return;
+    }
+  }
+  var $dtBtn = $(".buttons-excel");
+  if ($dtBtn.length) {
+    $dtBtn.trigger("click");
+  } else {
+    Swal.fire({
+      title: "Bilgi",
+      text: "Dışa aktarma işlemi hazırlanıyor...",
+      icon: "info",
+      timer: 1500,
+      showConfirmButton: false
+    });
+  }
+});
+
+/**
+ * Modal ve Select2 / Flatpickr Hazırlıkları
+ */
+function initTransactionModals() {
+  if (typeof flatpickr === "function") {
+    $(".flatpickr").flatpickr({
+      dateFormat: "d.m.Y",
+      allowInput: true,
+      locale: {
+        firstDayOfWeek: 1
+      }
+    });
+  }
+}
 
 //Genel modal kaydet butonuna basınca
 $(document).on("click", "#saveTransaction", function () {
@@ -144,12 +486,14 @@ $(document).on("click", ".transaction_type", function () {
 });
 
 $(document).on("change", "#firm_cases", function () {
-  //case_id'yi al sayfayı post ile yenile
-  var case_id = $(this).val();
-  var form = $("#caseForm");
-  //case_id'yi form'a ekle
-  form.append(`<input type="hidden" name="case_id" value="${case_id}">`);
-  form.submit();
+  if (transactionTable && transactionTable.ajax) {
+    transactionTable.ajax.reload(null, true);
+  } else {
+    var case_id = $(this).val();
+    var form = $("#caseForm");
+    form.append(`<input type="hidden" name="case_id" value="${case_id}">`);
+    form.submit();
+  }
 });
 let isTriggeringChange = false;
 
@@ -698,8 +1042,9 @@ $(document).on("click", ".edit-transactions", function () {
   //preloader göster
   $(".preloader").show();
 
-  //tablonun 4. sütunundaki (indeks 3) veriyi al
-  let type = $(this).closest("tr").find("td:eq(3)").text().trim();
+  // Alt tür bilgisini data attribute, class veya tablodan güvenli şekilde al
+  let type = ($(this).data("sub-type-name") || $(this).closest("tr").find(".sub-type-name").text() || $(this).closest("tr").find("td:eq(3)").text()).trim();
+
 
   switch (type) {
     case "Proje(Alınan Ödeme)":

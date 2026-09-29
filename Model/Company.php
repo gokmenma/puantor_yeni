@@ -32,8 +32,31 @@ class Company extends Model
 
     public function allWithUserId()
     {
-        $query = $this->db->prepare("SELECT * FROM companies WHERE user_id = ?");
-        $query->execute([$_SESSION["user"]->id]);
+        $userId = (int) ($_SESSION["user"]->id ?? 0);
+        $firmId = (int) ($_SESSION['firm_id'] ?? 0);
+        $isSuperadmin = (int) ($_SESSION["user"]->superadmin ?? 0) === 1;
+
+        if ($isSuperadmin && $firmId <= 0) {
+            $query = $this->db->prepare("
+                SELECT DISTINCT c.* 
+                FROM companies c
+                ORDER BY c.id DESC
+            ");
+            $query->execute();
+            return $query->fetchAll(PDO::FETCH_OBJ);
+        }
+
+        $query = $this->db->prepare("
+            SELECT DISTINCT c.* 
+            FROM companies c
+            WHERE c.user_id = :user_id 
+               OR (:firm_id > 0 AND c.user_id IN (SELECT mf.user_id FROM myfirms mf WHERE mf.id = :firm_id))
+            ORDER BY c.id DESC
+        ");
+        $query->execute([
+            ':user_id' => $userId,
+            ':firm_id' => $firmId
+        ]);
         $result = $query->fetchAll(PDO::FETCH_OBJ);
         return $result;
     }

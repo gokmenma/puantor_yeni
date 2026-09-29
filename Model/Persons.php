@@ -606,4 +606,134 @@ class Persons extends Model
         }
         return null;
     }
+
+    public function getPersonnelStats($firm_id)
+    {
+        $persons = $this->getPersonsByFirm($firm_id);
+        $total = count($persons);
+        $active = 0;
+        $passive = 0;
+        $monthlyWageCount = 0;
+        $dailyWageCount = 0;
+        $currentMonth = date('m');
+        $currentYear = date('Y');
+        $thisMonthHires = 0;
+
+        foreach ($persons as $p) {
+            $hasEnded = !empty($p->job_end_date);
+            if ($hasEnded) {
+                $passive++;
+            } else {
+                $active++;
+            }
+
+            if ((int)($p->wage_type ?? 0) === 1) {
+                $monthlyWageCount++;
+            } else {
+                $dailyWageCount++;
+            }
+
+            if (!empty($p->job_start_date)) {
+                $cleanDate = trim((string)$p->job_start_date);
+                $ts = false;
+                if (preg_match('/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/', $cleanDate, $m)) {
+                    $ts = strtotime("{$m[3]}-{$m[2]}-{$m[1]}");
+                } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $cleanDate)) {
+                    $ts = strtotime($cleanDate);
+                }
+                if ($ts && date('m', $ts) === $currentMonth && date('Y', $ts) === $currentYear) {
+                    $thisMonthHires++;
+                }
+            }
+        }
+
+        $activePercent = $total > 0 ? round(($active / $total) * 100, 1) : 0;
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'passive' => $passive,
+            'monthly_wage_count' => $monthlyWageCount,
+            'daily_wage_count' => $dailyWageCount,
+            'this_month_hires' => $thisMonthHires,
+            'active_percent' => $activePercent,
+        ];
+    }
+
+    public function getUpcomingBirthdays($firm_id, $days = 30)
+    {
+        $sql = "SELECT id, full_name, birth_date, job 
+                FROM persons 
+                WHERE firm_id = ? 
+                  AND deleted_at IS NULL 
+                  AND (job_end_date IS NULL OR job_end_date = '')
+                  AND birth_date IS NOT NULL 
+                  AND birth_date != '0000-00-00' 
+                  AND birth_date != ''";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$firm_id]);
+        $rows = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+        $upcoming = [];
+        $today = new DateTime();
+        $currentYear = (int)$today->format('Y');
+
+        foreach ($rows as $row) {
+            try {
+                $bdate = new DateTime($row->birth_date);
+                $bdateThisYear = new DateTime($currentYear . '-' . $bdate->format('m-d'));
+                if ($bdateThisYear < $today->setTime(0,0,0)) {
+                    $bdateThisYear = new DateTime(($currentYear + 1) . '-' . $bdate->format('m-d'));
+                }
+                $interval = $today->diff($bdateThisYear);
+                $diffDays = (int)$interval->format('%r%a');
+
+                if ($diffDays >= 0 && $diffDays <= $days) {
+                    $row->days_left = $diffDays;
+                    $row->formatted_birth_date = $bdate->format('d.m');
+                    $row->age = $currentYear - (int)$bdate->format('Y');
+                    $upcoming[] = $row;
+                }
+            } catch (Exception $e) {}
+        }
+
+        usort($upcoming, function ($a, $b) {
+            return $a->days_left <=> $b->days_left;
+        });
+
+        return $upcoming;
+    }
+
+    public function getRecentHires($firm_id, $limit = 5)
+    {
+        $sql = "SELECT p.id, p.full_name, p.job_start_date, p.job, jg.group_name as job_group_name
+                FROM persons p
+                LEFT JOIN job_groups jg ON jg.id = p.job_group
+                WHERE p.firm_id = ? 
+                  AND p.deleted_at IS NULL
+                  AND (p.job_end_date IS NULL OR p.job_end_date = '')
+                ORDER BY p.id DESC
+                LIMIT ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(1, $firm_id, PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function getJobGroupDistribution($firm_id)
+    {
+        $sql = "SELECT COALESCE(jg.group_name, 'Diğer') AS group_name, COUNT(*) as count
+                FROM persons p
+                LEFT JOIN job_groups jg ON jg.id = p.job_group
+                WHERE p.firm_id = ? 
+                  AND p.deleted_at IS NULL
+                  AND (p.job_end_date IS NULL OR p.job_end_date = '')
+                GROUP BY jg.group_name
+                ORDER BY count DESC
+                LIMIT 6";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$firm_id]);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
 }

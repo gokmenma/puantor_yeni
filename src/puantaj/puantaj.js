@@ -80,10 +80,10 @@ function applyTypeToClickedCells(typeInfo) {
     cell.css("color", typeInfo.FontRengi);
     cell.attr("data-id", typeInfo.id);
     cell.attr("data-change", "true");
-    cell.attr("data-tooltip", cellProjName);
-    cell.attr("title", cellProjName);
+    cell.removeAttr("data-tooltip");
+    cell.removeAttr("title");
     cell.attr("data-project", cellProj);
-    cell.css("background-color", typeInfo.ArkaPlanRengi);
+    cell.css("--puantaj-cell-bg", typeInfo.ArkaPlanRengi);
 
     if (parentTr.length > 0) {
       rowsToRecalculate.add(parentTr[0]);
@@ -173,7 +173,7 @@ $(document).keydown(function (event) {
       cell.attr("data-id", 0);
       cell.empty();
       cell.attr("data-change", "true");
-      cell.css("background-color", "white");
+      cell.css("--puantaj-cell-bg", "var(--tblr-bg-surface, #ffffff)");
       cell.removeAttr("data-tooltip");
       cell.removeAttr("title");
       // Keep the original project ID so the backend knows which record to delete.
@@ -497,6 +497,9 @@ $(document).ready(function () {
   // Sayfa yüklendiğinde favorileri güncelle
   initializeFavoritesUI();
 
+  // Filtre Paneli durumunu senkronize et
+  syncFilterToggleState();
+
   // Bind selected type events
   $(document).on("click", "#clear-selected-type", function(e) {
     e.preventDefault();
@@ -510,6 +513,31 @@ $(document).ready(function () {
     e.preventDefault();
     $("#projects").val([]).trigger("change");
     Route();
+  });
+
+  // Filtre Paneli Göster / Gizle Butonu Tıklama
+  $(document).on("click", "#btn-toggle-filter-panel", function(e) {
+    e.preventDefault();
+    const $container = $("#puantaj-filter-container");
+    const isCurrentlyVisible = $container.is(":visible");
+    
+    if (isCurrentlyVisible) {
+      $container.slideUp(250, function() {
+        localStorage.setItem("puantaj_filter_panel_visible", "false");
+        syncFilterToggleState();
+        if ($.fn.DataTable.isDataTable('#puantajTable')) {
+          $('#puantajTable').DataTable().columns.adjust().draw(false);
+        }
+      });
+    } else {
+      $container.slideDown(250, function() {
+        localStorage.setItem("puantaj_filter_panel_visible", "true");
+        syncFilterToggleState();
+        if ($.fn.DataTable.isDataTable('#puantajTable')) {
+          $('#puantajTable').DataTable().columns.adjust().draw(false);
+        }
+      });
+    }
   });
 
   $(document).on("click", "#selected-type-toggle", function(e) {
@@ -528,6 +556,21 @@ $(document).ready(function () {
     }
   });
 });
+
+function syncFilterToggleState() {
+  const isVisible = localStorage.getItem('puantaj_filter_panel_visible') !== 'false';
+  const $btn = $('#btn-toggle-filter-panel');
+
+  if (isVisible) {
+    $btn.removeClass('active btn-outline-primary').addClass('btn-outline-secondary');
+    $btn.html('<i class="ti ti-adjustments-horizontal me-1"></i> Filtre');
+    $btn.attr('title', 'Filtre Alanını Gizle');
+  } else {
+    $btn.removeClass('btn-outline-secondary').addClass('btn-outline-primary active');
+    $btn.html('<i class="ti ti-adjustments-horizontal me-1"></i> Filtre');
+    $btn.attr('title', 'Filtre Alanını Göster');
+  }
+}
 
 function Route() {
   // DataTable cache'indeki tüm satırlardan değişmiş veri var mı diye bak
@@ -645,6 +688,9 @@ function loadPuantajTable() {
 
       // Check projects warning bar
       checkProjectsWarning();
+
+      // Sync filter panel toggle button state
+      syncFilterToggleState();
 
       // Save the last values for unsaved changes detection
       storeLastValues();
@@ -990,7 +1036,7 @@ function renderFavoritesShortcuts() {
         <div class="favorite-type-shortcut cursor-pointer px-2.5 py-1 rounded d-flex align-items-center justify-content-center fw-bold text-center border shadow-sm btn-active-scale" 
              data-id="${type.id}"
              title="${type.PuantajAdi} (${type.Turu}) - Seçmek için tıklayın"
-             style="background-color: ${type.ArkaPlanRengi}; color: ${type.FontRengi}; font-size: 11.5px; min-width: 32px; border-color: rgba(0,0,0,0.1) !important; user-select: none;">
+             style="background-color: ${type.ArkaPlanRengi}; color: ${type.FontRengi}; font-size: 11.5px; font-family: inherit !important; min-width: 32px; border-color: rgba(0,0,0,0.1) !important; user-select: none;">
             ${type.PuantajKod}
         </div>
       `;

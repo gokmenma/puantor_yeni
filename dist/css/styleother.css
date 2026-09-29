@@ -2013,7 +2013,7 @@ table thead tr:first-child th {
   border-color: #1e293b !important;
 }
 
-[data-bs-theme="dark"] .table-hover tbody tr:hover {
+[data-bs-theme="dark"] .table-hover:not(#puantajTable) tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.02) !important;
 }
 
@@ -2441,7 +2441,7 @@ table thead tr:first-child th {
   border-color: #32394e !important;
 }
 
-[data-bs-theme="dark"] .table-hover > tbody > tr:hover > * {
+[data-bs-theme="dark"] .table-hover:not(#puantajTable) > tbody > tr:hover > * {
   --bs-table-accent-bg: rgba(255, 255, 255, 0.02) !important;
   color: #eff2f7 !important;
 }
@@ -3440,7 +3440,7 @@ table.dataTable.table-bordered {
     background-color: rgba(85, 110, 230, 0.08) !important;
 }
 
-.table-hover tbody tr:hover {
+.table-hover:not(#puantajTable) tbody tr:hover {
     cursor: pointer;
 }
 

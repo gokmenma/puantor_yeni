@@ -46,6 +46,13 @@ try {
         exit;
     }
 
+    if ($action === 'stats') {
+        $stats = $model->getHakedisStats($firma_id);
+        ob_clean();
+        echo json_encode(['status' => 'success', 'stats' => $stats], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     if ($action === 'add') {
         $personel_id = (int) Security::safeDecrypt($_POST['personel_id'] ?? '');
         $gun_sayisi  = (int) ($_POST['gun_sayisi'] ?? 0);

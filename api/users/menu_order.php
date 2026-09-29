@@ -40,5 +40,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         exit;
     }
+
+    if ($action === 'reset_order') {
+        try {
+            $menusModel = new Menus();
+            $result = $menusModel->resetUserMenuOrder($userId);
+            if ($result) {
+                ActivityLogModel::log('menu', 'reset_order', 'Kullanıcı menü sırasını varsayılana sıfırladı.');
+                echo json_encode(['success' => true, 'message' => 'Menü sırası varsayılana sıfırlandı.']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Menü sırası sıfırlanırken hata oluştu.']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
 }
 echo json_encode(['success' => false, 'message' => 'Geçersiz istek.']);

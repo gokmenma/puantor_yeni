@@ -3,6 +3,7 @@
 require_once '../../Database/require.php';
 require_once '../../Model/Projects.php';
 require_once '../../Model/ProjectIncomeExpense.php';
+require_once '../../Model/ActivityLogModel.php';
 require_once '../../App/Helper/helper.php';
 require_once '../../App/Helper/date.php';
 require_once '../../App/Helper/financial.php';
@@ -15,41 +16,46 @@ $project = new Projects();
 $incexp = new ProjectIncomeExpense();
 $financialHelper = new Financial();
 
-if ($_POST['action'] == 'add_progress_payment') {
-    $page = $_POST['page'];
+if (isset($_POST['action']) && $_POST['action'] == 'add_progress_payment') {
+    $page = $_POST['page'] ?? '';
     $summary = null;
     $last_progress_payment = null;
-    $progress_range=null;
+    $progress_range = null;
 
-    //$id = Security::decrypt($_POST['progress_payment_id']);
-    $id = $_POST['progress_payment_id'];
-    $project_id = Security::decrypt($_POST['progress_payment_project_id']);
+    $id = !empty($_POST['progress_payment_id']) ? (int)Security::safeDecrypt($_POST['progress_payment_id']) : 0;
+    $project_id = (int)Security::safeDecrypt($_POST['progress_payment_project_id'] ?? '');
 
     $data = [
         'id' => $id,
         'project_id' => $project_id,
-        'firm_id' => $_SESSION['firm_id'],
-        'case_id' => Security::decrypt($_POST['progress_payment_cases']),
-        'tarih' => Date::Ymd($_POST['progress_payment_date']),
-        'tutar' => Helper::formattedMoneyToNumber($_POST['progress_payment_amount']),
+        'firm_id' => $_SESSION['firm_id'] ?? 0,
+        'case_id' => (int)Security::safeDecrypt($_POST['progress_payment_cases'] ?? 0),
+        'tarih' => Date::Ymd($_POST['progress_payment_date'] ?? ''),
+        'tutar' => Helper::formattedMoneyToNumber($_POST['progress_payment_amount'] ?? 0),
         'turu' => 10, //app/Helper/financial.php'de tanımlı olan 10 numaralı hakediş türü
-        'kategori' => 'Proje Hakediş',
-        'aciklama' => $_POST['progress_payment_description']
+        'kategori' => 0,
+        'aciklama' => Security::escape($_POST['progress_payment_description'] ?? '')
     ];
 
     try {
         $lastInsertId = $incexp->saveWithAttr($data) ?? $id;
 
+        $logAction = ($id > 0) ? 'update_progress_payment' : 'add_progress_payment';
+        $logText = ($id > 0) ? "güncellendi" : "kaydedildi";
+        ActivityLogModel::log('project', $logAction, "Proje ID: {$project_id} için " . Helper::formattedMoney($data['tutar']) . " hakediş {$logText}.");
 
         //Projenin kendi sayfasında hakediş, kesinti ve ödeme bilgilerin göstermek için,
         //projeler sayfasında gerek yok
         if ($page == 'projects/manage') {
-            $last_progress_payment = $incexp->find(Security::decrypt($lastInsertId));
-            //id'yi şifrele
-            $last_progress_payment->id = Security::encrypt($last_progress_payment->id);
-            $last_progress_payment->tarih = Date::dmy($last_progress_payment->tarih);
-            $last_progress_payment->tutar = Helper::formattedMoney($last_progress_payment->tutar);
-            $last_progress_payment->turu = Helper::getIconWithColorByType($last_progress_payment->turu) . $financialHelper::getTransactionType($last_progress_payment->turu);
+            $recordId = ($id > 0) ? $id : (is_numeric($lastInsertId) ? (int)$lastInsertId : (int)Security::safeDecrypt($lastInsertId));
+            $last_progress_payment = $incexp->find($recordId);
+            if ($last_progress_payment) {
+                //id'yi şifrele
+                $last_progress_payment->id = Security::encrypt($last_progress_payment->id);
+                $last_progress_payment->tarih = Date::dmy($last_progress_payment->tarih);
+                $last_progress_payment->tutar = Helper::formattedMoney($last_progress_payment->tutar);
+                $last_progress_payment->turu = Helper::getIconWithColorByType($last_progress_payment->turu) . $financialHelper::getTransactionType($last_progress_payment->turu);
+            }
 
             //Özet Gösterge için
             $summary = $incexp->sumAllIncomeExpense($project_id);
@@ -59,14 +65,12 @@ if ($_POST['action'] == 'add_progress_payment') {
             $summary->hakedis = Helper::formattedMoney($summary->hakedis);
 
             //Projenin hakediş tamanlanma durumunu güncelle
-           $progress_range= $incexp->getProgressPaymentRange($project_id);
-
-
+            $progress_range = $incexp->getProgressPaymentRange($project_id);
         }
 
         $status = 'success';
         $message = 'Hakediş başarı ile eklendi';
-    } catch (PDOException $ex) {
+    } catch (\Throwable $ex) {
         $status = 'error';
         $message = $ex->getMessage();
     }
@@ -79,5 +83,7 @@ if ($_POST['action'] == 'add_progress_payment') {
         "progress" => $progress_range,
     ];
 
+    header('Content-Type: application/json');
     echo json_encode($res);
 }
+

@@ -45,3 +45,39 @@
 .flatpickr-calendar.flatpickr-monthSelect .flatpickr-weekdaycontainer {
   display: none !important;
 }
+
+/* Dark Mode */
+[data-bs-theme="dark"] .flatpickr-monthSelect-months,
+body[data-bs-theme="dark"] .flatpickr-monthSelect-months {
+  background: #1e293b;
+}
+
+[data-bs-theme="dark"] .flatpickr-monthSelect-month,
+body[data-bs-theme="dark"] .flatpickr-monthSelect-month {
+  color: #cbd5e1;
+  background-color: #0f172a;
+  border-color: #334155;
+}
+
+[data-bs-theme="dark"] .flatpickr-monthSelect-month:hover,
+body[data-bs-theme="dark"] .flatpickr-monthSelect-month:hover {
+  background-color: #1e3a8a;
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+[data-bs-theme="dark"] .flatpickr-monthSelect-month.selected,
+body[data-bs-theme="dark"] .flatpickr-monthSelect-month.selected {
+  background-color: #206bc4;
+  color: #ffffff;
+  border-color: #206bc4;
+}
+
+.topbar-period-wrapper:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-bs-theme="dark"] .topbar-period-wrapper:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
