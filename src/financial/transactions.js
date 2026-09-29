@@ -630,6 +630,23 @@ $(document).ready(function () {
   });
 
   var payToPersonsTable = null;
+
+  function initPayToPersonsMasks() {
+    if ($.fn.inputmask) {
+      $("#payToPersons input.money").each(function () {
+        if (!this._inputmask) {
+          $(this).inputmask("decimal", {
+            radixPoint: ",",
+            groupSeparator: ".",
+            digits: 2,
+            autoGroup: true,
+            rightAlign: false
+          });
+        }
+      });
+    }
+  }
+
   if ($("#payToPersons").length > 0 && window.createDataTable) {
     payToPersonsTable = window.createDataTable("#payToPersons", {
       paging: false,
@@ -643,53 +660,63 @@ $(document).ready(function () {
         topEnd: null
       },
       drawCallback: function () {
-        // Tablo çizildikten sonra inputmask'ı tekrar tetikle
-        if ($.fn.inputmask) {
-          $("#payToPersons tbody tr input.money").inputmask("decimal", {
-            radixPoint: ",",
-            groupSeparator: ".",
-            digits: 2,
-            autoGroup: true,
-            rightAlign: false
-          });
+        initPayToPersonsMasks();
+      }
+    });
+
+    // Hızlı ve debounced personel arama
+    var paySearchTimeout = null;
+    $(document).on("input", "#payToPersonsSearch", function () {
+      var term = this.value;
+      clearTimeout(paySearchTimeout);
+      paySearchTimeout = setTimeout(function () {
+        if (payToPersonsTable) {
+          payToPersonsTable.search(term).draw();
         }
-      }
+      }, 120);
     });
 
-    // Özel arama kutusu tetikleyicisi
-    $(document).on("keyup input", "#payToPersonsSearch", function () {
-      if (payToPersonsTable) {
-        payToPersonsTable.search(this.value).draw();
-      }
-    });
-
-    // Dinamik toplam hesaplama fonksiyonu
+    // Ultra-hızlı ve debounced dinamik toplam hesaplama
+    var payTotalTimeout = null;
     function updatePayToPersonsTotal() {
-      var total = 0;
-      if (payToPersonsTable) {
-        $(payToPersonsTable.rows().nodes()).each(function () {
-          var amountRaw = $(this).find("td:eq(1) input").val();
-          if (amountRaw) {
-            var cleanAmount = parseFloat(amountRaw.replace(/\./g, "").replace(",", ".")) || 0;
+      clearTimeout(payTotalTimeout);
+      payTotalTimeout = setTimeout(function () {
+        var total = 0;
+        var inputs = document.querySelectorAll("#payToPersons input.money");
+        for (var i = 0; i < inputs.length; i++) {
+          var val = inputs[i].value;
+          if (val) {
+            var cleanAmount = parseFloat(val.replace(/\./g, "").replace(",", ".")) || 0;
             total += cleanAmount;
           }
+        }
+        var formattedTotal = total.toLocaleString("tr-TR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
         });
-      }
-      var formattedTotal = total.toLocaleString("tr-TR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-      $("#payToPersonsTotal").text(formattedTotal);
+        var totalEl = document.getElementById("payToPersonsTotal");
+        if (totalEl) {
+          totalEl.textContent = formattedTotal;
+        }
+      }, 30);
     }
 
-    // Input girişlerinde anlık toplamı güncelle
-    $(document).on("input change keyup", "#payToPersons tbody tr input.money", function () {
+    // Yalnızca input eventinde çalıştır
+    $(document).on("input", "#payToPersons input.money", function () {
       updatePayToPersonsTotal();
     });
 
-    // Modal açıldığında toplamı sıfırla/başlat
+    // Modal açıldığında başlat
     $("#pay_to_persons-modal").on("shown.bs.modal", function () {
-      // DataTables scroll yüksekliklerini ve kolon hizalamalarını güncelle
+      if ($.fn.select2) {
+        $("#pay_to_persons-modal .select2").select2({
+          dropdownParent: $("#pay_to_persons-modal")
+        });
+      }
+      if (typeof flatpickr !== 'undefined') {
+        flatpickr("#tps_action_date", { dateFormat: "d.m.Y", locale: "tr" });
+      }
+      initPayToPersonsMasks();
       if (payToPersonsTable) {
         payToPersonsTable.columns.adjust().draw();
       }
@@ -708,11 +735,15 @@ $(document).ready(function () {
       // Preloader göster
       $(".preloader").fadeIn();
 
-      // Tüm satırları (filtreli/sayfalanmış olsun olmasın) tara
-      if (payToPersonsTable) {
-        $(payToPersonsTable.rows().nodes()).each(function () {
-          var person_id = $(this).find("td:eq(0)").data("id");
-          var amountRaw = $(this).find("td:eq(1) input").val();
+      // Tüm satırlardaki değerleri topla
+      var rows = document.querySelectorAll("#payToPersons tbody tr");
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var idTd = row.querySelector("td[data-id]");
+        var input = row.querySelector("input.money");
+        if (idTd && input) {
+          var person_id = idTd.getAttribute("data-id");
+          var amountRaw = input.value;
           if (amountRaw && amountRaw !== "") {
             var cleanAmount = parseFloat(amountRaw.replace(/\./g, "").replace(",", ".")) || 0;
             if (cleanAmount > 0) {
@@ -720,7 +751,7 @@ $(document).ready(function () {
               amounts.push(amountRaw);
             }
           }
-        });
+        }
       }
 
       if (person_ids.length === 0) {

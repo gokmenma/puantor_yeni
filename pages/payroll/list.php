@@ -422,6 +422,11 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                         <i class="ti ti-checklist icon me-2 text-info"></i> Banka Listesi İndir
                                     </a>
                                 <?php endif; ?>
+                                <?php if ($Auths->hasPermission('make_staff_payment')): ?>
+                                    <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#pay_to_persons-modal">
+                                        <i class="ti ti-users icon me-2 text-primary"></i> Toplu Personel Ödemesi
+                                    </a>
+                                <?php endif; ?>
                                 <?php if ($Auths->hasPermission('upload_payment_permission')): ?>
                                     <a class="dropdown-item" href="#" data-bs-target="#load-payment-modal" data-bs-toggle="modal">
                                         <i class="ti ti-table-import icon me-2 text-primary"></i> Ödeme Yükle
@@ -1036,3 +1041,4 @@ div#bordroTable_wrapper .dt-layout-row:has(.dt-info) {
 <?php include_once 'content/bulk-wage-cut-modal.php'; ?>
 <?php include_once 'content/bulk-wages-modal.php'; ?>
 <?php include_once 'content/icra-deductions-modal.php'; ?>
+<?php include_once 'content/pay_to_persons-modal.php'; ?>

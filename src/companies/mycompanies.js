@@ -1,12 +1,97 @@
+// Logo Önizleme Yardımcı Fonksiyonları
+function resetLogoPreview() {
+  $("#brand_logo").val("");
+  $("#logo-preview-img").attr("src", "").hide();
+  $("#logo-preview-placeholder").show();
+  $("#btn-remove-logo").hide();
+}
+
+function setLogoPreview(src) {
+  if (src) {
+    $("#logo-preview-img").attr("src", src).show();
+    $("#logo-preview-placeholder").hide();
+    $("#btn-remove-logo").show();
+  } else {
+    resetLogoPreview();
+  }
+}
+
+// Logo Seç Butonu ve Dosya Değişimi
+$(document).on("click", "#btn-browse-logo", function(e) {
+  e.preventDefault();
+  $("#brand_logo").trigger("click");
+});
+
+$(document).on("change", "#brand_logo", function(e) {
+  var file = this.files && this.files[0];
+  if (file) {
+    // 2MB Boyut Kontrolü
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire("Uyarı", "Seçilen logo 2MB boyutundan büyük olamaz.", "warning");
+      resetLogoPreview();
+      return;
+    }
+    
+    // Dosya Türü Kontrolü
+    if (!file.type.match("image.*")) {
+      Swal.fire("Uyarı", "Lütfen geçerli bir görsel dosyası seçiniz (PNG, JPG, SVG, WEBP).", "warning");
+      resetLogoPreview();
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function(evt) {
+      setLogoPreview(evt.target.result);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    resetLogoPreview();
+  }
+});
+
+// Logo Kaldır Butonu
+$(document).on("click", "#btn-remove-logo", function(e) {
+  e.preventDefault();
+  resetLogoPreview();
+});
+
+// Drag & Drop Desteği
+$(document).on("dragover dragenter", "#logoUploadDropzone", function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  $(this).addClass("dragover");
+});
+
+$(document).on("dragleave drop", "#logoUploadDropzone", function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  $(this).removeClass("dragover");
+});
+
+$(document).on("drop", "#logoUploadDropzone", function(e) {
+  var dt = e.originalEvent.dataTransfer;
+  if (dt && dt.files && dt.files.length) {
+    var fileInput = document.getElementById("brand_logo");
+    if (fileInput) {
+      fileInput.files = dt.files;
+      $("#brand_logo").trigger("change");
+    }
+  }
+});
+
 $(document).on("click", "#btn-new-mycompany, #btn-new-mycompany-header", function(e) {
   e.preventDefault();
 
   // Reset form
   $("#myFirmForm")[0].reset();
   $("#myfirm_id").val(0);
-  $("#logo-preview-img").attr("src", "").hide();
+  resetLogoPreview();
 
+  $("#mycompany-modal-icon").attr("class", "ti ti-building-plus fs-2");
   $("#mycompany-modal-title").text("Yeni Firma Ekle");
+  $("#mycompany-modal-subtitle").text("Sisteme yeni şirket tanımlayabilir ve firma detaylarını düzenleyebilirsiniz.");
+  $("#saveMyFirm").prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
+  
   $("#mycompany-modal").modal("show");
 });
 
@@ -17,7 +102,12 @@ $(document).on("click", ".mycompany-edit-btn", function(e) {
   // Reset form
   $("#myFirmForm")[0].reset();
   $("#myfirm_id").val(id);
-  $("#logo-preview-img").attr("src", "").hide();
+  resetLogoPreview();
+
+  $("#mycompany-modal-icon").attr("class", "ti ti-edit fs-2");
+  $("#mycompany-modal-title").text("Firma Bilgilerini Düzenle");
+  $("#mycompany-modal-subtitle").text("Firma detayları yükleniyor...");
+  $("#saveMyFirm").prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
 
   // Fetch details
   let formData = new FormData();
@@ -43,10 +133,13 @@ $(document).on("click", ".mycompany-edit-btn", function(e) {
         $("#description").val(myfirm.description);
 
         if (myfirm.brand_logo) {
-          $("#logo-preview-img").attr("src", "/uploads/" + myfirm.brand_logo).show();
+          setLogoPreview("/uploads/" + myfirm.brand_logo);
+        } else {
+          resetLogoPreview();
         }
 
         $("#mycompany-modal-title").text("Firma Düzenle: " + myfirm.firm_name);
+        $("#mycompany-modal-subtitle").text("Firma profil ve iletişim bilgilerini güncelleyebilirsiniz.");
         $("#mycompany-modal").modal("show");
       } else {
         Swal.fire("Hata", data.message, "error");
@@ -104,6 +197,9 @@ $(document).on("click", "#saveMyFirm", function (e) {
     return;
   }
 
+  var $saveBtn = $("#saveMyFirm");
+  $saveBtn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><span>Kaydediliyor...</span>');
+
   let formData = new FormData(form[0]);
 
   fetch("/api/companies/mycompanies.php", {
@@ -112,7 +208,8 @@ $(document).on("click", "#saveMyFirm", function (e) {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log(data);
+      $saveBtn.prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
+      
       let title, icon;
       if (data.status == "success") {
         title = "Başarılı!";
@@ -131,6 +228,10 @@ $(document).on("click", "#saveMyFirm", function (e) {
           location.reload();
         }
       });
+    })
+    .catch((err) => {
+      $saveBtn.prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
+      Swal.fire("Hata", "İşlem sırasında bir hata oluştu.", "error");
     });
 });
 

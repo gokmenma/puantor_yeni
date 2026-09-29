@@ -255,21 +255,21 @@ if ($action == "getPaymentFromProject") {
 //Personel Ödemesi Yap
 if ($action == "payToPerson") {
     $id = (isset($_POST["id"]) && $_POST["id"] != 0) ? Security::decrypt($_POST["id"]) : 0;
-    $person_id = $_POST["tp_person_name"];
+    $person_id = Security::decrypt($_POST["tp_person_name"]);
     $amount = Helper::formattedMoneyToNumber($_POST["tp_amount"]);
     $date = Date::ymd($_POST["tp_action_date"]);
     $description = Security::escape($_POST["tp_description"]);
+    $case_id = Security::decrypt($_POST["tp_cases"]);
 
-    //Kasa hareketi ekleme yetkisi var mı?
-    //$Auths->hasPermission("income_expense_add_update");
+    $Auths->hasPermissionReturn("make_staff_payment");
 
     $data = [
         "id" => $id,
         "date" => $date,
         "type_id" => 2, //Gider
         "sub_type" => 7, //Personel Ödemesi
-        "person_id" => Security::decrypt($_POST["tp_person_name"]),
-        "case_id" => Security::decrypt($_POST["tp_cases"]),
+        "person_id" => $person_id,
+        "case_id" => $case_id,
         "amount" => $amount,
         "amount_money" => 1,
         "description" => $description,
@@ -279,10 +279,32 @@ if ($action == "payToPerson") {
 
     try {
         $lastInsertId = $ct->saveWithAttr($data);
+
+        // Bordro maas_gelir_kesinti kaydı
+        if ($person_id > 0 && $amount > 0) {
+            $dateObj = strtotime($date);
+            $p_year = (int)date('Y', $dateObj);
+            $p_month = (int)date('m', $dateObj);
+            $p_gun = (int)date('Ymd', $dateObj);
+
+            $bordro_data = [
+                'id' => 0,
+                'user_id' => (int)($_SESSION['user']->id ?? 0),
+                'person_id' => $person_id,
+                'case_id' => $case_id,
+                'gun' => $p_gun,
+                'ay' => $p_month,
+                'yil' => $p_year,
+                'kategori' => 7, // Personel Ödemesi
+                'turu' => !empty($description) ? $description : 'Personel Ödemesi',
+                'tutar' => $amount,
+                'aciklama' => $description,
+            ];
+            $Bordro->saveWithAttr($bordro_data);
+        }
+
         $status = "success";
         $message = $id == 0 ? "Ödeme başarıyla yapıldı" : "Ödeme başarıyla güncellendi";
-
-
 
     } catch (PDOException $ex) {
         $status = "error";
@@ -292,14 +314,10 @@ if ($action == "payToPerson") {
     $res = [
         "status" => $status,
         "message" => $message,
-
     ];
-    ob_clean();
-    header('Content-Type: application/json');
     if (ob_get_length()) ob_clean();
     header('Content-Type: application/json');
     echo json_encode($res, JSON_UNESCAPED_UNICODE);
-    exit;
     exit;
 }
 
@@ -313,28 +331,58 @@ if ($action == "payToPersons") {
     $description = Security::escape($_POST["tps_amount_description"]);
     $amounts = explode(",", $_POST["amounts"]);
 
-    //Kasa hareketi ekleme yetkisi var mı?
-    //$Auths->hasPermission("income_expense_add_update");
+    // Personel ödemesi yetkisi kontrolü
+    $Auths->hasPermissionReturn("make_staff_payment");
 
     try {
+        $dateObj = strtotime($date);
+        $p_year = (int)date('Y', $dateObj);
+        $p_month = (int)date('m', $dateObj);
+        $p_gun = (int)date('Ymd', $dateObj);
+
         $i = 0;
         foreach ($person_ids as $person) {
-            $full_name = $Person->getPersonName($person)->full_name;
+            $person_id = (int)$person;
+            $person_obj = $Person->getPersonName($person_id);
+            $full_name = $person_obj ? $person_obj->full_name : '';
+            $amount_val = Helper::formattedMoneyToNumber($amounts[$i]);
+            $i++;
+
+            if ($amount_val <= 0) {
+                continue;
+            }
+
+            // 1. Kasa Hareketi (case_transactions)
             $data = [
                 "id" => 0,
                 "date" => $date,
                 "type_id" => 2, //Gider
                 "sub_type" => 7, //Personel Ödemesi
-                "person_id" => $person,
+                "person_id" => $person_id,
                 "case_id" => $case,
-                "amount" => Helper::formattedMoneyToNumber($amounts[$i]),
+                "amount" => $amount_val,
                 "amount_money" => 1,
-                "description" => $full_name . " " . $description,
+                "description" => trim($full_name . " " . $description),
                 "project_id" => 0,
                 "users_type_id" => 0,
             ];
-            $i++;
             $ct->saveWithAttr($data);
+
+            // 2. Bordro / Maaş Hareketi (maas_gelir_kesinti)
+            $bordro_data = [
+                'id' => 0,
+                'user_id' => (int)($_SESSION['user']->id ?? 0),
+                'person_id' => $person_id,
+                'case_id' => $case,
+                'gun' => $p_gun,
+                'ay' => $p_month,
+                'yil' => $p_year,
+                'kategori' => 7, // Personel Ödemesi
+                'turu' => !empty($description) ? $description : 'Personel Ödemesi',
+                'tutar' => $amount_val,
+                'aciklama' => $description,
+            ];
+            $Bordro->saveWithAttr($bordro_data);
         }
 
         $status = "success";
@@ -345,12 +393,9 @@ if ($action == "payToPersons") {
         $message = $ex->getMessage();
     }
 
-
-
     $res = [
         "status" => $status,
         "message" => $message,
-
     ];
     if (ob_get_length()) ob_clean();
     header('Content-Type: application/json');

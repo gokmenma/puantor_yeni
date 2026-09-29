@@ -7,7 +7,11 @@ $(document).on("click", "#btn-new-company", function(e) {
   $("#firm_cities").val("").trigger("change");
   $("#firm_towns").html("<option value=''>İlçe Seçiniz</option>").trigger("change");
   
+  $("#company-modal-icon").attr("class", "ti ti-building fs-2");
   $("#company-modal-title").text("Yeni Firma Ekle");
+  $("#company-modal-subtitle").text("Müşteri, tedarikçi veya iş ortağı firma kaydı ve detayları");
+  $("#saveCompany").prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
+  
   $("#company-modal").modal("show");
 });
 
@@ -19,6 +23,11 @@ $(document).on("click", ".company-edit-btn", function(e) {
   $("#companyForm")[0].reset();
   $("#company_id").val(id);
   
+  $("#company-modal-icon").attr("class", "ti ti-edit fs-2");
+  $("#company-modal-title").text("Firma Bilgilerini Düzenle");
+  $("#company-modal-subtitle").text("Firma detayları yükleniyor...");
+  $("#saveCompany").prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
+
   // Fetch details
   let formData = new FormData();
   formData.append("action", "getCompanyDetails");
@@ -60,6 +69,7 @@ $(document).on("click", ".company-edit-btn", function(e) {
         });
         
         $("#company-modal-title").text("Firma Düzenle: " + company.company_name);
+        $("#company-modal-subtitle").text("Firma profil ve iletişim bilgilerini güncelleyebilirsiniz.");
         $("#company-modal").modal("show");
       } else {
         Swal.fire("Hata", data.message, "error");
@@ -113,6 +123,9 @@ $(document).on("click", "#saveCompany", function (e) {
     return;
   }
   
+  var $saveBtn = $("#saveCompany");
+  $saveBtn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><span>Kaydediliyor...</span>');
+
   let formData = new FormData(form[0]);
 
   fetch("/api/companies/companies.php", {
@@ -121,7 +134,8 @@ $(document).on("click", "#saveCompany", function (e) {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log(data);
+      $saveBtn.prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
+      
       let title, icon;
       if (data.status == "success") {
         title = "Başarılı!";
@@ -140,6 +154,10 @@ $(document).on("click", "#saveCompany", function (e) {
           location.reload();
         }
       });
+    })
+    .catch((err) => {
+      $saveBtn.prop("disabled", false).html('<i class="ti ti-device-floppy me-2"></i><span>Değişiklikleri Kaydet</span>');
+      Swal.fire("Hata", "İşlem sırasında bir hata oluştu.", "error");
     });
 });
 

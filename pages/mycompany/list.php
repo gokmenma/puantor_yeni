@@ -369,142 +369,178 @@ foreach ($myfirms as $mf) {
 <!-- Yeni & Düzenleme Firma Modalı -->
 <div class="modal modal-blur fade" id="mycompany-modal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content shadow-lg border-0">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fs-3 fw-bold text-primary" id="mycompany-modal-title">Yeni Firma Ekle</h5>
+        <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="modal-header bg-surface-primary border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-xs">
+                        <i class="ti ti-building-skyscraper fs-2" id="mycompany-modal-icon"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title fw-bold text-dark mb-0" id="mycompany-modal-title">Yeni Firma Ekle</h4>
+                        <div class="text-secondary small mt-0" id="mycompany-modal-subtitle" style="font-size: 11.5px;">Sisteme yeni şirket tanımlayabilir ve firma detaylarını düzenleyebilirsiniz.</div>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <form id="myFirmForm" enctype="multipart/form-data">
+            <form id="myFirmForm" enctype="multipart/form-data" novalidate>
                 <input type="hidden" name="id" id="myfirm_id" value="0">
                 <input type="hidden" name="action" value="saveMyCompany">
                 
-                <div class="modal-body pt-2">
-                    <!-- Bölüm 1: Temel Firma Bilgileri -->
-                    <div class="mb-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-primary-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                <i class="ti ti-info-circle text-primary fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Temel Firma Bilgileri</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label required">Firma Adı</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-building"></i>
+                <div class="modal-body p-3 p-md-4">
+                    <div class="row g-3">
+                        <!-- Sol Kolon: Temel, İletişim ve Vergi Bilgileri -->
+                        <div class="col-lg-7 d-flex flex-column gap-3">
+                            
+                            <!-- Bölüm 1: Temel Bilgiler -->
+                            <div class="modal-section-card p-3 rounded-3 border">
+                                <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
+                                    <span class="badge bg-primary-lt p-1 rounded-2 me-2">
+                                        <i class="ti ti-id fs-3"></i>
                                     </span>
-                                    <input type="text" class="form-control" name="firm_name" id="firm_name" placeholder="Firma adını giriniz" required>
+                                    <span class="fw-bold text-uppercase font-11 tracking-wider text-muted">Temel Bilgiler</span>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <label class="form-label required small fw-semibold mb-1">Firma Adı</label>
+                                        <div class="input-icon">
+                                            <span class="input-icon-addon">
+                                                <i class="ti ti-building text-muted"></i>
+                                            </span>
+                                            <input type="text" class="form-control" name="firm_name" id="firm_name" placeholder="Örn: ABC Teknoloji San. ve Tic. Ltd. Şti." required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label required small fw-semibold mb-1">Yetkili Adı & Soyadı</label>
+                                        <div class="input-icon">
+                                            <span class="input-icon-addon">
+                                                <i class="ti ti-user-check text-muted"></i>
+                                            </span>
+                                            <input type="text" class="form-control" name="yetkili_adi" id="yetkili_adi" placeholder="Örn: Ahmet Yılmaz" required>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label required">Yetkili Adı</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-user"></i>
-                                    </span>
-                                    <input type="text" class="form-control" name="yetkili_adi" id="yetkili_adi" placeholder="Yetkili ad soyad" required>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Bölüm 2: İletişim Bilgileri -->
-                    <div class="mb-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-success-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                <i class="ti ti-phone text-success fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">İletişim Bilgileri</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Telefon</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-phone"></i>
+                            <!-- Bölüm 2: İletişim Bilgileri -->
+                            <div class="modal-section-card p-3 rounded-3 border">
+                                <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
+                                    <span class="badge bg-success-lt p-1 rounded-2 me-2">
+                                        <i class="ti ti-phone-call fs-3"></i>
                                     </span>
-                                    <input type="text" class="form-control" name="phone" id="phone" placeholder="Telefon numarası">
+                                    <span class="fw-bold text-uppercase font-11 tracking-wider text-muted">İletişim Bilgileri</span>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-semibold mb-1">Telefon</label>
+                                        <div class="input-icon">
+                                            <span class="input-icon-addon">
+                                                <i class="ti ti-phone text-muted"></i>
+                                            </span>
+                                            <input type="text" class="form-control" name="phone" id="phone" placeholder="0 (5XX) XXX XX XX">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-semibold mb-1">E-posta</label>
+                                        <div class="input-icon">
+                                            <span class="input-icon-addon">
+                                                <i class="ti ti-mail text-muted"></i>
+                                            </span>
+                                            <input type="email" class="form-control" name="email" id="email" placeholder="ornek@firma.com">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">E-posta</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-mail"></i>
-                                    </span>
-                                    <input type="email" class="form-control" name="email" id="email" placeholder="E-posta adresi">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Bölüm 3: Vergi Bilgileri -->
-                    <div class="mb-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-warning-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                <i class="ti ti-file-text text-warning fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Vergi Bilgileri</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Vergi Dairesi</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-building-bank"></i>
+                            <!-- Bölüm 3: Vergi Bilgileri -->
+                            <div class="modal-section-card p-3 rounded-3 border">
+                                <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
+                                    <span class="badge bg-warning-lt p-1 rounded-2 me-2">
+                                        <i class="ti ti-receipt-tax fs-3"></i>
                                     </span>
-                                    <input type="text" class="form-control" name="vergi_dairesi" id="vergi_dairesi" placeholder="Vergi dairesi">
+                                    <span class="fw-bold text-uppercase font-11 tracking-wider text-muted">Vergi & Yasal Bilgiler</span>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-semibold mb-1">Vergi Dairesi</label>
+                                        <div class="input-icon">
+                                            <span class="input-icon-addon">
+                                                <i class="ti ti-building-bank text-muted"></i>
+                                            </span>
+                                            <input type="text" class="form-control" name="vergi_dairesi" id="vergi_dairesi" placeholder="Vergi Dairesi Adı">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-semibold mb-1">Vergi Numarası</label>
+                                        <div class="input-icon">
+                                            <span class="input-icon-addon">
+                                                <i class="ti ti-file-text text-muted"></i>
+                                            </span>
+                                            <input type="text" class="form-control font-monospace" name="vergi_no" id="vergi_no" placeholder="Vergi No / TCKN" maxlength="20">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Vergi Numarası</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-file-text"></i>
-                                    </span>
-                                    <input type="text" class="form-control" name="vergi_no" id="vergi_no" placeholder="Vergi no">
-                                </div>
-                            </div>
                         </div>
-                    </div>
 
-                    <!-- Bölüm 4: Logo ve Açıklama -->
-                    <div>
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-info-lt p-2 rounded-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                <i class="ti ti-photo text-info fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Logo ve Açıklama</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Açıklama</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-notes"></i>
-                                    </span>
-                                    <input type="text" class="form-control" name="description" id="description" placeholder="Firma açıklaması">
+                        <!-- Sağ Kolon: Logo ve Açıklama -->
+                        <div class="col-lg-5 d-flex flex-column gap-3">
+                            <!-- Logo Yükleme Kartı -->
+                            <div class="modal-section-card p-3 rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
+                                        <span class="badge bg-info-lt p-1 rounded-2 me-2">
+                                            <i class="ti ti-photo fs-3"></i>
+                                        </span>
+                                        <span class="fw-bold text-uppercase font-11 tracking-wider text-muted">Firma Logosu</span>
+                                    </div>
+
+                                    <!-- Modern Logo Upload & Preview Zone -->
+                                    <div class="logo-upload-box text-center p-3 rounded-3 mb-3 position-relative" id="logoUploadDropzone">
+                                        <div class="logo-preview-container mb-2 mx-auto position-relative" style="width: 80px; height: 80px;">
+                                            <div id="logo-preview-placeholder" class="w-100 h-100 rounded-3 border bg-light d-flex align-items-center justify-content-center text-muted shadow-xs">
+                                                <i class="ti ti-building-skyscraper fs-1 text-secondary opacity-40"></i>
+                                            </div>
+                                            <img src="" id="logo-preview-img" class="w-100 h-100 rounded-3 border bg-white p-1 shadow-xs" style="object-fit: contain; display: none;" alt="Firma Logosu">
+                                            <button type="button" class="btn btn-sm btn-icon btn-danger position-absolute top-0 end-0 translate-middle rounded-circle shadow-sm" id="btn-remove-logo" style="display: none; width: 22px; height: 22px; padding: 0;" title="Logoyu Kaldır">
+                                                <i class="ti ti-x font-10"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="small fw-semibold text-dark mb-1">Kurumsal Logo</div>
+                                        <p class="text-muted small mb-2" style="font-size: 11px;">PNG, JPG, SVG veya WEBP (Maks. 2MB)</p>
+                                        
+                                        <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-2" id="btn-browse-logo">
+                                            <i class="ti ti-upload me-1"></i> Logo Seç / Yükle
+                                        </button>
+                                        <input type="file" name="brand_logo" id="brand_logo" class="d-none" accept="image/png, image/jpeg, image/webp, image/svg+xml">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Firma Logosu</label>
-                                <input type="file" class="form-control" name="brand_logo" id="brand_logo" onchange="previewImage(event)">
-                            </div>
-                            <div class="col-md-2 text-center d-flex align-items-end justify-content-center">
-                                <div class="brand-img border rounded p-1" style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: #f8fafc;">
-                                    <img src="" id="logo-preview-img" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" alt="">
+
+                                <!-- Firma Açıklaması -->
+                                <div>
+                                    <div class="d-flex align-items-center mb-2 pb-1 border-bottom">
+                                        <span class="badge bg-purple-lt p-1 rounded-2 me-2">
+                                            <i class="ti ti-notes fs-3"></i>
+                                        </span>
+                                        <span class="fw-bold text-uppercase font-11 tracking-wider text-muted">Ek Açıklama</span>
+                                    </div>
+                                    <textarea class="form-control" name="description" id="description" rows="3" placeholder="Firma hakkında kısa not veya adres bilgisi..."></textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light-lt border-0 rounded-bottom-4">
-                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn btn-primary px-4 shadow-sm" id="saveMyFirm">
-                        <i class="ti ti-device-floppy icon me-2"></i>
-                        Değişiklikleri Kaydet
+
+                <!-- Modal Footer -->
+                <div class="modal-footer bg-light-subtle border-top py-2 px-3 d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">
+                        <i class="ti ti-x me-1"></i> İptal
+                    </button>
+                    <button type="button" class="btn btn-primary px-4 fw-semibold shadow-sm d-inline-flex align-items-center" id="saveMyFirm">
+                        <i class="ti ti-device-floppy me-2"></i>
+                        <span>Değişiklikleri Kaydet</span>
                     </button>
                 </div>
             </form>
@@ -777,33 +813,106 @@ tbody tr.context-menu-active td {
 
 /* Modal responsive and styling improvements */
 #mycompany-modal .modal-content {
-    border-radius: 1.25rem;
-    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
+
+#mycompany-modal .modal-header {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+[data-bs-theme="dark"] #mycompany-modal .modal-header {
+    background-color: #1e293b;
+    border-bottom-color: #334155;
+}
+
+#mycompany-modal .modal-section-card {
+    background-color: #f8fafc;
+    border-color: #e2e8f0 !important;
+    transition: all 0.2s ease-in-out;
+}
+#mycompany-modal .modal-section-card:focus-within {
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+[data-bs-theme="dark"] #mycompany-modal .modal-section-card {
+    background-color: #1e293b;
+    border-color: #334155 !important;
+}
+
+#mycompany-modal .logo-upload-box {
+    border: 1.5px dashed #cbd5e1;
+    background-color: #ffffff;
+    transition: all 0.2s ease-in-out;
+}
+#mycompany-modal .logo-upload-box:hover,
+#mycompany-modal .logo-upload-box.dragover {
+    border-color: #206bc4;
+    background-color: #f0f7ff;
+}
+[data-bs-theme="dark"] #mycompany-modal .logo-upload-box {
+    border-color: #475569;
+    background-color: #0f172a;
+}
+[data-bs-theme="dark"] #mycompany-modal .logo-upload-box:hover,
+[data-bs-theme="dark"] #mycompany-modal .logo-upload-box.dragover {
+    border-color: #38bdf8;
+    background-color: #1e293b;
+}
+
 #mycompany-modal .form-label.required:after {
     content: " *";
-    color: #d63f3f;
+    color: #ef4444;
 }
-#mycompany-modal .input-icon-addon {
-    color: #94a3b8;
+
+#mycompany-modal .form-control {
+    border-color: #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
 }
 #mycompany-modal .form-control:focus {
     border-color: #206bc4;
-    box-shadow: 0 0 0 0.25rem rgba(32, 107, 196, 0.15);
+    box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.12);
 }
+[data-bs-theme="dark"] #mycompany-modal .form-control {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+[data-bs-theme="dark"] #mycompany-modal .form-control:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+#mycompany-modal .input-icon-addon {
+    color: #94a3b8;
+}
+
 #mycompany-modal .modal-body {
-    max-height: 70vh;
+    max-height: calc(85vh - 130px);
     overflow-y: auto;
 }
 #mycompany-modal .modal-body::-webkit-scrollbar {
     width: 6px;
 }
 #mycompany-modal .modal-body::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
+    background: #cbd5e1;
     border-radius: 10px;
 }
 #mycompany-modal .modal-body::-webkit-scrollbar-track {
     background: transparent;
+}
+[data-bs-theme="dark"] #mycompany-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+#mycompany-modal .modal-footer {
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+[data-bs-theme="dark"] #mycompany-modal .modal-footer {
+    background-color: #1e293b;
+    border-top-color: #334155;
 }
 </style>
 
