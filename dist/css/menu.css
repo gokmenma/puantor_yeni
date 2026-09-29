@@ -251,6 +251,8 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
   background-color: var(--sidebar-bg, #1e1e2d) !important;
   padding: 6px 14px 10px 14px !important;
   display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
   align-items: center !important;
   gap: 8px !important;
   flex-shrink: 0 !important;
@@ -259,6 +261,7 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
 .sidebar-search-wrap .sidebar-search {
   position: relative !important;
   flex: 1 1 auto !important;
+  min-width: 0 !important;
   margin: 0 !important;
 }
 
@@ -302,7 +305,9 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
 }
 
 /* Menü Ayarları Dişli Butonu */
-.sidebar-menu-settings {
+.sidebar-menu-settings,
+#navbar .sidebar-menu-settings,
+.navbar-vertical .sidebar-menu-settings {
   flex: 0 0 auto !important;
   position: relative !important;
 }
@@ -331,7 +336,16 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
   color: var(--sidebar-input-color, #ffffff) !important;
 }
 
-.sidebar-menu-settings .dropdown-menu {
+.sidebar-menu-settings .dropdown-menu,
+#navbar .sidebar-menu-settings .dropdown-menu,
+.navbar-vertical .sidebar-menu-settings .dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  right: 0 !important;
+  left: auto !important;
+  transform: none !important;
+  margin-top: 6px !important;
+  margin-bottom: 0 !important;
   background: var(--sidebar-dropdown-bg, #252538) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 8px !important;

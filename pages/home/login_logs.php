@@ -1,25 +1,24 @@
 <?php
 require_once ROOT . "/Model/LoginLogsModel.php";
 
-$loginLogsObj = new LoginLogsModel();
-$firm_id = $_SESSION['firm_id'];
-
-// Firmaya ait kullanıcıların son loginlerini getir
-// login_logs tablosunda firm_id yok, bu yüzden users ile join yapıyoruz
-$sql = "SELECT l.*, u.full_name 
-        FROM login_logs l 
-        JOIN users u ON l.user_id = u.id 
-        WHERE u.firm_id = :firm_id 
-        ORDER BY l.login_time DESC 
-        LIMIT 10";
-
-$stmt = (new Model())->getDb()->prepare($sql);
-$stmt->execute(['firm_id' => $firm_id]);
-$logs = $stmt->fetchAll(PDO::FETCH_OBJ);
-
 if (!$Auths->Authorize("home_page_login_logs_view")) {
-    // Eğer yetki kısıtlaması yoksa veya adminse gösterilebilir. 
-    // Proje bazlı yetki kontrolü burada yapılabilir.
+    return;
+}
+
+$loginLogsObj = new LoginLogsModel();
+$logs = $loginLogsObj->getRecentByFirmId((int)$firm_id, 10);
+
+/**
+ * IP adresini maskeler: son oktet gizlenir (örn. 192.168.1.xxx)
+ */
+function maskIp(string $ip): string {
+    $parts = explode('.', $ip);
+    if (count($parts) === 4) {
+        $parts[3] = 'xxx';
+        return implode('.', $parts);
+    }
+    // IPv6 veya farklı format ise ortasını gizle
+    return substr($ip, 0, 6) . '***';
 }
 ?>
 
@@ -39,33 +38,57 @@ if (!$Auths->Authorize("home_page_login_logs_view")) {
         </div>
         <div class="card-body p-0" style="overflow-y: auto;">
             <div class="list-group list-group-flush">
-                <?php if (count($logs) > 0): ?>
-                    <?php foreach ($logs as $log): ?>
+                <?php if (!empty($logs)): ?>
+                    <?php foreach ($logs as $log):
+                        $ua = $log->user_agent ?? '';
+                        if (stripos($ua, 'Mobile') !== false) {
+                            $deviceLabel = 'Mobil';
+                            $deviceIcon  = 'device-mobile';
+                            $deviceColor = 'azure';
+                        } elseif (stripos($ua, 'Windows') !== false) {
+                            $deviceLabel = 'Windows';
+                            $deviceIcon  = 'device-laptop';
+                            $deviceColor = 'secondary';
+                        } elseif (stripos($ua, 'Macintosh') !== false || stripos($ua, 'Mac OS') !== false) {
+                            $deviceLabel = 'Mac';
+                            $deviceIcon  = 'device-laptop';
+                            $deviceColor = 'secondary';
+                        } elseif (stripos($ua, 'Linux') !== false) {
+                            $deviceLabel = 'Linux';
+                            $deviceIcon  = 'device-desktop';
+                            $deviceColor = 'secondary';
+                        } else {
+                            $deviceLabel = 'Bilinmiyor';
+                            $deviceIcon  = 'device-desktop';
+                            $deviceColor = 'secondary';
+                        }
+                        $initials = mb_strtoupper(mb_substr($log->full_name ?? '?', 0, 1, 'UTF-8'), 'UTF-8');
+                    ?>
                         <div class="list-group-item">
                             <div class="row align-items-center">
                                 <div class="col-auto">
-                                    <span class="avatar avatar-xs rounded"><?php echo substr($log->full_name, 0, 1); ?></span>
+                                    <span class="avatar avatar-sm bg-blue-lt text-primary rounded-circle" style="font-size: 13px; font-weight: 700;">
+                                        <?php echo htmlspecialchars($initials, ENT_QUOTES, 'UTF-8'); ?>
+                                    </span>
                                 </div>
                                 <div class="col text-truncate">
-                                    <div class="text-reset d-block"><?php echo htmlspecialchars($log->full_name); ?></div>
-                                    <div class="d-flex align-items-center mt-1" style="gap: 8px;">
+                                    <div class="text-reset d-block fw-medium" style="font-size: 13px;">
+                                        <?php echo htmlspecialchars($log->full_name ?? 'Bilinmeyen', ENT_QUOTES, 'UTF-8'); ?>
+                                    </div>
+                                    <div class="d-flex align-items-center mt-1 flex-wrap" style="gap: 6px;">
                                         <small class="text-secondary" style="font-size: 11px;">
                                             <i class="ti ti-calendar-event me-1"></i>
-                                            <?php echo date('d.m.Y H:i', strtotime($log->login_time)); ?>
+                                            <?php echo !empty($log->login_time) ? date('d.m.Y H:i', strtotime($log->login_time)) : '-'; ?>
                                         </small>
-                                        <small class="text-secondary" style="font-size: 11px;" title="<?php echo htmlspecialchars($log->user_agent); ?>">
-                                            <i class="ti ti-device-laptop me-1"></i>
-                                            <?php 
-                                                if (strpos($log->user_agent, 'Mobile') !== false) echo 'Mobil';
-                                                else if (strpos($log->user_agent, 'Windows') !== false) echo 'Windows';
-                                                else if (strpos($log->user_agent, 'Macintosh') !== false) echo 'Mac';
-                                                else echo 'Bilinmiyor';
-                                            ?>
-                                        </small>
+                                        <span class="badge bg-<?php echo $deviceColor; ?>-lt text-<?php echo $deviceColor; ?>" style="font-size: 9px; padding: 2px 5px;">
+                                            <i class="ti ti-<?php echo $deviceIcon; ?> me-1"></i><?php echo $deviceLabel; ?>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <small class="text-muted" title="IP Adresi"><?php echo $log->ip_address; ?></small>
+                                    <small class="text-muted" title="IP Adresi (gizlenmiş)" style="font-size: 10px; font-family: monospace;">
+                                        <?php echo htmlspecialchars(maskIp($log->ip_address ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -73,7 +96,7 @@ if (!$Auths->Authorize("home_page_login_logs_view")) {
                 <?php else: ?>
                     <div class="text-center py-5 text-secondary">
                         <i class="ti ti-history mb-2" style="font-size: 32px; opacity: 0.5;"></i>
-                        <div style="font-size: 13px;">Kayıt bulunamadı.</div>
+                        <div style="font-size: 13px;">Giriş kaydı bulunamadı.</div>
                     </div>
                 <?php endif; ?>
             </div>

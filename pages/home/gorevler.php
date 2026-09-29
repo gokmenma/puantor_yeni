@@ -16,7 +16,7 @@ $bugun = date('Y-m-d');
 ?>
 
 <div class="col-md-6" data-id="widget-gorevler">
-    <div class="card" style="max-height: 450px; display: flex; flex-direction: column;">
+    <div class="card resizable-card" style="max-height: 450px; display: flex; flex-direction: column;">
         <div class="mac-titlebar">
             <div class="mac-buttons">
                 <div class="mac-btn mac-close"></div>

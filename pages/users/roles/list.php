@@ -456,6 +456,114 @@ div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
     background-color: #206bc4 !important;
     color: #ffffff !important;
 }
+/* Sağ Tık Context Menu */
+.role-context-menu {
+    position: fixed;
+    z-index: 9999;
+    display: none;
+    min-width: 200px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 6px;
+    font-size: 13px;
+    user-select: none;
+    animation: contextMenuFadeIn .12s ease;
+}
+
+@keyframes contextMenuFadeIn {
+    from { opacity: 0; transform: scale(.96) translateY(-4px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+[data-bs-theme="dark"] .role-context-menu {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+}
+
+.role-context-menu .rcm-header {
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+
+[data-bs-theme="dark"] .role-context-menu .rcm-header {
+    border-bottom-color: #334155;
+    color: #94a3b8;
+}
+
+.role-context-menu a {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    color: #334155;
+    text-decoration: none;
+    border-radius: 7px;
+    transition: background-color 0.12s;
+    font-weight: 500;
+    gap: 8px;
+    cursor: pointer;
+}
+
+[data-bs-theme="dark"] .role-context-menu a {
+    color: #e2e8f0;
+}
+
+.role-context-menu a i {
+    font-size: 15px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.role-context-menu a:hover {
+    background-color: #f1f5f9;
+    color: #206bc4;
+}
+
+[data-bs-theme="dark"] .role-context-menu a:hover {
+    background-color: #334155;
+    color: #38bdf8;
+}
+
+.role-context-menu .rcm-divider {
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 4px 2px;
+}
+
+[data-bs-theme="dark"] .role-context-menu .rcm-divider {
+    background-color: #334155;
+}
+
+.role-context-menu a.rcm-danger {
+    color: #ef4444;
+}
+
+.role-context-menu a.rcm-danger:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+[data-bs-theme="dark"] .role-context-menu a.rcm-danger:hover {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+#roleTable tbody tr.rcm-active td {
+    background-color: rgba(32, 107, 196, 0.06) !important;
+}
 </style>
 
 <div class="container-xl mt-1" id="rolesPage">
@@ -701,7 +809,12 @@ div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
                                     $assignedCount = (int)($roleUserCounts[$role->id] ?? 0);
                                     $isActive = ((int)$role->isActive === 1 || (string)$role->isActive === 'Aktif' || (string)$role->isActive === '1');
                                     ?>
-                                    <tr>
+                                    <tr
+                                        data-role-id="<?= $role->id ?>"
+                                        data-enc-id="<?= $encId ?>"
+                                        data-role-name="<?= htmlspecialchars((string)$role->roleName, ENT_QUOTES, 'UTF-8') ?>"
+                                        data-is-main="<?= $isMain ? '1' : '0' ?>"
+                                    >
                                         <td class="text-center text-muted fw-medium"><?= $i ?></td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
@@ -1056,5 +1169,168 @@ $(document).ready(function() {
             });
         }
     });
+
+    // ===== SAĞ TIK CONTEXT MENU =====
+    var $rcm = $('<div id="roleContextMenu" class="role-context-menu"></div>').appendTo('body');
+
+    // PHP yetki değişkenleri JS'e aktarıldı
+    var canManageAuth   = <?= $Auths->hasPermission('transaction_permissions') ? 'true' : 'false' ?>;
+    var canEditRole     = <?= $Auths->hasPermission('permission_group_add_update') ? 'true' : 'false' ?>;
+    var canDeleteRole   = <?= $Auths->hasPermission('permission_group_delete') ? 'true' : 'false' ?>;
+
+    function hideContextMenu() {
+        $rcm.fadeOut(80);
+        $('#roleTable tbody tr').removeClass('rcm-active');
+    }
+
+    function showContextMenu(e, $tr) {
+        e.preventDefault();
+
+        var encId   = $tr.data('enc-id');
+        var roleName = $tr.data('role-name') || 'Rol İşlemleri';
+        var isMain  = ($tr.data('is-main') == '1');
+
+        if (!encId) return;
+
+        // Aktif satırı vurgula
+        $('#roleTable tbody tr').removeClass('rcm-active');
+        $tr.addClass('rcm-active');
+
+        // Menü içeriği oluştur
+        var safe = $('<div>').text(roleName).html();
+        var items = '';
+
+        items += '<div class="rcm-header"><i class="ti ti-shield-lock me-1"></i>' + safe + '</div>';
+
+        if (canManageAuth) {
+            items += '<a href="#" class="route-link" data-page="users/auths/auths&id=' + encId + '">'
+                   + '<i class="ti ti-lock text-primary"></i> Yetkileri Yapılandır'
+                   + '</a>';
+            if (!isMain) {
+                items += '<a href="#" class="rcm-copy-roles" data-id="' + encId + '" data-name="' + safe + '">'
+                       + '<i class="ti ti-copy text-info"></i> Başka Rolden Yetki Kopyala'
+                       + '</a>';
+            }
+        }
+
+        if (canEditRole) {
+            items += '<a href="#" class="route-link" data-page="users/roles/manage&id=' + encId + '">'
+                   + '<i class="ti ti-edit text-warning"></i> Bilgileri Düzenle'
+                   + '</a>';
+        }
+
+        if (!isMain && canDeleteRole) {
+            items += '<div class="rcm-divider"></div>';
+            items += '<a href="#" class="rcm-danger rcm-delete-role" data-id="' + encId + '" data-name="' + safe + '">'
+                   + '<i class="ti ti-trash"></i> Rolü Sil'
+                   + '</a>';
+        }
+
+        $rcm.html(items).css({ display: 'block' });
+
+        // Ekrandan taşmayı önle
+        var menuW  = $rcm.outerWidth();
+        var menuH  = $rcm.outerHeight();
+        var winW   = $(window).width();
+        var winH   = $(window).height();
+        var posX   = (e.clientX + menuW > winW) ? winW - menuW - 10 : e.clientX;
+        var posY   = (e.clientY + menuH > winH) ? winH - menuH - 10 : e.clientY;
+
+        $rcm.css({ top: posY + 'px', left: posX + 'px' });
+    }
+
+    // Tablo satırlarında sağ tık
+    $(document).on('contextmenu', '#roleTable tbody tr', function(e) {
+        showContextMenu(e, $(this));
+    });
+
+    // Context menü içindeki Kopyala linkine tıklayınca modal aç
+    $(document).on('click', '.rcm-copy-roles', function(e) {
+        e.preventDefault();
+        var id   = $(this).data('id');
+        var name = $(this).data('name');
+        hideContextMenu();
+        // Mevcut copy-roles mekanizmasını tetikle
+        $('#copy_role_id').val(id);
+        $('#role_name').text(name);
+        var fd = new FormData();
+        fd.append('id', id);
+        fd.append('action', 'copyRoles');
+        fetch('api/users/roles.php', { method: 'POST', body: fd })
+            .then(function(r){ return r.json(); })
+            .then(function(data) {
+                data = data.roles || [];
+                var opts = '<option value="">Kaynak Rol Seçin...</option>';
+                data.forEach(function(el){ opts += '<option value="' + el.id + '">' + el.roleName + '</option>'; });
+                $('#role_to_copy').html(opts).trigger('change');
+                var modal = new bootstrap.Modal(document.getElementById('modal-small'));
+                modal.show();
+            });
+    });
+
+    // Context menü içindeki Sil linkine tıklayınca
+    $(document).on('click', '.rcm-delete-role', function(e) {
+        e.preventDefault();
+        var id   = $(this).data('id');
+        var name = $(this).data('name');
+        hideContextMenu();
+        // delete_role davranışıyla aynı şekilde sil
+        Swal.fire({
+            title: 'Emin misiniz?',
+            html: '<strong>' + name + '</strong> isimli yetki grubu kalıcı olarak silinecektir.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d63f3f',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="ti ti-trash me-1"></i> Evet, Sil!',
+            cancelButtonText: 'Vazgeç'
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+            var fd = new FormData();
+            fd.append('id', id);
+            fd.append('action', 'deleteRole');
+            fetch('/api/users/roles.php', { method: 'POST', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(data) {
+                    Swal.fire({
+                        icon: data.status,
+                        title: data.status === 'success' ? 'Başarılı!' : 'Hata!',
+                        text: data.message,
+                        timer: data.status === 'success' ? 1500 : 3000,
+                        showConfirmButton: data.status !== 'success'
+                    }).then(function() {
+                        if (data.status === 'success') location.reload();
+                    });
+                });
+        });
+    });
+
+    // Dışarı tıklayınca kapat
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#roleContextMenu').length) {
+            hideContextMenu();
+        }
+    });
+
+    // Context menüdeki route-link'e tıklayınca gizle
+    $(document).on('click', '#roleContextMenu a', function() {
+        hideContextMenu();
+    });
+
+    // Scroll/resize/blur'da kapat
+    $(window).on('scroll resize blur', function() {
+        hideContextMenu();
+    });
+
+    // Tabloda Escape tuşu ile kapat
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') hideContextMenu();
+    });
+
+    // Tablonun kendi sağ tık menüsünü engelle (tablo dışı alanlarda tarayıcı menüsü açılsın)
+    $(document).on('contextmenu', '.role-context-menu', function(e) {
+        e.preventDefault();
+    });
+    // ===== SAĞ TIK CONTEXT MENU BİTİŞ =====
 });
 </script>

@@ -1119,5 +1119,184 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = false;
         btn.innerHTML = '<i class="ti ti-send me-1"></i> Bildirimi Gönder';
     });
+
+    // ── Sağ Tık Bağlam Menüsü ──────────────────────────────────────
+    let $ctxMenu = null;
+    let ctxRow    = null;
+    let ctxSource = null;
+
+    function getOrCreateCtxMenu() {
+        if (!$ctxMenu || !$ctxMenu.length || !document.body.contains($ctxMenu[0])) {
+            $ctxMenu = $('<div id="pushContextMenu" class="custom-context-menu"></div>').appendTo('body');
+        }
+        return $ctxMenu;
+    }
+
+    function hideCtxMenu() {
+        if ($ctxMenu) $ctxMenu.hide();
+        $('#pushPage tbody tr').removeClass('context-menu-active');
+        ctxRow    = null;
+        ctxSource = null;
+    }
+
+    function showCtxMenu(e, row, source) {
+        ctxRow    = row;
+        ctxSource = source;
+
+        const title    = plainText(row.baslik)  || '—';
+        const icerik   = plainText(row.icerik)  || '—';
+        const tarih    = fmtDateTime(row.created_at);
+        const hedef    = row.hedef_aciklama || (row.hedef === 'hepsi' ? 'Tüm Alıcılar' : '—');
+        const gonderen = row.gonderen_adi   || 'Sistem';
+        const rowKey   = `${source}:${row.id}`;
+        const previewTitle  = title.length  > 40 ? title.substring(0, 40)  + '…' : title;
+        const sourceIcon    = source === 'sistem' ? 'ti-settings-automation text-azure' : 'ti-user-share text-primary';
+        const recipientsHtml = (row.alici_listesi && row.alici_listesi.length)
+            ? `<a href="#" class="js-ctx-copy" data-type="recipients" data-value="${escapeHtml(row.alici_listesi.join(', '))}">
+                   <i class="ti ti-users"></i> Alıcı Listesini Kopyala <span class="badge bg-secondary-lt ms-auto" style="font-size:10px;">${row.alici_sayisi ?? row.alici_listesi.length}</span>
+               </a>`
+            : '';
+
+        const menuHtml = `
+            <div class="cm-header"><i class="ti ${sourceIcon} me-1"></i>${escapeHtml(previewTitle)}</div>
+            <a href="#" class="js-ctx-detail" data-key="${escapeHtml(rowKey)}">
+                <i class="ti ti-eye"></i> Detayı Görüntüle
+            </a>
+            <div class="cm-divider"></div>
+            <a href="#" class="js-ctx-copy" data-type="title" data-value="${escapeHtml(title)}">
+                <i class="ti ti-copy"></i> Başlığı Kopyala
+            </a>
+            <a href="#" class="js-ctx-copy" data-type="content" data-value="${escapeHtml(icerik)}">
+                <i class="ti ti-clipboard-text"></i> İçeriği Kopyala
+            </a>
+            <a href="#" class="js-ctx-copy" data-type="info" data-value="${escapeHtml(tarih + ' — ' + gonderen + ' → ' + hedef)}">
+                <i class="ti ti-info-circle"></i> Gönderim Bilgisini Kopyala
+            </a>
+            ${recipientsHtml}
+            <div class="cm-divider"></div>
+            <a href="#" class="js-ctx-new-similar" data-key="${escapeHtml(rowKey)}">
+                <i class="ti ti-send"></i> Benzer Bildirim Gönder
+            </a>
+        `;
+
+        const $menu = getOrCreateCtxMenu();
+        $menu.html(menuHtml).css({ display: 'block', opacity: 0 });
+
+        const mW = $menu.outerWidth();
+        const mH = $menu.outerHeight();
+        const wW = $(window).width();
+        const wH = $(window).height();
+        const posX = (e.clientX + mW > wW) ? wW - mW - 8 : e.clientX;
+        const posY = (e.clientY + mH > wH) ? wH - mH - 8 : e.clientY;
+
+        $menu.css({ top: posY + 'px', left: posX + 'px', opacity: 1 });
+    }
+
+    // Attach to both tables
+    $(document).on('contextmenu', '#sistemBildirimTable tbody tr, #gonderilenTable tbody tr', function(e) {
+        e.preventDefault();
+        const $tr = $(this);
+        const tableId = $tr.closest('table').attr('id');
+        const src = tableId === 'sistemBildirimTable' ? 'sistem' : 'kullanici';
+
+        const keyBtn = $tr.find('.js-bildirim-detay').first();
+        const rowKey = keyBtn.data('notification-key') || '';
+        const rowData = notificationRows.get(rowKey);
+        if (!rowData) return;
+
+        $('#pushPage tbody tr').removeClass('context-menu-active');
+        $tr.addClass('context-menu-active');
+        showCtxMenu(e, rowData, src);
+    });
+
+    // Detail action
+    $(document).on('click', '#pushContextMenu .js-ctx-detail', function(e) {
+        e.preventDefault();
+        const key = $(this).data('key');
+        const row = notificationRows.get(key);
+        if (!row) return;
+        hideCtxMenu();
+
+        document.getElementById('detayBaslik').textContent   = plainText(row.baslik) || '—';
+        document.getElementById('detayTarih').textContent    = fmtDateTime(row.created_at);
+        document.getElementById('detayFirma').textContent    = row.firma_adi || '—';
+        document.getElementById('detayGonderen').textContent = row.gonderen_adi || 'Sistem';
+        document.getElementById('detayHedef').textContent    = row.hedef_aciklama || '—';
+        document.getElementById('detayIcerik').textContent   = plainText(row.icerik) || '—';
+
+        const recipients = Array.isArray(row.alici_listesi) ? row.alici_listesi : [];
+        const rc = document.getElementById('detayAlicilar');
+        rc.replaceChildren();
+        document.getElementById('detayAliciSayisi').textContent = `${row.alici_sayisi ?? recipients.length} alıcı`;
+        if (!recipients.length) {
+            const span = document.createElement('span');
+            span.className = 'text-secondary small';
+            span.textContent = 'Alıcı bilgisi bulunamadı.';
+            rc.appendChild(span);
+        } else {
+            recipients.forEach(name => {
+                const b = document.createElement('span');
+                b.className = 'badge bg-white text-body border fw-normal py-1 px-2';
+                b.style.fontSize = '12px';
+                b.textContent = name;
+                rc.appendChild(b);
+            });
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalBildirimDetay')).show();
+    });
+
+    // Copy action
+    $(document).on('click', '#pushContextMenu .js-ctx-copy', function(e) {
+        e.preventDefault();
+        const value = $(this).data('value') || '';
+        hideCtxMenu();
+        navigator.clipboard.writeText(value).then(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Panoya kopyalandı',
+                showConfirmButton: false,
+                timer: 1800
+            });
+        }).catch(() => {
+            Swal.fire({ icon: 'error', title: 'Kopyalama Hatası', text: 'Tarayıcınız panoya erişim izni vermiyor.' });
+        });
+    });
+
+    // Send similar action — pre-fill the send modal with the selected row's data
+    $(document).on('click', '#pushContextMenu .js-ctx-new-similar', function(e) {
+        e.preventDefault();
+        const key = $(this).data('key');
+        const row = notificationRows.get(key);
+        hideCtxMenu();
+        if (!row) return;
+
+        const form = document.getElementById('pushForm');
+        if (form) {
+            const baslikEl = form.querySelector('[name="baslik"]');
+            const icerikEl = form.querySelector('[name="icerik"]');
+            if (baslikEl) baslikEl.value = plainText(row.baslik)  || '';
+            if (icerikEl) icerikEl.value = plainText(row.icerik) || '';
+
+            const turuVal  = (row.hedef_turu === 'kullanici') ? 'kullanici' : 'personel';
+            const turuRadio = form.querySelector(`[name="hedef_turu"][value="${turuVal}"]`);
+            if (turuRadio) turuRadio.checked = true;
+
+            if (row.url) {
+                $('#pushUrl').val(row.url).trigger('change');
+            }
+            updateRecipientUi();
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPushGonder')).show();
+    });
+
+    // Hide on outside click / scroll / resize
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#pushContextMenu').length) hideCtxMenu();
+    });
+    $(document).on('click', '#pushContextMenu a', hideCtxMenu);
+    $(window).on('scroll resize blur', hideCtxMenu);
+    // ── Sağ Tık Bağlam Menüsü Son ──────────────────────────────────
 });
 </script>

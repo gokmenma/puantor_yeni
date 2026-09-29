@@ -14,11 +14,11 @@ $Auths->checkFirmReturn();
 
 // Yetki kontrolü - icra_files_list veya person_page_icra_info yetkisi
 if (!$Auths->Authorize('icra_files_list') && !$Auths->Authorize('person_page_icra_info')) {
-    App\Helper\Helper::authorizePage();
+    Helper::authorizePage();
     return;
 }
 
-$firm_id = $_SESSION['firm_id'];
+$firm_id = (int)($_SESSION['firm_id'] ?? 0);
 $personIcraModel = new PersonIcra();
 $personsModel = new Persons();
 
@@ -38,94 +38,72 @@ $icraDaireleri = $q_defines->fetchAll(PDO::FETCH_COLUMN);
 // Merkezi Durum Tanımları
 $statuses = PersonIcra::getStatuses();
 ?>
+<script>
+(function() {
+    try {
+        document.documentElement.classList.toggle(
+            'icra-summary-collapsed',
+            localStorage.getItem('icra_summary_collapsed') === '1'
+        );
+    } catch (e) {}
+})();
+</script>
+<style>
+html.icra-summary-collapsed #icraSummaryCards {
+    max-height: 0 !important;
+    margin-bottom: 12px !important;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+}
+</style>
 
-<div class="container-xl mt-2 mb-2">
-    <!-- Sayfa Başlığı -->
-    <div class="d-flex align-items-center justify-content-between mb-2">
-        <h2 class="page-title m-0">İcra Dosyaları</h2>
-    </div>
+<div class="container-xl mt-1" id="icraPage">
 
-    <!-- Özet / KPI Kartları -->
-    <div class="row row-cards mb-2">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-primary-lt text-primary avatar avatar-md rounded-2">
-                                <i class="ti ti-file-invoice fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark" id="kpi-total-files">
-                                <?= number_format($stats['total_files']); ?>
-                            </div>
-                            <div class="text-muted small" style="font-size: 11.5px;">
-                                Toplam Dosya (<span id="kpi-total-debt"><?= Helper::formattedMoney($stats['total_debt']); ?></span>)
-                            </div>
+    <!-- Page Header (Hero Banner) -->
+    <div class="page-header d-print-none mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-sm" style="width: 44px; height: 44px;">
+                        <i class="ti ti-file-invoice" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                            İcra Dosyaları Yönetimi
+                        </h2>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Personel icra dosyaları, kesinti durumları, bakiye ve icra dairesi takibi
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-success-lt text-success avatar avatar-md rounded-2">
-                                <i class="ti ti-scissors fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark" id="kpi-active-files">
-                                <?= number_format($stats['active_files']); ?>
-                            </div>
-                            <div class="text-muted small" style="font-size: 11.5px;">
-                                Kesilen (Aktif) Dosyalar
-                            </div>
+            <!-- Primary Actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary btn-icon icra-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
+                            <i class="ti ti-columns"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-2" id="icraColvisMenu"
+                            style="min-width: 210px; max-height: 350px; overflow-y: auto;">
+                            <!-- Checkboxes will be rendered dynamically by JS -->
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-warning-lt text-warning avatar avatar-md rounded-2">
-                                <i class="ti ti-clock fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark" id="kpi-pending-files">
-                                <?= number_format($stats['pending_files']); ?>
-                            </div>
-                            <div class="text-muted small" style="font-size: 11.5px;">
-                                Bekleyen / Sırada Dosyalar
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-danger-lt text-danger avatar avatar-md rounded-2">
-                                <i class="ti ti-wallet fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark" id="kpi-remaining-debt">
-                                <?= Helper::formattedMoney($stats['remaining_debt']); ?>
-                            </div>
-                            <div class="text-muted small" style="font-size: 11.5px;">
-                                Kalan Borç (Kesilen: <strong class="text-success" id="kpi-total-deductions"><?= Helper::formattedMoney($stats['total_deductions']); ?></strong>)
-                            </div>
+                    <button type="button" class="btn btn-sm btn-dark shadow-sm icra-header-action" id="btn-open-add-modal" style="background-color: #1e293b; border-color: #1e293b;">
+                        <i class="ti ti-plus me-1"></i> Yeni İcra Dosyası
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle icra-header-action" data-bs-toggle="dropdown">
+                            <i class="ti ti-settings me-1"></i> İşlemler
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a href="javascript:void(0)" id="btn-export-excel-list" class="dropdown-item">
+                                <i class="ti ti-file-excel icon me-2 text-success"></i> Excel'e Aktar
+                            </a>
+                            <a href="javascript:void(0)" id="btn-print-list" class="dropdown-item">
+                                <i class="ti ti-printer icon me-2 text-secondary"></i> Yazdır / PDF
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -133,14 +111,118 @@ $statuses = PersonIcra::getStatuses();
         </div>
     </div>
 
-    <!-- Ana Kart ve Tablo -->
-    <div class="row row-deck row-cards mt-2">
+    <!-- KPI / İstatistik Özet Kartları -->
+    <div class="row row-cards g-3 mb-3" id="icraSummaryCards">
+        <!-- Kart 1: Toplam Dosya -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM DOSYA</span>
+                        <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-file-invoice" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-total-files">
+                        <?= number_format($stats['total_files'] ?? 0, 0, ',', '.'); ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            Toplam: <strong class="text-dark" id="kpi-total-debt"><?= Helper::formattedMoney($stats['total_debt'] ?? 0); ?></strong>
+                        </span>
+                        <label class="status-summary-filter mb-0" title="Tüm icra dosyalarını göster">
+                            <input type="radio" name="icra_status_filter" value="" class="status-filter">
+                            <span><i class="ti ti-files"></i> Tümü</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 2: Kesilen (Aktif) Dosyalar -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KESİLEN (AKTİF) DOSYALAR</span>
+                        <div class="avatar avatar-sm rounded-2 bg-warning-lt text-warning" style="width: 32px; height: 32px;">
+                            <i class="ti ti-scissors" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-active-files">
+                        <?= number_format($stats['active_files'] ?? 0, 0, ',', '.'); ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            Aktif Kesintide
+                        </span>
+                        <label class="status-summary-filter mb-0" title="Kesilen (Aktif) dosyaları göster">
+                            <input type="radio" name="icra_status_filter" value="Kesilen" class="status-filter" checked>
+                            <span><i class="ti ti-scissors"></i> Kesilen</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 3: Bekleyen / Sırada Dosyalar -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">BEKLEYEN / SIRADA DOSYALAR</span>
+                        <div class="avatar avatar-sm rounded-2 bg-info-lt text-info" style="width: 32px; height: 32px;">
+                            <i class="ti ti-clock" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-pending-files">
+                        <?= number_format($stats['pending_files'] ?? 0, 0, ',', '.'); ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            Sıradaki Dosyalar
+                        </span>
+                        <label class="status-summary-filter mb-0" title="Bekleyen dosyaları göster">
+                            <input type="radio" name="icra_status_filter" value="Bekliyor" class="status-filter">
+                            <span><i class="ti ti-clock"></i> Bekliyor</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 4: Kalan Borç -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KALAN BORÇ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-danger-lt text-danger" style="width: 32px; height: 32px;">
+                            <i class="ti ti-wallet" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-remaining-debt">
+                        <?= Helper::formattedMoney($stats['remaining_debt'] ?? 0); ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 11.5px;">
+                            Kesilen: <strong class="text-success" id="kpi-total-deductions"><?= Helper::formattedMoney($stats['total_deductions'] ?? 0); ?></strong>
+                        </span>
+                        <span class="badge bg-danger-lt fw-semibold" style="font-size: 10px;">Kalan Bakiye</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="row row-cards">
         <div class="col-12">
-            <div class="card">
+            <div class="card icra-table-card" style="border: 1px solid #dbe3ec !important; overflow: hidden; background: #ffffff;">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="card-header-icon">
-                            <i class="ti ti-file-invoice"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">
+                            <i class="ti ti-list text-secondary" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
@@ -149,37 +231,31 @@ $statuses = PersonIcra::getStatuses();
                                     <i class="ti ti-plus"></i>
                                 </a>
                             </div>
-                            <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Personel icra dosyaları, kesinti durumları ve bakiye takibi</p>
+                            <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Anlık arama, sütun filtreleme ve icra dosyaları yönetimi</p>
                         </div>
                     </div>
 
-                    <!-- Durum Çoklu Seçim Filtresi -->
-                    <div class="d-flex align-items-center my-1 my-md-0" style="min-width: 260px; max-width: 320px;">
-                        <select class="form-select select2-init" id="icra-status-multiselect" multiple="multiple" data-placeholder="Durum Filtrele...">
-                            <?php foreach ($statuses as $key => $stInfo): ?>
-                                <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>" <?= $key === 'Kesilen' ? 'selected' : ''; ?>>
-                                    <?= htmlspecialchars($stInfo['title'], ENT_QUOTES, 'UTF-8'); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- Aksiyon Butonları -->
+                    <!-- Actions & Search -->
                     <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-export-excel-list" data-tooltip="Excel'e Aktar" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-file-excel text-success me-1"></i> Excel
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-print-list" data-tooltip="Yazdır / PDF" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-printer text-secondary me-1"></i> Yazdır
-                        </button>
-                        <button type="button" class="btn btn-sm btn-primary" id="btn-open-add-modal" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
-                            <i class="ti ti-plus me-1"></i> Yeni Dosya
+                        <!-- Fast Instant Search -->
+                        <div class="input-icon icra-search-wrap" style="min-width: 170px;">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-search text-muted"></i>
+                            </span>
+                            <input type="text" id="icra-fast-search" class="form-control form-control-sm" placeholder="Arayın..." autocomplete="off">
+                            <button type="button" id="icra-search-clear" class="icra-search-clear d-none" aria-label="Aramayı temizle" title="Aramayı temizle">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
+                        <button type="button" id="toggleIcraSummary" class="btn btn-sm btn-outline-secondary btn-icon icra-summary-toggle" title="Özet kartlarını gizle" aria-label="Özet kartlarını gizle" aria-expanded="true">
+                            <i class="ti ti-chevron-up"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="table-responsive" style="padding: 4px !important;">
-                    <table class="table data-table table-hover text-nowrap w-100" id="icraMainTable" style="width: 100% !important;">
+                <!-- Table Responsive Container (Seamless inside card) -->
+                <div class="table-responsive icra-table-area" style="overflow-x: auto !important;">
+                    <table class="table data-table table-hover text-nowrap w-100 mb-0" id="icraMainTable" style="width: 100% !important; margin: 0 !important;">
                         <thead>
                             <tr>
                                 <th style="width: 40px; min-width: 40px;" class="text-center no-export" data-orderable="false">#</th>
@@ -193,7 +269,7 @@ $statuses = PersonIcra::getStatuses();
                                 <th class="text-end">Yapılan Kesinti</th>
                                 <th class="text-end">Kalan Borç</th>
                                 <th class="text-center">Durum</th>
-                                <th class="text-center no-export" style="width: 110px;" data-orderable="false">İşlemler</th>
+                                <th style="width:110px; min-width:110px;" class="no-export text-end actions-column" data-orderable="false">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -201,117 +277,260 @@ $statuses = PersonIcra::getStatuses();
                         </tbody>
                     </table>
                 </div>
+
             </div>
         </div>
     </div>
 </div>
 
-<!-- İcra Dosyası Ekle / Düzenle Modal -->
+<!-- İcra Dosyası Ekle / Düzenle Modal (Ferah 2-Sütunlu Tasarım) -->
 <div class="modal modal-blur fade" id="icraFileModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content shadow-lg border-0">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document" style="max-width: 960px;">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 14px; overflow: hidden;">
             <form id="form-icra-file" enctype="multipart/form-data">
                 <input type="hidden" name="id" id="icra-file-id" value="">
-                <div class="modal-header py-2 px-3">
-                    <h5 class="modal-title font-weight-700" id="modal-icra-title">
-                        <i class="ti ti-file-plus me-2 text-primary"></i>Yeni İcra Dosyası Ekle
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body py-3">
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label required font-weight-600">Personel</label>
-                            <select class="form-select" name="person_id" id="modal-person-id" required style="width: 100%;">
-                                <option value="">Personel Seçiniz...</option>
-                                <?php foreach ($firmPersons as $p): ?>
-                                    <?php $decryptedKimlik = Security::safeDecrypt($p->kimlik_no ?? ''); ?>
-                                    <option value="<?= Security::encrypt($p->id); ?>" data-person-id="<?= (int)$p->id; ?>" data-fullname="<?= htmlspecialchars($p->full_name ?? '', ENT_QUOTES, 'UTF-8'); ?>" data-tc="<?= htmlspecialchars($decryptedKimlik ?: 'TC Yok', ENT_QUOTES, 'UTF-8'); ?>">
-                                        <?= htmlspecialchars($p->full_name ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                
+                <!-- Modal Header -->
+                <div class="modal-header py-2.5 px-3.5 bg-light-subtle border-bottom">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div class="avatar avatar-sm rounded-3 bg-primary-lt text-primary shadow-sm" style="width: 36px; height: 36px;">
+                            <i class="ti ti-file-invoice" style="font-size: 20px;"></i>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label required font-weight-600">İcra Sırası</label>
-                            <input type="number" class="form-control" name="icra_sirasi" id="modal-icra-sirasi" value="1" min="1" required>
-                        </div>
-                        <div class="col-md-8">
-                            <label class="form-label required font-weight-600">İcra Dairesi</label>
-                            <input type="text" class="form-control" name="icra_dairesi" id="modal-icra-dairesi" list="icra-daireleri-list" placeholder="Örn: İstanbul 3. İcra Dairesi" required autocomplete="off">
-                            <datalist id="icra-daireleri-list">
-                                <?php foreach ($icraDaireleri as $daire): ?>
-                                    <option value="<?= htmlspecialchars($daire, ENT_QUOTES, 'UTF-8'); ?>">
-                                <?php endforeach; ?>
-                            </datalist>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label required font-weight-600">Dosya No</label>
-                            <input type="text" class="form-control" name="dosya_no" id="modal-dosya-no" placeholder="Örn: 2026/1234 Esas" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label required font-weight-600">Alacaklı / Avukat</label>
-                            <input type="text" class="form-control" name="alacakli" id="modal-alacakli" placeholder="Alacaklı kişi veya kurum adı" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label required font-weight-600">Toplam Borç Tutarı (₺)</label>
-                            <input type="text" class="form-control money-input" name="toplam_borc" id="modal-toplam-borc" placeholder="0,00" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label required font-weight-600">Durum</label>
-                            <select class="form-select select2-modal" name="durum" id="modal-durum" required style="width:100%;">
-                                <?php foreach ($statuses as $key => $stInfo): ?>
-                                    <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>">
-                                        <?= htmlspecialchars($stInfo['title'], ENT_QUOTES, 'UTF-8'); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label required font-weight-600">Kesinti Yöntemi</label>
-                            <select class="form-select select2-modal" name="kesinti_yontemi" id="modal-kesinti-yontemi" style="width:100%;">
-                                <option value="oran">Maaş Oranı (%25, 1/4 vb.)</option>
-                                <option value="sabit">Sabit Tutar (₺)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6" id="wrapper-kesinti-orani">
-                            <label class="form-label font-weight-600">Kesinti Oranı</label>
-                            <input type="text" class="form-control" name="kesinti_orani" id="modal-kesinti-orani" value="1/4" placeholder="Örn: %25 veya 1/4">
-                        </div>
-                        <div class="col-md-6 d-none" id="wrapper-kesinti-tutari">
-                            <label class="form-label font-weight-600">Aylık Sabit Kesinti Tutarı (₺)</label>
-                            <input type="text" class="form-control money-input" name="kesinti_tutari" id="modal-kesinti-tutari" placeholder="0,00">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label font-weight-600">Başlama Tarihi</label>
-                            <input type="text" class="form-control flatpickr-input" name="baslama_tarihi" id="modal-baslama-tarihi" placeholder="YYYY-AA-GG">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label font-weight-600">Bitiş Tarihi</label>
-                            <input type="text" class="form-control flatpickr-input" name="bitis_tarihi" id="modal-bitis-tarihi" placeholder="YYYY-AA-GG">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label font-weight-600">Gelen Evrak No/Tarih</label>
-                            <input type="text" class="form-control" name="gelen_evrak" id="modal-gelen-evrak" placeholder="Örn: 12345 / 15.01.2026">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label font-weight-600">Giden Evrak No/Tarih</label>
-                            <input type="text" class="form-control" name="giden_evrak" id="modal-giden-evrak" placeholder="Örn: Cevap Yazısı 54321">
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label font-weight-600">Açıklama / Notlar</label>
-                            <textarea class="form-control" name="aciklama" id="modal-aciklama" rows="2" placeholder="Varsa ek notlar..."></textarea>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label font-weight-600">İcra Belgesi (PDF / Resim / Doküman)</label>
-                            <input type="file" class="form-control" name="belge_dosyasi" id="modal-belge-dosyasi" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx">
-                            <div class="form-text text-muted small">Maksimum 5MB. Yeni dosya seçerseniz mevcut belge güncellenir.</div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark mb-0" id="modal-icra-title" style="font-size: 15px; letter-spacing: -0.2px;">
+                                Yeni İcra Dosyası Ekle
+                            </h5>
+                            <div class="text-muted font-11" style="font-size: 11.5px; line-height: 1.2;">
+                                Personel maaş haczi, icra dairesi ve kesinti parametrelerini yapılandırın
+                            </div>
                         </div>
                     </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-primary px-4" id="btn-save-icra">
+
+                <!-- Modal Body (Ferah 2 Kolonlu Grid) -->
+                <div class="modal-body p-3.5">
+                    <div class="row g-4">
+                        
+                        <!-- SOL KOLON: İCRA VE BORÇ BİLGİLERİ -->
+                        <div class="col-lg-6">
+                            <div class="d-flex align-items-center gap-2 pb-2 mb-3 border-bottom">
+                                <span class="avatar avatar-xs rounded-2 bg-primary-lt text-primary" style="width: 24px; height: 24px;">
+                                    <i class="ti ti-scale" style="font-size: 14px;"></i>
+                                </span>
+                                <span class="fw-bold text-uppercase text-secondary font-12" style="letter-spacing: 0.5px;">İcra Dosyası ve Borç Bilgileri</span>
+                            </div>
+
+                            <div class="row g-2.5">
+                                <!-- Personel Seçimi -->
+                                <div class="col-12">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">İcra Dosyası Açılacak Personel</label>
+                                    <select class="form-select" name="person_id" id="modal-person-id" required style="width: 100%;">
+                                        <option value="">Personel Seçiniz...</option>
+                                        <?php foreach ($firmPersons as $p): ?>
+                                            <?php $decryptedKimlik = Security::safeDecrypt($p->kimlik_no ?? ''); ?>
+                                            <option value="<?= Security::encrypt($p->id); ?>" data-person-id="<?= (int)$p->id; ?>" data-fullname="<?= htmlspecialchars($p->full_name ?? '', ENT_QUOTES, 'UTF-8'); ?>" data-tc="<?= htmlspecialchars($decryptedKimlik ?: 'TC Yok', ENT_QUOTES, 'UTF-8'); ?>">
+                                                <?= htmlspecialchars($p->full_name ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <!-- İcra Sırası & Durum -->
+                                <div class="col-sm-4">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">İcra Sırası</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px; font-size: 12px;">#</span>
+                                        <input type="number" class="form-control" name="icra_sirasi" id="modal-icra-sirasi" value="1" min="1" required style="height: 36px; font-size: 13px;">
+                                    </div>
+                                </div>
+                                <div class="col-sm-8">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Dosya Durumu</label>
+                                    <select class="form-select select2-modal" name="durum" id="modal-durum" required style="width:100%;">
+                                        <?php foreach ($statuses as $key => $stInfo): ?>
+                                            <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>">
+                                                <?= htmlspecialchars($stInfo['title'], ENT_QUOTES, 'UTF-8'); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <!-- İcra Dairesi & Dosya No -->
+                                <div class="col-sm-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">İcra Dairesi</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-building-bank font-14"></i></span>
+                                        <input type="text" class="form-control" name="icra_dairesi" id="modal-icra-dairesi" list="icra-daireleri-list" placeholder="Örn: İstanbul 3. İcra" required autocomplete="off" style="height: 36px; font-size: 13px;">
+                                    </div>
+                                    <datalist id="icra-daireleri-list">
+                                        <?php foreach ($icraDaireleri as $daire): ?>
+                                            <option value="<?= htmlspecialchars($daire, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <?php endforeach; ?>
+                                    </datalist>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Dosya No</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-file-text font-14"></i></span>
+                                        <input type="text" class="form-control" name="dosya_no" id="modal-dosya-no" placeholder="Örn: 2026/1234 Esas" required style="height: 36px; font-size: 13px;">
+                                    </div>
+                                </div>
+
+                                <!-- Alacaklı / Avukat -->
+                                <div class="col-12">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Alacaklı / Avukat / Kurum</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-briefcase font-14"></i></span>
+                                        <input type="text" class="form-control" name="alacakli" id="modal-alacakli" placeholder="Alacaklı kişi, kurum veya avukat adı" required style="height: 36px; font-size: 13px;">
+                                    </div>
+                                </div>
+
+                                <!-- Toplam Borç Tutarı & Kesinti Yöntemi -->
+                                <div class="col-sm-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Toplam Borç Tutarı</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white fw-bold text-dark" style="font-size: 13px; border-color: #cbd5e1;">₺</span>
+                                        <input type="text" class="form-control money-input fw-bold text-dark font-14" name="toplam_borc" id="modal-toplam-borc" placeholder="0,00" required style="height: 36px;">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Kesinti Şekli</label>
+                                    <div class="row g-1.5">
+                                        <div class="col-6">
+                                            <label class="form-selectgroup-item w-100 cursor-pointer mb-0">
+                                                <input type="radio" name="kesinti_yontemi" value="oran" class="form-selectgroup-input kesinti-yontemi-radio" checked>
+                                                <div class="form-selectgroup-label d-flex align-items-center justify-content-between py-1.5 px-2 rounded-2 border" style="min-height: 36px;">
+                                                    <span class="fw-semibold font-12"><i class="ti ti-percentage me-1 text-primary"></i>Oran</span>
+                                                    <i class="ti ti-check text-primary font-13"></i>
+                                                </div>
+                                            </label>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-selectgroup-item w-100 cursor-pointer mb-0">
+                                                <input type="radio" name="kesinti_yontemi" value="sabit" class="form-selectgroup-input kesinti-yontemi-radio">
+                                                <div class="form-selectgroup-label d-flex align-items-center justify-content-between py-1.5 px-2 rounded-2 border" style="min-height: 36px;">
+                                                    <span class="fw-semibold font-12"><i class="ti ti-currency-lira me-1 text-success"></i>Sabit</span>
+                                                    <i class="ti ti-check text-primary font-13"></i>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dinamik Oran / Sabit Tutar Alanı -->
+                                <div class="col-12" id="wrapper-kesinti-orani">
+                                    <div class="p-2.5 rounded-2 bg-light-subtle border" style="border-color: #e2e8f0 !important;">
+                                        <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
+                                            <label class="form-label fw-semibold text-secondary mb-0" style="font-size: 11.5px;">Uygulanacak Kesinti Oranı</label>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 btn-quick-rate active" data-rate="1/4" style="font-size: 11px;">1/4 (%25)</button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 btn-quick-rate" data-rate="1/3" style="font-size: 11px;">1/3 (%33)</button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 btn-quick-rate" data-rate="1/2" style="font-size: 11px;">1/2 (%50)</button>
+                                                <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 btn-quick-rate" data-rate="%25" style="font-size: 11px;">%25</button>
+                                            </div>
+                                        </div>
+                                        <div class="input-group input-group-flat">
+                                            <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-percentage font-13"></i></span>
+                                            <input type="text" class="form-control" name="kesinti_orani" id="modal-kesinti-orani" value="1/4" placeholder="Örn: 1/4 veya %25" style="height: 34px; font-size: 13px;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 d-none" id="wrapper-kesinti-tutari">
+                                    <div class="p-2.5 rounded-2 bg-light-subtle border" style="border-color: #e2e8f0 !important;">
+                                        <label class="form-label fw-semibold text-secondary mb-1.5" style="font-size: 11.5px;">Aylık Sabit Kesinti Tutarı (₺)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white fw-bold text-dark" style="font-size: 12px;">₺</span>
+                                            <input type="text" class="form-control money-input fw-bold font-13" name="kesinti_tutari" id="modal-kesinti-tutari" placeholder="0,00" style="height: 34px;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SAĞ KOLON: TARİHLER, EVRAKLAR VE BELGE -->
+                        <div class="col-lg-6">
+                            <div class="d-flex align-items-center gap-2 pb-2 mb-3 border-bottom">
+                                <span class="avatar avatar-xs rounded-2 bg-info-lt text-info" style="width: 24px; height: 24px;">
+                                    <i class="ti ti-calendar-time" style="font-size: 14px;"></i>
+                                </span>
+                                <span class="fw-bold text-uppercase text-secondary font-12" style="letter-spacing: 0.5px;">Tarihler, Evrak ve Belgeler</span>
+                            </div>
+
+                            <div class="row g-2.5">
+                                <!-- Başlama ve Bitiş Tarihleri -->
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Kesinti Başlama Tarihi</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-calendar font-14"></i></span>
+                                        <input type="text" class="form-control flatpickr-input" name="baslama_tarihi" id="modal-baslama-tarihi" placeholder="YYYY-AA-GG" style="height: 36px; font-size: 12.5px;">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Kesinti Bitiş Tarihi</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-calendar-off font-14"></i></span>
+                                        <input type="text" class="form-control flatpickr-input" name="bitis_tarihi" id="modal-bitis-tarihi" placeholder="YYYY-AA-GG" style="height: 36px; font-size: 12.5px;">
+                                    </div>
+                                </div>
+
+                                <!-- Gelen / Giden Evrak -->
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Gelen Evrak No / Tarih</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-arrow-down-left font-14 text-success"></i></span>
+                                        <input type="text" class="form-control" name="gelen_evrak" id="modal-gelen-evrak" placeholder="Örn: 12345 / 15.01.2026" style="height: 36px; font-size: 12.5px;">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Giden Evrak No / Tarih</label>
+                                    <div class="input-group input-group-flat">
+                                        <span class="input-group-text text-muted" style="padding: 0 8px;"><i class="ti ti-arrow-up-right font-14 text-primary"></i></span>
+                                        <input type="text" class="form-control" name="giden_evrak" id="modal-giden-evrak" placeholder="Örn: Cevap Yazısı 54321" style="height: 36px; font-size: 12.5px;">
+                                    </div>
+                                </div>
+
+                                <!-- İcra Belgesi Dosyası -->
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold" style="font-size: 12px; margin-bottom: 4px;">İcra Belgesi / Mahkeme Kararı</label>
+                                    <div class="icra-file-dropzone rounded-2 p-2.5 text-center" style="border: 1px dashed #cbd5e1; background: #fafafa;">
+                                        <input type="file" class="d-none" name="belge_dosyasi" id="modal-belge-dosyasi" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx">
+                                        <label for="modal-belge-dosyasi" class="cursor-pointer mb-0 d-block">
+                                            <div class="d-flex align-items-center justify-content-center gap-2 py-1">
+                                                <div class="avatar avatar-sm rounded-2 bg-primary-lt text-primary">
+                                                    <i class="ti ti-cloud-upload font-18"></i>
+                                                </div>
+                                                <div class="text-start">
+                                                    <div class="fw-semibold text-dark font-12" id="modal-file-chosen-text">Belge Yüklemek İçin Tıklayın veya Sürükleyin</div>
+                                                    <div class="text-muted font-11" style="font-size: 11px;">PDF, Görsel, Word, Excel (Maks: 5MB)</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                        <div id="modal-existing-file-container" class="mt-2 d-none">
+                                            <span class="badge bg-blue-lt text-blue py-1 px-2.5 font-11 d-inline-flex align-items-center gap-1.5">
+                                                <i class="ti ti-file-check font-14"></i>
+                                                <span id="modal-existing-file-text">Mevcut Belge Yüklü</span>
+                                                <a href="javascript:void(0)" id="modal-existing-file-link" target="_blank" class="text-primary text-decoration-underline ms-1 fw-bold">Görüntüle</a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Açıklama / Notlar -->
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold" style="font-size: 12px; margin-bottom: 4px;">Açıklama / Notlar</label>
+                                    <textarea class="form-control" name="aciklama" id="modal-aciklama" rows="3" placeholder="Varsa icra dosyasına dair özel notlar, avukat iletişim veya ek açıklamalar..." style="font-size: 12.5px;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer py-2.5 px-3.5 bg-light-subtle border-top d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-link link-secondary px-2" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-dark px-4 shadow-sm" id="btn-save-icra" style="background-color: #1e293b; border-color: #1e293b;">
                         <i class="ti ti-device-floppy me-1"></i> Kaydet
                     </button>
                 </div>
@@ -323,11 +542,17 @@ $statuses = PersonIcra::getStatuses();
 <!-- İcra Kesintileri Geçmişi Modalı -->
 <div class="modal modal-blur fade" id="deductionsHistoryModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
-        <div class="modal-content shadow-lg border-0">
-            <div class="modal-header py-2 px-3">
-                <h5 class="modal-title font-weight-700" id="modal-deductions-title">
-                    <i class="ti ti-history me-2 text-success"></i>İcra Kesintileri Geçmişi
-                </h5>
+        <div class="modal-content shadow-lg border-0" style="border-radius: 14px; overflow: hidden;">
+            <div class="modal-header py-2.5 px-3 bg-light-subtle border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar avatar-sm rounded-2 bg-success-lt text-success" style="width: 32px; height: 32px;">
+                        <i class="ti ti-history font-16"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold font-14 mb-0" id="modal-deductions-title">İcra Kesintileri Geçmişi</h5>
+                        <div class="text-muted font-11">Bordro dönemlerinde yapılan maaş haczi kesintileri</div>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
@@ -356,7 +581,7 @@ $statuses = PersonIcra::getStatuses();
                     </table>
                 </div>
             </div>
-            <div class="modal-footer py-2 d-flex justify-content-between">
+            <div class="modal-footer py-2 px-3 bg-light-subtle d-flex justify-content-between">
                 <div class="btn-group">
                     <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-modal-print-deductions">
                         <i class="ti ti-printer me-1"></i> Yazdır
@@ -372,48 +597,181 @@ $statuses = PersonIcra::getStatuses();
 </div>
 
 <style>
-/* Tablonun etrafındaki eşit 4px dış boşluk */
-.card .table-responsive {
-    padding: 4px !important;
-    margin: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    overflow-x: auto !important;
+.icra-header-action {
+    height: 32px;
+    padding: 4px 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
 }
 
-#icraMainTable_wrapper {
-    width: 100% !important;
+.icra-header-icon-action,
+.icra-summary-toggle {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+}
+.icra-header-icon-action i,
+.icra-summary-toggle i {
     margin: 0 !important;
+    font-size: 18px !important;
+}
+
+#icraPage .icra-summary-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+    overflow: hidden;
+}
+
+#icraSummaryCards {
+    max-height: 1000px;
+    opacity: 1;
+    transform: translateY(0);
+    overflow: hidden;
+    transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
+}
+
+#icraPage .icra-table-card {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
+    overflow: hidden;
+}
+
+.icra-table-card > .icra-table-area {
+    width: calc(100% - 16px) !important;
+    margin: 0 8px 8px !important;
     padding: 0 !important;
 }
 
-/* Belirgin dış çerçeve, yuvarlak köşeler ve tam %100 genişlik */
+.icra-table-card > .card-header {
+    border-bottom: 0 !important;
+}
+
+.status-summary-filter { cursor: pointer; }
+.status-summary-filter input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.status-summary-filter span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 2px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #64748b;
+    background: #fff;
+    font-size: 10.5px;
+    font-weight: 600;
+    transition: all .15s ease;
+}
+.status-summary-filter:hover span,
+.status-summary-filter input:focus-visible + span {
+    border-color: #94a3b8;
+    color: #334155;
+}
+.status-summary-filter input:checked + span {
+    border-color: #206bc4;
+    color: #206bc4;
+    background: rgba(32, 107, 196, .08);
+    box-shadow: 0 0 0 1px rgba(32, 107, 196, .08);
+}
+
+.icra-search-wrap { position: relative; }
+#icra-fast-search {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 4px 32px 4px 34px !important;
+    line-height: 1.25 !important;
+    font-size: 12.5px;
+    border-radius: 6px;
+}
+.icra-search-wrap,
+.icra-search-wrap.input-icon {
+    height: 32px !important;
+}
+.icra-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    z-index: 3;
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 50%;
+    color: #64748b;
+    background: #f1f5f9;
+    cursor: pointer;
+}
+.icra-search-clear:hover {
+    color: #1e293b;
+    background: #e2e8f0;
+}
+
+.table-responsive,
+#icraMainTable_wrapper,
+div.dt-container,
+div.dt-container .dt-layout-row.dt-layout-table,
+div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
+    height: auto !important;
+    min-height: 0 !important;
+    min-height: unset !important;
+    max-height: none !important;
+    flex-grow: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+div.dt-container .dt-layout-row.dt-layout-table {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Tek Çerçeve (Kart ile Bütünleşik Tablo) */
 table#icraMainTable.data-table,
 table#icraMainTable.dataTable {
     border-collapse: separate !important;
     border-spacing: 0 !important;
-    border-radius: 10px !important;
-    border: 1px solid #cbd5e1 !important;
-    overflow: hidden !important;
+    border: 1px solid #dbe3ec !important;
+    border-radius: 8px !important;
     width: 100% !important;
     min-width: 100% !important;
     margin: 0 !important;
+    overflow: hidden !important;
+}
+table#icraMainTable.data-table tbody,
+table#icraMainTable.dataTable tbody,
+table#icraMainTable.data-table tbody tr:last-child,
+table#icraMainTable.dataTable tbody tr:last-child,
+#icraMainTable_wrapper .dt-layout-table,
+#icraMainTable_wrapper .dt-layout-cell {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
 }
 
-table#icraMainTable.data-table thead tr:first-child th:first-child { border-top-left-radius: 9px !important; }
-table#icraMainTable.data-table thead tr:first-child th:last-child { border-top-right-radius: 9px !important; }
-table#icraMainTable.data-table tbody tr:last-child td:first-child { border-bottom-left-radius: 9px !important; }
-table#icraMainTable.data-table tbody tr:last-child td:last-child { border-bottom-right-radius: 9px !important; }
-
-/* Başlık hücreleri ve iç kenarlıklar */
+/* Tablo Başlık Hücreleri */
 table#icraMainTable.data-table thead th {
     background: #f8fafc !important;
     color: #475569 !important;
     font-weight: 600 !important;
-    font-size: 12px !important;
+    font-size: 11.5px !important;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 10px 12px !important;
+    letter-spacing: 0.4px;
+    padding: 9px 12px !important;
     border-bottom: 1px solid #cbd5e1 !important;
     border-right: 1px solid #e2e8f0 !important;
     border-top: none !important;
@@ -424,10 +782,10 @@ table#icraMainTable.data-table thead th:last-child {
     border-right: none !important;
 }
 
-/* Gövde satırları */
+/* Gövde Satır ve Sütun Kenarlıkları */
 table#icraMainTable.data-table tbody td {
-    padding: 8px 12px !important;
-    font-size: 13.5px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
     color: #1e293b !important;
     vertical-align: middle !important;
     border-bottom: 1px solid #e2e8f0 !important;
@@ -435,104 +793,280 @@ table#icraMainTable.data-table tbody td {
     border-top: none !important;
     border-left: none !important;
 }
+table#icraMainTable.data-table td.actions-column .btn.btn-sm.btn-icon {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+}
+table#icraMainTable.data-table td.actions-column .btn.btn-sm.btn-icon i {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    font-size: 13px !important;
+}
 table#icraMainTable.data-table tbody td:last-child {
     border-right: none !important;
 }
 table#icraMainTable.data-table tbody tr:last-child td {
     border-bottom: none !important;
 }
+table#icraMainTable.dataTable > tbody > tr:last-child > *,
+table#icraMainTable.data-table > tbody > tr:last-child > * {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}
 table#icraMainTable.data-table tbody tr:hover td {
     background-color: #f8fafc !important;
 }
 
-/* Select2 Kompakt Styling */
-.select2-container--bootstrap-5 .select2-selection--multiple,
-.select2-container--default .select2-selection--multiple,
-.select2-container .select2-selection--multiple {
-    min-height: 32px !important;
-    height: auto !important;
-    border: 1px solid var(--tblr-border-color, #dadcde) !important;
-    background-color: var(--tblr-bg-surface, #ffffff) !important;
-    border-radius: 6px !important;
-    padding: 2px 4px !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    gap: 3px !important;
-}
-
-.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice,
-.select2-container--default .select2-selection--multiple .select2-selection__choice,
-.select2-container .select2-selection--multiple .select2-selection__choice {
-    background-color: var(--tblr-bg-surface-secondary, #f1f5f9) !important;
-    color: var(--tblr-body-color, #1e293b) !important;
-    border: 1px solid var(--tblr-border-color, #cbd5e1) !important;
-    border-radius: 4px !important;
-    padding: 2px 8px !important;
-    margin: 1px !important;
-    font-size: 0.775rem !important;
-    font-weight: 600 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-}
-
-.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove,
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove,
-.select2-container .select2-selection--multiple .select2-selection__choice__remove {
-    display: none !important;
-}
-
-.select2-container--bootstrap-5 .select2-dropdown .select2-results__option--selected,
-.select2-container--default .select2-dropdown .select2-results__option--selected {
-    background-color: rgba(32, 107, 196, 0.15) !important;
-}
-
-.select2-container .select2-search--inline .select2-search__field {
+/* Tablo Altı Sayfalama ve Bilgi Alanı */
+#icraMainTable_wrapper .dt-layout-row:last-child,
+div.dt-container .dt-layout-row:last-child,
+div#icraMainTable_wrapper .dt-layout-row:has(.dt-paging),
+div#icraMainTable_wrapper .dt-layout-row:has(.dt-info) {
+    margin: 0 !important;
     margin-top: 0 !important;
-    height: 24px !important;
-    line-height: 24px !important;
-    font-size: 0.8125rem !important;
+    padding: 10px 16px !important;
     background: transparent !important;
-    color: var(--tblr-body-color, inherit) !important;
-    border: none !important;
+    border-top: none !important;
     box-shadow: none !important;
+    position: static !important;
+    flex-shrink: 0 !important;
+}
+
+/* Modern Select Styling (DataTables Length) */
+.dataTables_length select,
+.dt-length select {
+    display: inline-block !important;
+    width: auto !important;
+    min-width: 65px !important;
+    height: 30px !important;
+    padding: 3px 26px 3px 8px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+    color: #334155 !important;
+    background-color: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 7px center !important;
+    background-size: 10px 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    outline: none !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+    cursor: pointer !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+.dataTables_length select:hover,
+.dt-length select:hover {
+    border-color: #94a3b8 !important;
+}
+.dataTables_length select:focus,
+.dt-length select:focus {
+    border-color: #206bc4 !important;
+    box-shadow: 0 0 0 2px rgba(32, 107, 196, 0.15) !important;
+}
+
+/* Custom Context Menu */
+.custom-context-menu {
+    position: fixed;
+    z-index: 1050;
+    display: none;
+    min-width: 190px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 6px;
+    font-size: 13px;
+    user-select: none;
+}
+[data-bs-theme="dark"] .custom-context-menu {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+.custom-context-menu .cm-header {
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+[data-bs-theme="dark"] .custom-context-menu .cm-header {
+    border-bottom-color: #334155;
+    color: #94a3b8;
+}
+.custom-context-menu a {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    color: #334155;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.15s;
+    font-weight: 500;
+}
+[data-bs-theme="dark"] .custom-context-menu a {
+    color: #e2e8f0;
+}
+.custom-context-menu a i {
+    font-size: 15px;
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+.custom-context-menu a:hover {
+    background-color: #f1f5f9;
+    color: #206bc4;
+}
+[data-bs-theme="dark"] .custom-context-menu a:hover {
+    background-color: #334155;
+    color: #38bdf8;
+}
+.custom-context-menu .cm-divider {
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 4px 0;
+}
+[data-bs-theme="dark"] .custom-context-menu .cm-divider {
+    background-color: #334155;
+}
+.custom-context-menu a.cm-danger {
+    color: #ef4444;
+}
+.custom-context-menu a.cm-danger:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+[data-bs-theme="dark"] .custom-context-menu a.cm-danger:hover {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+tbody tr.context-menu-active td {
+    background-color: rgba(32, 107, 196, 0.08) !important;
+}
+
+/* Modal UI/UX Custom Styling */
+.btn-quick-rate {
+    transition: all 0.15s ease;
+}
+.btn-quick-rate.active {
+    background-color: #206bc4 !important;
+    border-color: #206bc4 !important;
+    color: #ffffff !important;
+}
+.icra-file-dropzone {
+    transition: all 0.2s ease;
+}
+.icra-file-dropzone:hover {
+    border-color: #206bc4 !important;
+    background-color: rgba(32, 107, 196, 0.03) !important;
 }
 
 /* Dark Mode */
-[data-bs-theme="dark"] table#icraMainTable.data-table {
-    border-color: #334155 !important;
-}
 [data-bs-theme="dark"] table#icraMainTable.data-table thead th {
-    background: #1e293b !important;
+    background: #0f172a !important;
     color: #94a3b8 !important;
     border-bottom-color: #334155 !important;
     border-right-color: #334155 !important;
+}
+[data-bs-theme="dark"] table#icraMainTable.data-table,
+[data-bs-theme="dark"] table#icraMainTable.dataTable {
+    border-color: #334155 !important;
 }
 [data-bs-theme="dark"] table#icraMainTable.data-table tbody td {
     border-bottom-color: #334155 !important;
     border-right-color: #334155 !important;
     color: #e2e8f0 !important;
 }
+[data-bs-theme="dark"] table#icraMainTable.data-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
 [data-bs-theme="dark"] table#icraMainTable.data-table tbody tr:hover td {
     background-color: rgba(255, 255, 255, 0.04) !important;
 }
-[data-bs-theme="dark"] .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice,
-[data-bs-theme="dark"] .select2-container--default .select2-selection--multiple .select2-selection__choice,
-[data-bs-theme="dark"] .select2-container .select2-selection--multiple .select2-selection__choice {
-    background-color: rgba(32, 107, 196, 0.2) !important;
-    color: var(--tblr-primary, #206bc4) !important;
-    border-color: rgba(32, 107, 196, 0.4) !important;
+[data-bs-theme="dark"] .dataTables_length select,
+[data-bs-theme="dark"] .dt-length select {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
 }
-[data-bs-theme="dark"] .select2-dropdown {
-    background-color: var(--tblr-bg-surface, #1e293b) !important;
-    border-color: var(--tblr-border-color, #334155) !important;
-    color: var(--tblr-body-color, #f8fafc) !important;
+[data-bs-theme="dark"] .status-summary-filter span {
+    color: #94a3b8;
+    background: #1e293b;
+    border-color: #334155;
+}
+[data-bs-theme="dark"] .status-summary-filter input:checked + span {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, .14);
+    border-color: #3b82f6;
+}
+[data-bs-theme="dark"] .icra-search-clear {
+    color: #94a3b8;
+    background: #334155;
+}
+[data-bs-theme="dark"] .icra-summary-card,
+[data-bs-theme="dark"] .icra-table-card {
+    background: #182433 !important;
+    border-color: #334155 !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
+}
+[data-bs-theme="dark"] .icra-file-dropzone {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+#icraMainTable th:last-child,
+#icraMainTable td:last-child {
+    width: 110px !important;
+    min-width: 110px !important;
+    text-align: right !important;
+    white-space: nowrap;
+    padding-right: 12px !important;
 }
 </style>
 
 <script>
 $(document).ready(function() {
     let icraDataTable = null;
+    let currentStatus = 'Kesilen';
+
+    // Summary Toggle Logic
+    var $summaryToggle = $('#toggleIcraSummary');
+    function syncSummaryToggle() {
+        var isCollapsed = document.documentElement.classList.contains('icra-summary-collapsed');
+        $summaryToggle
+            .attr('aria-expanded', String(!isCollapsed))
+            .attr('aria-label', isCollapsed ? 'Özet kartlarını göster' : 'Özet kartlarını gizle')
+            .attr('title', isCollapsed ? 'Özet kartlarını göster' : 'Özet kartlarını gizle');
+        $summaryToggle.find('i')
+            .toggleClass('ti-chevron-up', !isCollapsed)
+            .toggleClass('ti-chevron-down', isCollapsed);
+    }
+    syncSummaryToggle();
+
+    $summaryToggle.on('click', function() {
+        var isCollapsed = document.documentElement.classList.toggle('icra-summary-collapsed');
+        try {
+            localStorage.setItem('icra_summary_collapsed', isCollapsed ? '1' : '0');
+        } catch (e) {}
+        syncSummaryToggle();
+    });
 
     // Status UI Badge Mapping
     const statusMap = {
@@ -547,48 +1081,6 @@ $(document).ready(function() {
 
     // 1. Select2 İlklendirme
     if ($.fn.select2) {
-        $('#icra-status-multiselect').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            closeOnSelect: false,
-            placeholder: 'Durum Filtrele...',
-            dropdownParent: $('body'),
-            templateResult: function(state) {
-                if (!state.id) return state.text;
-                const isSelected = $(state.element).is(':selected');
-                if (isSelected) {
-                    return $('<div class="d-flex align-items-center justify-content-between text-primary font-weight-700 w-100 py-1"><span>' + state.text + '</span><i class="ti ti-check fs-2 text-primary"></i></div>');
-                } else {
-                    return $('<div class="d-flex align-items-center justify-content-between w-100 py-1"><span>' + state.text + '</span></div>');
-                }
-            },
-            templateSelection: function(state) {
-                if (!state.id) return state.text;
-                return $('<span class="d-inline-flex align-items-center"><i class="ti ti-check me-1 text-primary"></i>' + state.text + '</span>');
-            }
-        });
-
-        $('#icra-status-multiselect').on('select2:select select2:unselect', function (e) {
-            setTimeout(function() {
-                $('.select2-results__option').each(function() {
-                    const data = $(this).data('data');
-                    if (data && data.element) {
-                        const isSelected = $(data.element).is(':selected');
-                        if (isSelected) {
-                            $(this).addClass('select2-results__option--selected');
-                            if ($(this).find('.ti-check').length === 0) {
-                                $(this).find('> div').addClass('text-primary font-weight-700').append('<i class="ti ti-check fs-2 text-primary"></i>');
-                            }
-                        } else {
-                            $(this).removeClass('select2-results__option--selected');
-                            $(this).find('.ti-check').remove();
-                            $(this).find('> div').removeClass('text-primary font-weight-700');
-                        }
-                    }
-                });
-            }, 10);
-        });
-
         $('.select2-modal').select2({
             theme: 'bootstrap-5',
             width: '100%',
@@ -639,8 +1131,8 @@ $(document).ready(function() {
         });
     }
 
-    // 3. Kesinti Yöntemi Değişimi
-    $('#modal-kesinti-yontemi').on('change', function() {
+    // 3. Kesinti Yöntemi Değişimi (Radio Button Handlers)
+    $(document).on('change', 'input.kesinti-yontemi-radio', function() {
         const val = $(this).val();
         if (val === 'oran') {
             $('#wrapper-kesinti-orani').removeClass('d-none');
@@ -651,16 +1143,92 @@ $(document).ready(function() {
         }
     });
 
+    // Hızlı Oran Seçim Butonları
+    $(document).on('click', '.btn-quick-rate', function() {
+        const rate = $(this).data('rate');
+        $('#modal-kesinti-orani').val(rate);
+        $('.btn-quick-rate').removeClass('active');
+        $(this).addClass('active');
+    });
+
+    $('#modal-kesinti-orani').on('input', function() {
+        const val = $(this).val().trim();
+        $('.btn-quick-rate').each(function() {
+            $(this).toggleClass('active', $(this).data('rate') === val);
+        });
+    });
+
+    // Dosya Seçim Metni Güncelleme
+    $('#modal-belge-dosyasi').on('change', function() {
+        if (this.files && this.files.length > 0) {
+            $('#modal-file-chosen-text').html('<span class="text-success fw-bold"><i class="ti ti-check me-1"></i>Seçilen Dosya: ' + this.files[0].name + '</span>');
+        } else {
+            $('#modal-file-chosen-text').text('Belge Yüklemek İçin Tıklayın veya Sürükleyin');
+        }
+    });
+
+    // Sütun Konfigürasyonu
+    var columnConfig = {
+        1: { label: 'Personel', default: true },
+        2: { label: 'İcra Sırası', default: true },
+        3: { label: 'İcra Dairesi', default: true },
+        4: { label: 'Dosya No', default: true },
+        5: { label: 'Alacaklı / Avukat', default: true },
+        6: { label: 'Toplam Borç', default: true },
+        7: { label: 'Kesinti Yöntemi', default: true },
+        8: { label: 'Yapılan Kesinti', default: true },
+        9: { label: 'Kalan Borç', default: true },
+        10: { label: 'Durum', default: true }
+    };
+
+    function setupColumnVisibilityMenu(dtInstance) {
+        var savedVisibility = localStorage.getItem('icra_column_visibility');
+        var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+
+        var menuHtml = '';
+        $.each(columnConfig, function(idx, conf) {
+            var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
+            dtInstance.column(idx).visible(isVisible, false);
+
+            menuHtml += `
+                <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
+                    <div class="form-check mb-0 w-100">
+                        <input class="form-check-input icra-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
+                        <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+                            ${conf.label}
+                        </span>
+                    </div>
+                </label>`;
+        });
+
+        $('#icraColvisMenu').html(menuHtml);
+        dtInstance.columns.adjust();
+    }
+
+    $(document).on('change', '.icra-col-trigger', function() {
+        if (!icraDataTable) return;
+        var colIdx = parseInt($(this).data('column'));
+        var isChecked = this.checked;
+        icraDataTable.column(colIdx).visible(isChecked);
+
+        var savedVisibility = localStorage.getItem('icra_column_visibility');
+        var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+        visibilityState[colIdx] = isChecked;
+        localStorage.setItem('icra_column_visibility', JSON.stringify(visibilityState));
+    });
+
+    $(document).on('click', '#icraColvisMenu', function(e) {
+        e.stopPropagation();
+    });
+
     // 4. Veri Yükleme & DataTable Kurulumu
     function loadIcraTable() {
-        const selectedStatuses = $('#icra-status-multiselect').val() || [];
-
         $.ajax({
             url: 'api/persons/icra.php',
             type: 'POST',
             data: {
                 action: 'firm_list',
-                status_filter: selectedStatuses
+                status_filter: currentStatus ? [currentStatus] : []
             },
             dataType: 'json',
             success: function(res) {
@@ -698,7 +1266,7 @@ $(document).ready(function() {
                             if (f.has_belge) {
                                 fileBtn = `
                                     <a href="api/persons/icra.php?action=download&id=${f.id}" class="btn btn-sm btn-icon btn-ghost-primary" title="Evrak İndir" target="_blank">
-                                        <i class="ti ti-download fs-2"></i>
+                                        <i class="ti ti-download"></i>
                                     </a>
                                 `;
                             }
@@ -706,18 +1274,18 @@ $(document).ready(function() {
                             let fileJsonData = encodeURIComponent(JSON.stringify(f));
 
                             let tr = `
-                                <tr>
+                                <tr data-file="${fileJsonData}" data-id="${f.id}" data-person-id="${f.person_id}" data-person-name="${f.person_name}" data-dosya-no="${f.dosya_no}" data-has-belge="${f.has_belge ? '1' : '0'}">
                                     <td class="text-center font-weight-600 text-secondary">${idx + 1}</td>
                                     <td>
                                         <a href="index.php?p=persons/manage&id=${f.person_id}&tab=icra" class="font-weight-700 text-reset text-decoration-none hover-primary">
                                             ${f.person_name}
                                         </a>
-                                        <div class="small text-muted">TC: ${f.person_tc || '-'} | Sicil: ${f.person_sicil || '-'}</div>
+                                        <div class="small text-muted" style="font-size: 11px;">TC: ${f.person_tc || '-'} | Sicil: ${f.person_sicil || '-'}</div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-blue-lt text-blue">${f.icra_sirasi}. Sıra</span>
                                     </td>
-                                    <td class="icra-dairesi-cell">${f.icra_dairesi}</td>
+                                    <td>${f.icra_dairesi}</td>
                                     <td class="font-weight-600">${f.dosya_no}</td>
                                     <td>${f.alacakli}</td>
                                     <td class="text-end font-weight-700">${f.toplam_borc}</td>
@@ -729,17 +1297,17 @@ $(document).ready(function() {
                                     </td>
                                     <td class="text-end text-danger font-weight-700">${f.kalan_borc}</td>
                                     <td class="text-center">${statusBadge}</td>
-                                    <td class="text-center">
-                                        <div class="d-inline-flex gap-1 align-items-center">
+                                    <td class="text-end actions-column">
+                                        <div class="d-inline-flex gap-1 align-items-center justify-content-end">
                                             ${fileBtn}
                                             <button type="button" class="btn btn-sm btn-icon btn-ghost-primary btn-edit-icra" data-file="${fileJsonData}" title="Düzenle">
-                                                <i class="ti ti-edit fs-2"></i>
+                                                <i class="ti ti-edit"></i>
                                             </button>
                                             <a href="index.php?p=persons/manage&id=${f.person_id}&tab=icra" class="btn btn-sm btn-icon btn-ghost-secondary" title="Personel Detayı">
-                                                <i class="ti ti-external-link fs-2"></i>
+                                                <i class="ti ti-external-link"></i>
                                             </a>
                                             <button type="button" class="btn btn-sm btn-icon btn-ghost-danger btn-delete-icra" data-id="${f.id}" title="Sil">
-                                                <i class="ti ti-trash fs-2"></i>
+                                                <i class="ti ti-trash"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -749,23 +1317,35 @@ $(document).ready(function() {
                         });
                     }
 
-                    // window.createDataTable kullanarak DataTable oluştur
-                    if (typeof window.createDataTable === 'function') {
-                        icraDataTable = window.createDataTable('#icraMainTable', {
-                            pageLength: 25,
-                            order: [[1, 'asc']],
-                            columnDefs: [
-                                { targets: 0, className: 'text-center' },
-                                { targets: [2, 7, 10], className: 'text-center' },
-                                { targets: [6, 8, 9], className: 'text-end' },
-                                { targets: 11, orderable: false, searchable: false, className: 'text-center no-export' }
-                            ]
-                        });
-                    } else if ($.fn.DataTable) {
-                        icraDataTable = $('#icraMainTable').DataTable({
-                            pageLength: 25,
-                            language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json' }
-                        });
+                    // DataTable init
+                    icraDataTable = $('#icraMainTable').DataTable({
+                        pageLength: 25,
+                        lengthMenu: [10, 25, 50, 100],
+                        order: [[1, 'asc']],
+                        columnDefs: [
+                            { targets: [0, 11], orderable: false, searchable: false },
+                            { targets: 0, className: 'text-center no-export' },
+                            { targets: [2, 7, 10], className: 'text-center' },
+                            { targets: [6, 8, 9], className: 'text-end' },
+                            { targets: 11, width: '110px', className: 'text-end no-export actions-column' }
+                        ],
+                        language: {
+                            url: 'src/tr.json',
+                            processing: '<span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...'
+                        },
+                        initComplete: function() {
+                            var api = this.api();
+                            if (typeof window.initDataTableColumnFilters === 'function') {
+                                window.initDataTableColumnFilters($('#icraMainTable'), api);
+                            }
+                            setupColumnVisibilityMenu(api);
+                        }
+                    });
+
+                    // Eğer hızlı arama kutusunda değer varsa uygula
+                    const searchVal = $('#icra-fast-search').val();
+                    if (searchVal) {
+                        icraDataTable.search(searchVal).draw();
                     }
                 } else {
                     Swal.fire('Hata!', res.message || 'Veriler yüklenirken bir hata oluştu.', 'error');
@@ -781,23 +1361,62 @@ $(document).ready(function() {
     // İlk yükleme
     loadIcraTable();
 
-    // 5. Durum Multi-Select Değişimi
-    $('#icra-status-multiselect').on('change', function() {
+    // 5. Durum Filtresi Değişimi
+    $('.status-filter').on('change', function() {
+        currentStatus = $(this).val();
         loadIcraTable();
     });
 
-    // 6. Yeni İcra Dosyası Modal Açma (Header veya Ana Buton)
+    // 6. Hızlı Genel Arama Inputu
+    var searchTimer = null;
+    $('#icra-fast-search').on('input', function() {
+        var val = this.value;
+        $('#icra-search-clear').toggleClass('d-none', val.length === 0);
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function() {
+            if (icraDataTable) {
+                icraDataTable.search(val).draw();
+            }
+        }, 300);
+    });
+
+    $('#icra-search-clear').on('click', function() {
+        clearTimeout(searchTimer);
+        $('#icra-fast-search').val('').trigger('focus');
+        $(this).addClass('d-none');
+        if (icraDataTable) {
+            icraDataTable.search('').draw();
+        }
+    });
+
+    // 7. Yeni İcra Dosyası Modal Açma (Header veya Ana Buton)
     $(document).on('click', '#btn-open-add-modal, #btn-open-add-modal-header', function() {
         $('#form-icra-file')[0].reset();
         $('#icra-file-id').val('');
-        $('#modal-icra-title').html('<i class="ti ti-file-plus me-2 text-primary"></i>Yeni İcra Dosyası Ekle');
+        $('#modal-icra-title').html('Yeni İcra Dosyası Ekle');
         $('#modal-person-id').val('').trigger('change');
         $('#modal-durum').val('Kesilen').trigger('change');
-        $('#modal-kesinti-yontemi').val('oran').trigger('change');
+        
+        // Reset kesinti yöntemi
+        $('input.kesinti-yontemi-radio[value="oran"]').prop('checked', true).trigger('change');
+        $('#modal-kesinti-orani').val('1/4');
+        $('.btn-quick-rate').removeClass('active');
+        $('.btn-quick-rate[data-rate="1/4"]').addClass('active');
+        
+        // Reset file container
+        $('#modal-file-chosen-text').text('Belge Yüklemek İçin Tıklayın veya Sürükleyin');
+        $('#modal-existing-file-container').addClass('d-none');
+
+        // Reset dates
+        if (typeof flatpickr !== 'undefined') {
+            document.querySelector("#modal-baslama-tarihi")?._flatpickr?.clear();
+            document.querySelector("#modal-bitis-tarihi")?._flatpickr?.clear();
+        }
+
         $('#icraFileModal').modal('show');
     });
 
-    // 7. Düzenle (Edit) Modal Açma
+    // 8. Düzenle (Edit) Modal Açma
     $(document).on('click', '.btn-edit-icra', function() {
         const rawData = $(this).attr('data-file');
         if (!rawData) return;
@@ -807,7 +1426,7 @@ $(document).ready(function() {
 
             $('#form-icra-file')[0].reset();
             $('#icra-file-id').val(f.id);
-            $('#modal-icra-title').html('<i class="ti ti-edit me-2 text-primary"></i>İcra Dosyası Güncelle');
+            $('#modal-icra-title').html('İcra Dosyası Güncelle');
 
             let targetPersonId = f.raw_person_id || f.person_id_raw;
             let optionVal = $('#modal-person-id option[data-person-id="' + targetPersonId + '"]').val();
@@ -822,8 +1441,16 @@ $(document).ready(function() {
             $('#modal-alacakli').val(f.alacakli);
             $('#modal-toplam-borc').val(f.toplam_borc_raw || f.toplam_borc);
             $('#modal-durum').val(f.durum).trigger('change');
-            $('#modal-kesinti-yontemi').val(f.kesinti_yontemi || 'oran').trigger('change');
-            $('#modal-kesinti-orani').val(f.kesinti_orani || '1/4');
+
+            const kesintiYontemi = f.kesinti_yontemi || 'oran';
+            $('input.kesinti-yontemi-radio[value="' + kesintiYontemi + '"]').prop('checked', true).trigger('change');
+            
+            const kesintiOrani = f.kesinti_orani || '1/4';
+            $('#modal-kesinti-orani').val(kesintiOrani);
+            $('.btn-quick-rate').each(function() {
+                $(this).toggleClass('active', $(this).data('rate') === kesintiOrani);
+            });
+
             $('#modal-kesinti-tutari').val(f.kesinti_tutari_raw || f.kesinti_tutari || '');
 
             if (typeof flatpickr !== 'undefined') {
@@ -843,15 +1470,28 @@ $(document).ready(function() {
             $('#modal-giden-evrak').val(f.giden_evrak || '');
             $('#modal-aciklama').val(f.aciklama || '');
 
+            // File reset / preview
+            $('#modal-file-chosen-text').text('Yeni Belge Yüklemek İçin Tıklayın');
+            if (f.has_belge) {
+                $('#modal-existing-file-link').attr('href', 'api/persons/icra.php?action=download&id=' + encodeURIComponent(f.id));
+                $('#modal-existing-file-container').removeClass('d-none');
+            } else {
+                $('#modal-existing-file-container').addClass('d-none');
+            }
+
             $('#icraFileModal').modal('show');
         } catch(e) {
             console.error("Error parsing icra file JSON:", e);
         }
     });
 
-    // 8. Kaydetme Form Submit (Ekle & Güncelle)
+    // 9. Kaydetme Form Submit (Ekle & Güncelle)
     $('#form-icra-file').on('submit', function(e) {
         e.preventDefault();
+        const $saveBtn = $('#btn-save-icra');
+        const origBtnHtml = $saveBtn.html();
+        $saveBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Kaydediliyor...');
+
         const formData = new FormData(this);
         formData.append('action', 'save');
 
@@ -863,21 +1503,29 @@ $(document).ready(function() {
             processData: false,
             dataType: 'json',
             success: function(res) {
+                $saveBtn.prop('disabled', false).html(origBtnHtml);
                 if (res.status === 'success') {
                     $('#icraFileModal').modal('hide');
-                    Swal.fire('Başarılı!', res.message || 'İcra dosyası kaydedildi.', 'success');
+                    Swal.fire({
+                        title: 'Başarılı!',
+                        text: res.message || 'İcra dosyası kaydedildi.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
                     loadIcraTable();
                 } else {
                     Swal.fire('Hata!', res.message || 'Kaydedilemedi.', 'error');
                 }
             },
             error: function(err) {
+                $saveBtn.prop('disabled', false).html(origBtnHtml);
                 Swal.fire('Hata!', 'Sunucu hatası oluştu.', 'error');
             }
         });
     });
 
-    // 9. Silme İşlemi (SweetAlert2)
+    // 10. Silme İşlemi (SweetAlert2)
     $(document).on('click', '.btn-delete-icra', function() {
         const fileId = $(this).data('id');
         Swal.fire({
@@ -917,7 +1565,7 @@ $(document).ready(function() {
 
     let currentDeductionsFileId = null;
 
-    // 10. Kesintiler Geçmişi Detayı Tıklama
+    // 11. Kesintiler Geçmişi Detayı Tıklama
     $(document).on('click', '.btn-view-deductions', function(e) {
         e.preventDefault();
         const fileId = $(this).data('file-id') || '';
@@ -972,7 +1620,7 @@ $(document).ready(function() {
         });
     });
 
-    // 11. Modal ve Liste İndirme / Yazdırma Butonları
+    // 12. Modal ve Liste İndirme / Yazdırma Butonları
     $('#btn-modal-print-deductions').on('click', function() {
         if (!currentDeductionsFileId) {
             Swal.fire('Uyarı', 'Lütfen önce bir icra dosyası seçiniz.', 'warning');
@@ -990,13 +1638,115 @@ $(document).ready(function() {
     });
 
     $('#btn-export-excel-list').on('click', function() {
-        const selectedStatuses = $('#icra-status-multiselect').val() || [];
-        window.location.href = 'pages/persons/icra-export-xls.php?status_filter=' + encodeURIComponent(selectedStatuses.join(','));
+        const filterVal = currentStatus || '';
+        window.location.href = 'pages/persons/icra-export-xls.php?status_filter=' + encodeURIComponent(filterVal);
     });
 
     $('#btn-print-list').on('click', function() {
-        const selectedStatuses = $('#icra-status-multiselect').val() || [];
-        window.open('print_icra.php?status_filter=' + encodeURIComponent(selectedStatuses.join(',')), '_blank');
+        const filterVal = currentStatus || '';
+        window.open('print_icra.php?status_filter=' + encodeURIComponent(filterVal), '_blank');
+    });
+
+    // 13. Tabloda Sağ Tık (Custom Context Menu)
+    $(document).on('contextmenu', '#icraMainTable tbody tr', function(e) {
+        var $tr = $(this);
+        var rawData = $tr.attr('data-file') || $tr.find('.btn-edit-icra').attr('data-file');
+        var fileId = $tr.attr('data-id') || $tr.find('.btn-delete-icra').attr('data-id');
+        var personId = $tr.attr('data-person-id');
+        var personName = $tr.attr('data-person-name') || $tr.find('td').eq(1).find('a').text().trim() || 'İcra Dosyası';
+        var dosyaNo = $tr.attr('data-dosya-no') || $tr.find('td').eq(4).text().trim() || '';
+        var hasBelge = $tr.attr('data-has-belge') === '1' || $tr.find('.ti-download').length > 0;
+
+        if (!fileId && !rawData) return;
+
+        e.preventDefault();
+        $('#icraMainTable tbody tr').removeClass('context-menu-active');
+        $tr.addClass('context-menu-active');
+
+        var $contextMenu = $('#customContextMenu');
+        if (!$contextMenu.length) {
+            $contextMenu = $('<div id="customContextMenu" class="custom-context-menu"></div>').appendTo('body');
+        }
+
+        var headerTitle = $('<div>').text(personName + (dosyaNo ? ' (' + dosyaNo + ')' : '')).html();
+
+        var menuHtml = `
+            <div class="cm-header"><i class="ti ti-file-invoice"></i> <span class="text-truncate">${headerTitle}</span></div>
+            <a href="javascript:void(0)" class="cm-action-edit" data-file="${rawData}"><i class="ti ti-edit"></i> Dosyayı Düzenle</a>
+            <a href="javascript:void(0)" class="cm-action-deductions" data-file-id="${fileId}" data-person-id="${personId}"><i class="ti ti-receipt-2"></i> Kesintileri Gör</a>
+            ${personId ? `<a href="index.php?p=persons/manage&id=${personId}&tab=icra"><i class="ti ti-user"></i> Personel Sayfası</a>` : ''}
+            ${hasBelge ? `<a href="api/persons/icra.php?action=download&id=${fileId}" target="_blank"><i class="ti ti-download"></i> Evrak İndir</a>` : ''}
+            <div class="cm-divider"></div>
+            <a href="pages/persons/icra-export-xls.php?id=${encodeURIComponent(fileId)}"><i class="ti ti-file-excel text-success"></i> Excel Raporu</a>
+            <a href="print_icra.php?id=${encodeURIComponent(fileId)}" target="_blank"><i class="ti ti-printer text-secondary"></i> Yazdır / PDF</a>
+            <div class="cm-divider"></div>
+            <a href="javascript:void(0)" class="cm-danger cm-action-delete" data-id="${fileId}"><i class="ti ti-trash"></i> İcra Dosyasını Sil</a>
+        `;
+
+        $contextMenu.html(menuHtml);
+        $contextMenu.css({ display: 'block', opacity: 0 });
+
+        var menuWidth = $contextMenu.outerWidth();
+        var menuHeight = $contextMenu.outerHeight();
+        var clickX = e.clientX;
+        var clickY = e.clientY;
+        var windowWidth = $(window).width();
+        var windowHeight = $(window).height();
+
+        var posX = (clickX + menuWidth > windowWidth) ? windowWidth - menuWidth - 10 : clickX;
+        var posY = (clickY + menuHeight > windowHeight) ? windowHeight - menuHeight - 10 : clickY;
+
+        $contextMenu.css({
+            top: posY + 'px',
+            left: posX + 'px',
+            opacity: 1
+        });
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#customContextMenu').length) {
+            $('#customContextMenu').hide();
+            $('#icraMainTable tbody tr').removeClass('context-menu-active');
+        }
+    });
+
+    $(document).on('click', '#customContextMenu a', function() {
+        $('#customContextMenu').hide();
+        $('#icraMainTable tbody tr').removeClass('context-menu-active');
+    });
+
+    $(window).on('scroll resize blur', function() {
+        $('#customContextMenu').hide();
+        $('#icraMainTable tbody tr').removeClass('context-menu-active');
+    });
+
+    // Context menu aksiyon tetikleyicileri
+    $(document).on('click', '.cm-action-edit', function(e) {
+        e.preventDefault();
+        var rawData = $(this).attr('data-file');
+        var $dummy = $('<button class="btn-edit-icra"></button>').attr('data-file', rawData);
+        $('body').append($dummy);
+        $dummy.trigger('click');
+        $dummy.remove();
+    });
+
+    $(document).on('click', '.cm-action-deductions', function(e) {
+        e.preventDefault();
+        var fileId = $(this).attr('data-file-id');
+        var personId = $(this).attr('data-person-id');
+        var $dummy = $('<button class="btn-view-deductions"></button>').data('file-id', fileId).data('person-id', personId);
+        $('body').append($dummy);
+        $dummy.trigger('click');
+        $dummy.remove();
+    });
+
+    $(document).on('click', '.cm-action-delete', function(e) {
+        e.preventDefault();
+        var fileId = $(this).attr('data-id');
+        var $dummy = $('<button class="btn-delete-icra"></button>').data('id', fileId);
+        $('body').append($dummy);
+        $dummy.trigger('click');
+        $dummy.remove();
     });
 });
 </script>

@@ -307,9 +307,11 @@ foreach ($users as $u) {
                                 $statusBadgeClass = $isActive ? 'bg-success-lt text-success' : 'bg-danger-lt text-danger';
                                 $statusDotClass = $isActive ? 'bg-success' : 'bg-danger';
                             ?>
-                                <tr data-user-id="<?php echo $id; ?>" 
+                                <tr data-user-id="<?php echo $id; ?>"
                                     data-user-name="<?php echo htmlspecialchars($user->full_name ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                    data-user-status="<?php echo $statusText; ?>">
+                                    data-user-status="<?php echo $statusText; ?>"
+                                    data-is-main="<?php echo $isMainUser ? '1' : '0'; ?>"
+                                    data-manage-page="users/manage&id=<?php echo $id; ?>">
                                     
                                     <td class="text-center fw-medium text-muted"><?php echo $i; ?></td>
                                     
@@ -873,6 +875,26 @@ table#userTable tbody tr:hover td {
     background-color: #3b82f6 !important;
     color: #ffffff !important;
 }
+
+/* Context Menu — Aktif Satır Vurgusu */
+#userTable tbody tr.context-menu-active > td {
+    background-color: #eff6ff !important;
+}
+[data-bs-theme="dark"] #userTable tbody tr.context-menu-active > td {
+    background-color: #1e3a5f !important;
+}
+
+/* Context Menu — Durum Satırı */
+.custom-context-menu .cm-status-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 14px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 4px;
+}
+[data-bs-theme="dark"] .custom-context-menu .cm-status-row {
+    border-bottom-color: #334155;
+}
 </style>
 
 <script>
@@ -1116,6 +1138,112 @@ $(document).ready(function() {
         setTimeout(function() {
             $('#modal_full_name').focus();
         }, 120);
+    });
+
+    // ========================================================================
+    // Tabloda Sağ Tık (Custom Context Menu)
+    // ========================================================================
+    $(document).on('contextmenu', '#userTable tbody tr', function(e) {
+        e.preventDefault();
+
+        var $tr = $(this);
+        var userName   = $tr.data('user-name')  || 'Kullanıcı İşlemleri';
+        var userStatus = $tr.data('user-status') || '';
+        var managePage = $tr.data('manage-page') || '';
+        var userId     = $tr.data('user-id')     || '';
+        var isMain     = parseInt($tr.data('is-main') || 0, 10) === 1;
+
+        $('#userTable tbody tr').removeClass('context-menu-active');
+        $tr.addClass('context-menu-active');
+
+        var $menu = $('#usersContextMenu');
+        if (!$menu.length) {
+            $menu = $('<div id="usersContextMenu" class="custom-context-menu"></div>').appendTo('body');
+        }
+
+        var statusIcon    = (userStatus === 'Aktif') ? 'ti-user-check' : 'ti-user-off';
+        var statusLabel   = (userStatus === 'Aktif') ? 'Aktif Kullanıcı' : 'Pasif Kullanıcı';
+        var statusCls     = (userStatus === 'Aktif') ? 'text-success' : 'text-secondary';
+
+        var menuHtml = `
+            <div class="cm-header">
+                <i class="ti ti-user-shield me-1"></i>
+                ${$('<div>').text(userName).html()}
+            </div>
+            <div class="cm-status-row">
+                <i class="ti ${statusIcon} me-1 ${statusCls}"></i>
+                <span class="${statusCls}" style="font-size:11.5px;">${statusLabel}</span>
+            </div>
+            ${managePage ? `
+            <a href="#" class="route-link" data-page="${managePage}">
+                <i class="ti ti-edit"></i> Detay / Düzenle
+            </a>
+            ` : ''}
+            <div class="cm-divider"></div>
+            <a href="#" class="cm-copy-name" data-name="${$('<div>').text(userName).html()}">
+                <i class="ti ti-copy"></i> Adı Kopyala
+            </a>
+            ${(!isMain && userId) ? `
+            <div class="cm-divider"></div>
+            <a href="#" class="cm-danger delete_user" data-id="${userId}">
+                <i class="ti ti-trash"></i> Kullanıcıyı Sil
+            </a>
+            ` : ''}
+        `;
+
+        $menu.html(menuHtml);
+        $menu.css({ display: 'block', opacity: 0 });
+
+        var menuW  = $menu.outerWidth();
+        var menuH  = $menu.outerHeight();
+        var clickX = e.clientX;
+        var clickY = e.clientY;
+        var winW   = $(window).width();
+        var winH   = $(window).height();
+
+        var posX = (clickX + menuW > winW) ? winW - menuW - 10 : clickX;
+        var posY = (clickY + menuH > winH) ? winH - menuH - 10 : clickY;
+
+        $menu.css({ top: posY + 'px', left: posX + 'px', opacity: 1 });
+    });
+
+    // Dışarı tıklanınca menüyü kapat
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#usersContextMenu').length) {
+            $('#usersContextMenu').hide();
+            $('#userTable tbody tr').removeClass('context-menu-active');
+        }
+    });
+
+    // Menü içinden tıklanınca kapat
+    $(document).on('click', '#usersContextMenu a', function() {
+        $('#usersContextMenu').hide();
+        $('#userTable tbody tr').removeClass('context-menu-active');
+    });
+
+    // Adı Kopyala
+    $(document).on('click', '#usersContextMenu .cm-copy-name', function(e) {
+        e.preventDefault();
+        var name = $(this).data('name') || '';
+        if (navigator.clipboard && name) {
+            navigator.clipboard.writeText(name).then(function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    icon: 'success',
+                    title: 'Ad panoya kopyalandı',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            });
+        }
+    });
+
+    // Scroll / resize / blur → menüyü kapat
+    $(window).on('scroll resize blur', function() {
+        $('#usersContextMenu').hide();
+        $('#userTable tbody tr').removeClass('context-menu-active');
     });
 });
 </script>

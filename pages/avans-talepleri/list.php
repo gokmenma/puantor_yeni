@@ -283,7 +283,12 @@ html.avans-summary-collapsed #avansSummaryCards {
                                 $donem_text = Date::monthName($req->hedef_ay) . ' ' . $req->hedef_yil;
                                 $encrypted_id = Security::encrypt($req->id);
                             ?>
-                                <tr>
+                                <tr class="advance-row"
+                                    data-id="<?= (int)$req->id; ?>"
+                                    data-encrypted-id="<?= $encrypted_id; ?>"
+                                    data-durum="<?= (int)$req->durum; ?>"
+                                    data-personel="<?= htmlspecialchars($req->full_name, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-tutar="<?= Helper::formattedMoney($req->tutar); ?>">
                                     <td class="text-center font-weight-medium text-muted"><?= (int)$req->id; ?></td>
                                     <td>
                                         <div class="d-flex align-items-center">
@@ -830,6 +835,40 @@ div#advanceTable_wrapper .dt-layout-row:has(.dt-info) {
     border-color: #334155 !important;
     box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
 }
+
+#advanceTable tbody tr.context-menu-active {
+    background-color: rgba(32, 107, 196, 0.08) !important;
+}
+[data-bs-theme="dark"] #advanceTable tbody tr.context-menu-active {
+    background-color: rgba(59, 130, 246, 0.16) !important;
+}
+
+[data-bs-theme="dark"] .custom-context-menu {
+    background: #182433 !important;
+    border-color: #334155 !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+[data-bs-theme="dark"] .custom-context-menu .cm-header {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155 !important;
+}
+[data-bs-theme="dark"] .custom-context-menu a,
+[data-bs-theme="dark"] .custom-context-menu button {
+    color: #e2e8f0 !important;
+}
+[data-bs-theme="dark"] .custom-context-menu a:hover,
+[data-bs-theme="dark"] .custom-context-menu button:hover {
+    background: #1e293b !important;
+    color: #60a5fa !important;
+}
+[data-bs-theme="dark"] .custom-context-menu .cm-divider {
+    background: #334155 !important;
+}
+[data-bs-theme="dark"] .custom-context-menu a.cm-danger:hover,
+[data-bs-theme="dark"] .custom-context-menu button.cm-danger:hover {
+    background: rgba(225, 29, 72, 0.15) !important;
+    color: #f43f5e !important;
+}
 </style>
 
 <script>
@@ -1341,6 +1380,119 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+
+    var CAN_DELETE_APPROVED = <?= $perm->hasPermission("onayli_avanslarda_islem_yap") ? 'true' : 'false'; ?>;
+
+    // Tabloda Sağ Tık (Custom Context Menu)
+    $(document).on('contextmenu', '#advanceTable tbody tr', function(e) {
+        var $tr = $(this);
+        if ($tr.hasClass('dataTables_empty') || (!$tr.find('.view-detail').length && !$tr.data('id'))) return;
+
+        e.preventDefault();
+        $('#advanceTable tbody tr').removeClass('context-menu-active');
+        $tr.addClass('context-menu-active');
+
+        var id = $tr.data('id') || $tr.find('.view-detail').data('id');
+        var durum = parseInt($tr.data('durum') !== undefined ? $tr.data('durum') : $tr.find('.view-detail').data('durum'));
+        var personel = $tr.data('personel') || $tr.find('.view-detail').data('personel') || 'Avans Talebi';
+        var tutar = $tr.data('tutar') || $tr.find('.view-detail').data('tutar') || '';
+
+        var $contextMenu = $('#customContextMenu');
+        if (!$contextMenu.length) {
+            $contextMenu = $('<div id="customContextMenu" class="custom-context-menu"></div>').appendTo('body');
+        }
+
+        var headerTitle = personel + (tutar ? ' (' + tutar + ')' : '');
+
+        var menuHtml = `
+            <div class="cm-header"><i class="ti ti-cash me-1"></i> ${$('<div>').text(headerTitle).html()}</div>
+            <a href="javascript:void(0)" class="ctx-action-detail"><i class="ti ti-eye"></i> Detay Görüntüle</a>
+        `;
+
+        if (durum === 0) {
+            menuHtml += `
+                <a href="javascript:void(0)" class="ctx-action-approve text-success"><i class="ti ti-check"></i> Talebi Onayla</a>
+                <a href="javascript:void(0)" class="ctx-action-reject text-warning"><i class="ti ti-x"></i> Talebi Reddet</a>
+                <div class="cm-divider"></div>
+                <a href="javascript:void(0)" class="ctx-action-delete cm-danger"><i class="ti ti-trash"></i> Talebi Sil</a>
+            `;
+        } else if (durum === 1 && CAN_DELETE_APPROVED) {
+            menuHtml += `
+                <div class="cm-divider"></div>
+                <a href="javascript:void(0)" class="ctx-action-delete cm-danger"><i class="ti ti-trash"></i> Talebi Sil</a>
+            `;
+        } else if (durum === 2) {
+            menuHtml += `
+                <div class="cm-divider"></div>
+                <a href="javascript:void(0)" class="ctx-action-delete cm-danger"><i class="ti ti-trash"></i> Talebi Sil</a>
+            `;
+        }
+
+        $contextMenu.html(menuHtml);
+        $contextMenu.data('target-row', $tr);
+        $contextMenu.css({ display: 'block', opacity: 0 });
+
+        var menuWidth = $contextMenu.outerWidth();
+        var menuHeight = $contextMenu.outerHeight();
+        var clickX = e.clientX;
+        var clickY = e.clientY;
+        var windowWidth = $(window).width();
+        var windowHeight = $(window).height();
+
+        var posX = (clickX + menuWidth > windowWidth) ? windowWidth - menuWidth - 10 : clickX;
+        var posY = (clickY + menuHeight > windowHeight) ? windowHeight - menuHeight - 10 : clickY;
+
+        $contextMenu.css({
+            top: posY + 'px',
+            left: posX + 'px',
+            opacity: 1
+        });
+    });
+
+    $(document).on('click', '.ctx-action-detail', function() {
+        var $tr = $('#customContextMenu').data('target-row');
+        if ($tr && $tr.length) {
+            $tr.find('.view-detail').first().trigger('click');
+        }
+    });
+
+    $(document).on('click', '.ctx-action-approve', function() {
+        var $tr = $('#customContextMenu').data('target-row');
+        if ($tr && $tr.length) {
+            $tr.find('.update-status[data-status="1"]').first().trigger('click');
+        }
+    });
+
+    $(document).on('click', '.ctx-action-reject', function() {
+        var $tr = $('#customContextMenu').data('target-row');
+        if ($tr && $tr.length) {
+            $tr.find('.update-status[data-status="2"]').first().trigger('click');
+        }
+    });
+
+    $(document).on('click', '.ctx-action-delete', function() {
+        var $tr = $('#customContextMenu').data('target-row');
+        if ($tr && $tr.length) {
+            $tr.find('.delete-request').first().trigger('click');
+        }
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#customContextMenu').length) {
+            $('#customContextMenu').hide();
+            $('#advanceTable tbody tr').removeClass('context-menu-active');
+        }
+    });
+
+    $(document).on('click', '#customContextMenu a, #customContextMenu button', function() {
+        $('#customContextMenu').hide();
+        $('#advanceTable tbody tr').removeClass('context-menu-active');
+    });
+
+    $(window).on('scroll resize blur', function() {
+        $('#customContextMenu').hide();
+        $('#advanceTable tbody tr').removeClass('context-menu-active');
     });
 });
 </script>

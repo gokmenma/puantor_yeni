@@ -1230,6 +1230,18 @@ aside#navbar {
     color: var(--sidebar-search-icon, #a2a5b9) !important;
 }
 
+#navbar .sidebar-menu-settings .dropdown-menu,
+.navbar-vertical .sidebar-menu-settings .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    transform: none !important;
+    margin-top: 6px !important;
+    margin-bottom: 0 !important;
+    z-index: 1050 !important;
+}
+
 [data-sidebar-theme="klasik-koyu"], html[data-sidebar-theme="klasik-koyu"] #navbar, #navbar[data-sidebar-theme="klasik-koyu"] { --sidebar-bg: #1e1e2d; }
 [data-sidebar-theme="klasik-koyu"] #navbar, [data-sidebar-theme="klasik-koyu"] .navbar-vertical { background: #1e1e2d !important; background-color: #1e1e2d !important; color: #a2a3b7; }
 

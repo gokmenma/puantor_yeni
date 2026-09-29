@@ -147,7 +147,7 @@ $navbarBsTheme = $isLightSidebar ? 'light' : 'dark';
                     <input type="search" id="menu-search-input" name="navigation_menu_filter" autocomplete="new-password" autocapitalize="none" spellcheck="false" readonly data-lpignore="true" data-1p-ignore="true" data-bwignore="true" class="sidebar-search-input" placeholder="Menüde ara..." aria-label="Menü ara">
                 </div>
                 <div class="sidebar-menu-settings dropdown">
-                    <button type="button" class="btn btn-sm btn-menu-settings" id="sidebarMenuSettingsDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Menü Ayarları">
+                    <button type="button" class="btn btn-sm btn-menu-settings" id="sidebarMenuSettingsDropdown" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" title="Menü Ayarları">
                         <i class="ti ti-settings"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="sidebarMenuSettingsDropdown">
