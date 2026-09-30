@@ -772,6 +772,11 @@ table.dataTable thead > tr > th,
     vertical-align: middle !important;
     cursor: pointer !important;
     user-select: none !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    word-wrap: normal !important;
+    hyphens: none !important;
 }
 
 table.dataTable thead > tr > th:first-child,
@@ -783,6 +788,48 @@ table.dataTable thead > tr > th.no-sort,
 .data-table thead > tr > th.actions-column,
 .data-table thead > tr > th.no-sort {
     padding: 6px 4px !important;
+}
+
+.dt-header-content {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    word-wrap: normal !important;
+}
+
+.dt-header-title-wrap {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    word-wrap: normal !important;
+    hyphens: none !important;
+}
+
+.dt-header-title {
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    word-wrap: normal !important;
+    hyphens: none !important;
+    line-height: 1.25 !important;
+    display: inline-block !important;
+    min-width: 0 !important;
+    flex: 1 1 auto;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    padding-left: 0px !important;
 }
 
 /* DataTables 2 Sıralama İkon Kapsayıcısı (span.dt-column-order) */

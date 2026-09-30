@@ -46,9 +46,19 @@
         padding: 6px 4px !important;
     }
 
+    table.dataTable thead th,
+    .data-table thead th {
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+        hyphens: none !important;
+    }
     .dt-header-content {
         white-space: normal !important;
-        word-break: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
         min-width: 0 !important;
         width: 100% !important;
         display: flex !important;
@@ -62,6 +72,11 @@
         gap: 5px !important;
         min-width: 0 !important;
         flex: 1 1 auto !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+        hyphens: none !important;
     }
     .dt-header-title-wrap span.dt-column-order,
     table.dataTable thead th span.dt-column-order,
@@ -118,9 +133,10 @@
     }
     .dt-header-title {
         white-space: normal !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
-        text-wrap: wrap !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+        hyphens: none !important;
         line-height: 1.25 !important;
         display: inline-block !important;
         min-width: 0 !important;
@@ -377,23 +393,31 @@
         colCloneObserver.observe(document.documentElement, { childList: true, subtree: true });
     }
 
-    // Tıklanan konumu orantısal olarak takip et (en alttan tutulursa altı, ortadan tutulursa ortası imlece yapışır)
-    var dragRatio = { x: 0.5, y: 0.5 };
-    $(document).on('mousedown.dtcrRatio touchstart.dtcrRatio', 'th, .dt-draggable-header', function (e) {
-        var $th = $(this).closest('th');
-        if (!$th.length) return;
-        var offset = $th.offset();
-        var pageX = e.pageX !== undefined ? e.pageX : (e.originalEvent && e.originalEvent.touches && e.originalEvent.touches[0] ? e.originalEvent.touches[0].pageX : 0);
-        var pageY = e.pageY !== undefined ? e.pageY : (e.originalEvent && e.originalEvent.touches && e.originalEvent.touches[0] ? e.originalEvent.touches[0].pageY : 0);
-        var w = $th.outerWidth();
-        var h = $th.outerHeight();
-        if (w > 0 && h > 0) {
-            dragRatio.x = Math.max(0.05, Math.min(0.95, (pageX - offset.left) / w));
-            dragRatio.y = Math.max(0.05, Math.min(0.95, (pageY - offset.top) / h));
-        }
-    });
+    // ColReorder Prototip Düzeltmesi: Taşınan başlık kutusunu daima mouse imlecinin merkezine bağla
+    if ($.fn.dataTable && $.fn.dataTable.ColReorder && $.fn.dataTable.ColReorder.prototype) {
+        var origDtcrMouseMove = $.fn.dataTable.ColReorder.prototype._mouseMove;
+        $.fn.dataTable.ColReorder.prototype._mouseMove = function (e) {
+            var wasNull = (this.dom.drag === null);
+            origDtcrMouseMove.call(this, e);
+            if (this.dom.drag) {
+                var w = this.dom.drag.outerWidth() || 130;
+                var h = this.dom.drag.outerHeight() || 34;
+                this.s.mouse.offset.x = Math.round(w / 2);
+                this.s.mouse.offset.y = Math.round(h / 2);
 
-    // Taşınan başlığı kullanıcının tuttuğu tam noktaya sabitle
+                var pageX = this._cursorPosition(e, 'pageX');
+                var pageY = this._cursorPosition(e, 'pageY');
+                if (pageX !== undefined && pageY !== undefined) {
+                    this.dom.drag.css({
+                        left: (pageX - this.s.mouse.offset.x) + 'px',
+                        top: (pageY - this.s.mouse.offset.y) + 'px'
+                    });
+                }
+            }
+        };
+    }
+
+    // Taşınan başlığı daima kullanıcının mouse imlecinin tam merkezine sabitle
     $(document).on('mousemove.dtcrCursorAlign touchmove.dtcrCursorAlign', function (e) {
         if (!$('body').hasClass('dtcr-dragging')) return;
         var $clone = $('.dtcr-cloned');
@@ -403,8 +427,8 @@
             if (pageX && pageY) {
                 var w = $clone.outerWidth() || 130;
                 var h = $clone.outerHeight() || 34;
-                var offsetX = Math.round(w * dragRatio.x);
-                var offsetY = Math.round(h * dragRatio.y);
+                var offsetX = Math.round(w / 2);
+                var offsetY = Math.round(h / 2);
                 $clone.css({
                     left: (pageX - offsetX) + 'px',
                     top: (pageY - offsetY) + 'px'

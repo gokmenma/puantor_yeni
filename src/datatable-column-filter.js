@@ -77,6 +77,14 @@
         cursor: pointer !important;
         user-select: none !important;
     }
+    table.dataTable thead > tr > th,
+    .data-table thead > tr > th {
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+        hyphens: none !important;
+    }
     table.dataTable thead > tr > th:first-child,
     .data-table thead > tr > th:first-child {
         padding: 6px 4px !important;
@@ -89,6 +97,10 @@
         gap: 6px !important;
         width: 100% !important;
         min-width: 0 !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
     }
     .dt-header-title-wrap {
         display: inline-flex !important;
@@ -96,6 +108,26 @@
         gap: 5px !important;
         min-width: 0 !important;
         flex: 1 1 auto !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+        hyphens: none !important;
+    }
+    .dt-header-title {
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+        hyphens: none !important;
+        line-height: 1.25 !important;
+        display: inline-block !important;
+        min-width: 0 !important;
+        flex: 1 1 auto;
+        font-size: 11.5px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.3px !important;
+        padding-left: 0px !important;
     }
 
     /* Sıralama İkonu (Resimdeki gibi sol tarafta doğal flex elemanı) */
