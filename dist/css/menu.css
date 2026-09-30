@@ -264,7 +264,8 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
   position: sticky !important;
   top: 0 !important;
   z-index: 20 !important;
-  background-color: var(--sidebar-bg, #1e1e2d) !important;
+  background-color: transparent !important;
+  background: transparent !important;
   padding: 6px 14px 10px 14px !important;
   display: flex !important;
   flex-direction: row !important;
@@ -467,7 +468,7 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
 #sortable-menu > li.nav-item > .nav-link:hover,
 #navbar .nav-link:hover,
 .navbar-vertical .nav-link:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -487,7 +488,7 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
 #navbar .nav-item.dropdown.active > .nav-link,
 .navbar-vertical .nav-item.show > .nav-link,
 .navbar-vertical .nav-item.dropdown.active > .nav-link {
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -512,7 +513,7 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
 #navbar .nav-item:not(.dropdown) > .nav-link.active,
 .navbar-vertical .nav-item:not(.dropdown).active > .nav-link,
 .navbar-vertical .nav-item:not(.dropdown) > .nav-link.active {
-  background: var(--sidebar-active-bg, rgba(255, 255, 255, 0.18)) !important;
+  background: var(--sidebar-active-bg, rgba(255, 255, 255, 0.12)) !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -647,7 +648,7 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
 #navbar .dropdown-item:hover,
 .navbar-vertical .dropdown-item:hover {
   color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.09) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -659,7 +660,7 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
 .navbar-vertical .dropdown-item.active,
 .navbar-vertical .dropdown-item.active-link {
   color: var(--sidebar-active-color, #ffffff) !important;
-  background: var(--sidebar-active-bg, rgba(255, 255, 255, 0.18)) !important;
+  background: var(--sidebar-active-bg, rgba(255, 255, 255, 0.12)) !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;

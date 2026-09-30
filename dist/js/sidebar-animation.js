@@ -151,7 +151,7 @@
         var isLight = colorScheme.isLight;
 
         if (currentEffect === 'constellation') {
-            var maxDistance = width < 120 ? 65 : 85;
+            var maxDistance = width < 120 ? 75 : 105;
             var maxDistSq = maxDistance * maxDistance;
 
             // 1. Çizgileri çiz (Bağlantılar)
@@ -166,10 +166,10 @@
 
                     if (distSq < maxDistSq) {
                         var dist = Math.sqrt(distSq);
-                        var lineAlpha = (1 - dist / maxDistance) * (isLight ? 0.18 : 0.25);
+                        var lineAlpha = (1 - dist / maxDistance) * (isLight ? 0.35 : 0.50);
                         ctx.beginPath();
                         ctx.strokeStyle = colorScheme.lineColor + lineAlpha + ')';
-                        ctx.lineWidth = 0.85;
+                        ctx.lineWidth = 1.0;
                         ctx.moveTo(p1.x, p1.y);
                         ctx.lineTo(p2.x, p2.y);
                         ctx.stroke();
@@ -184,10 +184,10 @@
                     var mRadius = mouse.radius;
                     if (mDistSq < mRadius * mRadius) {
                         var mDist = Math.sqrt(mDistSq);
-                        var mAlpha = (1 - mDist / mRadius) * (isLight ? 0.3 : 0.45);
+                        var mAlpha = (1 - mDist / mRadius) * (isLight ? 0.5 : 0.75);
                         ctx.beginPath();
                         ctx.strokeStyle = colorScheme.accentColor + mAlpha + ')';
-                        ctx.lineWidth = 1;
+                        ctx.lineWidth = 1.2;
                         ctx.moveTo(p1.x, p1.y);
                         ctx.lineTo(mouse.x, mouse.y);
                         ctx.stroke();
@@ -205,19 +205,20 @@
 
                 p.pulseAngle += p.pulseSpeed;
                 var pulseFactor = Math.sin(p.pulseAngle) * 0.25;
-                p.alpha = Math.max(0.1, p.baseAlpha + pulseFactor);
+                p.alpha = Math.max(0.2, p.baseAlpha + pulseFactor);
 
                 // Nokta
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 if (p.isSpecial) {
-                    ctx.fillStyle = colorScheme.accentColor + (p.alpha * 1.2) + ')';
-                    // Minik parlama halesi
-                    ctx.shadowBlur = 6;
-                    ctx.shadowColor = colorScheme.accentColor + '0.6)';
+                    ctx.fillStyle = colorScheme.accentColor + Math.min(p.alpha * 1.3, 1) + ')';
+                    // Parlama halesi
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = colorScheme.accentColor + '0.8)';
                 } else {
                     ctx.fillStyle = colorScheme.nodeColor + p.alpha + ')';
-                    ctx.shadowBlur = 0;
+                    ctx.shadowBlur = 3;
+                    ctx.shadowColor = colorScheme.lineColor + '0.5)';
                 }
                 ctx.fill();
                 ctx.shadowBlur = 0;

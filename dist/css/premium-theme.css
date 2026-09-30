@@ -1512,8 +1512,8 @@ aside#navbar {
 #navbar #menu-search-container,
 .navbar-vertical .sidebar-search-wrap,
 .navbar-vertical #menu-search-container {
-    background-color: var(--sidebar-bg, #1e1e2d) !important;
-    background: var(--sidebar-bg, #1e1e2d) !important;
+    background-color: transparent !important;
+    background: transparent !important;
 }
 
 #navbar .sidebar-search-wrap .sidebar-search-input,
@@ -1631,8 +1631,7 @@ aside#navbar {
     --sidebar-input-focus-bg: #ffffff;
     --sidebar-dropdown-bg: #ffffff;
 }
-html[data-sidebar-theme="platin-gri"] #navbar, #navbar[data-sidebar-theme="platin-gri"], [data-sidebar-theme="platin-gri"] .navbar-vertical { background: #e2e8f0 !important; background-color: #e2e8f0 !important; color: #334155; border-right: 1px solid #cbd5e1; }
-html[data-sidebar-theme="platin-gri"] #navbar #menu-search-container, html[data-sidebar-theme="platin-gri"] #navbar .sidebar-search-wrap, #navbar[data-sidebar-theme="platin-gri"] #menu-search-container, #navbar[data-sidebar-theme="platin-gri"] .sidebar-search-wrap { background: #e2e8f0 !important; background-color: #e2e8f0 !important; }
+html[data-sidebar-theme="platin-gri"] #navbar #menu-search-container, html[data-sidebar-theme="platin-gri"] #navbar .sidebar-search-wrap, #navbar[data-sidebar-theme="platin-gri"] #menu-search-container, #navbar[data-sidebar-theme="platin-gri"] .sidebar-search-wrap { background: transparent !important; background-color: transparent !important; }
 html[data-sidebar-theme="platin-gri"] #navbar .sidebar-search-input, #navbar[data-sidebar-theme="platin-gri"] .sidebar-search-input { background: rgba(0, 0, 0, 0.05) !important; border: 1px solid rgba(0, 0, 0, 0.12) !important; color: #1e293b !important; }
 html[data-sidebar-theme="platin-gri"] #navbar .sidebar-search-input::placeholder, #navbar[data-sidebar-theme="platin-gri"] .sidebar-search-input::placeholder { color: #64748b !important; }
 html[data-sidebar-theme="platin-gri"] #navbar .btn-menu-settings, #navbar[data-sidebar-theme="platin-gri"] .btn-menu-settings { background: rgba(0, 0, 0, 0.05) !important; border: 1px solid rgba(0, 0, 0, 0.12) !important; color: #64748b !important; }
@@ -1652,7 +1651,7 @@ html[data-sidebar-theme="platin-gri"] #navbar .btn-menu-settings, #navbar[data-s
     --sidebar-dropdown-bg: #ffffff;
 }
 html[data-sidebar-theme="slate-light"] #navbar, #navbar[data-sidebar-theme="slate-light"], [data-sidebar-theme="slate-light"] .navbar-vertical { background: #f8fafc !important; background-color: #f8fafc !important; color: #334155; border-right: 1px solid #e2e8f0; }
-html[data-sidebar-theme="slate-light"] #navbar #menu-search-container, html[data-sidebar-theme="slate-light"] #navbar .sidebar-search-wrap, #navbar[data-sidebar-theme="slate-light"] #menu-search-container, #navbar[data-sidebar-theme="slate-light"] .sidebar-search-wrap { background: #f8fafc !important; background-color: #f8fafc !important; }
+html[data-sidebar-theme="slate-light"] #navbar #menu-search-container, html[data-sidebar-theme="slate-light"] #navbar .sidebar-search-wrap, #navbar[data-sidebar-theme="slate-light"] #menu-search-container, #navbar[data-sidebar-theme="slate-light"] .sidebar-search-wrap { background: transparent !important; background-color: transparent !important; }
 html[data-sidebar-theme="slate-light"] #navbar .sidebar-search-input, #navbar[data-sidebar-theme="slate-light"] .sidebar-search-input { background: rgba(0, 0, 0, 0.04) !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; color: #1e293b !important; }
 html[data-sidebar-theme="slate-light"] #navbar .sidebar-search-input::placeholder, #navbar[data-sidebar-theme="slate-light"] .sidebar-search-input::placeholder { color: #94a3b8 !important; }
 html[data-sidebar-theme="slate-light"] #navbar .btn-menu-settings, #navbar[data-sidebar-theme="slate-light"] .btn-menu-settings { background: rgba(0, 0, 0, 0.04) !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; color: #64748b !important; }
@@ -1672,7 +1671,7 @@ html[data-sidebar-theme="slate-light"] #navbar .btn-menu-settings, #navbar[data-
     --sidebar-dropdown-bg: #ffffff;
 }
 html[data-sidebar-theme="sade-beyaz"] #navbar, #navbar[data-sidebar-theme="sade-beyaz"], [data-sidebar-theme="sade-beyaz"] .navbar-vertical { background: #ffffff !important; background-color: #ffffff !important; color: #1e293b; border-right: 1px solid #e2e8f0; }
-html[data-sidebar-theme="sade-beyaz"] #navbar #menu-search-container, html[data-sidebar-theme="sade-beyaz"] #navbar .sidebar-search-wrap, #navbar[data-sidebar-theme="sade-beyaz"] #menu-search-container, #navbar[data-sidebar-theme="sade-beyaz"] .sidebar-search-wrap { background: #ffffff !important; background-color: #ffffff !important; }
+html[data-sidebar-theme="sade-beyaz"] #navbar #menu-search-container, html[data-sidebar-theme="sade-beyaz"] #navbar .sidebar-search-wrap, #navbar[data-sidebar-theme="sade-beyaz"] #menu-search-container, #navbar[data-sidebar-theme="sade-beyaz"] .sidebar-search-wrap { background: transparent !important; background-color: transparent !important; }
 html[data-sidebar-theme="sade-beyaz"] #navbar .sidebar-search-input, #navbar[data-sidebar-theme="sade-beyaz"] .sidebar-search-input { background: rgba(0, 0, 0, 0.04) !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; color: #1e293b !important; }
 html[data-sidebar-theme="sade-beyaz"] #navbar .sidebar-search-input::placeholder, #navbar[data-sidebar-theme="sade-beyaz"] .sidebar-search-input::placeholder { color: #94a3b8 !important; }
 html[data-sidebar-theme="sade-beyaz"] #navbar .btn-menu-settings, #navbar[data-sidebar-theme="sade-beyaz"] .btn-menu-settings { background: rgba(0, 0, 0, 0.04) !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; color: #64748b !important; }
@@ -1731,7 +1730,7 @@ html[data-sidebar-theme="sade-beyaz"] #navbar .btn-menu-settings, #navbar[data-s
 [data-sidebar-theme]:not([data-sidebar-theme="sade-beyaz"]):not([data-sidebar-theme="slate-light"]):not([data-sidebar-theme="platin-gri"]) #navbar .nav-link:hover,
 [data-sidebar-theme]:not([data-sidebar-theme="sade-beyaz"]):not([data-sidebar-theme="slate-light"]):not([data-sidebar-theme="platin-gri"]) .navbar-vertical .nav-link:hover {
     color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
