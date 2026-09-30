@@ -1669,6 +1669,7 @@ window.createDataTable = function (selector, userOptions) {
     var config = $.extend(true, {
         ordering:      false,
         autoWidth:     false,
+        colReorder:    true,
         pagingType:    'simple_numbers',
         language:      { url: 'src/tr.json' },
         columnDefs: [
@@ -1744,6 +1745,10 @@ window.createDataTable = function (selector, userOptions) {
             window.initDataTableColumnFilters($table, api);
         }
 
+        if (typeof window.initPuantorDTManager === 'function') {
+            window.initPuantorDTManager($table, api);
+        }
+
         if (typeof userInitDone === 'function') {
             userInitDone.call(this, settings, json);
         }
@@ -1757,6 +1762,15 @@ window.createDataTable = function (selector, userOptions) {
 
     return $table.DataTable(config);
 };
+
+// Global listener: doğrudan DataTable() ile ilklendirilen tablolar için de otomatik bağla
+$(document).on('init.dt', function (e, settings) {
+    var api = new $.fn.dataTable.Api(settings);
+    var $table = $(settings.nTable);
+    if (typeof window.initPuantorDTManager === 'function') {
+        window.initPuantorDTManager($table, api);
+    }
+});
 
 // Dynamic Seamless Animated Theme Switcher (No Page Reload & GPU Accelerated 60fps)
 $(document).on('click', '.js-theme-toggle, a[aria-label="Enable dark mode"], a[aria-label="Enable light mode"]', function(e) {

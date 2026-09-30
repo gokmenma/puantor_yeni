@@ -27,10 +27,43 @@ function safeLoginReturnUrl(string $value, string $fallback): string
     return $value;
 }
 
-use App\Helper\Security;
-use App\Helper\Date;
+function determineUserLoginRedirect($user, $rawReturn = ''): string
+{
+    $returnUrl = safeLoginReturnUrl($rawReturn, '');
+    if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
+        $defaultDest = 'index.php?p=home';
+    } else {
+        $defaultDest = $returnUrl;
+    }
 
-$error = "";
+    $is_superadmin = ($user->superadmin ?? 0) == 1;
+    if ($is_superadmin) {
+        $_SESSION['firm_id'] = $user->firm_id ?? 0;
+        return $defaultDest;
+    }
+
+    require_once ROOT . '/Model/MyFirmModel.php';
+    $myFirmModel = new MyFirmModel();
+    $myFirms = $myFirmModel->getMyFirmByUserId();
+
+    $defaultFirmId = (int) ($user->default_firm_id ?? 0);
+    $authorizedFirmIds = array_map(static function ($firm) {
+        return (int) $firm->id;
+    }, $myFirms);
+
+    if (count($myFirms) === 1) {
+        $_SESSION['firm_id'] = (int) $myFirms[0]->id;
+        return $defaultDest;
+    }
+
+    if ($defaultFirmId > 0 && in_array($defaultFirmId, $authorizedFirmIds, true)) {
+        $_SESSION['firm_id'] = $defaultFirmId;
+        return $defaultDest;
+    }
+
+    $encodedReturn = !empty($returnUrl) ? urlencode($returnUrl) : '';
+    return 'company-list.php' . (!empty($encodedReturn) ? "?returnUrl={$encodedReturn}" : "");
+}
 
 // Beni Hatırla Kontrolü (Cookie)
 if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['remember_me'])) {
@@ -48,46 +81,17 @@ if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['r
         $_SESSION['user_role'] = $cookie_user->user_roles;
         $_SESSION["log_id"] = $User->loginLog($cookie_user->id);
         
-        $is_superadmin = ($cookie_user->superadmin ?? 0) == 1;
-        if ($is_superadmin) {
-            $_SESSION['firm_id'] = $cookie_user->firm_id ?? 0;
-            $rawReturn = $_GET['returnUrl'] ?? '';
-            $returnUrl = safeLoginReturnUrl($rawReturn, '');
-            if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
-                $redirectUri = 'index.php?p=home';
-            } else {
-                $redirectUri = $returnUrl;
-            }
-            header("Location: {$redirectUri}");
-        } else {
-            $rawReturn = $_GET['returnUrl'] ?? '';
-            $returnUrl = safeLoginReturnUrl($rawReturn, 'company-list.php');
-            header("Location: {$returnUrl}");
-        }
+        $rawReturn = $_GET['returnUrl'] ?? '';
+        $redirectUri = determineUserLoginRedirect($cookie_user, $rawReturn);
+        header("Location: {$redirectUri}");
         exit();
     }
 }
 
 if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
-    $is_superadmin = ($_SESSION['user']->superadmin ?? 0) == 1;
-    if ($is_superadmin) {
-        $_SESSION['firm_id'] = $_SESSION['user']->firm_id ?? 0;
-        $rawReturn = $_GET['returnUrl'] ?? '';
-        $returnUrl = safeLoginReturnUrl($rawReturn, '');
-        if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
-            $redirectUri = 'index.php?p=home';
-        } else {
-            $redirectUri = $returnUrl;
-        }
-        header("Location: {$redirectUri}");
-    } elseif (!hash_equals((string) $_SESSION['csrf_token'], (string) ($_POST['csrf_token'] ?? ''))) {
-        $error = 'Güvenlik doğrulaması başarısız. Sayfayı yenileyin.';
-    } elseif ($loginSecurity->isBlocked($email, $clientIp)) {
-        $error = 'Çok fazla hatalı giriş denemesi yapıldı. 15 dakika sonra tekrar deneyin.';
-        $loginSecurity->event(null, 'login_rate_limited', 'Giriş deneme sınırı uygulandı.');
-    } else {
-        header("Location: company-list.php");
-    }
+    $rawReturn = $_GET['returnUrl'] ?? '';
+    $redirectUri = determineUserLoginRedirect($_SESSION['user'], $rawReturn);
+    header("Location: {$redirectUri}");
     exit();
 }
 
@@ -206,23 +210,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
                         }
                     }
 
-                    $is_superadmin = ($user->superadmin ?? 0) == 1;
-                    if ($is_superadmin) {
-                        $_SESSION['firm_id'] = $user->firm_id ?? 0;
-                        $rawReturn = $_GET['returnUrl'] ?? '';
-                        $returnUrl = safeLoginReturnUrl($rawReturn, '');
-                        if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
-                            $redirectUri = 'index.php?p=home';
-                        } else {
-                            $redirectUri = $returnUrl;
-                        }
-                        header("Location: {$redirectUri}");
-                        exit();
-                    } else {
-                        $returnUrl = isset($_GET['returnUrl']) && !empty($_GET['returnUrl']) ? urlencode($_GET['returnUrl']) : '';
-                        header("Location: company-list.php?returnUrl={$returnUrl}");
-                        exit();
-                    }
+                    $rawReturn = $_GET['returnUrl'] ?? '';
+                    $redirectUri = determineUserLoginRedirect($user, $rawReturn);
+                    header("Location: {$redirectUri}");
+                    exit();
                 }
             } else {
                 $loginSecurity->record($email, $clientIp, false);

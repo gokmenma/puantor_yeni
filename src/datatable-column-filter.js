@@ -68,6 +68,115 @@
 
     var cssStyles = `
     <style id="dt-col-filter-styles">
+    /* DataTables Başlık Hücresi ve Sıralama İkonu Düzeni (Resimdeki Gibi Flex) */
+    table.dataTable thead > tr > th,
+    .data-table thead > tr > th {
+        position: relative !important;
+        padding: 6px 8px !important;
+        vertical-align: middle !important;
+        cursor: pointer !important;
+        user-select: none !important;
+    }
+    table.dataTable thead > tr > th:first-child,
+    .data-table thead > tr > th:first-child {
+        padding: 6px 4px !important;
+    }
+
+    .dt-header-content {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .dt-header-title-wrap {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    /* Sıralama İkonu (Resimdeki gibi sol tarafta doğal flex elemanı) */
+    .dt-header-title-wrap span.dt-column-order,
+    table.dataTable thead > tr > th span.dt-column-order,
+    table.dataTable thead > tr > td span.dt-column-order,
+    .data-table thead > tr > th span.dt-column-order {
+        position: static !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
+        min-height: 14px !important;
+        max-width: 14px !important;
+        max-height: 14px !important;
+        flex-shrink: 0 !important;
+        background-repeat: no-repeat !important;
+        background-position: center center !important;
+        background-size: 14px 14px !important;
+        pointer-events: none !important;
+        opacity: 0.65;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+    }
+    table.dataTable thead > tr > th span.dt-column-order:before,
+    table.dataTable thead > tr > th span.dt-column-order:after,
+    table.dataTable thead > tr > td span.dt-column-order:before,
+    table.dataTable thead > tr > td span.dt-column-order:after {
+        display: none !important;
+        content: "" !important;
+        opacity: 0 !important;
+    }
+    /* 1. Boşta / Sıralanabilir (Default: Nötr Çift Ok ⇅) */
+    table.dataTable thead > tr > th.dt-orderable-asc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+    table.dataTable thead > tr > th.dt-orderable-desc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+    table.dataTable thead > tr > td.dt-orderable-asc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+    table.dataTable thead > tr > td.dt-orderable-desc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+    table.dataTable thead > tr > th.sorting:not(.sorting_asc):not(.sorting_desc) span.dt-column-order,
+    table.dataTable thead > tr > td.sorting:not(.sorting_asc):not(.sorting_desc) span.dt-column-order,
+    .data-table thead > tr > th.dt-orderable-asc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+    .data-table thead > tr > th.dt-orderable-desc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 11.5V4.5M5 4.5L2.5 7M5 4.5L7.5 7'/%3E%3Cpath d='M11 4.5v7m0 0l-2.5-2.5m2.5 2.5l2.5-2.5'/%3E%3C/svg%3E") !important;
+        opacity: 0.55 !important;
+    }
+    /* 2. Artan Sıralama (Ascending / ASC: Yalnızca Yukarı Ok ↑) */
+    table.dataTable thead > tr > th.dt-ordering-asc span.dt-column-order,
+    table.dataTable thead > tr > th.sorting_asc span.dt-column-order,
+    table.dataTable thead > tr > td.dt-ordering-asc span.dt-column-order,
+    table.dataTable thead > tr > td.sorting_asc span.dt-column-order,
+    .data-table thead > tr > th.dt-ordering-asc span.dt-column-order,
+    .data-table thead > tr > th.sorting_asc span.dt-column-order {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%230054a6' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 13.5V2.5M8 2.5L3.5 7M8 2.5L12.5 7'/%3E%3C/svg%3E") !important;
+        opacity: 1 !important;
+    }
+    /* 3. Azalan Sıralama (Descending / DESC: Yalnızca Aşağı Ok ↓) */
+    table.dataTable thead > tr > th.dt-ordering-desc span.dt-column-order,
+    table.dataTable thead > tr > th.sorting_desc span.dt-column-order,
+    table.dataTable thead > tr > td.dt-ordering-desc span.dt-column-order,
+    table.dataTable thead > tr > td.sorting_desc span.dt-column-order,
+    .data-table thead > tr > th.dt-ordering-desc span.dt-column-order,
+    .data-table thead > tr > th.sorting_desc span.dt-column-order {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%230054a6' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2.5v11m0 0l-4.5-4.5m4.5 4.5l4.5-4.5'/%3E%3C/svg%3E") !important;
+        opacity: 1 !important;
+    }
+    [data-bs-theme="dark"] table.dataTable thead > tr > th.dt-ordering-asc span.dt-column-order,
+    [data-bs-theme="dark"] table.dataTable thead > tr > th.sorting_asc span.dt-column-order,
+    [data-bs-theme="dark"] .data-table thead > tr > th.dt-ordering-asc span.dt-column-order,
+    [data-bs-theme="dark"] .data-table thead > tr > th.sorting_asc span.dt-column-order {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2338bdf8' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 13.5V2.5M8 2.5L3.5 7M8 2.5L12.5 7'/%3E%3C/svg%3E") !important;
+        opacity: 1 !important;
+    }
+    [data-bs-theme="dark"] table.dataTable thead > tr > th.dt-ordering-desc span.dt-column-order,
+    [data-bs-theme="dark"] table.dataTable thead > tr > th.sorting_desc span.dt-column-order,
+    [data-bs-theme="dark"] .data-table thead > tr > th.dt-ordering-desc span.dt-column-order,
+    [data-bs-theme="dark"] .data-table thead > tr > th.sorting_desc span.dt-column-order {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2338bdf8' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2.5v11m0 0l-4.5-4.5m4.5 4.5l4.5-4.5'/%3E%3C/svg%3E") !important;
+        opacity: 1 !important;
+    }
     .dt-col-filter-btn {
         width: 24px !important;
         height: 24px !important;
@@ -1107,12 +1216,21 @@
                 var detectedType = detectColumnType(header, title);
                 $th.attr('data-filter-type', detectedType);
 
+                var isOrderable = $th.hasClass('dt-orderable-asc') || $th.hasClass('dt-orderable-desc') || $th.hasClass('dt-ordering-asc') || $th.hasClass('dt-ordering-desc') || $th.hasClass('sorting') || $th.hasClass('sorting_asc') || $th.hasClass('sorting_desc');
                 var currentHtml = $th.html();
-                $th.addClass('dt-filterable-th');
+                var $clean = $('<div>').html(currentHtml);
+                $clean.find('.dt-column-order, .dt-col-filter-btn').remove();
+                var cleanTitleHtml = $clean.html().trim();
 
                 var $wrapper = $('<div class="dt-header-content d-flex align-items-center justify-content-between gap-1 w-100"></div>');
-                var $titleSpan = $('<span class="dt-header-title text-truncate"></span>').html(currentHtml);
-                var $actionsSpan = $('<span class="dt-header-actions d-inline-flex align-items-center gap-1 ms-auto"></span>');
+                var $titleWrap = $('<div class="dt-header-title-wrap d-inline-flex align-items-center gap-1.5 flex-grow-1 min-w-0"></div>');
+                if (isOrderable) {
+                    $titleWrap.append('<span class="dt-column-order"></span>');
+                }
+                var $titleSpan = $('<span class="dt-header-title text-wrap"></span>').html(cleanTitleHtml);
+                $titleWrap.append($titleSpan);
+
+                var $actionsSpan = $('<span class="dt-header-actions d-inline-flex align-items-center gap-1 ms-auto flex-shrink-0"></span>');
 
                 var $btn = $(`
                     <button type="button" class="dt-col-filter-btn ${isFiltered ? 'active text-primary bg-primary-lt' : 'text-muted'}" title="Filtrele" data-column="${colIdx}" data-title="${title}" data-filter-type="${detectedType}">
@@ -1121,7 +1239,8 @@
                 `);
 
                 $actionsSpan.append($btn);
-                $th.empty().append($wrapper.append($titleSpan).append($actionsSpan));
+                $wrapper.append($titleWrap).append($actionsSpan);
+                $th.empty().append($wrapper);
 
                 $btn.on('click', function (e) {
                     e.stopPropagation();

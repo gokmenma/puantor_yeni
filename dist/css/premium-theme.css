@@ -744,13 +744,15 @@ table.dataTable thead th,
     font-size: 13px !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
-    padding: 12px 14px !important;
+    padding: 8px 8px !important;
     border-top: none !important;
     border-left: none !important;
     border-right: 1px solid #e2e8f0 !important;
     border-bottom: 2px solid #e2e8f0 !important;
     vertical-align: middle !important;
-    white-space: nowrap;
+    white-space: normal !important;
+    word-break: break-word !important;
+    text-wrap: wrap !important;
 }
 
 .table thead th:last-child,
@@ -758,6 +760,269 @@ table.dataTable thead th,
 table.dataTable thead th:last-child,
 .data-table thead th:last-child {
     border-right: none !important;
+}
+
+/* ==============================================================
+   DATATABLE BAŞLIK VE SIRALAMA İKONLARI (SORT ICONS FLEX LAYOUT)
+   ============================================================== */
+table.dataTable thead > tr > th,
+.data-table thead > tr > th {
+    position: relative !important;
+    padding: 6px 8px !important;
+    vertical-align: middle !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+table.dataTable thead > tr > th:first-child,
+table.dataTable thead > tr > th.no-export,
+table.dataTable thead > tr > th.actions-column,
+table.dataTable thead > tr > th.no-sort,
+.data-table thead > tr > th:first-child,
+.data-table thead > tr > th.no-export,
+.data-table thead > tr > th.actions-column,
+.data-table thead > tr > th.no-sort {
+    padding: 6px 4px !important;
+}
+
+/* DataTables 2 Sıralama İkon Kapsayıcısı (span.dt-column-order) */
+.dt-header-title-wrap span.dt-column-order,
+table.dataTable thead > tr > th span.dt-column-order,
+table.dataTable thead > tr > td span.dt-column-order,
+.data-table thead > tr > th span.dt-column-order {
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    max-width: 14px !important;
+    max-height: 14px !important;
+    flex-shrink: 0 !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 14px 14px !important;
+    pointer-events: none !important;
+    opacity: 0.65;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+}
+
+/* ColReorder Sürükleme Kutusunu (Klon Tablo) Kompakt Tek Rozet Yapma */
+table.dtcr-cloned,
+table.dtcr-cloned.dataTable,
+table.dtcr-cloned.data-table,
+.dtcr-cloned,
+.dtcr-cloned table,
+div.dt-colreorder-drag,
+div.dt-colreorder-drag table,
+div.dt-colreorder-floating,
+div.dt-colreorder-floating table,
+div.dt-colreorder-moving,
+.dt-colreorder-clone {
+    position: fixed !important;
+    width: 140px !important;
+    min-width: 80px !important;
+    max-width: 160px !important;
+    height: 34px !important;
+    max-height: 34px !important;
+    display: inline-block !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: 1.5px solid #0054a6 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 8px 24px rgba(0, 84, 166, 0.3) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    opacity: 0.95 !important;
+    pointer-events: none !important;
+    z-index: 9999999 !important;
+}
+[data-bs-theme="dark"] table.dtcr-cloned,
+[data-bs-theme="dark"] .dtcr-cloned,
+[data-bs-theme="dark"] div.dt-colreorder-drag,
+[data-bs-theme="dark"] div.dt-colreorder-floating {
+    background: #1e293b !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Klonun Gövde Satırlarını Kesin Gizle (Upuzun uzamayı önler) */
+table.dtcr-cloned tbody,
+.dtcr-cloned tbody,
+div.dt-colreorder-floating tbody,
+div.dt-colreorder-drag tbody,
+.dt-colreorder-clone tbody {
+    display: none !important;
+}
+
+table.dtcr-cloned thead,
+.dtcr-cloned thead,
+table.dtcr-cloned tr,
+.dtcr-cloned tr {
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 160px !important;
+    height: 100% !important;
+}
+table.dtcr-cloned th,
+table.dtcr-cloned td,
+.dtcr-cloned th,
+.dtcr-cloned td {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 160px !important;
+    height: 32px !important;
+    padding: 4px 10px !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
+    border: none !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: #0054a6 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+[data-bs-theme="dark"] table.dtcr-cloned th,
+[data-bs-theme="dark"] table.dtcr-cloned td,
+[data-bs-theme="dark"] .dtcr-cloned th,
+[data-bs-theme="dark"] .dtcr-cloned td {
+    background: #1e293b !important;
+    color: #60a5fa !important;
+}
+table.dtcr-cloned .dt-column-order,
+table.dtcr-cloned .dt-col-filter-btn,
+table.dtcr-cloned .dt-col-resizer,
+.dtcr-cloned .dt-column-order,
+.dtcr-cloned .dt-col-filter-btn,
+.dtcr-cloned .dt-col-resizer {
+    display: none !important;
+}
+.data-table thead > tr > th span.dt-column-order {
+    position: absolute !important;
+    left: 8px !important;
+    right: auto !important;
+    top: 50% !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    width: 14px !important;
+    height: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 14px 14px !important;
+    pointer-events: none !important;
+    opacity: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* DataTables 2 varsayılan üçgen oklarını kaldır */
+table.dataTable thead > tr > th span.dt-column-order:before,
+table.dataTable thead > tr > th span.dt-column-order:after,
+table.dataTable thead > tr > td span.dt-column-order:before,
+table.dataTable thead > tr > td span.dt-column-order:after {
+    display: none !important;
+    content: "" !important;
+    opacity: 0 !important;
+}
+
+/* 1. Boşta / Sıralanabilir (Default: Nötr Çift Ok ⇅) */
+table.dataTable thead > tr > th.dt-orderable-asc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+table.dataTable thead > tr > th.dt-orderable-desc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+table.dataTable thead > tr > td.dt-orderable-asc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+table.dataTable thead > tr > td.dt-orderable-desc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+table.dataTable thead > tr > th.sorting:not(.sorting_asc):not(.sorting_desc) span.dt-column-order,
+table.dataTable thead > tr > td.sorting:not(.sorting_asc):not(.sorting_desc) span.dt-column-order,
+.data-table thead > tr > th.dt-orderable-asc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+.data-table thead > tr > th.dt-orderable-desc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 11.5V4.5M5 4.5L2.5 7M5 4.5L7.5 7'/%3E%3Cpath d='M11 4.5v7m0 0l-2.5-2.5m2.5 2.5l2.5-2.5'/%3E%3C/svg%3E") !important;
+    opacity: 0.55 !important;
+}
+
+/* 2. Artan Sıralama (Ascending / ASC: Yalnızca Yukarı Ok ↑) */
+table.dataTable thead > tr > th.dt-ordering-asc span.dt-column-order,
+table.dataTable thead > tr > th.sorting_asc span.dt-column-order,
+table.dataTable thead > tr > td.dt-ordering-asc span.dt-column-order,
+table.dataTable thead > tr > td.sorting_asc span.dt-column-order,
+.data-table thead > tr > th.dt-ordering-asc span.dt-column-order,
+.data-table thead > tr > th.sorting_asc span.dt-column-order {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%230054a6' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 13.5V2.5M8 2.5L3.5 7M8 2.5L12.5 7'/%3E%3C/svg%3E") !important;
+    opacity: 1 !important;
+}
+
+/* 3. Azalan Sıralama (Descending / DESC: Yalnızca Aşağı Ok ↓) */
+table.dataTable thead > tr > th.dt-ordering-desc span.dt-column-order,
+table.dataTable thead > tr > th.sorting_desc span.dt-column-order,
+table.dataTable thead > tr > td.dt-ordering-desc span.dt-column-order,
+table.dataTable thead > tr > td.sorting_desc span.dt-column-order,
+.data-table thead > tr > th.dt-ordering-desc span.dt-column-order,
+.data-table thead > tr > th.sorting_desc span.dt-column-order {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%230054a6' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2.5v11m0 0l-4.5-4.5m4.5 4.5l4.5-4.5'/%3E%3C/svg%3E") !important;
+    opacity: 1 !important;
+}
+
+/* DataTables 1 (Eski .sorting, .sorting_asc, .sorting_desc sınıfları) */
+table.dataTable thead > tr > th.sorting:not(.dt-orderable-asc):not(.dt-orderable-desc):not(.sorting_asc):not(.sorting_desc),
+table.dataTable thead > tr > td.sorting:not(.dt-orderable-asc):not(.dt-orderable-desc):not(.sorting_asc):not(.sorting_desc) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 11.5V4.5M5 4.5L2.5 7M5 4.5L7.5 7'/%3E%3Cpath d='M11 4.5v7m0 0l-2.5-2.5m2.5 2.5l2.5-2.5'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: left 8px center !important;
+    background-size: 14px 14px !important;
+}
+
+table.dataTable thead > tr > th.sorting_asc:not(.dt-ordering-asc),
+table.dataTable thead > tr > td.sorting_asc:not(.dt-ordering-asc) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%230054a6' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 13.5V2.5M8 2.5L3.5 7M8 2.5L12.5 7'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: left 8px center !important;
+    background-size: 14px 14px !important;
+}
+
+table.dataTable thead > tr > th.sorting_desc:not(.dt-ordering-desc),
+table.dataTable thead > tr > td.sorting_desc:not(.dt-ordering-desc) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%230054a6' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2.5v11m0 0l-4.5-4.5m4.5 4.5l4.5-4.5'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: left 8px center !important;
+    background-size: 14px 14px !important;
+}
+
+/* Dark Mode Desteği */
+[data-bs-theme="dark"] table.dataTable thead > tr > th.dt-orderable-asc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+[data-bs-theme="dark"] table.dataTable thead > tr > th.dt-orderable-desc:not(.dt-ordering-asc):not(.dt-ordering-desc) span.dt-column-order,
+[data-bs-theme="dark"] table.dataTable thead > tr > th.sorting:not(.dt-orderable-asc):not(.dt-orderable-desc):not(.sorting_asc):not(.sorting_desc) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2364748b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 11.5V4.5M5 4.5L2.5 7M5 4.5L7.5 7'/%3E%3Cpath d='M11 4.5v7m0 0l-2.5-2.5m2.5 2.5l2.5-2.5'/%3E%3C/svg%3E") !important;
+}
+
+[data-bs-theme="dark"] table.dataTable thead > tr > th.dt-ordering-asc span.dt-column-order,
+[data-bs-theme="dark"] table.dataTable thead > tr > th.sorting_asc:not(.dt-ordering-asc),
+[data-bs-theme="dark"] .data-table thead > tr > th.dt-ordering-asc span.dt-column-order,
+[data-bs-theme="dark"] .data-table thead > tr > th.sorting_asc span.dt-column-order {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2338bdf8' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 13.5V2.5M8 2.5L3.5 7M8 2.5L12.5 7'/%3E%3C/svg%3E") !important;
+    opacity: 1 !important;
+}
+
+[data-bs-theme="dark"] table.dataTable thead > tr > th.dt-ordering-desc span.dt-column-order,
+[data-bs-theme="dark"] table.dataTable thead > tr > th.sorting_desc:not(.dt-ordering-desc),
+[data-bs-theme="dark"] .data-table thead > tr > th.dt-ordering-desc span.dt-column-order,
+[data-bs-theme="dark"] .data-table thead > tr > th.sorting_desc span.dt-column-order {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='14' height='14' fill='none' stroke='%2338bdf8' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2.5v11m0 0l-4.5-4.5m4.5 4.5l4.5-4.5'/%3E%3C/svg%3E") !important;
+    opacity: 1 !important;
 }
 
 /* Sütun Arama ve Filtre Giriş Kutuları Kaldırıldı (Merkezi Popover Standardı) */
@@ -2349,10 +2614,38 @@ table.dataTable [data-tooltip]::after {
    GLOBAL SEARCH INPUT & TOPBAR WIDGET
    ============================================================== */
 .header-search-wrap {
-    flex: 1;
-    max-width: 520px;
-    margin: 0 auto;
-    position: relative;
+    position: absolute;
+    left: calc(50% + 135px);
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 480px;
+    max-width: calc(100vw - 760px);
+    margin: 0 !important;
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.2s ease;
+}
+
+#navbar.collapsed + header .header-search-wrap,
+#navbar.collapsed ~ header .header-search-wrap,
+aside#navbar.collapsed ~ header .header-search-wrap,
+.navbar-vertical.collapsed ~ header .header-search-wrap {
+    left: calc(50% + 32.5px);
+}
+
+@media (max-width: 1200px) {
+    .header-search-wrap {
+        max-width: 380px;
+    }
+}
+
+@media (max-width: 991px) {
+    .header-search-wrap {
+        position: static;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+        margin: 8px 0 !important;
+    }
 }
 
 .global-search-container {

@@ -597,7 +597,7 @@ html.payroll-summary-collapsed #payrollSummaryCards {
 
                     <!-- Table Responsive Container (Seamless inside card) -->
                     <div class="table-responsive payroll-table-area" style="overflow-x: auto !important;">
-                        <table class="table data-table table-hover text-nowrap w-100 mb-0" id="bordroTable" style="width: 100% !important; margin: 0 !important;">
+                        <table class="table data-table table-hover text-nowrap w-100 mb-0" id="bordroTable" style="margin: 0 !important;">
                             <thead>
                                 <tr>
                                     <th style="width: 40px; min-width: 40px;" class="text-center no-export" data-orderable="false">
@@ -934,8 +934,8 @@ div.dt-container .dt-layout-row.dt-layout-table > div.dt-layout-cell {
 }
 
 /* Tek Çerçeve (Kart ile Bütünleşik Tablo) */
-table#bordroTable.data-table,
-table#bordroTable.dataTable {
+table#bordroTable.data-table:not(.dtcr-cloned),
+table#bordroTable.dataTable:not(.dtcr-cloned) {
     border-collapse: separate !important;
     border-spacing: 0 !important;
     border: 1px solid #dbe3ec !important;

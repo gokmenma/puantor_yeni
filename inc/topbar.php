@@ -86,7 +86,7 @@ if ($firm_id > 0) {
 <header class="navbar-expand-md">
     <div class="collapse navbar-collapse" id="navbar-menu">
 
-        <div class="navbar">
+        <div class="navbar position-relative">
             <div class="topbar-left-wrapper d-flex align-items-center">
                 <div class="collapse-button text-muted me-2" onclick="toggleNavbar()">
                     <span></span>

@@ -101,6 +101,21 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
     })();
   </script>
 
+  <?php
+  if (!empty($_SESSION['user']->id)) {
+      try {
+          require_once __DIR__ . '/../Model/UserDatatableStateModel.php';
+          $dtStateModel = new UserDatatableStateModel();
+          $preloadedStates = $dtStateModel->getAllStatesForUser((int)$_SESSION['user']->id);
+          echo '<script>window.__PRELOADED_DT_STATES__ = ' . json_encode($preloadedStates, JSON_UNESCAPED_UNICODE) . ';</script>';
+      } catch (\Throwable $t) {
+          echo '<script>window.__PRELOADED_DT_STATES__ = {};</script>';
+      }
+  } else {
+      echo '<script>window.__PRELOADED_DT_STATES__ = {};</script>';
+  }
+  ?>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
   <link href="./dist/css/style.css?v=<?php echo filemtime("./dist/css/style.css"); ?>" rel="stylesheet" />

@@ -663,6 +663,7 @@ $(document).ready(function() {
         processing: true,
         serverSide: true,
         autoWidth: false,
+        colReorder: true,
         searchDelay: 400,
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
@@ -689,6 +690,9 @@ $(document).ready(function() {
             if (typeof window.initDataTableColumnFilters === 'function') {
                 window.initDataTableColumnFilters($('#persons'), api);
             }
+            if (typeof window.initPuantorDTManager === 'function') {
+                window.initPuantorDTManager($('#persons'), api);
+            }
         },
         drawCallback: function() {
             $('.select-all-persons').prop('checked', false);
@@ -698,58 +702,58 @@ $(document).ready(function() {
         }
     });
 
-    // Sütunların varsayılan durumları ve etiketleri
-    var columnConfig = {
-        3: { label: 'TC Kimlik No', default: false },
-        4: { label: 'Firma Adı', default: true },
-        5: { label: 'Ücret Türü', default: true },
-        6: { label: 'İşe Giriş Tarihi', default: true },
-        7: { label: 'İşten Çıkış Tarihi', default: true },
-        8: { label: 'Telefon', default: true },
-        9: { label: 'E-posta', default: false },
-        10: { label: 'IBAN Numarası', default: false },
-        11: { label: 'Grubu', default: false },
-        12: { label: 'Görevi', default: false },
-        13: { label: 'Ekip', default: true },
-        14: { label: 'Proje', default: true },
-        15: { label: 'Günlük/Aylık Ücreti', default: true },
-        16: { label: 'Durumu', default: true },
-        17: { label: 'Güncel Bakiyesi', default: true },
-        18: { label: 'Adres', default: false },
-        19: { label: 'Açıklama', default: false }
-    };
+    // Dinamik Sütun Menüsü Oluşturucu (Gizli sütunlarda da %100 güvenli okuma)
+    function renderPersonsColvisMenu() {
+        var skipTitles = ['İşlem', 'İşlemler', 'Seç', 'Aksiyon', 'Aksiyonlar', 'Sıra', '#'];
+        var menuHtml = '';
+        var settings = table ? table.settings()[0] : null;
+        if (!settings || !settings.aoColumns) return;
 
-    // Kayıtlı sütun durumlarını yükle veya varsayılanları kullan
-    var savedVisibility = localStorage.getItem('persons_column_visibility');
-    var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+        settings.aoColumns.forEach(function (colConfig, idx) {
+            var $th = $(colConfig.nTh);
+            var origIdx = colConfig._crOriginalIdx !== undefined ? colConfig._crOriginalIdx : idx;
+            var title = colConfig.sTitle || $th.find('.dt-header-title').text().trim() || $th.clone().find('.dt-col-filter-btn, .dt-column-order, .dt-col-resizer, input, button').remove().end().text().trim();
+            title = title.replace(/\s+/g, ' ').trim();
 
-    // Menüyü oluştur ve sütun görünürlüklerini ayarla
-    var menuHtml = '';
-    $.each(columnConfig, function(idx, conf) {
-        var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
-        table.column(idx).visible(isVisible, false);
+            if ($th.hasClass('no-export') || $th.hasClass('actions-column') || $th.find('input[type="checkbox"]').length > 0 || !title) {
+                return;
+            }
+            if (skipTitles.indexOf(title) !== -1) return;
+
+            var isVisible = colConfig.bVisible !== false;
+            menuHtml += `
+                <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
+                    <div class="form-check mb-0 w-100">
+                        <input class="form-check-input persons-col-trigger" type="checkbox" id="colCheck_${origIdx}" data-column="${origIdx}" data-orig-idx="${origIdx}" ${isVisible ? "checked" : ""}>
+                        <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+                            ${title}
+                        </span>
+                    </div>
+                </label>`;
+        });
 
         menuHtml += `
-            <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
-                <div class="form-check mb-0 w-100">
-                    <input class="form-check-input persons-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
-                    <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
-                        ${conf.label}
-                    </span>
-                </div>
-            </label>`;
-    });
+            <div class="dropdown-divider my-1"></div>
+            <button type="button" class="dropdown-item text-danger py-1.5 px-3 rounded-2" id="resetTableColumnsBtn" style="font-size: 0.8rem;">
+                <i class="ti ti-rotate-2 me-1"></i> Görünümü Sıfırla
+            </button>
+        `;
 
-    $('#personsColvisMenu').html(menuHtml);
-    table.columns.adjust();
+        $('#personsColvisMenu').html(menuHtml);
+    }
 
-    // Sütun tetikleyicilerine tıklama olayı
-    $(document).on('change', '.persons-col-trigger', function() {
-        var colIdx = parseInt($(this).data('column'));
-        var isChecked = this.checked;
-        table.column(colIdx).visible(isChecked);
-        visibilityState[colIdx] = isChecked;
-        localStorage.setItem('persons_column_visibility', JSON.stringify(visibilityState));
+    renderPersonsColvisMenu();
+
+    // Görünümü Sıfırla Butonu
+    $(document).on('click', '#resetTableColumnsBtn', function(e) {
+        e.preventDefault();
+        if (typeof window.resetPuantorDTState === 'function') {
+            window.resetPuantorDTState($('#persons'), table, function() {
+                table.columns().visible(true, true);
+                table.columns.adjust().draw(false);
+                renderPersonsColvisMenu();
+            });
+        }
     });
 
     $(document).on('click', '#personsColvisMenu', function(e) {

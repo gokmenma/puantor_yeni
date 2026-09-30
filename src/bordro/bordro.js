@@ -335,6 +335,7 @@ $(document).ready(function () {
 
   var table = $('#bordroTable').DataTable({
     autoWidth: false,
+    colReorder: true,
     ordering: true,
     pageLength: 25,
     lengthMenu: [10, 25, 50, 100],
@@ -353,6 +354,9 @@ $(document).ready(function () {
       var api = this.api();
       if (typeof window.initDataTableColumnFilters === 'function') {
         window.initDataTableColumnFilters($('#bordroTable'), api);
+      }
+      if (typeof window.initPuantorDTManager === 'function') {
+        window.initPuantorDTManager($('#bordroTable'), api);
       }
     },
     drawCallback: function () {
@@ -378,42 +382,64 @@ $(document).ready(function () {
     table.search('').draw();
   });
 
-  // Sütun indeksleri (thead sırasına göre: 0=Checkbox, 1=Sıra, 2=Personel, 3=ÜcretTürü, 4=Görevi, 5=Ekip, 6=Proje, 7=IBAN, 8=İşeBaşlama, 9=Brüt, 10=İcra Kesintisi, 11=Ödenen, 12=Ödenecek, 13=İşlem)
-  var columnConfig = {
-    3: { label: 'Ücret Türü',         default: true  },
-    4: { label: 'Görevi',              default: true  },
-    5: { label: 'Ekip',               default: true  },
-    6: { label: 'Proje',              default: true  },
-    7: { label: 'IBAN',               default: false },
-    8: { label: 'İşe Başlama Tarihi', default: true  },
-    10: { label: 'İcra Kesintisi',    default: true  }
-  };
+  function renderBordroColvisMenu() {
+    var skipTitles = ['İşlem', 'İşlemler', 'Seç', 'Aksiyon', 'Aksiyonlar', 'Sıra', '#'];
+    var menuHtml = '';
+    var settings = table ? table.settings()[0] : null;
+    if (!settings || !settings.aoColumns) return;
 
-  var savedVisibility = localStorage.getItem('bordro_column_visibility_v3');
-  var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+    settings.aoColumns.forEach(function (colConfig, idx) {
+      var $th = $(colConfig.nTh);
+      var origIdx = colConfig._crOriginalIdx !== undefined ? colConfig._crOriginalIdx : idx;
+      
+      // Başlık metnini temizle
+      var title = colConfig.sTitle || $th.find('.dt-header-title').text().trim() || $th.clone().find('.dt-col-filter-btn, .dt-column-order, .dt-col-resizer, input, button').remove().end().text().trim();
+      title = title.replace(/\s+/g, ' ').trim();
 
-  var menuHtml = '';
-  $.each(columnConfig, function (idx, conf) {
-    var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
-    table.column(idx).visible(isVisible, false);
+      if ($th.hasClass('no-export') || $th.hasClass('actions-column') || $th.find('input[type="checkbox"]').length > 0 || !title) {
+        return;
+      }
+      if (skipTitles.indexOf(title) !== -1) return;
+
+      var isVisible = colConfig.bVisible !== false;
+      menuHtml += `
+        <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size:0.85rem;">
+          <div class="form-check mb-0 w-100">
+            <input class="form-check-input bordro-col-trigger" type="checkbox" id="bordroColCheck_${origIdx}" data-column="${origIdx}" data-orig-idx="${origIdx}" ${isVisible ? 'checked' : ''}>
+            <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">${title}</span>
+          </div>
+        </label>`;
+    });
+
     menuHtml += `
-      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size:0.85rem;">
-        <div class="form-check mb-0 w-100">
-          <input class="form-check-input bordro-col-trigger" type="checkbox" id="bordroColCheck_${idx}" data-column="${idx}" ${isVisible ? 'checked' : ''}>
-          <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">${conf.label}</span>
-        </div>
-      </label>`;
+      <div class="dropdown-divider my-1"></div>
+      <button type="button" class="dropdown-item text-danger py-1.5 px-3 rounded-2" id="resetBordroTableColumnsBtn" style="font-size: 0.8rem;">
+        <i class="ti ti-rotate-2 me-1"></i> Görünümü Sıfırla
+      </button>
+    `;
+
+    $('#bordroColvisMenu').html(menuHtml);
+  }
+
+  // Sayfa açılışında ve menü her tıklandığında anında render et
+  renderBordroColvisMenu();
+  $('#colvisDropdownBtn').on('click', function () {
+    renderBordroColvisMenu();
+  });
+  $('#colvisDropdownBtn').parent().on('show.bs.dropdown', function () {
+    renderBordroColvisMenu();
   });
 
-  $('#bordroColvisMenu').html(menuHtml);
-  table.columns.adjust();
-
-  $(document).off('change.bordroCol').on('change.bordroCol', '.bordro-col-trigger', function () {
-    var colIdx = parseInt($(this).data('column'));
-    var isChecked = this.checked;
-    table.column(colIdx).visible(isChecked);
-    visibilityState[colIdx] = isChecked;
-    localStorage.setItem('bordro_column_visibility_v3', JSON.stringify(visibilityState));
+  // Görünümü Sıfırla Butonu
+  $(document).on('click', '#resetBordroTableColumnsBtn', function(e) {
+    e.preventDefault();
+    if (typeof window.resetPuantorDTState === 'function') {
+      window.resetPuantorDTState($('#bordroTable'), table, function() {
+        table.columns().visible(true, true);
+        table.columns.adjust().draw(false);
+        renderBordroColvisMenu();
+      });
+    }
   });
 
   $(document).off('click.bordroCol').on('click.bordroCol', '#bordroColvisMenu', function (e) {

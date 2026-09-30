@@ -244,6 +244,7 @@ if ($page == 'activities/index' || $page == 'admin-home') {
 <!-- <script src="./dist/js/demo.min.js?1692870487"></script> -->
 <script src="./src/jquery.inputmask.js"></script>
 <script src="./src/datatable-column-filter.js?v=<?php echo time(); ?>"></script>
+<script src="./src/datatable-col-manager.js?v=<?php echo time(); ?>"></script>
 <script src="./src/global-search.js?v=<?php echo file_exists(ROOT . '/src/global-search.js') ? filemtime(ROOT . '/src/global-search.js') : time(); ?>"></script>
 <script src="./src/app.js?v=<?php echo time(); ?>" defer></script>
 <?php 
