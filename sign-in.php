@@ -9,9 +9,12 @@ require_once 'Model/LoginLogsModel.php';
 require_once 'Service/LoginSecurityService.php';
 require_once 'Service/MailGonderimService.php';
 
+use App\Helper\Date;
+use App\Helper\Security;
 use Service\LoginSecurityService;
 use Service\MailGonderimService;
 
+$error = '';
 $Settings = new SettingsModel();
 $User = new UserModel();
 $loginSecurity = new LoginSecurityService($User->getDb());
