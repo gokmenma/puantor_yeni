@@ -1731,7 +1731,10 @@ html[data-sidebar-theme="sade-beyaz"] #navbar .btn-menu-settings, #navbar[data-s
 [data-sidebar-theme]:not([data-sidebar-theme="sade-beyaz"]):not([data-sidebar-theme="slate-light"]):not([data-sidebar-theme="platin-gri"]) #navbar .nav-link:hover,
 [data-sidebar-theme]:not([data-sidebar-theme="sade-beyaz"]):not([data-sidebar-theme="slate-light"]):not([data-sidebar-theme="platin-gri"]) .navbar-vertical .nav-link:hover {
     color: #ffffff !important;
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 [data-sidebar-theme]:not([data-sidebar-theme="sade-beyaz"]):not([data-sidebar-theme="slate-light"]):not([data-sidebar-theme="platin-gri"]) #navbar .nav-link:hover .nav-link-icon,
 [data-sidebar-theme]:not([data-sidebar-theme="sade-beyaz"]):not([data-sidebar-theme="slate-light"]):not([data-sidebar-theme="platin-gri"]) .navbar-vertical .nav-link:hover .nav-link-icon {
