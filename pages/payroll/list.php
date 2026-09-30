@@ -292,23 +292,18 @@ foreach ($persons as $item) {
         }
     }
 
-    if (!empty($person->icra_kesintisi_aktif)) {
-        $stmt_check_icra = $bordro->connect()->prepare("SELECT COUNT(id) FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
-        $stmt_check_icra->execute([$person->id, $month, $year]);
-        $icra_count = (int)$stmt_check_icra->fetchColumn();
-        if (isset($_POST["action"]) || $icra_count === 0) {
+    if ($isPayrollCalculation) {
+        if (!empty($person->icra_kesintisi_aktif)) {
             $stmt_calc_inc = $bordro->connect()->prepare("SELECT SUM(tutar) FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori IN (1, 16, 17)");
             $stmt_calc_inc->execute([$person->id, $month, $year]);
             $earned_inc = (float)($stmt_calc_inc->fetchColumn() ?? 0);
             if ($earned_inc > 0) {
                 $personIcra->calculateAndApplyIcraDeduction($person->id, $month, $year, $earned_inc);
             }
+        } else {
+            $personIcra->calculateAndApplyIcraDeduction($person->id, $month, $year, 0);
         }
-    } else {
-        $personIcra->calculateAndApplyIcraDeduction($person->id, $month, $year, 0);
-    }
 
-    if ($isPayrollCalculation || !empty($person->icra_kesintisi_aktif)) {
         $res = $bordro->getPersonSalaryAndWageCut($person->id, $firstDay, $lastDay);
         if (!empty($person->icra_kesintisi_aktif)) {
             $stmt_icra_calc = $bordro->connect()->prepare("SELECT tutar FROM maas_gelir_kesinti WHERE person_id = ? AND ay = ? AND yil = ? AND kategori = 15 AND (aciklama LIKE '%İcra%' OR aciklama LIKE '%icra%' OR turu = 'İcra Kesintisi')");
@@ -676,7 +671,20 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                       </div>
                                     </div>";
                                 ?>
-                                <tr>
+                                <tr data-id="<?= $id ?>"
+                                    data-raw-id="<?= (int) $person->id ?>"
+                                    data-person-name="<?= htmlspecialchars($person->full_name ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                    data-iban="<?= htmlspecialchars(Security::safeDecrypt($person->iban_number ?? '') ?: '', ENT_QUOTES, 'UTF-8') ?>"
+                                    data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>"
+                                    data-balance-raw="<?= (float)($kalan ?? 0) ?>"
+                                    data-month="<?= $month ?>"
+                                    data-year="<?= $year ?>"
+                                    data-project-id="<?= $project_id ?>"
+                                    data-has-icra="<?= $icra_month_amount > 0 ? '1' : '0' ?>"
+                                    data-icra-amount="<?= htmlspecialchars(Helper::formattedMoney($icra_month_amount), ENT_QUOTES, 'UTF-8') ?>"
+                                    data-slip-url="index.php?p=payroll/pay-slip&id=<?= $link ?>"
+                                    data-can-pay="<?= $Auths->hasPermission('make_staff_payment') ? '1' : '0' ?>"
+                                    data-can-income="<?= $Auths->hasPermission('income_expense_add_update') ? '1' : '0' ?>">
                                     <td class="text-center">
                                         <input type="checkbox" class="form-check-input payroll-row-check" value="<?= (int) $person->id ?>" data-enc-id="<?= $id ?>">
                                     </td>
@@ -754,6 +762,7 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                             <div class="dropdown-menu dropdown-menu-end">
                                                 <?php if ($Auths->hasPermission('make_staff_payment')): ?>
                                                     <a class="dropdown-item add-payment" data-id="<?= $id ?>"
+                                                        data-name="<?= htmlspecialchars($person->full_name ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                         data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>" href="#"
                                                         data-bs-toggle="modal" data-bs-target="#payment-modal">
                                                         <i class="ti ti-cash-register icon me-2 text-success"></i> Ödeme Yap
@@ -762,6 +771,7 @@ html.payroll-summary-collapsed #payrollSummaryCards {
 
                                                 <?php if ($Auths->hasPermission("income_expense_add_update")): ?>
                                                     <a class="dropdown-item add-wage-cut" data-id="<?= $id ?>"
+                                                        data-name="<?= htmlspecialchars($person->full_name ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                         data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>"
                                                         data-tooltip="Avans, Ceza veya BES gibi" data-tooltip-location="left"
                                                         href="#" data-bs-toggle="modal" data-bs-target="#wage_cut_modal">
@@ -769,6 +779,7 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                                     </a>
 
                                                     <a class="dropdown-item add-income" data-id="<?= $id ?>"
+                                                        data-name="<?= htmlspecialchars($person->full_name ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                         data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>"
                                                         data-tooltip="Prim, İkramiye veya Ödül gibi" data-tooltip-location="left"
                                                         href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
@@ -1014,6 +1025,14 @@ table#bordroTable.data-table > tbody > tr:last-child > * {
 }
 table#bordroTable.data-table tbody tr:hover td {
     background-color: #f8fafc !important;
+}
+
+/* Context Menu — Aktif Satır Vurgusu */
+#bordroTable tbody tr.context-menu-active > td {
+    background-color: #eff6ff !important;
+}
+[data-bs-theme="dark"] #bordroTable tbody tr.context-menu-active > td {
+    background-color: #1e3a5f !important;
 }
 
 /* Tablo Altı Sayfalama ve Bilgi Alanı */

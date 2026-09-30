@@ -394,17 +394,17 @@ try {
         $actions = '';
         if ($canMakePayment) {
             $actions .= '<a class="dropdown-item add-payment" data-id="' . $encryptedId
-                . '" data-balance="' . $safeBalance . '" href="#" data-bs-toggle="modal" data-bs-target="#payment-modal">
+                . '" data-name="' . $safeName . '" data-balance="' . $safeBalance . '" href="#" data-bs-toggle="modal" data-bs-target="#payment-modal">
                 <i class="ti ti-cash-register icon me-3"></i> Ödeme Yap
             </a>';
         }
         if ($canEditIncomeExpense) {
             $actions .= '<a class="dropdown-item add-wage-cut" data-id="' . $encryptedId
-                . '" data-balance="' . $safeBalance . '" data-tooltip="Avans,Ceza veya Bes gibi" data-tooltip-location="left" href="#">
+                . '" data-name="' . $safeName . '" data-balance="' . $safeBalance . '" data-tooltip="Avans,Ceza veya Bes gibi" data-tooltip-location="left" href="#">
                 <i class="ti ti-cut icon me-3"></i> Kesinti Ekle
             </a>
             <a class="dropdown-item add-income" data-id="' . $encryptedId
-                . '" data-balance="' . $safeBalance . '" data-tooltip="Prim,İkramiye veya Ödül gibi" data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
+                . '" data-name="' . $safeName . '" data-balance="' . $safeBalance . '" data-tooltip="Prim,İkramiye veya Ödül gibi" data-tooltip-location="left" href="#" data-bs-toggle="modal" data-bs-target="#income_modal">
                 <i class="ti ti-download icon me-3"></i> Gelir Ekle
             </a>';
         }

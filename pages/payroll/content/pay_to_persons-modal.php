@@ -78,29 +78,38 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
         background: #a6a6a6;
     }
 </style>
-<div class="modal modal-blur fade" id="pay_to_persons-modal" aria-hidden="true" style="display: none;">
+<div class="modal modal-blur fade" id="pay_to_persons-modal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
-        <div class="modal-content shadow-lg">
-            <div class="modal-header bg-light py-3">
-                <h5 class="modal-title fw-bold text-dark d-flex align-items-center">
-                    <i class="ti ti-users icon me-2 text-primary fs-3"></i> Toplu Personel Ödemesi Yap
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content shadow-lg border" style="border-radius: 12px; border-color: #dbe3ec !important; overflow: hidden;">
+            <!-- Modal Header -->
+            <div class="modal-header bg-white px-4 py-3" style="border-bottom: 1px solid #e2e8f0;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-sm" style="width: 42px; height: 42px;">
+                        <i class="ti ti-users" style="font-size: 22px;"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title fw-bold text-dark mb-0" style="font-size: 1.1rem; letter-spacing: -0.3px;">Toplu Personel Ödemesi Yap</h4>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12.5px;">Birden fazla personele tek seferde kasa çıkışlı ödeme yapın</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
-            <div class="modal-body pb-2">
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4 bg-white">
                 <form action="" id="payToPersonsForm">
-                    <!-- Form Üst Bilgileri (Kasa, Tarih, Açıklama) -->
-                    <div class="card border-0 bg-transparent mb-3">
-                        <div class="card-body p-0">
+                    <!-- Form Üst Parametreleri (Kasa, Tarih, Açıklama) -->
+                    <div class="card border mb-3" style="border-radius: 10px; border-color: #e2e8f0; background: #f8fafc;">
+                        <div class="card-body p-3">
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold text-secondary mb-1">
-                                        <i class="ti ti-wallet text-muted me-1"></i> Ödeme Yapılacak Kasa
+                                    <label class="form-label required fw-semibold text-secondary small mb-1">
+                                        <i class="ti ti-wallet text-muted me-1"></i> Çıkış Yapılacak Kasa
                                     </label>
                                     <?php echo $financialHelper->getCasesSelectByUser("tps_cases", $case_id); ?>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-semibold text-secondary mb-1">
+                                    <label class="form-label required fw-semibold text-secondary small mb-1">
                                         <i class="ti ti-calendar text-muted me-1"></i> Ödeme Tarihi
                                     </label>
                                     <div class="input-icon">
@@ -112,7 +121,7 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                                     </div>
                                 </div>
                                 <div class="col-md-5">
-                                    <label class="form-label fw-semibold text-secondary mb-1">
+                                    <label class="form-label fw-semibold text-secondary small mb-1">
                                         <i class="ti ti-note text-muted me-1"></i> Ödeme Açıklaması
                                     </label>
                                     <div class="input-icon">
@@ -127,11 +136,12 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                     </div>
 
                     <!-- Personel Listesi Tablosu -->
-                    <div class="card border shadow-sm">
-                        <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
-                            <h3 class="card-title fw-semibold text-secondary mb-0" style="font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase;">
-                                <i class="ti ti-list me-1 text-primary"></i> Personel Listesi
-                            </h3>
+                    <div class="card border" style="border-radius: 10px; border-color: #e2e8f0; overflow: hidden;">
+                        <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e2e8f0;">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="ti ti-list text-primary" style="font-size: 16px;"></i>
+                                <span class="fw-semibold text-secondary small text-uppercase" style="letter-spacing: 0.5px;">Personel Listesi</span>
+                            </div>
                             <div class="input-icon" style="width: 220px;">
                                 <span class="input-icon-addon">
                                     <i class="ti ti-search text-muted"></i>
@@ -141,10 +151,10 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                         </div>
                         <div class="card-body p-0">
                             <table class="table table-vcenter card-table table-striped table-hover mb-0" id="payToPersons">
-                                <thead>
+                                <thead class="bg-light">
                                     <tr>
-                                        <th class="fw-bold bg-light py-2 text-dark">Personel</th>
-                                        <th class="text-end fw-bold bg-light py-2 text-dark" style="width: 200px;">Ödeme Tutarı</th>
+                                        <th class="fw-semibold text-secondary small ps-3 py-2">Personel</th>
+                                        <th class="text-end fw-semibold text-secondary small pe-3 py-2" style="width: 200px;">Ödeme Tutarı</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -153,17 +163,17 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                                         $initials = getInitials($person->full_name);
                                     ?>
                                         <tr>
-                                            <td data-id="<?= $person->id ?>" class="py-2">
+                                            <td data-id="<?= $person->id ?>" class="ps-3 py-2">
                                                 <div class="d-flex align-items-center">
-                                                    <span class="avatar avatar-sm rounded-circle bg-<?= $color ?>-lt me-3 fw-bold fs-5"><?= $initials ?></span>
+                                                    <span class="avatar avatar-sm rounded-circle bg-<?= $color ?>-lt me-2.5 fw-bold" style="width: 32px; height: 32px; font-size: 11.5px;"><?= $initials ?></span>
                                                     <div>
-                                                        <div class="font-weight-medium text-dark"><?= htmlspecialchars($person->full_name, ENT_QUOTES, 'UTF-8') ?></div>
+                                                        <div class="fw-medium text-dark" style="font-size: 13px;"><?= htmlspecialchars($person->full_name, ENT_QUOTES, 'UTF-8') ?></div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="py-2">
+                                            <td class="pe-3 py-2">
                                                 <div class="input-group input-group-flat ms-auto" style="max-width: 160px;">
-                                                    <input type="text" class="form-control text-end money pe-2 py-1" placeholder="0,00">
+                                                    <input type="text" class="form-control text-end money pe-2 py-1" placeholder="0,00" style="font-size: 13px;">
                                                     <span class="input-group-text bg-transparent text-muted fw-bold py-1">₺</span>
                                                 </div>
                                             </td>
@@ -176,17 +186,17 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                 </form>
             </div>
 
-            <!-- Footer: Dinamik Toplam Göstergesi ve Butonlar -->
-            <div class="modal-footer d-flex justify-content-between align-items-center bg-light py-2">
-                <div class="d-flex align-items-center bg-white border rounded px-3 py-2 shadow-sm">
-                    <span class="text-muted fw-semibold me-2 small">TOPLAM ÖDEME:</span>
-                    <span id="payToPersonsTotal" class="text-primary fw-bold fs-3">0,00</span>
-                    <span class="text-primary fw-bold fs-4 ms-1">₺</span>
+            <!-- Modal Footer: Dinamik Toplam Göstergesi ve Butonlar -->
+            <div class="modal-footer d-flex justify-content-between align-items-center bg-light px-4 py-3" style="border-top: 1px solid #e2e8f0;">
+                <div class="d-flex align-items-center bg-white border rounded px-3 py-1.5 shadow-xs" style="border-color: #dbe3ec !important;">
+                    <span class="text-muted fw-semibold me-2 small" style="font-size: 11.5px;">TOPLAM ÖDEME:</span>
+                    <span id="payToPersonsTotal" class="text-primary fw-bold" style="font-size: 1.15rem;">0,00</span>
+                    <span class="text-primary fw-bold ms-1">₺</span>
                 </div>
-                <div>
-                    <button type="button" class="btn btn-link link-secondary me-2" data-bs-dismiss="modal">Çık</button>
-                    <button type="button" class="btn btn-primary" id="savePayToPersons">
-                        <i class="ti ti-check me-1"></i> Kaydet
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary px-3 py-1.5" data-bs-dismiss="modal" style="height: 34px; font-size: 13px;">Vazgeç</button>
+                    <button type="button" class="btn btn-primary shadow-sm px-4 py-1.5 d-inline-flex align-items-center gap-1.5" id="savePayToPersons" style="height: 34px; font-size: 13px;">
+                        <i class="ti ti-check" style="font-size: 16px;"></i> Kaydet
                     </button>
                 </div>
             </div>

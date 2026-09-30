@@ -562,57 +562,75 @@ html.icra-summary-collapsed #icraSummaryCards {
 </div>
 
 <!-- İcra Kesintileri Geçmişi Modalı -->
-<div class="modal modal-blur fade" id="deductionsHistoryModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
-        <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
-            <div class="modal-header py-2.5 px-3 bg-light-subtle border-bottom">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="avatar avatar-sm rounded-2 bg-success-lt text-success" style="width: 32px; height: 32px;">
-                        <i class="ti ti-history font-16"></i>
+<div class="modal modal-blur fade" id="deductionsHistoryModal" tabindex="-1" role="dialog" aria-labelledby="modal-deductions-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 680px;" role="document">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 14px; overflow: hidden;">
+            <!-- Modal Header -->
+            <div class="modal-header py-3 px-3.5 bg-white border-bottom d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-teal-lt text-teal shadow-xs" style="width: 42px; height: 42px;">
+                        <i class="ti ti-receipt-tax" style="font-size: 22px;"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold font-14 mb-0" id="modal-deductions-title">İcra Kesintileri Geçmişi</h5>
-                        <div class="text-muted font-11">Bordro dönemlerinde yapılan maaş haczi kesintileri</div>
+                        <h4 class="modal-title fw-bold text-dark mb-0" id="modal-deductions-title" style="font-size: 1.15rem; letter-spacing: -0.3px;">İcra Kesintileri Geçmişi</h4>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12.5px;">Bordro dönemlerinde yapılan maaş haczi kesintileri</div>
                     </div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
-            <div class="modal-body p-0">
-                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light-subtle">
-                    <div>
-                        <div class="small text-muted text-uppercase tracking-wide font-weight-600" style="font-size: 11px;">Personel / Dosya</div>
-                        <div class="font-weight-700 fs-4" id="modal-deductions-person-name">-</div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-0 bg-white">
+                <!-- Personel ve Toplam Kesinti Özet Kutusu -->
+                <div class="m-3.5 p-3 rounded-3 bg-light-subtle border d-flex justify-content-between align-items-center" style="border-color: #e2e8f0 !important;">
+                    <div class="pe-3">
+                        <div class="small text-muted text-uppercase tracking-wider fw-semibold mb-1" style="font-size: 10.5px; letter-spacing: 0.5px;">Personel / Dosya</div>
+                        <div class="d-flex align-items-center flex-wrap gap-2" id="modal-deductions-person-name">
+                            <span class="fs-4 text-dark fw-bold">-</span>
+                        </div>
+                        <div class="small text-muted mt-1 d-flex align-items-center gap-1" id="modal-deductions-count-wrapper" style="font-size: 11.5px;">
+                            <i class="ti ti-layers-subtract text-secondary"></i>
+                            <span id="modal-deductions-count">0 kesinti</span>
+                        </div>
                     </div>
-                    <div class="text-end">
-                        <div class="small text-muted text-uppercase tracking-wide font-weight-600" style="font-size: 11px;">Toplam Kesilen</div>
-                        <div class="h3 mb-0 text-success font-weight-700" id="modal-deductions-total">0,00 ₺</div>
+                    <div class="text-end ps-3">
+                        <div class="bg-white px-3.5 py-2 rounded-2 border shadow-xs text-end" style="border-color: #d1fae5 !important; background-color: #f0fdf4 !important;">
+                            <div class="text-success text-uppercase tracking-wider fw-bold" style="font-size: 10.5px; letter-spacing: 0.5px;">Toplam Kesilen</div>
+                            <div class="h3 mb-0 text-success fw-bold" id="modal-deductions-total" style="font-size: 1.35rem; letter-spacing: -0.4px;">0,00 ₺</div>
+                        </div>
                     </div>
                 </div>
-                <div class="table-responsive" style="max-height: 350px;">
-                    <table class="table table-vcenter table-striped table-sm mb-0">
-                        <thead class="sticky-top bg-light">
-                            <tr>
-                                <th class="ps-3">Dönem</th>
-                                <th>Açıklama</th>
-                                <th class="text-end pe-3">Tutar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modal-deductions-table-body">
-                            <!-- AJAX ile doldurulacak -->
-                        </tbody>
-                    </table>
+
+                <!-- Kesintiler Tablosu -->
+                <div class="px-3.5 pb-3.5">
+                    <div class="table-responsive border rounded-3" style="max-height: 380px; border-color: #e2e8f0 !important;">
+                        <table class="table table-vcenter table-hover table-sm mb-0">
+                            <thead class="bg-light sticky-top" style="border-bottom: 1px solid #e2e8f0;">
+                                <tr>
+                                    <th class="ps-3 py-2.5 text-secondary fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; width: 125px;">Dönem</th>
+                                    <th class="py-2.5 text-secondary fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Kesinti Açıklaması</th>
+                                    <th class="text-end pe-3 py-2.5 text-secondary fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; width: 150px;">Tutar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-deductions-table-body">
+                                <!-- AJAX ile doldurulacak -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer py-2 px-3 bg-light-subtle d-flex justify-content-between">
+
+            <!-- Modal Footer -->
+            <div class="modal-footer py-2.5 px-3.5 bg-light-subtle border-top d-flex justify-content-between align-items-center" style="border-color: #e2e8f0 !important;">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-modal-print-deductions">
-                        <i class="ti ti-printer me-1"></i> Yazdır
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5" id="btn-modal-print-deductions" style="height: 34px; font-size: 12.5px;">
+                        <i class="ti ti-printer" style="font-size: 16px;"></i> Yazdır
                     </button>
-                    <button type="button" class="btn btn-outline-success btn-sm" id="btn-modal-excel-deductions">
-                        <i class="ti ti-file-excel me-1"></i> Excel
+                    <button type="button" class="btn btn-outline-success btn-sm d-inline-flex align-items-center gap-1.5" id="btn-modal-excel-deductions" style="height: 34px; font-size: 12.5px;">
+                        <i class="ti ti-file-spreadsheet" style="font-size: 16px;"></i> Excel
                     </button>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm px-3 ms-auto" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-dark btn-sm px-4" data-bs-dismiss="modal" style="height: 34px; font-size: 13px; font-weight: 500;">Kapat</button>
             </div>
         </div>
     </div>
@@ -1727,9 +1745,17 @@ $(document).ready(function() {
         const personId = $(this).data('person-id') || '';
         currentDeductionsFileId = fileId;
 
-        $('#modal-deductions-person-name').text('Yükleniyor...');
+        $('#modal-deductions-person-name').html('<span class="fs-4 text-muted">Yükleniyor...</span>');
+        $('#modal-deductions-count').text('Yükleniyor...');
         $('#modal-deductions-total').text('0,00 ₺');
-        $('#modal-deductions-table-body').html('<tr><td colspan="3" class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> Kesintiler yükleniyor...</td></tr>');
+        $('#modal-deductions-table-body').html(`
+            <tr>
+                <td colspan="3" class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    <span class="font-13">Kesinti kayıtları yükleniyor...</span>
+                </td>
+            </tr>
+        `);
         $('#deductionsHistoryModal').modal('show');
 
         $.ajax({
@@ -1743,24 +1769,45 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if (res.status === 'success') {
-                    $('#modal-deductions-person-name').html(`<strong>${res.person_name}</strong> <span class="badge bg-secondary-lt ms-2">${res.dosya_no}</span>`);
+                    $('#modal-deductions-person-name').html(`
+                        <strong class="fs-3 text-dark">${res.person_name}</strong> 
+                        <span class="badge bg-secondary-lt text-dark border border-secondary-subtle px-2.5 py-1 font-12 fw-medium">${res.dosya_no}</span>
+                    `);
+                    const count = (res.history && res.history.length) ? res.history.length : 0;
+                    $('#modal-deductions-count').text(`${count} adet kesinti kaydı`);
                     $('#modal-deductions-total').text(res.total_amount || '0,00 ₺');
 
                     const tbody = $('#modal-deductions-table-body');
                     tbody.empty();
 
                     if (!res.history || res.history.length === 0) {
-                        tbody.html('<tr><td colspan="3" class="text-center py-4 text-muted"><i class="ti ti-folder-off fs-1 d-block mb-1 text-secondary"></i>Bu icra dosyasına ait bordro kesintisi bulunamadı.</td></tr>');
+                        tbody.html(`
+                            <tr>
+                                <td colspan="3" class="text-center py-5 text-muted">
+                                    <div class="avatar avatar-md rounded-circle bg-light text-secondary mb-2 mx-auto" style="width: 48px; height: 48px;">
+                                        <i class="ti ti-receipt-off" style="font-size: 24px;"></i>
+                                    </div>
+                                    <div class="fw-semibold text-dark font-14">Kesinti Kaydı Bulunamadı</div>
+                                    <div class="small text-muted mt-1">Bu icra dosyasına ait bordro dönemlerinden yapılmış kesinti bulunamadı.</div>
+                                </td>
+                            </tr>
+                        `);
                     } else {
                         res.history.forEach((h) => {
                             tbody.append(`
                                 <tr>
-                                    <td class="ps-3 fw-bold">${h.donem}</td>
-                                    <td>
-                                        <div class="font-weight-600">${h.aciklama || h.turu}</div>
-                                        <div class="small text-muted">${h.created_at || ''}</div>
+                                    <td class="ps-3 py-2.5">
+                                        <span class="badge bg-blue-lt text-primary px-2.5 py-1 font-12 fw-semibold">
+                                            <i class="ti ti-calendar-event me-1"></i>${h.donem}
+                                        </span>
                                     </td>
-                                    <td class="text-end pe-3 text-success font-weight-700">${h.tutar}</td>
+                                    <td class="py-2.5">
+                                        <div class="fw-semibold text-dark font-13">${h.aciklama || h.turu || 'İcra Kesintisi'}</div>
+                                        ${h.created_at ? `<div class="small text-muted d-flex align-items-center gap-1 mt-0.5" style="font-size: 11.5px;"><i class="ti ti-clock text-secondary" style="font-size: 12px;"></i> ${h.created_at}</div>` : ''}
+                                    </td>
+                                    <td class="text-end pe-3 py-2.5">
+                                        <span class="fw-bold text-success font-14">${h.tutar}</span>
+                                    </td>
                                 </tr>
                             `);
                         });

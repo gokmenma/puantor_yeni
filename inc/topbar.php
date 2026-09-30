@@ -131,6 +131,74 @@ if ($firm_id > 0) {
                 <?php endif; ?>
             </div>
 
+            <!-- Orta: Global Arama (Personel, Proje, Kasa, Cari, İcra, İzin, Görev) -->
+            <div class="header-search-wrap d-none d-lg-flex">
+                <div class="global-search-container" id="global-search-container">
+                    <div class="global-search-input-box">
+                        <i class="ti ti-search global-search-icon" aria-hidden="true"></i>
+                        <input type="text" 
+                            id="global-search-input" 
+                            class="global-search-input" 
+                            placeholder="Personel, proje, kasa, cari, icra, izin veya görev ara..." 
+                            autocomplete="off" 
+                            spellcheck="false">
+                        <button type="button" class="global-search-clear-btn" id="global-search-clear" title="Temizle" style="display: none;">
+                            <i class="ti ti-x"></i>
+                        </button>
+                        <div class="global-search-kbd-badge" title="Kısayol: Ctrl + K">
+                            <kbd>ctrl</kbd><kbd>K</kbd>
+                        </div>
+                        <div class="global-search-spinner" id="global-search-spinner" style="display: none;">
+                            <i class="ti ti-loader-2"></i>
+                        </div>
+                    </div>
+
+                    <!-- Arama Sonuç Dropdown Kartı -->
+                    <div class="global-search-dropdown" id="global-search-dropdown">
+                        <!-- Kategori Filtreleme Sekmeleri -->
+                        <div class="global-search-categories" id="global-search-categories">
+                            <button type="button" class="gs-cat-pill active" data-cat="all">
+                                <i class="ti ti-layout-grid"></i> Tümü <span class="gs-count" id="count-all">0</span>
+                            </button>
+                            <button type="button" class="gs-cat-pill" data-cat="persons">
+                                <i class="ti ti-users"></i> Personeller <span class="gs-count" id="count-persons">0</span>
+                            </button>
+                            <button type="button" class="gs-cat-pill" data-cat="projects">
+                                <i class="ti ti-folders"></i> Projeler <span class="gs-count" id="count-projects">0</span>
+                            </button>
+                            <button type="button" class="gs-cat-pill" data-cat="financial">
+                                <i class="ti ti-wallet"></i> Kasa & Cari <span class="gs-count" id="count-financial">0</span>
+                            </button>
+                            <button type="button" class="gs-cat-pill" data-cat="icra">
+                                <i class="ti ti-scale"></i> İcra <span class="gs-count" id="count-icra">0</span>
+                            </button>
+                            <button type="button" class="gs-cat-pill" data-cat="izin">
+                                <i class="ti ti-calendar-time"></i> İzin <span class="gs-count" id="count-izin">0</span>
+                            </button>
+                            <button type="button" class="gs-cat-pill" data-cat="tasks">
+                                <i class="ti ti-checkbox"></i> Görevler <span class="gs-count" id="count-tasks">0</span>
+                            </button>
+                        </div>
+
+                        <!-- Sonuç İçerik Alanı -->
+                        <div class="global-search-results" id="global-search-results">
+                            <!-- JS dinamik render edecek -->
+                        </div>
+
+                        <!-- Alt Bilgi / Kısayol İpuçları Çubuğu -->
+                        <div class="global-search-footer">
+                            <div class="gs-footer-info" id="gs-footer-info">
+                                Toplam <span id="gs-total-count">0</span> sonuç bulundu
+                            </div>
+                            <div class="gs-footer-hints">
+                                <span class="gs-hint-item"><kbd>↑</kbd><kbd>↓</kbd> Gezin</span>
+                                <span class="gs-hint-item"><kbd>↵</kbd> Seç</span>
+                                <span class="gs-hint-item"><kbd>Esc</kbd> Kapat</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="navbar-nav flex-row order-md-last ms-auto me-3">
                 <div class="d-none d-md-flex align-items-center">

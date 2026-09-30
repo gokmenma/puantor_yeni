@@ -1,10 +1,9 @@
 $(document).on("click", ".add-payment", function () {
   let personel_id = $(this).data("id");
-  let personel_name = $(this).closest("tr").find("td:eq(1)").text();
+  let personel_name = $(this).attr("data-name") || $(this).data("name") || $(this).closest("tr").attr("data-person-name") || $(this).closest("tr").find("td:eq(2)").text().trim() || $(this).closest("tr").find("td:eq(1)").text().trim();
   let balance = $(this).attr("data-balance") || "";
   $("#person_id_payment").val(personel_id);
   $("#person_name_payment").text(personel_name);
-  console.log(personel_name);
 
   $("#person_payment_balance").text("Bakiye :" + balance);
 });

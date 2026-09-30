@@ -1,6 +1,6 @@
 $(document).on("click", ".add-wage-cut", function () {
     let personel_id = $(this).data("id");
-    let personel_name = $(this).closest("tr").find("td:eq(1)").text();
+    let personel_name = $(this).attr("data-name") || $(this).data("name") || $(this).closest("tr").attr("data-person-name") || $(this).closest("tr").find("td:eq(2)").text().trim() || $(this).closest("tr").find("td:eq(1)").text().trim();
     let balance = $(this).attr("data-balance") || "";
     $("#person_id_wage_cut").val(personel_id);
     $("#person_name_wage_cut").text(personel_name);
@@ -64,7 +64,7 @@ $(document).on('click', '#wage_cut_addButton', function () {
                     title: 'Başarılı!',
                     text: data.message
                 }).then(() => {
-                    $('#wage_cut-modal').modal('hide');
+                    $('#wage_cut_modal').modal('hide');
                     location.reload();
                 });
             } else {

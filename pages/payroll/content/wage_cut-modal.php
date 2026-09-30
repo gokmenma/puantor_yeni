@@ -7,73 +7,62 @@ $month = $month ?? (isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m')
 $year = $year ?? (isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y'));
 ?>
 
-
-<div class="modal modal-blur fade" id="wage_cut_modal" tabindex="-1" style="display: none;" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            <div class="modal-status bg-danger"></div>
-            <div class="modal-body text-center pb-0">
-                <!-- Download SVG icon from http://tabler-icons.io/i/alert-triangle -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="icon mb-2 text-danger icon-lg">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                    <path d="M12 9v4"></path>
-                    <path
-                        d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z">
-                    </path>
-                    <path d="M12 16h.01"></path>
-                </svg>
-                <h3 id="person_name_wage_cut">
-                </h3>
-                <p>
-                    <small class="text-danger">Kesinti eklemek için aşağıdaki bilgileri doldurunuz</small>
-                </p>
+<div class="modal modal-blur fade" id="wage_cut_modal" tabindex="-1" role="dialog" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 500px;">
+        <div class="modal-content shadow-lg border" style="border-radius: 12px; border-color: #dbe3ec !important; overflow: hidden;">
+            <!-- Modal Header -->
+            <div class="modal-header bg-white px-4 py-3" style="border-bottom: 1px solid #e2e8f0;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-danger-lt text-danger shadow-sm" style="width: 42px; height: 42px;">
+                        <i class="ti ti-cut" style="font-size: 22px;"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title fw-bold text-dark mb-0" style="font-size: 1.1rem; letter-spacing: -0.3px;">Kesinti Ekle</h4>
+                        <div class="text-secondary small mt-0.5" id="person_name_wage_cut" style="font-size: 12.5px;">Personel seçiniz</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
-            <div class="container ps-4 pe-4 py-4">
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4 bg-white">
                 <form action="" id="wage_cut_modalForm">
                     <input type="hidden" class="form-control" name="wage_cut_id" value="0">
-                    <input type="hidden" class="form-control" name="person_id_wage_cut" id="person_id_wage_cut"
-                        value="0">
+                    <input type="hidden" class="form-control" name="person_id_wage_cut" id="person_id_wage_cut" value="0">
                     <input type="hidden" name="wage_cut_month" value="<?php echo (int) $month; ?>">
                     <input type="hidden" name="wage_cut_year" value="<?php echo (int) $year; ?>">
 
-                    <div class="text-secondary mt-3">
-                        <label for="">Kesinti Adı</label>
-                        <input type="text" name="wage_cut_type" class="form-control mt-1">
-                    </div>
-                    <div class="row">
-
-
-                        <div class="text-secondary mt-3">
-                            <label for="">Kesinti Miktarı</label>
-                            <input type="text" name="wage_cut_amount" class="form-control mt-1 money">
+                    <div class="mb-3">
+                        <label class="form-label required fw-semibold text-secondary small mb-1" for="wage_cut_type">Kesinti Adı</label>
+                        <div class="input-icon">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-tag text-muted"></i>
+                            </span>
+                            <input type="text" name="wage_cut_type" id="wage_cut_type" class="form-control" placeholder="Örn: Avans Kesintisi, Ceza, Eksik Gün">
                         </div>
-
-
                     </div>
 
-                    <div class="text-secondary mt-3">
-                        <label for="">Açıklama</label>
-                        <textarea name="wage_cut_description" class="form-control mt-1"
-                            placeholder="Kesinti hakkında açıklama yazınız"></textarea>
+                    <div class="mb-3">
+                        <label class="form-label required fw-semibold text-secondary small mb-1" for="wage_cut_amount">Kesinti Miktarı</label>
+                        <div class="input-group input-group-flat">
+                            <input type="text" name="wage_cut_amount" id="wage_cut_amount" class="form-control money" placeholder="0,00">
+                            <span class="input-group-text bg-light text-muted fw-bold">₺</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold text-secondary small mb-1" for="wage_cut_description">Açıklama</label>
+                        <textarea name="wage_cut_description" id="wage_cut_description" class="form-control" rows="2" placeholder="Kesinti hakkında varsa açıklama yazınız..."></textarea>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <div class="w-100">
-                    <div class="row">
-                        <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">
-                                Vazgeç
-                            </a></div>
-                        <div class="col">
-                            <a href="#" class="btn btn-danger w-100" id="wage_cut_addButton">
-                                Kesinti Ekle
-                            </a>
-                        </div>
-                    </div>
-                </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between align-items-center" style="border-top: 1px solid #e2e8f0;">
+                <button type="button" class="btn btn-outline-secondary px-3 py-1.5" data-bs-dismiss="modal" style="height: 34px; font-size: 13px;">Vazgeç</button>
+                <button type="button" class="btn btn-danger shadow-sm px-4 py-1.5 d-inline-flex align-items-center gap-1.5" id="wage_cut_addButton" style="height: 34px; font-size: 13px;">
+                    <i class="ti ti-check" style="font-size: 16px;"></i> Kesinti Ekle
+                </button>
             </div>
         </div>
     </div>

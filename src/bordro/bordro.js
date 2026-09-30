@@ -419,6 +419,163 @@ $(document).ready(function () {
   $(document).off('click.bordroCol').on('click.bordroCol', '#bordroColvisMenu', function (e) {
     e.stopPropagation();
   });
+
+  // Tabloda Sağ Tık (Custom Context Menu)
+  $(document).on('contextmenu', '#bordroTable tbody tr', function (e) {
+    var $tr = $(this);
+    var id = $tr.attr('data-id');
+    if (!id) return;
+
+    e.preventDefault();
+    $('#bordroTable tbody tr').removeClass('context-menu-active');
+    $tr.addClass('context-menu-active');
+
+    var personName = $tr.attr('data-person-name') || 'Personel İşlemleri';
+    var iban = $tr.attr('data-iban') || '';
+    var balance = $tr.attr('data-balance') || '0,00 ₺';
+    var balanceRaw = parseFloat($tr.attr('data-balance-raw') || 0);
+    var month = $tr.attr('data-month') || '';
+    var year = $tr.attr('data-year') || '';
+    var projectId = $tr.attr('data-project-id') || '0';
+    var hasIcra = $tr.attr('data-has-icra') === '1';
+    var icraAmount = $tr.attr('data-icra-amount') || '0,00 ₺';
+    var slipUrl = $tr.attr('data-slip-url') || ('index.php?p=payroll/pay-slip&id=' + id);
+    var canPay = $tr.attr('data-can-pay') === '1';
+    var canIncome = $tr.attr('data-can-income') === '1';
+
+    var $contextMenu = $('#customContextMenu');
+    if (!$contextMenu.length) {
+      $contextMenu = $('<div id="customContextMenu" class="custom-context-menu"></div>').appendTo('body');
+    }
+
+    var safePersonName = $('<div>').text(personName).html();
+    var safeBalance = $('<div>').text(balance).html();
+    var safeIban = $('<div>').text(iban).html();
+    var safeIcraAmount = $('<div>').text(icraAmount).html();
+
+    var menuHtml = `
+      <div class="cm-header"><i class="ti ti-user me-1"></i> ${safePersonName}</div>
+      <div class="d-flex align-items-center justify-content-between px-3 py-1 mb-1 border-bottom" style="font-size: 11.5px; border-color: #f1f5f9 !important;">
+        <span class="text-secondary">Kalan Bakiye:</span>
+        <span class="fw-bold ${balanceRaw > 0 ? 'text-danger' : (balanceRaw < 0 ? 'text-primary' : 'text-success')}">${safeBalance}</span>
+      </div>
+
+      <a href="#" class="view-payroll-detail" data-id="${id}" data-month="${month}" data-year="${year}" data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
+        <i class="ti ti-file-analytics text-primary"></i> Bordro Detayları
+      </a>
+      <a href="${slipUrl}" target="_blank">
+        <i class="ti ti-file-dollar text-info"></i> Bordro Pusulası
+      </a>
+      ${canPay ? `
+      <a href="#" class="add-payment" data-id="${id}" data-name="${safePersonName}" data-balance="${safeBalance}" data-bs-toggle="modal" data-bs-target="#payment-modal">
+        <i class="ti ti-cash-register text-success"></i> Ödeme Yap
+      </a>
+      ` : ''}
+      ${canIncome ? `
+      <a href="#" class="add-income" data-id="${id}" data-name="${safePersonName}" data-balance="${safeBalance}" data-bs-toggle="modal" data-bs-target="#income_modal">
+        <i class="ti ti-download text-primary"></i> Gelir Ekle
+      </a>
+      <a href="#" class="add-wage-cut" data-id="${id}" data-name="${safePersonName}" data-balance="${safeBalance}" data-bs-toggle="modal" data-bs-target="#wage_cut_modal">
+        <i class="ti ti-cut text-danger"></i> Kesinti Ekle
+      </a>
+      ` : ''}
+      ${hasIcra ? `
+      <a href="#" class="btn-view-icra-deductions" data-person-id="${id}">
+        <i class="ti ti-gavel text-purple"></i> İcra Kesintisi (${safeIcraAmount})
+      </a>
+      ` : ''}
+
+      <div class="cm-divider"></div>
+
+      <a href="#" class="route-link" data-page="persons/manage&id=${id}">
+        <i class="ti ti-user-edit text-secondary"></i> Personel Kartı / Detay
+      </a>
+      <a href="#" class="route-link" data-page="persons/statement&id=${id}">
+        <i class="ti ti-receipt text-secondary"></i> Hesap Ekstresi
+      </a>
+      <a href="#" class="route-link" data-page="puantaj/list">
+        <i class="ti ti-calendar-event text-secondary"></i> Puantaj Sayfası
+      </a>
+
+      <div class="cm-divider"></div>
+
+      <a href="#" class="cm-copy-text" data-copy="${safePersonName}" data-label="Personel Adı">
+        <i class="ti ti-copy text-muted"></i> Adı Kopyala
+      </a>
+      ${iban ? `
+      <a href="#" class="cm-copy-text" data-copy="${safeIban}" data-label="IBAN">
+        <i class="ti ti-credit-card text-muted"></i> IBAN Kopyala
+      </a>
+      ` : ''}
+
+      <div class="cm-divider"></div>
+
+      <a href="#" class="cm-danger delete-monthly-payroll" data-id="${id}" data-month="${month}" data-year="${year}" data-project-id="${projectId}">
+        <i class="ti ti-trash"></i> Bordrodan Çıkar
+      </a>
+    `;
+
+    $contextMenu.html(menuHtml);
+    $contextMenu.css({ display: 'block', opacity: 0 });
+
+    var menuWidth = $contextMenu.outerWidth();
+    var menuHeight = $contextMenu.outerHeight();
+    var clickX = e.clientX;
+    var clickY = e.clientY;
+    var windowWidth = $(window).width();
+    var windowHeight = $(window).height();
+
+    var posX = (clickX + menuWidth > windowWidth) ? windowWidth - menuWidth - 10 : clickX;
+    var posY = (clickY + menuHeight > windowHeight) ? windowHeight - menuHeight - 10 : clickY;
+
+    $contextMenu.css({
+      top: posY + 'px',
+      left: posX + 'px',
+      opacity: 1
+    });
+  });
+
+  // Dışarı tıklanınca kapat
+  $(document).on('click', function (e) {
+    if (!$(e.target).closest('#customContextMenu').length) {
+      $('#customContextMenu').hide();
+      $('#bordroTable tbody tr').removeClass('context-menu-active');
+    }
+  });
+
+  // Menü içindeki linklere tıklanınca kapat
+  $(document).on('click', '#customContextMenu a, #customContextMenu button', function () {
+    $('#customContextMenu').hide();
+    $('#bordroTable tbody tr').removeClass('context-menu-active');
+  });
+
+  // Sayfa kaydırılınca veya odak değişince kapat
+  $(window).on('scroll resize blur', function () {
+    $('#customContextMenu').hide();
+    $('#bordroTable tbody tr').removeClass('context-menu-active');
+  });
+
+  // Metin kopyalama
+  $(document).on('click', '#customContextMenu .cm-copy-text', function (e) {
+    e.preventDefault();
+    var text = $(this).attr('data-copy') || '';
+    var label = $(this).attr('data-label') || 'Metin';
+    if (navigator.clipboard && text) {
+      navigator.clipboard.writeText(text).then(function () {
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'success',
+            title: label + ' panoya kopyalandı',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+          });
+        }
+      });
+    }
+  });
 });
 
 // Bordro kayıtlarını sil
@@ -505,9 +662,17 @@ $(document).on('click', '.btn-view-icra-deductions', function(e) {
     currentDeductionsFileId = fileId;
     currentDeductionsPersonId = personId;
 
-    $('#modal-deductions-person-name').text('Yükleniyor...');
+    $('#modal-deductions-person-name').html('<span class="fs-4 text-muted">Yükleniyor...</span>');
+    $('#modal-deductions-count').text('Yükleniyor...');
     $('#modal-deductions-total').text('0,00 ₺');
-    $('#modal-deductions-table-body').html('<tr><td colspan="3" class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> Kesintiler yükleniyor...</td></tr>');
+    $('#modal-deductions-table-body').html(`
+        <tr>
+            <td colspan="3" class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                <span class="font-13">Kesinti kayıtları yükleniyor...</span>
+            </td>
+        </tr>
+    `);
     $('#deductionsHistoryModal').modal('show');
 
     $.ajax({
@@ -521,7 +686,12 @@ $(document).on('click', '.btn-view-icra-deductions', function(e) {
         dataType: 'json',
         success: function(res) {
             if (res.status === 'success') {
-                $('#modal-deductions-person-name').html(`<strong>${res.person_name}</strong> <span class="badge bg-secondary-lt ms-2">${res.dosya_no}</span>`);
+                $('#modal-deductions-person-name').html(`
+                    <strong class="fs-3 text-dark">${res.person_name}</strong> 
+                    <span class="badge bg-secondary-lt text-dark border border-secondary-subtle px-2.5 py-1 font-12 fw-medium">${res.dosya_no}</span>
+                `);
+                const count = (res.history && res.history.length) ? res.history.length : 0;
+                $('#modal-deductions-count').text(`${count} adet kesinti kaydı`);
                 $('#modal-deductions-total').text(res.total_amount || '0,00 ₺');
                 if (res.file_id) {
                     currentDeductionsFileId = res.file_id;
@@ -531,17 +701,33 @@ $(document).on('click', '.btn-view-icra-deductions', function(e) {
                 tbody.empty();
 
                 if (!res.history || res.history.length === 0) {
-                    tbody.html('<tr><td colspan="3" class="text-center py-4 text-muted"><i class="ti ti-folder-off fs-1 d-block mb-1 text-secondary"></i>Bu personele ait icra kesintisi bulunamadı.</td></tr>');
+                    tbody.html(`
+                        <tr>
+                            <td colspan="3" class="text-center py-5 text-muted">
+                                <div class="avatar avatar-md rounded-circle bg-light text-secondary mb-2 mx-auto" style="width: 48px; height: 48px;">
+                                    <i class="ti ti-receipt-off" style="font-size: 24px;"></i>
+                                </div>
+                                <div class="fw-semibold text-dark font-14">Kesinti Kaydı Bulunamadı</div>
+                                <div class="small text-muted mt-1">Bu personele ait icra kesintisi bulunamadı.</div>
+                            </td>
+                        </tr>
+                    `);
                 } else {
                     res.history.forEach((h) => {
                         tbody.append(`
                             <tr>
-                                <td class="ps-3 fw-bold">${h.donem}</td>
-                                <td>
-                                    <div class="font-weight-600">${h.aciklama || h.turu}</div>
-                                    <div class="small text-muted">${h.created_at || ''}</div>
+                                <td class="ps-3 py-2.5">
+                                    <span class="badge bg-blue-lt text-primary px-2.5 py-1 font-12 fw-semibold">
+                                        <i class="ti ti-calendar-event me-1"></i>${h.donem}
+                                    </span>
                                 </td>
-                                <td class="text-end pe-3 text-success font-weight-700">${h.tutar}</td>
+                                <td class="py-2.5">
+                                    <div class="fw-semibold text-dark font-13">${h.aciklama || h.turu || 'İcra Kesintisi'}</div>
+                                    ${h.created_at ? `<div class="small text-muted d-flex align-items-center gap-1 mt-0.5" style="font-size: 11.5px;"><i class="ti ti-clock text-secondary" style="font-size: 12px;"></i> ${h.created_at}</div>` : ''}
+                                </td>
+                                <td class="text-end pe-3 py-2.5">
+                                    <span class="fw-bold text-success font-14">${h.tutar}</span>
+                                </td>
                             </tr>
                         `);
                     });

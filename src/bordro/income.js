@@ -1,10 +1,9 @@
 $(document).on("click", ".add-income", function () {
     let personel_id = $(this).data("id");
-    let personel_name = $(this).closest("tr").find("td:eq(1)").text();
+    let personel_name = $(this).attr("data-name") || $(this).data("name") || $(this).closest("tr").attr("data-person-name") || $(this).closest("tr").find("td:eq(2)").text().trim() || $(this).closest("tr").find("td:eq(1)").text().trim();
     let balance = $(this).attr("data-balance") || "";
     $("#person_id_income").val(personel_id);
     $("#person_name_income").text(personel_name);
-    console.log(personel_name);
   
     $("#person_income_balance").text("Bakiye :" + balance);
   });
@@ -64,7 +63,7 @@ $(document).on("click", ".add-income", function () {
             title: "Başarılı!",
             text: data.message
           }).then(() => {
-            $("#income-modal").modal("hide");
+            $("#income_modal").modal("hide");
             location.reload();
           });
         } else {
