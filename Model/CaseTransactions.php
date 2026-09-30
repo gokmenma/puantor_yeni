@@ -42,14 +42,15 @@ class CaseTransactions extends Model
 
     public function delete($id)
     {
-        $transaction = $this->find($id);
+        $rawId = Security::safeDecrypt($id);
+        $transaction = $this->find($rawId);
         if ($transaction) {
             $type = ($transaction->type_id == 1) ? 'Gelir' : 'Gider';
             $amount = Helper::formattedMoney($transaction->amount);
             require_once __DIR__ . '/ActivityLogModel.php';
             ActivityLogModel::log('finance', 'delete', "Kasa hareketi silindi ({$type}): {$amount} - {$transaction->description}");
         }
-        return parent::delete($id);
+        return parent::delete($rawId);
     }
 
     public function __construct()

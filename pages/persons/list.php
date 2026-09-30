@@ -48,7 +48,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
             <div class="col-auto ms-auto d-print-none">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary btn-icon persons-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
+                        <button class="btn btn-sm btn-outline-secondary btn-icon persons-header-icon-action" id="personsColvisDropdownBtn" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
                             <i class="ti ti-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="personsColvisMenu"
@@ -693,6 +693,7 @@ $(document).ready(function() {
             if (typeof window.initPuantorDTManager === 'function') {
                 window.initPuantorDTManager($('#persons'), api);
             }
+            renderPersonsColvisMenu();
         },
         drawCallback: function() {
             $('.select-all-persons').prop('checked', false);
@@ -702,31 +703,60 @@ $(document).ready(function() {
         }
     });
 
+    // Personel Tablosu Sütun Konfigürasyonu
+    var personColumnConfig = {
+        2: 'Adı Soyadı',
+        3: 'TC Kimlik No',
+        4: 'Firma Adı',
+        5: 'Ücret Türü',
+        6: 'İşe Giriş Tarihi',
+        7: 'İşten Çıkış Tarihi',
+        8: 'Telefon',
+        9: 'E-posta',
+        10: 'IBAN Numarası',
+        11: 'Grubu',
+        12: 'Görevi',
+        13: 'Ekip',
+        14: 'Proje',
+        15: 'Günlük/Aylık Ücreti',
+        16: 'Durumu',
+        17: 'Güncel Bakiyesi',
+        18: 'Adres',
+        19: 'Açıklama'
+    };
+
     // Dinamik Sütun Menüsü Oluşturucu (Gizli sütunlarda da %100 güvenli okuma)
     function renderPersonsColvisMenu() {
-        var skipTitles = ['İşlem', 'İşlemler', 'Seç', 'Aksiyon', 'Aksiyonlar', 'Sıra', '#'];
         var menuHtml = '';
         var settings = table ? table.settings()[0] : null;
-        if (!settings || !settings.aoColumns) return;
 
-        settings.aoColumns.forEach(function (colConfig, idx) {
-            var $th = $(colConfig.nTh);
-            var origIdx = colConfig._crOriginalIdx !== undefined ? colConfig._crOriginalIdx : idx;
-            var title = colConfig.sTitle || $th.find('.dt-header-title').text().trim() || $th.clone().find('.dt-col-filter-btn, .dt-column-order, .dt-col-resizer, input, button').remove().end().text().trim();
-            title = title.replace(/\s+/g, ' ').trim();
+        $.each(personColumnConfig, function (origIdxStr, label) {
+            var origIdx = parseInt(origIdxStr, 10);
+            var isVisible = true;
 
-            if ($th.hasClass('no-export') || $th.hasClass('actions-column') || $th.find('input[type="checkbox"]').length > 0 || !title) {
-                return;
+            if (settings && settings.aoColumns) {
+                for (var c = 0; c < settings.aoColumns.length; c++) {
+                    var colCfg = settings.aoColumns[c];
+                    var cOrig = colCfg._crOriginalIdx !== undefined ? colCfg._crOriginalIdx : c;
+                    if (cOrig === origIdx) {
+                        isVisible = colCfg.bVisible !== false;
+                        break;
+                    }
+                }
+            } else if (table) {
+                try {
+                    isVisible = table.column(origIdx).visible();
+                } catch(e) {
+                    isVisible = true;
+                }
             }
-            if (skipTitles.indexOf(title) !== -1) return;
 
-            var isVisible = colConfig.bVisible !== false;
             menuHtml += `
                 <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
                     <div class="form-check mb-0 w-100">
                         <input class="form-check-input persons-col-trigger" type="checkbox" id="colCheck_${origIdx}" data-column="${origIdx}" data-orig-idx="${origIdx}" ${isVisible ? "checked" : ""}>
                         <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
-                            ${title}
+                            ${label}
                         </span>
                     </div>
                 </label>`;
@@ -742,7 +772,14 @@ $(document).ready(function() {
         $('#personsColvisMenu').html(menuHtml);
     }
 
+    // İlk render ve dropdown açıldığında anında güncelle
     renderPersonsColvisMenu();
+    $('#personsColvisDropdownBtn').on('click', function () {
+        renderPersonsColvisMenu();
+    });
+    $('#personsColvisDropdownBtn').parent().on('show.bs.dropdown', function () {
+        renderPersonsColvisMenu();
+    });
 
     // Görünümü Sıfırla Butonu
     $(document).on('click', '#resetTableColumnsBtn', function(e) {

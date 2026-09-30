@@ -101,8 +101,12 @@ $(document).ready(function () {
     addCustomValidationValidValue();
   }
 
-  if ($("#payToPersonsForm").length > 0) {
-    $("#payToPersonsForm").validate({
+  var $modal = $("#pay_to_persons-modal");
+  var $form = $("#payToPersonsForm");
+
+  if ($modal.length > 0) {
+    // Form Doğrulama
+    $form.validate({
       rules: {
         tps_action_date: {
           required: true
@@ -120,185 +124,270 @@ $(document).ready(function () {
         }
       },
       errorPlacement: function (error, element) {
-        if (element.hasClass("select2")) {
-          error.insertAfter(element.next("span"));
+        if (element.hasClass("select2") || element.hasClass("select2-hidden-accessible")) {
+          error.insertAfter(element.next(".select2"));
         } else {
           error.insertAfter(element);
         }
       }
     });
 
-    var payToPersonsTable = null;
-
+    // Para Maskesi Başlatma
     function initPayToPersonsMasks() {
       if ($.fn.inputmask) {
-        $("#payToPersons input.money").each(function () {
+        $modal.find("input.money").each(function () {
           if (!this._inputmask) {
             $(this).inputmask("decimal", {
               radixPoint: ",",
               groupSeparator: ".",
               digits: 2,
               autoGroup: true,
-              rightAlign: false
+              rightAlign: true,
+              placeholder: "0,00"
             });
           }
         });
       }
     }
 
-    if ($("#payToPersons").length > 0 && window.createDataTable) {
-      payToPersonsTable = window.createDataTable("#payToPersons", {
-        paging: false,
-        scrollY: "350px",
-        scrollCollapse: true,
-        skipSearch: ["Personel", "Ödeme Tutarı"],
-        layout: {
-          bottomStart: "info",
-          bottomEnd: null,
-          topStart: null,
-          topEnd: null
-        },
-        drawCallback: function () {
-          initPayToPersonsMasks();
-        }
-      });
-
-      // Hızlı ve debounced personel arama
-      var paySearchTimeout = null;
-      $(document).on("input", "#payToPersonsSearch", function () {
-        var term = this.value;
-        clearTimeout(paySearchTimeout);
-        paySearchTimeout = setTimeout(function () {
-          if (payToPersonsTable) {
-            payToPersonsTable.search(term).draw();
+    // Dinamik Toplam ve Seçili Personel Sayısı Güncelleme
+    function updatePayToPersonsSummary() {
+      var total = 0;
+      var count = 0;
+      
+      $modal.find("tbody tr.bulk-pay-row").each(function () {
+        var $row = $(this);
+        var $input = $row.find("input.bulk-pay-input");
+        var val = $input.val();
+        
+        if (val && val.trim() !== "") {
+          var cleanAmount = parseFloat(val.replace(/\./g, "").replace(",", ".")) || 0;
+          if (cleanAmount > 0) {
+            total += cleanAmount;
+            count++;
+            $row.addClass("row-has-amount");
+          } else {
+            $row.removeClass("row-has-amount");
           }
-        }, 120);
+        } else {
+          $row.removeClass("row-has-amount");
+        }
       });
 
-      // Ultra-hızlı ve debounced dinamik toplam hesaplama
-      var payTotalTimeout = null;
-      function updatePayToPersonsTotal() {
-        clearTimeout(payTotalTimeout);
-        payTotalTimeout = setTimeout(function () {
-          var total = 0;
-          var inputs = document.querySelectorAll("#payToPersons input.money");
-          for (var i = 0; i < inputs.length; i++) {
-            var val = inputs[i].value;
-            if (val) {
-              var cleanAmount = parseFloat(val.replace(/\./g, "").replace(",", ".")) || 0;
-              total += cleanAmount;
-            }
-          }
-          var formattedTotal = total.toLocaleString("tr-TR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          });
-          var totalEl = document.getElementById("payToPersonsTotal");
-          if (totalEl) {
-            totalEl.textContent = formattedTotal;
-          }
-        }, 30);
-      }
-
-      // Yalnızca input eventinde çalıştır
-      $(document).on("input", "#payToPersons input.money", function () {
-        updatePayToPersonsTotal();
+      var formattedTotal = total.toLocaleString("tr-TR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       });
 
-      // Modal açıldığında başlat
-      $("#pay_to_persons-modal").on("shown.bs.modal", function () {
-        if ($.fn.select2) {
-          $("#pay_to_persons-modal .select2").select2({
-            dropdownParent: $("#pay_to_persons-modal")
-          });
-        }
-        if (typeof flatpickr !== 'undefined') {
-          flatpickr("#tps_action_date", { dateFormat: "d.m.Y", locale: "tr" });
-        }
-        initPayToPersonsMasks();
-        if (payToPersonsTable) {
-          payToPersonsTable.columns.adjust().draw();
-        }
-        updatePayToPersonsTotal();
-      });
+      $("#payToPersonsTotal").text(formattedTotal);
+      $("#selectedPersonCount").text(count);
     }
 
-    $("#savePayToPersons").on("click", function () {
-      if ($("#payToPersonsForm").valid()) {
-        var person_ids = [];
-        var amounts = [];
+    // Canlı Arama ve Filtreleme
+    var filterOnlyBalance = false;
+    function applyPayFilters() {
+      var searchTerm = ($("#payToPersonsSearch").val() || "").trim().toLowerCase();
+      var visibleCount = 0;
 
-        var form = $("#payToPersonsForm");
-        var formData = new FormData(form[0]);
+      $modal.find("tbody tr.bulk-pay-row").each(function () {
+        var $row = $(this);
+        var searchData = ($row.attr("data-search") || "").toLowerCase();
+        var hasBalance = $row.attr("data-has-balance") === "1";
 
-        // Preloader göster
-        $(".preloader").fadeIn();
+        var matchesSearch = !searchTerm || searchData.indexOf(searchTerm) > -1;
+        var matchesBalance = !filterOnlyBalance || hasBalance;
 
-        // Tüm satırlardaki değerleri topla
-        var rows = document.querySelectorAll("#payToPersons tbody tr");
-        for (var i = 0; i < rows.length; i++) {
-          var row = rows[i];
-          var idTd = row.querySelector("td[data-id]");
-          var input = row.querySelector("input.money");
-          if (idTd && input) {
-            var person_id = idTd.getAttribute("data-id");
-            var amountRaw = input.value;
-            if (amountRaw && amountRaw !== "") {
-              var cleanAmount = parseFloat(amountRaw.replace(/\./g, "").replace(",", ".")) || 0;
-              if (cleanAmount > 0) {
-                person_ids.push(person_id);
-                amounts.push(amountRaw);
-              }
-            }
+        if (matchesSearch && matchesBalance) {
+          $row.show();
+          visibleCount++;
+        } else {
+          $row.hide();
+        }
+      });
+
+      $("#visibleRowCount").text(visibleCount);
+      if (searchTerm) {
+        $("#clearPaySearch").show();
+      } else {
+        $("#clearPaySearch").hide();
+      }
+    }
+
+    // Arama Input Olayı
+    $(document).on("input", "#payToPersonsSearch", function () {
+      applyPayFilters();
+    });
+
+    // Arama Temizleme
+    $(document).on("click", "#clearPaySearch", function () {
+      $("#payToPersonsSearch").val("").trigger("input").focus();
+    });
+
+    // Yalnızca Bakiyesi Olanlar Filtre Butonu
+    $(document).on("click", "#btnToggleBalanceFilter", function () {
+      filterOnlyBalance = !filterOnlyBalance;
+      var $btn = $(this);
+      if (filterOnlyBalance) {
+        $btn.removeClass("btn-outline-secondary").addClass("btn-primary text-white");
+        $("#filterBtnText").text("Tümünü Göster");
+      } else {
+        $btn.removeClass("btn-primary text-white").addClass("btn-outline-secondary");
+        $("#filterBtnText").text("Yalnızca Alacağı Olanlar");
+      }
+      applyPayFilters();
+    });
+
+    // Tek Satır Bakiye Aktarma Butonu
+    $(document).on("click", ".btn-transfer-balance", function (e) {
+      e.preventDefault();
+      var $row = $(this).closest("tr");
+      var balanceRaw = $row.attr("data-balance");
+      var balanceNum = parseFloat(balanceRaw) || 0;
+      if (balanceNum > 0) {
+        var formatted = balanceNum.toLocaleString("tr-TR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        var $input = $row.find("input.bulk-pay-input");
+        $input.val(formatted).trigger("input");
+        
+        $input.addClass("border-success");
+        setTimeout(function () {
+          $input.removeClass("border-success");
+        }, 600);
+      }
+    });
+
+    // Tüm Bakiyeleri Doldur Butonu
+    $(document).on("click", "#btnFillAllBalances", function (e) {
+      e.preventDefault();
+      var filledCount = 0;
+      $modal.find("tbody tr.bulk-pay-row").each(function () {
+        var $row = $(this);
+        // Eğer satır görünür ise veya arama yapılmamışsa
+        if ($row.is(":visible")) {
+          var balanceRaw = $row.attr("data-balance");
+          var balanceNum = parseFloat(balanceRaw) || 0;
+          if (balanceNum > 0) {
+            var formatted = balanceNum.toLocaleString("tr-TR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+            $row.find("input.bulk-pay-input").val(formatted);
+            filledCount++;
           }
         }
+      });
+      updatePayToPersonsSummary();
+    });
 
-        if (person_ids.length === 0) {
-          $(".preloader").fadeOut();
-          Swal.fire({
-            title: "Uyarı",
-            text: "Lütfen en az bir personel için ödeme tutarı giriniz.",
-            icon: "warning",
-            confirmButtonText: "Tamam"
-          });
-          return;
+    // Tüm Tutarları Sıfırla Butonu
+    $(document).on("click", "#btnResetAllAmounts", function (e) {
+      e.preventDefault();
+      $modal.find("input.bulk-pay-input").val("");
+      updatePayToPersonsSummary();
+    });
+
+    // Input Tutar Değişikliklerinde Toplam Güncelleme
+    $(document).on("input change blur", "#pay_to_persons-modal input.bulk-pay-input", function () {
+      updatePayToPersonsSummary();
+    });
+
+    // Modal Açıldığında
+    $modal.on("shown.bs.modal", function () {
+      if ($.fn.select2) {
+        $modal.find(".select2").select2({
+          dropdownParent: $modal,
+          width: "100%"
+        });
+      }
+      if (typeof flatpickr !== "undefined") {
+        flatpickr("#tps_action_date", { dateFormat: "d.m.Y", locale: "tr" });
+      }
+      initPayToPersonsMasks();
+      updatePayToPersonsSummary();
+      applyPayFilters();
+    });
+
+    // Kaydetme İşlemi
+    $(document).on("click", "#savePayToPersons", function () {
+      if (!$form.valid()) {
+        return;
+      }
+
+      var person_ids = [];
+      var amounts = [];
+
+      $modal.find("tbody tr.bulk-pay-row").each(function () {
+        var $row = $(this);
+        var personId = $row.attr("data-person-id");
+        var $input = $row.find("input.bulk-pay-input");
+        var val = $input.val();
+
+        if (val && val.trim() !== "") {
+          var cleanAmount = parseFloat(val.replace(/\./g, "").replace(",", ".")) || 0;
+          if (cleanAmount > 0) {
+            person_ids.push(personId);
+            amounts.push(val);
+          }
         }
+      });
 
-        formData.append("person_ids", person_ids.join(","));
-        formData.append("amounts", amounts.join(","));
-        formData.append("action", "payToPersons");
+      if (person_ids.length === 0) {
+        Swal.fire({
+          title: "Uyarı",
+          text: "Lütfen en az bir personel için ödenecek tutar giriniz.",
+          icon: "warning",
+          confirmButtonText: "Tamam"
+        });
+        return;
+      }
 
-        fetch("api/financial/transaction.php", {
-          method: "POST",
-          body: formData
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            $(".preloader").fadeOut();
-            var title = data.status == "success" ? "Başarılı!" : "Hata";
+      var $btn = $("#savePayToPersons");
+      var originalBtnHtml = $btn.html();
+      $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1.5" role="status" aria-hidden="true"></span> Kaydediliyor...');
+
+      var formData = new FormData($form[0]);
+      formData.append("person_ids", person_ids.join(","));
+      formData.append("amounts", amounts.join(","));
+      formData.append("action", "payToPersons");
+
+      fetch("api/financial/transaction.php", {
+        method: "POST",
+        body: formData
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          $btn.prop("disabled", false).html(originalBtnHtml);
+          if (data.status === "success") {
             Swal.fire({
-              title: title,
-              text: data.message,
-              icon: data.status,
+              title: "Başarılı!",
+              text: data.message || "Toplu personel ödemesi başarıyla kaydedildi.",
+              icon: "success",
               confirmButtonText: "Tamam"
-            })
-            .then((result) => {
-              if (result.isConfirmed && data.status == "success") {
-                location.reload();
-              }
+            }).then(() => {
+              $modal.modal("hide");
+              location.reload();
             });
-          })
-          .catch((error) => {
-            $(".preloader").fadeOut();
-            console.error("Error:", error);
+          } else {
             Swal.fire({
               title: "Hata",
-              text: "Sistemde bir hata oluştu.",
+              text: data.message || "Ödeme işlemi gerçekleştirilemedi.",
               icon: "error",
               confirmButtonText: "Tamam"
             });
+          }
+        })
+        .catch((error) => {
+          $btn.prop("disabled", false).html(originalBtnHtml);
+          console.error("PayToPersons Error:", error);
+          Swal.fire({
+            title: "Hata",
+            text: "Sistemde bir hata oluştu. Lütfen tekrar deneyin.",
+            icon: "error",
+            confirmButtonText: "Tamam"
           });
-      }
+        });
     });
   }
 });

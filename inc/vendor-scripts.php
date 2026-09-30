@@ -115,7 +115,7 @@ if ($page == 'financial/case/list' || $page == 'financial/case/manage') {
     echo '<script src="./src/financial/case.js?v=' . time() . '"></script>';
 }
 // Kasa İşlemleri(kasa ekleme ve düzenleme sayfası)
-if ($page == 'financial/transactions/list') {
+if ($page == 'financial/transactions/list' || $page == 'financial/case/manage') {
     echo '<script src="./src/financial/transactions.js?v=' . time() . '"></script>';
 }
 // Proje Ekleme,güncelleme ve listeleme sayfası
@@ -246,6 +246,7 @@ if ($page == 'activities/index' || $page == 'admin-home') {
 <script src="./src/datatable-column-filter.js?v=<?php echo time(); ?>"></script>
 <script src="./src/datatable-col-manager.js?v=<?php echo time(); ?>"></script>
 <script src="./src/global-search.js?v=<?php echo file_exists(ROOT . '/src/global-search.js') ? filemtime(ROOT . '/src/global-search.js') : time(); ?>"></script>
+<script src="./dist/js/sidebar-animation.js?v=<?php echo file_exists(ROOT . '/dist/js/sidebar-animation.js') ? filemtime(ROOT . '/dist/js/sidebar-animation.js') : time(); ?>"></script>
 <script src="./src/app.js?v=<?php echo time(); ?>" defer></script>
 <?php 
 if ($page == 'puantaj/list') {

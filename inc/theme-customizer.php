@@ -1003,6 +1003,38 @@
                 </div>
             </div>
 
+            <!-- 3. Sidebar Arka Plan Animasyonu / Deseni -->
+            <div class="theme-customizer-section-title-wrap mt-3">
+                <h6 class="theme-customizer-section-title">Sidebar Arka Plan Efekti</h6>
+                <span class="theme-customizer-badge bg-teal-lt text-teal">Animasyon</span>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <button type="button" class="theme-color-swatch-btn w-100 justify-content-center py-2" data-sidebar-effect="constellation" onclick="selectSidebarEffect('constellation', true);">
+                        <i class="ti ti-network me-1 text-primary" style="font-size: 15px;"></i>
+                        <span style="font-size: 11px;">Parçacık Ağı</span>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="theme-color-swatch-btn w-100 justify-content-center py-2" data-sidebar-effect="particles" onclick="selectSidebarEffect('particles', true);">
+                        <i class="ti ti-sparkles me-1 text-warning" style="font-size: 15px;"></i>
+                        <span style="font-size: 11px;">Yüzen Işıklar</span>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="theme-color-swatch-btn w-100 justify-content-center py-2" data-sidebar-effect="geometric" onclick="selectSidebarEffect('geometric', true);">
+                        <i class="ti ti-grid-dots me-1 text-cyan" style="font-size: 15px;"></i>
+                        <span style="font-size: 11px;">Geometrik</span>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="theme-color-swatch-btn w-100 justify-content-center py-2" data-sidebar-effect="none" onclick="selectSidebarEffect('none', true);">
+                        <i class="ti ti-ban me-1 text-secondary" style="font-size: 15px;"></i>
+                        <span style="font-size: 11px;">Kapalı</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Bilgilendirme Kutusu -->
             <div class="alert alert-info py-2 px-3 mb-0" style="font-size: 11.5px; border-radius: 8px;">
                 <i class="ti ti-info-circle me-1"></i>

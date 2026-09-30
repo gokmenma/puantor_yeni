@@ -463,9 +463,6 @@ $(document).ready(function () {
     var month = $tr.attr('data-month') || '';
     var year = $tr.attr('data-year') || '';
     var projectId = $tr.attr('data-project-id') || '0';
-    var hasIcra = $tr.attr('data-has-icra') === '1';
-    var icraAmount = $tr.attr('data-icra-amount') || '0,00 ₺';
-    var slipUrl = $tr.attr('data-slip-url') || ('index.php?p=payroll/pay-slip&id=' + id);
     var canPay = $tr.attr('data-can-pay') === '1';
     var canIncome = $tr.attr('data-can-income') === '1';
 
@@ -477,7 +474,6 @@ $(document).ready(function () {
     var safePersonName = $('<div>').text(personName).html();
     var safeBalance = $('<div>').text(balance).html();
     var safeIban = $('<div>').text(iban).html();
-    var safeIcraAmount = $('<div>').text(icraAmount).html();
 
     var menuHtml = `
       <div class="cm-header"><i class="ti ti-user me-1"></i> ${safePersonName}</div>
@@ -486,12 +482,6 @@ $(document).ready(function () {
         <span class="fw-bold ${balanceRaw > 0 ? 'text-danger' : (balanceRaw < 0 ? 'text-primary' : 'text-success')}">${safeBalance}</span>
       </div>
 
-      <a href="#" class="view-payroll-detail" data-id="${id}" data-month="${month}" data-year="${year}" data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
-        <i class="ti ti-file-analytics text-primary"></i> Bordro Detayları
-      </a>
-      <a href="${slipUrl}" target="_blank">
-        <i class="ti ti-file-dollar text-info"></i> Bordro Pusulası
-      </a>
       ${canPay ? `
       <a href="#" class="add-payment" data-id="${id}" data-name="${safePersonName}" data-balance="${safeBalance}" data-bs-toggle="modal" data-bs-target="#payment-modal">
         <i class="ti ti-cash-register text-success"></i> Ödeme Yap
@@ -505,20 +495,9 @@ $(document).ready(function () {
         <i class="ti ti-cut text-danger"></i> Kesinti Ekle
       </a>
       ` : ''}
-      ${hasIcra ? `
-      <a href="#" class="btn-view-icra-deductions" data-person-id="${id}">
-        <i class="ti ti-gavel text-purple"></i> İcra Kesintisi (${safeIcraAmount})
-      </a>
-      ` : ''}
 
       <div class="cm-divider"></div>
 
-      <a href="#" class="route-link" data-page="persons/manage&id=${id}">
-        <i class="ti ti-user-edit text-secondary"></i> Personel Kartı / Detay
-      </a>
-      <a href="#" class="route-link" data-page="persons/statement&id=${id}">
-        <i class="ti ti-receipt text-secondary"></i> Hesap Ekstresi
-      </a>
       <a href="#" class="route-link" data-page="puantaj/list">
         <i class="ti ti-calendar-event text-secondary"></i> Puantaj Sayfası
       </a>

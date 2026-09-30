@@ -68,7 +68,7 @@ function initTransactionDataTable() {
     searchDelay: 400,
     pageLength: 25,
     lengthMenu: [10, 25, 50, 100],
-    order: [[2, "desc"]],
+    order: [[3, "desc"]],
     ajax: {
       url: "api/financial/list.php",
       type: "POST",
@@ -78,9 +78,11 @@ function initTransactionDataTable() {
       }
     },
     columnDefs: [
-      { targets: [0, 2], className: "text-center" },
-      { targets: [5], className: "text-end" },
-      { targets: [7], orderable: false, searchable: false, className: "text-end no-export actions-column" }
+      { targets: [0, 8], orderable: false, searchable: false },
+      { targets: 0, className: "text-center no-export" },
+      { targets: [1, 3], className: "text-center" },
+      { targets: [6], className: "text-end" },
+      { targets: [8], className: "text-end no-export actions-column" }
     ],
     language: {
       url: "src/tr.json",
@@ -94,6 +96,10 @@ function initTransactionDataTable() {
       }
     },
     drawCallback: function (settings) {
+      $(".select-all-transactions").prop("checked", false);
+      if (typeof toggleBulkDeleteTransactionsButton === "function") {
+        toggleBulkDeleteTransactionsButton();
+      }
       if (settings && settings.json && settings.json.stats) {
         updateTransactionSummaryCards(settings.json.stats);
       }
@@ -146,12 +152,12 @@ function buildTransactionColvisMenu(api) {
   if (!$menu.length || !api) return;
 
   var columnConfig = {
-    1: { label: "Kasa", default: true },
-    2: { label: "Tarih", default: true },
-    3: { label: "İşlem Türü", default: true },
-    4: { label: "Hesap / Muhatap", default: true },
-    5: { label: "Tutar", default: true },
-    6: { label: "Açıklama", default: true }
+    2: { label: "Kasa", default: true },
+    3: { label: "Tarih", default: true },
+    4: { label: "İşlem Türü", default: true },
+    5: { label: "Hesap / Muhatap", default: true },
+    6: { label: "Tutar", default: true },
+    7: { label: "Açıklama", default: true }
   };
 
   var savedVisibility = localStorage.getItem("transactions_column_visibility");
@@ -200,6 +206,115 @@ $(document).on("click", "#transactionColvisMenu", function (e) {
   e.stopPropagation();
 });
 
+// Checkbox Seçim Yönetimi (Tümünü Seç / Tekil Seçim)
+$(document).on("change", ".select-all-transactions", function () {
+  var isChecked = $(this).prop("checked");
+  $(".transaction-checkbox:not(:disabled)").prop("checked", isChecked);
+  toggleBulkDeleteTransactionsButton();
+});
+
+$(document).on("change", ".transaction-checkbox", function () {
+  var total = $(".transaction-checkbox:not(:disabled)").length;
+  var checked = $(".transaction-checkbox:checked").length;
+  $(".select-all-transactions").prop("checked", total > 0 && total === checked);
+  toggleBulkDeleteTransactionsButton();
+});
+
+function toggleBulkDeleteTransactionsButton() {
+  var selectedCount = $(".transaction-checkbox:checked").length;
+  if (selectedCount > 0) {
+    $("#btnDeleteSelectedTransactions").removeClass("d-none");
+    $("#btnDeleteSelectedTransactions").html(
+      '<i class="ti ti-trash icon me-1"></i> Seçilenleri Sil (' + selectedCount + ')'
+    );
+  } else {
+    $("#btnDeleteSelectedTransactions").addClass("d-none");
+  }
+}
+
+// Toplu Kasa Hareketi Silme Aksiyonu
+$(document).on("click", "#btnDeleteSelectedTransactions", function () {
+  var selectedItems = [];
+  $(".transaction-checkbox:checked").each(function () {
+    selectedItems.push({
+      id: $(this).val(),
+      type: $(this).data("type") || "",
+      table: $(this).data("table") || ""
+    });
+  });
+
+  if (selectedItems.length === 0) {
+    Swal.fire({
+      title: "Hata!",
+      text: "Lütfen silmek istediğiniz kasa hareketlerini seçin.",
+      icon: "error"
+    });
+    return;
+  }
+
+  Swal.fire({
+    title: "Emin misiniz?",
+    html: "Seçilen <strong>" + selectedItems.length + "</strong> adet kasa hareketi silinecektir!<br><span class=\"text-danger\">Bu işlem geri alınamaz!</span>",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Evet, Sil!",
+    cancelButtonText: "İptal"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: "Siliniyor...",
+        text: "Lütfen bekleyin.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      var formData = new FormData();
+      formData.append("action", "bulkDeleteTransactions");
+      selectedItems.forEach(function (item, idx) {
+        formData.append("items[" + idx + "][id]", item.id);
+        formData.append("items[" + idx + "][type]", item.type);
+        formData.append("items[" + idx + "][table]", item.table);
+      });
+
+      fetch("/api/financial/transaction.php", {
+        method: "POST",
+        body: formData
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            Swal.fire({
+              title: "Başarılı!",
+              text: data.message,
+              icon: "success"
+            });
+            if (transactionTable) {
+              transactionTable.ajax.reload(null, false);
+            }
+          } else {
+            Swal.fire({
+              title: "Hata!",
+              text: data.message || "Silme işlemi sırasında bir hata oluştu.",
+              icon: "error"
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Bulk delete error:", error);
+          Swal.fire({
+            title: "Hata!",
+            text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+            icon: "error"
+          });
+        });
+    }
+  });
+});
+
 // Tür Filtresi (Tümü / Gelir / Gider)
 $(document).on("change", ".type-filter", function () {
   if (!transactionTable) {
@@ -211,7 +326,7 @@ $(document).on("change", ".type-filter", function () {
     transactionTable.ajax.reload(null, true);
   } else if (transactionTable) {
     var val = $(this).val();
-    transactionTable.column(3).search(val ? val : "").draw();
+    transactionTable.column(4).search(val ? val : "").draw();
   }
 });
 
@@ -285,7 +400,7 @@ $(document).on("contextmenu", "#transactionTable tbody tr", function (e) {
   $("#transactionTable tbody tr").removeClass("context-menu-active");
   $tr.addClass("context-menu-active");
 
-  var rowTitle = $tr.find("td:eq(4)").text().trim() || $tr.find("td:eq(1)").text().trim() || "Kasa Hareketi";
+  var rowTitle = $tr.find("td:eq(5)").text().trim() || $tr.find("td:eq(2)").text().trim() || "Kasa Hareketi";
   var editId = $editBtn.attr("data-id") || "";
   var deleteId = $deleteBtn.attr("data-id") || "";
 
@@ -441,8 +556,9 @@ $(document).on("click", ".delete-transaction", function () {
   //Tablo adı butonun içinde bulunduğu tablo
   let action = "deleteTransaction";
   let confirmMessage = "Kasa hareketi silinecektir!";
-  let type = $(this).data("type");
-  let url = "/api/financial/transaction.php?type=" + type;
+  let type = $(this).data("type") || "";
+  let table = $(this).data("table") || "";
+  let url = "/api/financial/transaction.php?type=" + encodeURIComponent(type) + "&table=" + encodeURIComponent(table);
 
   deleteRecord(this, action, confirmMessage, url);
 });

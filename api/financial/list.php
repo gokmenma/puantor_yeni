@@ -242,18 +242,18 @@ try {
         return Helper::searchContains($cellValueStr, $searchValue);
     };
 
-    $orderColumn = (int) ($_POST['order'][0]['column'] ?? 2);
+    $orderColumn = (int) ($_POST['order'][0]['column'] ?? 3);
     $orderDirection = strtolower((string) ($_POST['order'][0]['dir'] ?? 'desc')) === 'asc' ? 'asc' : 'desc';
     $orderFields = [
-        0 => 'id',
-        1 => 'case_id',
-        2 => 'date',
-        3 => 'type_id',
-        4 => 'account_name',
-        5 => 'amount',
-        6 => 'description',
+        1 => 'id',
+        2 => 'case_id',
+        3 => 'date',
+        4 => 'type_id',
+        5 => 'account_name',
+        6 => 'amount',
+        7 => 'description',
     ];
-    $orderField = $orderFields[$orderColumn] ?? 'id';
+    $orderField = $orderFields[$orderColumn] ?? 'date';
 
     // Summary KPIs
     $summaryStats = $ctModel->getTransactionsSummaryStats($targetCaseIds, $typeIdFilter);
@@ -286,12 +286,12 @@ try {
             $dateStr = Date::dmY($t->date);
 
             $searchable = [
-                1 => $caseName,
-                2 => $dateStr,
-                3 => $typeFull,
-                4 => $t->account_name ?? '',
-                5 => ($isInc ? '+' : '-') . $formattedAmt . ' ' . $amt,
-                6 => $t->description ?? '',
+                2 => $caseName,
+                3 => $dateStr,
+                4 => $typeFull,
+                5 => $t->account_name ?? '',
+                6 => ($isInc ? '+' : '-') . $formattedAmt . ' ' . $amt,
+                7 => $t->description ?? '',
             ];
 
             $matches = true;
@@ -376,11 +376,16 @@ try {
             $actionButtons .= '<button type="button" class="btn btn-sm btn-icon btn-outline-secondary edit-transactions" data-id="' . $encryptedId . '" data-sub-type-name="' . htmlspecialchars($subTypeName ?: '', ENT_QUOTES, 'UTF-8') . '" title="Düzenle / Detay" aria-label="Düzenle / Detay"><i class="ti ti-pencil"></i></button>';
         }
         if ($canDelete) {
-            $actionButtons .= '<button type="button" class="btn btn-sm btn-icon btn-outline-danger delete-transaction" data-id="' . $encryptedId . '" data-type="' . htmlspecialchars($t->sub_type ?? '', ENT_QUOTES, 'UTF-8') . '" title="Sil" aria-label="Sil"><i class="ti ti-trash"></i></button>';
+            $actionButtons .= '<button type="button" class="btn btn-sm btn-icon btn-outline-danger delete-transaction" data-id="' . $encryptedId . '" data-type="' . htmlspecialchars($t->sub_type ?? '', ENT_QUOTES, 'UTF-8') . '" data-table="' . htmlspecialchars($t->tablename ?? 'case_transactions', ENT_QUOTES, 'UTF-8') . '" title="Sil" aria-label="Sil"><i class="ti ti-trash"></i></button>';
         }
         $actionButtons .= '</div>';
 
+        $checkboxHtml = $canDelete
+            ? '<input type="checkbox" class="form-check-input transaction-checkbox" value="' . $encryptedId . '" data-type="' . htmlspecialchars($t->sub_type ?? '', ENT_QUOTES, 'UTF-8') . '" data-table="' . htmlspecialchars($t->tablename ?? 'case_transactions', ENT_QUOTES, 'UTF-8') . '">'
+            : '<input type="checkbox" class="form-check-input" disabled>';
+
         $rowItem = [
+            $checkboxHtml,
             '<span class="text-muted fw-medium">' . ($start + $offset + 1) . '</span>',
             '<span class="d-inline-flex align-items-center fw-medium text-dark"><i class="ti ti-wallet text-muted me-1.5" style="font-size: 15px;"></i>' . htmlspecialchars($caseName, ENT_QUOTES, 'UTF-8') . '</span>',
             '<span class="badge bg-secondary-lt text-secondary fw-medium" style="font-size: 11px;"><i class="ti ti-calendar me-1"></i>' . htmlspecialchars($formattedDate, ENT_QUOTES, 'UTF-8') . '</span>',

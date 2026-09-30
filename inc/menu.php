@@ -16,7 +16,7 @@ $navbarBsTheme = $isLightSidebar ? 'light' : 'dark';
 ?>
 
 <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="<?php echo $navbarBsTheme; ?>" data-sidebar-theme="<?php echo htmlspecialchars($sidebarThemeCookie, ENT_QUOTES, 'UTF-8'); ?>" id="navbar">
-    <!-- <aside class="navbar navbar-vertical navbar-expand-lg navbar-transparent"> -->
+    <canvas id="sidebar-particles-canvas" class="sidebar-particles-canvas"></canvas>
     <div class="container-fluid">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
             aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation">

@@ -155,17 +155,18 @@ if ($action == "saveTransaction") {
 }
 
 if ($action == "deleteTransaction") {
-
-    //Kasa hareketi silme yetkisi var mı?
+    // Kasa hareketi silme yetkisi var mı?
     $Auths->hasPermissionReturn("delete_income_expense");
 
+    $id = $_POST["id"] ?? '';
+    $type = $_GET["type"] ?? $_POST["type"] ?? '';
+    $table = $_GET["table"] ?? $_POST["table"] ?? '';
 
-    $id = $_POST["id"];
-    $type = $_GET["type"];
     try {
-
-        if (in_array($type, [5, 6, 10, 11, 12])) {
+        if ($table === 'project_gelir_gider' || in_array($type, [5, 6, 10, 11, 12])) {
             $ProjectIncExp->delete($id);
+        } elseif ($table === 'maas_gelir_kesinti' || $type == 7) {
+            $Bordro->delete($id);
         } else {
             $ct->delete($id);
         }
@@ -173,18 +174,89 @@ if ($action == "deleteTransaction") {
         $message = "Kasa hareketi başarıyla silindi.";
     } catch (PDOException $ex) {
         $status = "error";
-        $message = "Kasa hareketi bir hata oluştu.";
+        $message = "Kasa hareketi silinirken bir veritabanı hatası oluştu.";
+    } catch (Throwable $ex) {
+        $status = "error";
+        $message = $ex->getMessage() ?: "Kasa hareketi silinirken bir hata oluştu.";
     }
+
     $res = [
         "status" => $status,
         "message" => $message,
     ];
-    ob_clean();
-    header('Content-Type: application/json');
     if (ob_get_length()) ob_clean();
     header('Content-Type: application/json');
     echo json_encode($res, JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+if ($action == "bulkDeleteTransactions") {
+    // Kasa hareketi silme yetkisi var mı?
+    $Auths->hasPermissionReturn("delete_income_expense");
+
+    $items = $_POST["items"] ?? [];
+    if (empty($items)) {
+        $ids = $_POST["ids"] ?? [];
+        if (!empty($ids) && is_array($ids)) {
+            $items = array_map(function($id) {
+                return ['id' => $id, 'type' => '', 'table' => ''];
+            }, $ids);
+        }
+    }
+
+    if (empty($items) || !is_array($items)) {
+        if (ob_get_length()) ob_clean();
+        header('Content-Type: application/json');
+        echo json_encode([
+            "status" => "error",
+            "message" => "Lütfen silmek istediğiniz kasa hareketlerini seçin."
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $deleted_count = 0;
+    foreach ($items as $item) {
+        $rawId = is_array($item) ? ($item['id'] ?? '') : (string)$item;
+        $type = is_array($item) ? ($item['type'] ?? '') : '';
+        $table = is_array($item) ? ($item['table'] ?? '') : '';
+
+        $decrypted_id = Security::safeDecrypt($rawId);
+        if (!$decrypted_id) {
+            continue;
+        }
+
+        try {
+            if ($table === 'project_gelir_gider' || in_array($type, [5, 6, 10, 11, 12])) {
+                $ProjectIncExp->delete($decrypted_id);
+                $deleted_count++;
+            } elseif ($table === 'maas_gelir_kesinti' || $type == 7) {
+                $Bordro->delete($decrypted_id);
+                $deleted_count++;
+            } else {
+                $ct->delete($decrypted_id);
+                $deleted_count++;
+            }
+        } catch (Throwable $e) {
+            error_log("Bulk delete transaction error for ID {$decrypted_id}: " . $e->getMessage());
+        }
+    }
+
+    if ($deleted_count > 0) {
+        $status = "success";
+        $message = "Seçilen {$deleted_count} kasa hareketi başarıyla silindi.";
+    } else {
+        $status = "error";
+        $message = "Seçilen hareketler silinemedi.";
+    }
+
+    $res = [
+        "status" => $status,
+        "message" => $message,
+        "deleted_count" => $deleted_count
+    ];
+    if (ob_get_length()) ob_clean();
+    header('Content-Type: application/json');
+    echo json_encode($res, JSON_UNESCAPED_UNICODE);
     exit;
 }
 

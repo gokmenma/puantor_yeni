@@ -273,6 +273,12 @@ html.transactions-summary-collapsed #transactionSummaryCards {
 
                     <!-- Actions & Search -->
                     <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
+                        <?php if ($Auths->hasPermission('delete_income_expense')): ?>
+                            <button type="button" id="btnDeleteSelectedTransactions" class="btn btn-sm btn-danger d-none">
+                                <i class="ti ti-trash icon me-1"></i> Seçilenleri Sil
+                            </button>
+                        <?php endif; ?>
+
                         <!-- Kasa Filtre Seçimi -->
                         <div class="transactions-case-filter" style="min-width: 180px; max-width: 240px;">
                             <form action="#" method="post" id="caseForm" class="m-0">
@@ -303,6 +309,9 @@ html.transactions-summary-collapsed #transactionSummaryCards {
                     <table class="table data-table table-hover text-nowrap w-100 mb-0" id="transactionTable" style="width: 100% !important; margin: 0 !important;">
                         <thead>
                             <tr>
+                                <th style="width: 40px; min-width: 40px;" class="text-center no-export" data-orderable="false">
+                                    <input type="checkbox" class="form-check-input select-all-transactions">
+                                </th>
                                 <th style="width: 45px;" class="text-center">Sıra</th>
                                 <th style="width: 14%;">Kasa</th>
                                 <th style="width: 95px;" class="text-center">Tarih</th>

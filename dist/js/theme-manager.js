@@ -447,7 +447,22 @@
         window.syncActiveDensityButtons();
     };
 
-    // 11. Tema Ayarlarını Sıfırlama
+    // 11. Sidebar Arka Plan Efekti / Animasyonu
+    window.selectSidebarEffect = function(effectName, isManual) {
+        effectName = effectName || 'constellation';
+        try {
+            if (isManual) localStorage.setItem('app_sidebar_effect_manual', 'true');
+            localStorage.setItem('app_sidebar_effect', effectName);
+            setCookie('app_sidebar_effect', effectName);
+        } catch (e) {}
+
+        if (window.SidebarParticles && typeof window.SidebarParticles.setEffect === 'function') {
+            window.SidebarParticles.setEffect(effectName, false);
+        }
+        window.syncActiveSidebarEffectButtons();
+    };
+
+    // 12. Tema Ayarlarını Sıfırlama
     window.resetThemeCustomizer = function() {
         try {
             var keys = [
@@ -568,11 +583,19 @@
         });
     };
 
+    window.syncActiveSidebarEffectButtons = function() {
+        var activeEffect = localStorage.getItem('app_sidebar_effect') || 'constellation';
+        document.querySelectorAll('[data-sidebar-effect]').forEach(function(btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-sidebar-effect') === activeEffect);
+        });
+    };
+
     window.syncAllThemeControls = function() {
         window.syncActiveThemePresetCard();
         window.syncActiveTopbarButtons();
         window.syncActiveSidebarButtons();
         window.syncActiveSidebarActiveButtons();
+        window.syncActiveSidebarEffectButtons();
         window.syncActivePrimaryButtons();
         window.syncActiveThemeFontButtons();
         window.syncActiveThemeWeightButtons();
