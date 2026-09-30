@@ -99,14 +99,14 @@
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.45,
-                    vy: (Math.random() - 0.5) * 0.45,
-                    radius: Math.random() * 1.6 + 1.2,
-                    baseAlpha: Math.random() * 0.4 + 0.25,
-                    alpha: 0.3,
-                    pulseSpeed: Math.random() * 0.02 + 0.01,
+                    vx: (Math.random() - 0.5) * 0.25,
+                    vy: (Math.random() - 0.5) * 0.25,
+                    radius: Math.random() * 1.2 + 1.0,
+                    baseAlpha: Math.random() * 0.2 + 0.15,
+                    alpha: 0.2,
+                    pulseSpeed: Math.random() * 0.015 + 0.008,
                     pulseAngle: Math.random() * Math.PI * 2,
-                    isSpecial: Math.random() > 0.75
+                    isSpecial: Math.random() > 0.8
                 });
             }
         } else if (currentEffect === 'particles') {
@@ -114,13 +114,13 @@
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.3,
-                    vy: -(Math.random() * 0.4 + 0.2), // Yükselen
-                    radius: Math.random() * 3 + 1.5,
-                    baseAlpha: Math.random() * 0.45 + 0.15,
-                    alpha: 0.3,
+                    vx: (Math.random() - 0.5) * 0.2,
+                    vy: -(Math.random() * 0.3 + 0.15), // Yükselen
+                    radius: Math.random() * 2.5 + 1.2,
+                    baseAlpha: Math.random() * 0.25 + 0.1,
+                    alpha: 0.2,
                     wobble: Math.random() * Math.PI * 2,
-                    wobbleSpeed: Math.random() * 0.03 + 0.01
+                    wobbleSpeed: Math.random() * 0.02 + 0.01
                 });
             }
         } else if (currentEffect === 'geometric') {
@@ -128,13 +128,13 @@
                 particles.push({
                     x: Math.random() * width,
                     y: Math.random() * height,
-                    vx: (Math.random() - 0.5) * 0.35,
-                    vy: (Math.random() - 0.5) * 0.35,
-                    size: Math.random() * 4 + 3,
+                    vx: (Math.random() - 0.5) * 0.2,
+                    vy: (Math.random() - 0.5) * 0.2,
+                    size: Math.random() * 3 + 2.5,
                     rotation: Math.random() * Math.PI,
-                    rotSpeed: (Math.random() - 0.5) * 0.02,
-                    baseAlpha: Math.random() * 0.35 + 0.2,
-                    alpha: 0.25
+                    rotSpeed: (Math.random() - 0.5) * 0.015,
+                    baseAlpha: Math.random() * 0.2 + 0.1,
+                    alpha: 0.15
                 });
             }
         }
@@ -151,7 +151,7 @@
         var isLight = colorScheme.isLight;
 
         if (currentEffect === 'constellation') {
-            var maxDistance = width < 120 ? 75 : 105;
+            var maxDistance = width < 120 ? 65 : 85;
             var maxDistSq = maxDistance * maxDistance;
 
             // 1. Çizgileri çiz (Bağlantılar)
@@ -166,10 +166,10 @@
 
                     if (distSq < maxDistSq) {
                         var dist = Math.sqrt(distSq);
-                        var lineAlpha = (1 - dist / maxDistance) * (isLight ? 0.35 : 0.50);
+                        var lineAlpha = (1 - dist / maxDistance) * (isLight ? 0.12 : 0.18);
                         ctx.beginPath();
                         ctx.strokeStyle = colorScheme.lineColor + lineAlpha + ')';
-                        ctx.lineWidth = 1.0;
+                        ctx.lineWidth = 0.75;
                         ctx.moveTo(p1.x, p1.y);
                         ctx.lineTo(p2.x, p2.y);
                         ctx.stroke();
@@ -184,17 +184,17 @@
                     var mRadius = mouse.radius;
                     if (mDistSq < mRadius * mRadius) {
                         var mDist = Math.sqrt(mDistSq);
-                        var mAlpha = (1 - mDist / mRadius) * (isLight ? 0.5 : 0.75);
+                        var mAlpha = (1 - mDist / mRadius) * (isLight ? 0.25 : 0.35);
                         ctx.beginPath();
                         ctx.strokeStyle = colorScheme.accentColor + mAlpha + ')';
-                        ctx.lineWidth = 1.2;
+                        ctx.lineWidth = 0.85;
                         ctx.moveTo(p1.x, p1.y);
                         ctx.lineTo(mouse.x, mouse.y);
                         ctx.stroke();
 
                         // Hafif itme
-                        p1.x += (mdx / mDist) * 0.3;
-                        p1.y += (mdy / mDist) * 0.3;
+                        p1.x += (mdx / mDist) * 0.2;
+                        p1.y += (mdy / mDist) * 0.2;
                     }
                 }
             }
@@ -204,24 +204,18 @@
                 var p = particles[k];
 
                 p.pulseAngle += p.pulseSpeed;
-                var pulseFactor = Math.sin(p.pulseAngle) * 0.25;
-                p.alpha = Math.max(0.2, p.baseAlpha + pulseFactor);
+                var pulseFactor = Math.sin(p.pulseAngle) * 0.15;
+                p.alpha = Math.max(0.08, p.baseAlpha + pulseFactor);
 
                 // Nokta
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 if (p.isSpecial) {
-                    ctx.fillStyle = colorScheme.accentColor + Math.min(p.alpha * 1.3, 1) + ')';
-                    // Parlama halesi
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = colorScheme.accentColor + '0.8)';
+                    ctx.fillStyle = colorScheme.accentColor + Math.min(p.alpha * 1.2, 0.45) + ')';
                 } else {
                     ctx.fillStyle = colorScheme.nodeColor + p.alpha + ')';
-                    ctx.shadowBlur = 3;
-                    ctx.shadowColor = colorScheme.lineColor + '0.5)';
                 }
                 ctx.fill();
-                ctx.shadowBlur = 0;
 
                 // Konum güncelle
                 p.x += p.vx;

@@ -106,7 +106,7 @@ aside#navbar,
   height: 100% !important;
   pointer-events: none !important;
   z-index: 0 !important;
-  opacity: 0.95;
+  opacity: 0.90;
   transition: opacity 0.3s ease;
 }
 
