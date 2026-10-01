@@ -16,7 +16,7 @@ class Authorize extends Db
             $query->execute([$authname]);
             $auth_id = $query->fetch(PDO::FETCH_OBJ);
             if ($auth_id == null) {
-                echo "<script type='text/javascript'>window.location.href = 'index.php?p=authorize';</script>";
+                echo "<script type='text/javascript'>window.location.href = '/yetkisiz-erisim';</script>";
                 exit;
             }
         }
@@ -24,7 +24,7 @@ class Authorize extends Db
         $query->execute([$role_id, $auth_id->id]);
         $auths = $query->fetch(PDO::FETCH_OBJ);
         if ($auths == null) {
-            echo "<script type='text/javascript'>window.location.href = 'index.php?p=authorize';</script>";
+            echo "<script type='text/javascript'>window.location.href = '/yetkisiz-erisim';</script>";
             exit;
         }
         return;

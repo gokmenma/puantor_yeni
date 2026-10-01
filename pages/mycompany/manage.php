@@ -13,13 +13,13 @@ $id = isset($_GET["id"]) ? Security::decrypt($_GET['id']) : 0;
 $new_id = isset($_GET["id"]) ? $_GET['id'] : 0;
 
 if($id == null && isset($_GET['id'])) {
-    header("Location: /index.php?p=mycompany/list");
+    header("Location: /firmalarim");
     exit;
 }
 
 $myfirm = $companyObj->findMyFirm($id);
 if (!$myfirm) {
-    header("Location: /index.php?p=mycompany/list");
+    header("Location: /firmalarim");
     exit;
 }
 

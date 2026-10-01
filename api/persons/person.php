@@ -67,6 +67,7 @@ if ($_POST["action"] == "savePerson") {
         "job_group" => $job_group,
         "team_id" => $team_id_val,
         "ekip" => $team_val,
+        "company_id" => 0,
         "firm_id" => $_SESSION["firm_id"],
         "wage_type" => $_POST["wage_type"],
         "iban_number" => Security::encrypt($_POST["iban_number"]),
@@ -129,8 +130,9 @@ if ($_POST["action"] == "savePerson") {
         }
 
     } catch (PDOException $e) {
+        error_log("Person save PDO exception: " . $e->getMessage());
         $status = "error";
-        if ($e->errorInfo[1] == 1062) {
+        if (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062) {
             // Hata mesajından ihlal edilen benzersiz kısıtın adını çıkar
             preg_match('/Duplicate entry .* for key \'(.*)\'/', $e->getMessage(), $matches);
             $violatedField = $matches[1] ?? 'Bilinmeyen alan';
@@ -139,11 +141,15 @@ if ($_POST["action"] == "savePerson") {
             } elseif ($violatedField == 'phone') {
                 $message = "Bu telefon numarası zaten kayıtlı.";
             } else {
-                $message = $e->getMessage();
+                $message = "Bu kayıt zaten sistemde mevcut.";
             }
         } else {
-            $message = $e->getMessage();
+            $message = "Personel kaydedilirken bir veritabanı hatası oluştu. Lütfen tekrar deneyiniz.";
         }
+    } catch (\Throwable $e) {
+        error_log("Person save error: " . $e->getMessage());
+        $status = "error";
+        $message = "İşlem sırasında bir hata oluştu: " . $e->getMessage();
     }
     $res = [
         "status" => $status,

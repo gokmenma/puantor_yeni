@@ -341,7 +341,7 @@
   -o-border-radius: 0.46rem;
 }
 
-.select2-container {
+span.select2.select2-container {
   width: 100% !important;
   /* min-width: 200px !important; */
 }

@@ -12,7 +12,7 @@ $new_id = isset($_GET["id"]) ? $_GET['id'] : 0;
 
 //Eğer url'den id yazılmışsa veya id boş ise projeler sayfasına gider
 if($id == null && isset($_GET['id'])) {
-    header("Location: /index.php?p=users/roles/list");
+    header("Location: /roller");
     exit;
 }
 

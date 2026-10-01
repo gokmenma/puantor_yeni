@@ -492,7 +492,8 @@ html.push-summary-collapsed #pushSummaryCards {
     font-size: 18px !important;
 }
 
-#pushPage .push-summary-card {
+html:not([data-bs-theme="dark"]) #pushPage .push-summary-card,
+html:not([data-bs-theme="dark"]) .push-summary-card {
     background: #ffffff !important;
     border: 1px solid #dbe3ec !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
@@ -508,7 +509,10 @@ html.push-summary-collapsed #pushSummaryCards {
     transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
 }
 
-#pushPage .push-table-card {
+html:not([data-bs-theme="dark"]) #pushPage .push-table-card,
+html:not([data-bs-theme="dark"]) .push-table-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
     overflow: hidden;
     border-radius: 12px;

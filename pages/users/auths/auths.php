@@ -15,7 +15,7 @@ ob_start(); // Çıktı tamponlamasını başlatın
 $id = Security::decrypt($_GET['id']) ?? 0;
 // echo "manuel yazılan id :" . $id;
 if (!isset($_GET['id']) || $id == 0) {
-    header('Location: index.php?p=users/roles/list');
+    header('Location: /roller');
     exit();
 }
 

@@ -23,7 +23,7 @@ $projectsList = $projSummary['projects'] ?? [];
             </div>
             <span class="mac-title">PROJE DURUM VE İLERLEME DAĞILIMI</span>
             <div class="ms-auto d-flex align-items-center">
-                <a href="index.php?p=projects/list" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Tüm Projeler</a>
+                <a href="/projeler" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Tüm Projeler</a>
                 <i class="ti ti-grid-dots drag-handle text-muted"></i>
             </div>
         </div>
@@ -82,7 +82,7 @@ $projectsList = $projSummary['projects'] ?? [];
                 <?php if (!empty($projectsList)): ?>
                     <div class="list-group list-group-flush border rounded-2">
                         <?php foreach (array_slice($projectsList, 0, 5) as $proj): ?>
-                            <a href="index.php?p=projects/manage&id=<?php echo \App\Helper\Security::encrypt($proj->id); ?>" class="list-group-item list-group-item-action py-2 px-3">
+                            <a href="/proje-duzenle?id=<?php echo \App\Helper\Security::encrypt($proj->id); ?>" class="list-group-item list-group-item-action py-2 px-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="text-truncate me-2">
                                         <div class="fw-medium text-dark text-truncate" style="font-size: 13px;">

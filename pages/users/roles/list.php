@@ -91,7 +91,8 @@ html.roles-summary-collapsed #rolesSummaryCards {
     font-size: 18px !important;
 }
 
-#rolesPage .roles-summary-card {
+html:not([data-bs-theme="dark"]) #rolesPage .roles-summary-card,
+html:not([data-bs-theme="dark"]) .roles-summary-card {
     background: #ffffff !important;
     border: 1px solid #dbe3ec !important;
     border-radius: 12px !important;
@@ -107,7 +108,8 @@ html.roles-summary-collapsed #rolesSummaryCards {
     transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
 }
 
-#rolesPage .roles-table-card {
+html:not([data-bs-theme="dark"]) #rolesPage .roles-table-card,
+html:not([data-bs-theme="dark"]) .roles-table-card {
     border: 1px solid #dbe3ec !important;
     border-radius: 12px !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;

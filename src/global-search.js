@@ -398,14 +398,14 @@
             var html = '<div class="gs-suggestions-wrap">';
             html += '  <div class="gs-suggestions-header">Hızlı Modül Sayfaları</div>';
             html += '  <div class="gs-suggestions-grid">';
-            html += '    <a href="index.php?p=persons/list" class="gs-suggestion-card"><i class="ti ti-users text-blue"></i><span>Personeller</span></a>';
-            html += '    <a href="index.php?p=projects/list" class="gs-suggestion-card"><i class="ti ti-folders text-purple"></i><span>Projeler</span></a>';
-            html += '    <a href="index.php?p=puantaj/list" class="gs-suggestion-card"><i class="ti ti-calendar-month text-azure"></i><span>Puantaj</span></a>';
-            html += '    <a href="index.php?p=payroll/list" class="gs-suggestion-card"><i class="ti ti-calculator text-emerald"></i><span>Bordro</span></a>';
-            html += '    <a href="index.php?p=financial/transactions/list" class="gs-suggestion-card"><i class="ti ti-wallet text-teal"></i><span>Kasa Hareketleri</span></a>';
-            html += '    <a href="index.php?p=persons/icra-list" class="gs-suggestion-card"><i class="ti ti-scale text-amber"></i><span>İcra Dosyaları</span></a>';
-            html += '    <a href="index.php?p=izin/list" class="gs-suggestion-card"><i class="ti ti-calendar-time text-indigo"></i><span>İzin Talepleri</span></a>';
-            html += '    <a href="index.php?p=gorevler/list" class="gs-suggestion-card"><i class="ti ti-checkbox text-orange"></i><span>Görevler</span></a>';
+            html += '    <a href="/personeller" class="gs-suggestion-card"><i class="ti ti-users text-blue"></i><span>Personeller</span></a>';
+            html += '    <a href="/projeler" class="gs-suggestion-card"><i class="ti ti-folders text-purple"></i><span>Projeler</span></a>';
+            html += '    <a href="/puantaj" class="gs-suggestion-card"><i class="ti ti-calendar-month text-azure"></i><span>Puantaj</span></a>';
+            html += '    <a href="/bordro" class="gs-suggestion-card"><i class="ti ti-calculator text-emerald"></i><span>Bordro</span></a>';
+            html += '    <a href="/gelir-gider-islemleri" class="gs-suggestion-card"><i class="ti ti-wallet text-teal"></i><span>Kasa Hareketleri</span></a>';
+            html += '    <a href="/personel-icra-dosyalari" class="gs-suggestion-card"><i class="ti ti-scale text-amber"></i><span>İcra Dosyaları</span></a>';
+            html += '    <a href="/izin-talepleri" class="gs-suggestion-card"><i class="ti ti-calendar-time text-indigo"></i><span>İzin Talepleri</span></a>';
+            html += '    <a href="/gorevler" class="gs-suggestion-card"><i class="ti ti-checkbox text-orange"></i><span>Görevler</span></a>';
             html += '  </div>';
             html += '</div>';
 

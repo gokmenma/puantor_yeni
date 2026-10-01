@@ -264,7 +264,7 @@ if ($firm_id > 0) {
                             $_topbar_unread_supports_count = 0;
                         }
                     ?>
-                    <a href="index.php?p=<?php echo $_topbar_is_superadmin ? 'supports/admin-tickets' : 'supports/tickets'; ?>" class="nav-link px-0 me-1"
+                    <a href="<?php echo $_topbar_is_superadmin ? '/destek-yonetimi' : '/destek-talepleri'; ?>" class="nav-link px-0 me-1"
                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Destek Talepleri" aria-label="Destek Talepleri">
                         <span class="position-relative d-inline-flex">
                             <i class="ti ti-headset" style="font-size:1.25rem;"></i>
@@ -289,7 +289,7 @@ if ($firm_id > 0) {
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h3 class="card-title">Duyurular</h3>
-                                    <a href="index.php?p=duyurular/list" class="btn btn-sm btn-ghost-primary">Tümü</a>
+                                    <a href="/duyurular" class="btn btn-sm btn-ghost-primary">Tümü</a>
                                 </div>
                                 <div class="list-group list-group-flush list-group-hoverable" style="max-height:320px;overflow-y:auto;">
                                     <?php
@@ -357,15 +357,15 @@ if ($firm_id > 0) {
                     </a>
                     <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
                         <?php if ($_topbar_is_superadmin): ?>
-                        <a href="index.php?p=supports/admin-tickets" class="dropdown-item">
+                        <a href="/destek-yonetimi" class="dropdown-item">
                             <i class="ti ti-headset me-2"></i> Destek Yönetimi
                         </a>
                         <div class="dropdown-divider"></div>
                         <?php endif; ?>
-                        <a href="index.php?p=settings/manage&view=profile" class="dropdown-item">
+                        <a href="/ayarlar?view=profile" class="dropdown-item">
                             <i class="ti ti-user me-2"></i> Profil Bilgileri
                         </a>
-                        <a href="index.php?p=settings/manage&view=profile#tabs-notifications-7" class="dropdown-item">
+                        <a href="/ayarlar?view=profile#tabs-notifications-7" class="dropdown-item">
                             <i class="ti ti-bell me-2"></i> Bildirim Tercihleri
                         </a>
                         <div class="dropdown-divider"></div>
@@ -382,7 +382,7 @@ if ($firm_id > 0) {
 $(document).on('click', '.topbar-duyuru-item', function () {
     var encId = $(this).data('id');
     var okundu = $(this).data('okundu');
-    var go = function () { window.location.href = 'index.php?p=duyurular/list'; };
+    var go = function () { window.location.href = '/duyurular'; };
 
     if (okundu == '1') { go(); return; }
 

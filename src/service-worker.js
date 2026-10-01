@@ -3,7 +3,7 @@ self.addEventListener('install', (event) => {
       caches.open('v3').then((cache) => {
         return cache.addAll([
           '/',
-          '/index.php?p=home',
+          '/anasayfa',
           '/dist/css/style.css',
           '/script.js',
           '/icon-168x168.png',

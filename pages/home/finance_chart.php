@@ -30,7 +30,7 @@ $latestBalance = $latestIncome - $latestExpense;
                 <span class="badge bg-blue-lt d-none d-sm-inline-block" style="font-size: 11px;">
                     <i class="ti ti-calendar me-1"></i> Son 6 Ay
                 </span>
-                <a href="index.php?p=financial/transactions/list" class="btn btn-sm btn-link text-decoration-none" style="font-size:11px; padding:0;">
+                <a href="/gelir-gider-islemleri" class="btn btn-sm btn-link text-decoration-none" style="font-size:11px; padding:0;">
                     Kasa Hareketleri <i class="ti ti-chevron-right ms-1"></i>
                 </a>
                 <i class="ti ti-grid-dots drag-handle text-muted ms-2"></i>
@@ -88,7 +88,7 @@ $latestBalance = $latestIncome - $latestExpense;
                             <span class="fw-bold text-uppercase small text-muted">
                                 <i class="ti ti-wallet me-1 text-primary"></i> Kasa Bakiyeleri
                             </span>
-                            <a href="index.php?p=financial/case/list" class="badge bg-primary-lt text-decoration-none">
+                            <a href="/kasalar" class="badge bg-primary-lt text-decoration-none">
                                 Kasalar
                             </a>
                         </div>

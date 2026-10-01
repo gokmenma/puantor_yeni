@@ -479,7 +479,7 @@
             });
         } catch (e) {}
 
-        window.selectThemePreset('kode');
+        window.selectThemePreset('ersan-gold');
         window.selectSidebarActiveBg('rgba(255, 255, 255, 0.18)', 'soft-white', '#ffffff', false);
         window.selectThemeRadius('default', false);
         window.selectThemeDensity('normal', false);
@@ -491,7 +491,7 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Tema Sıfırlandı',
-                text: 'Varsayılan Tabler teması başarıyla uygulandı.',
+                text: 'Varsayılan tema başarıyla uygulandı.',
                 timer: 1500,
                 showConfirmButton: false
             });
@@ -500,7 +500,7 @@
 
     // Senkronizasyon Fonksiyonları
     window.syncActiveThemePresetCard = function() {
-        var activePreset = localStorage.getItem('app_theme_preset') || document.documentElement.getAttribute('data-theme-preset') || 'kode';
+        var activePreset = localStorage.getItem('app_theme_preset') || document.documentElement.getAttribute('data-theme-preset') || 'ersan-gold';
         document.querySelectorAll('.theme-preset-card').forEach(function(card) {
             card.classList.toggle('active', card.getAttribute('data-preset') === activePreset);
         });
@@ -528,14 +528,14 @@
     };
 
     window.syncActiveThemeFontButtons = function() {
-        var activeFont = localStorage.getItem('app_theme_font') || document.documentElement.getAttribute('data-theme-font') || 'inter';
+        var activeFont = localStorage.getItem('app_theme_font') || document.documentElement.getAttribute('data-theme-font') || 'outfit';
         document.querySelectorAll('.theme-font-btn').forEach(function(btn) {
             btn.classList.toggle('active', btn.getAttribute('data-font') === activeFont);
         });
     };
 
     window.syncActiveThemeWeightButtons = function() {
-        var activeWeight = localStorage.getItem('app_theme_weight') || document.documentElement.getAttribute('data-theme-weight') || '400';
+        var activeWeight = localStorage.getItem('app_theme_weight') || document.documentElement.getAttribute('data-theme-weight') || '500';
         document.querySelectorAll('.theme-weight-btn').forEach(function(btn) {
             btn.classList.toggle('active', btn.getAttribute('data-weight') === activeWeight);
         });
@@ -608,7 +608,7 @@
 
     // DOM Yüklendiğinde Başlat
     function initThemeManager() {
-        var activePreset = localStorage.getItem('app_theme_preset') || 'kode';
+        var activePreset = localStorage.getItem('app_theme_preset') || 'ersan-gold';
         var darkPresets = ['koyu-gece', 'gece-altini', 'cyber-neon', 'tokyo-gece', 'dracula-pro', 'midnight-sapphire'];
         var isDarkPreset = darkPresets.indexOf(activePreset) !== -1;
         var expectedMode = isDarkPreset ? 'dark' : (localStorage.getItem('theme') || 'light');
@@ -618,11 +618,11 @@
         document.documentElement.setAttribute('data-bs-theme', expectedMode);
         if (document.body) document.body.setAttribute('data-bs-theme', expectedMode);
 
-        var activeFont = localStorage.getItem('app_theme_font') || (window.themePresetFonts[activePreset] || 'inter');
+        var activeFont = localStorage.getItem('app_theme_font') || (window.themePresetFonts[activePreset] || 'outfit');
         document.documentElement.setAttribute('data-theme-font', activeFont);
         if (document.body) document.body.setAttribute('data-theme-font', activeFont);
 
-        var activeWeight = localStorage.getItem('app_theme_weight') || (window.themePresetWeights[activePreset] || '400');
+        var activeWeight = localStorage.getItem('app_theme_weight') || (window.themePresetWeights[activePreset] || '500');
         document.documentElement.setAttribute('data-theme-weight', activeWeight);
         if (document.body) document.body.setAttribute('data-theme-weight', activeWeight);
 

@@ -82,7 +82,7 @@ $(document).ready(function () {
         cancelButtonText: 'Vazgeç'
       }).then(function (result) {
         if (result.isConfirmed) {
-          window.location.href = 'index.php?p=users/roles/manage';
+          window.location.href = '/rol-ekle';
         }
       });
       return false;
@@ -279,7 +279,7 @@ $(document).on('click', '#kullanici_kaydet', function () {
         confirmButtonText: 'Tamam'
       }).then(() => {
         if (data.status === 'success' && id == '0') {
-          window.location.href = 'index.php?p=users/manage&id=' + data.lastid;
+          window.location.href = '/kullanici/duzenle?id=' + data.lastid;
         }
       });
     })

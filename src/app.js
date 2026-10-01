@@ -1260,11 +1260,119 @@ function formatNumber(num) {
   return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
 }
 
-$(document).on("click", ".route-link", function () {
-  var page = $(this).data("page");
-  var link = "index.php?p=" + page;
+window.puantorRouteMap = {
+  'home': 'anasayfa',
+  'admin-home': 'admin-anasayfa',
+  'persons/list': 'personeller',
+  'persons/manage': 'personel-ekle',
+  'persons/icra-list': 'personel-icra-dosyalari',
+  'persons/advance_requests': 'personel-avans-talepleri',
+  'persons/xls/person-load': 'personel-ice-aktar',
+  'puantaj/list': 'puantaj',
+  'payroll/list': 'bordro',
+  'payroll/bordro': 'bordro-hesapla',
+  'izin/list': 'izin-talepleri',
+  'izin/hakedis': 'izin-hakedisleri',
+  'projects/list': 'projeler',
+  'projects/manage': 'proje-ekle',
+  'companies/list': 'firmalar',
+  'companies/manage': 'firma-ekle',
+  'mycompany/list': 'firmalarim',
+  'mycompany/manage': 'firmam-ekle',
+  'financial/case/list': 'kasalar',
+  'financial/case/manage': 'kasa-ekle',
+  'financial/transactions/list': 'gelir-gider-islemleri',
+  'cari/list': 'cariler',
+  'cari/movements': 'cari-hareketleri',
+  'raporlar/list': 'raporlar',
+  'avans-talepleri/list': 'avans-talepleri',
+  'gorevler/list': 'gorevler',
+  'missions/list': 'gorev-listesi',
+  'missions/manage': 'yeni-gorev',
+  'missions/process/list': 'gorev-surecleri',
+  'missions/headers/list': 'gorev-basliklari',
+  'todos/list': 'yapilacaklar',
+  'todos/manage': 'yapilacak-ekle',
+  'users/list': 'kullanicilar',
+  'users/manage': 'kullanici-ekle',
+  'users/roles/list': 'roller',
+  'users/roles/manage': 'rol-ekle',
+  'users/auths/auths': 'rol-yetkileri',
+  'defines/incexp/list': 'gelir-gider-tanimlari',
+  'defines/job-groups/list': 'is-grubu-tanimlari',
+  'defines/project-status/list': 'proje-durumu-tanimlari',
+  'defines/national-holidays/list': 'resmi-tatil-tanimlari',
+  'defines/timesheet-types/list': 'puantaj-turu-tanimlari',
+  'defines/icra-daireleri/list': 'icra-daireleri',
+  'products/list': 'urunler',
+  'products/manage': 'urun-ekle',
+  'kvkk/index': 'kvkk',
+  'kvkk/ihlaller': 'kvkk-ihlalleri',
+  'kvkk/talepler': 'kvkk-talepleri',
+  'abonelik-islemleri/list': 'abonelikler',
+  'abonelik-islemleri/paketler': 'abonelik-paketleri',
+  'abonelik-islemleri/paket-moduller': 'paket-modulleri',
+  'abonelik-islemleri/satin-alma-islemleri': 'satin-alma-islemleri',
+  'activities/index': 'sistem-aktiviteleri',
+  'duyurular/list': 'duyurular',
+  'bildirimler/push': 'bildirimler',
+  'mail-islemleri/index': 'mail-islemleri',
+  'supports/tickets': 'destek-talepleri',
+  'supports/admin-tickets': 'destek-yonetimi',
+  'feedback/send': 'gorus-oneri',
+  'settings/manage': 'ayarlar'
+};
 
-  window.location = link;
+window.puantorResolveRoute = function(pageStr) {
+  if (!pageStr) return '/anasayfa';
+  if (typeof pageStr !== 'string') return '/anasayfa';
+  if (pageStr.startsWith('/') || pageStr.startsWith('http')) return pageStr;
+  
+  var parts = pageStr.split('&');
+  var basePage = parts[0];
+  var queryParams = parts.slice(1);
+  
+  var editMap = {
+    'persons/manage': 'personel/duzenle',
+    'persons/statement': 'personel/ekstre',
+    'projects/manage': 'proje/duzenle',
+    'companies/manage': 'firma/duzenle',
+    'mycompany/manage': 'firmam/duzenle',
+    'financial/case/manage': 'kasa/duzenle',
+    'todos/manage': 'yapilacak/duzenle',
+    'missions/manage': 'gorev/duzenle',
+    'missions/process/manage': 'gorev-surec-duzenle',
+    'missions/headers/manage': 'gorev-baslik-duzenle',
+    'users/manage': 'kullanici/duzenle',
+    'users/roles/manage': 'rol/duzenle',
+    'products/manage': 'urun/duzenle',
+    'supports/ticket-view': 'destek/detay',
+    'supports/admin-ticket-view': 'destek/yonetim-detay',
+    'payroll/pay-slip': 'hesap-pusulasi'
+  };
+  
+  var hasIdParam = queryParams.some(function(q) { return q.startsWith('id='); });
+  if (hasIdParam && editMap[basePage]) {
+    return '/' + editMap[basePage] + '?' + queryParams.join('&');
+  }
+  
+  var cleanBase = window.puantorRouteMap[basePage] || basePage;
+  var finalUrl = '/' + cleanBase;
+  if (queryParams.length > 0) {
+    finalUrl += '?' + queryParams.join('&');
+  }
+  return finalUrl;
+};
+
+$(document).on("click", ".route-link", function (e) {
+  var href = $(this).attr("href");
+  var page = $(this).data("page");
+  if (!page && href && href !== "#" && href !== "javascript:;" && href !== "javascript:void(0);") {
+    return;
+  }
+  if (!page) return;
+  e.preventDefault();
+  window.location.href = window.puantorResolveRoute(page);
 });
 
 

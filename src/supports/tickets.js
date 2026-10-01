@@ -63,7 +63,7 @@ $(document).ready(function () {
       var form = $("#supportTicketForm");
       let formData = new FormData(form[0]);
 
-      fetch("api/supports/tickets.php", {
+      fetch("/api/supports/tickets.php", {
         method: "POST",
         body: formData
       })
@@ -109,7 +109,7 @@ $(document).on("click", "#send_new_ticket_message", function () {
     return false;
   }
 
-  fetch("api/supports/tickets.php", {
+  fetch("/api/supports/tickets.php", {
     method: "POST",
     body: formData
   })
@@ -157,7 +157,7 @@ function closeTicket() {
   formData.append("action", "closeTicket");
   formData.append("id", id);
 
-  fetch("api/supports/tickets.php", {
+  fetch("/api/supports/tickets.php", {
     method: "POST",
     body: formData
   })

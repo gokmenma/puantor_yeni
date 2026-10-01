@@ -408,7 +408,7 @@ try {
                 <i class="ti ti-download icon me-3"></i> Gelir Ekle
             </a>';
         }
-        $actions .= '<a class="dropdown-item" target="_blank" href="index.php?p=payroll/pay-slip&id='
+        $actions .= '<a class="dropdown-item" target="_blank" href="/hesap-pusulasi?id='
             . $encryptedId . '&month=' . $encryptedMonth . '&year=' . $encryptedYear . '">
                 <i class="ti ti-file-dollar icon me-3"></i> Bordro Göster
             </a>

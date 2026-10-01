@@ -103,7 +103,7 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
     <div class="row row-cards g-3 mb-3" id="hakedisSummaryCards">
         <!-- Kart 1: Toplam Hak Edilen -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border hakedis-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border hakedis-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM HAK EDİLEN</span>
@@ -111,12 +111,12 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
                             <i class="ti ti-calendar-event" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-hakedilen" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-hakedilen" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['total_hakedilen_gun'], 0, ',', '.') ?> Gün
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
-                            Kayıtlı: <strong class="text-dark" id="stat-personel-count"><?= $stats['personel_count'] ?> Personel</strong>
+                            Kayıtlı: <strong id="stat-personel-count"><?= $stats['personel_count'] ?> Personel</strong>
                         </span>
                         <span class="badge bg-secondary-lt fw-semibold" style="font-size: 10px;">Hak Edilen</span>
                     </div>
@@ -126,7 +126,7 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
 
         <!-- Kart 2: Toplam Kullanılan -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border hakedis-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border hakedis-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM KULLANILAN</span>
@@ -134,10 +134,10 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
                             <i class="ti ti-history" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-kullanilan" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-kullanilan" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['total_kullanilan_gun'], 0, ',', '.') ?> Gün
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Talep & Devir Kullanımı
                         </span>
@@ -149,7 +149,7 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
 
         <!-- Kart 3: Toplam Kalan Bakiye -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border hakedis-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border hakedis-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM KALAN BAKİYE</span>
@@ -157,10 +157,10 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
                             <i class="ti ti-circle-check" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-kalan" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-kalan" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['total_kalan_gun'], 0, ',', '.') ?> Gün
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Kullanılabilir Toplam Bakiye
                         </span>
@@ -172,7 +172,7 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
 
         <!-- Kart 4: Yaklaşan Hakedişler -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border hakedis-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border hakedis-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">YAKLAŞAN HAKEDİŞLER</span>
@@ -180,10 +180,10 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
                             <i class="ti ti-clock" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-yaklasan" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-yaklasan" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['yaklasan_count'], 0, ',', '.') ?> Personel
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Önümüzdeki 30 Gün
                         </span>
@@ -623,7 +623,8 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
     font-size: 18px !important;
 }
 
-#hakedisPage .hakedis-summary-card {
+html:not([data-bs-theme="dark"]) #hakedisPage .hakedis-summary-card,
+html:not([data-bs-theme="dark"]) .hakedis-summary-card {
     background: #ffffff !important;
     border: 1px solid #dbe3ec !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
@@ -639,7 +640,10 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
     transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
 }
 
-#hakedisPage .hakedis-table-card {
+html:not([data-bs-theme="dark"]) #hakedisPage .hakedis-table-card,
+html:not([data-bs-theme="dark"]) .hakedis-table-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
     border-radius: 12px !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
     overflow: hidden;
@@ -853,10 +857,12 @@ div#hakedis-table_wrapper .dt-layout-row:has(.dt-info) {
     color: #94a3b8;
     background: #334155;
 }
+[data-bs-theme="dark"] #hakedisPage .hakedis-summary-card,
 [data-bs-theme="dark"] .hakedis-summary-card,
+[data-bs-theme="dark"] #hakedisPage .hakedis-table-card,
 [data-bs-theme="dark"] .hakedis-table-card {
     background: #182433 !important;
-    border-color: #334155 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
 }
 [data-bs-theme="dark"] #hakedis-context-menu {
@@ -1161,7 +1167,7 @@ $(document).ready(function() {
                                 <i class="ti ti-dots-vertical" style="font-size: 15px;"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end shadow-sm">
-                                <a class="dropdown-item py-2" href="index.php?p=persons/manage&id=${row.personel_enc_id}">
+                                <a class="dropdown-item py-2" href="/personel-duzenle?id=${row.personel_enc_id}">
                                     <i class="ti ti-user me-2 text-primary"></i> Personel Kartına Git
                                 </a>
                                 <a class="dropdown-item py-2" href="#" onclick="event.preventDefault(); event.stopPropagation(); openDevirModal('${row.personel_enc_id}')">
@@ -1275,7 +1281,7 @@ $(document).ready(function() {
         e.preventDefault();
         $('#hakedis-context-menu').hide();
         if (selectedContextRowData && selectedContextRowData.personel_enc_id) {
-            window.location.href = 'index.php?p=persons/manage&id=' + selectedContextRowData.personel_enc_id;
+            window.location.href = '/personel-duzenle?id=' + selectedContextRowData.personel_enc_id;
         }
     });
 

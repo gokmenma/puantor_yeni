@@ -82,7 +82,7 @@ $(document).on("change", ".payroll-row-check", function () {
 function openBulkPrint(ids) {
   var m = $("#months").val() || "";
   var y = $("#year").val() || "";
-  window.open("index.php?p=raporlar/bordro-yazdir&ids=" + ids.join(",") + "&month=" + encodeURIComponent(m) + "&year=" + encodeURIComponent(y), "_blank");
+  window.open("/bordro-yazdir?ids=" + ids.join(",") + "&month=" + encodeURIComponent(m) + "&year=" + encodeURIComponent(y), "_blank");
 }
 
 $(document).on("click", "#btnPrintBulkPayrolls", function (e) {

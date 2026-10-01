@@ -115,7 +115,7 @@ html.icra-summary-collapsed #icraSummaryCards {
     <div class="row row-cards g-3 mb-3" id="icraSummaryCards">
         <!-- Kart 1: Toplam Dosya -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border icra-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM DOSYA</span>
@@ -123,12 +123,12 @@ html.icra-summary-collapsed #icraSummaryCards {
                             <i class="ti ti-file-invoice" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-total-files">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-total-files">
                         <?= number_format($stats['total_files'] ?? 0, 0, ',', '.'); ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
-                            Toplam: <strong class="text-dark" id="kpi-total-debt"><?= Helper::formattedMoney($stats['total_debt'] ?? 0); ?></strong>
+                            Toplam: <strong id="kpi-total-debt"><?= Helper::formattedMoney($stats['total_debt'] ?? 0); ?></strong>
                         </span>
                         <label class="status-summary-filter mb-0" title="Tüm icra dosyalarını göster">
                             <input type="radio" name="icra_status_filter" value="" class="status-filter">
@@ -141,7 +141,7 @@ html.icra-summary-collapsed #icraSummaryCards {
 
         <!-- Kart 2: Kesilen (Aktif) Dosyalar -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border icra-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KESİLEN (AKTİF) DOSYALAR</span>
@@ -149,10 +149,10 @@ html.icra-summary-collapsed #icraSummaryCards {
                             <i class="ti ti-scissors" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-active-files">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-active-files">
                         <?= number_format($stats['active_files'] ?? 0, 0, ',', '.'); ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Aktif Kesintide
                         </span>
@@ -167,7 +167,7 @@ html.icra-summary-collapsed #icraSummaryCards {
 
         <!-- Kart 3: Bekleyen / Sırada Dosyalar -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border icra-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">BEKLEYEN / SIRADA DOSYALAR</span>
@@ -175,10 +175,10 @@ html.icra-summary-collapsed #icraSummaryCards {
                             <i class="ti ti-clock" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-pending-files">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-pending-files">
                         <?= number_format($stats['pending_files'] ?? 0, 0, ',', '.'); ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Sıradaki Dosyalar
                         </span>
@@ -193,7 +193,7 @@ html.icra-summary-collapsed #icraSummaryCards {
 
         <!-- Kart 4: Kalan Borç -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border icra-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border icra-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KALAN BORÇ</span>
@@ -201,10 +201,10 @@ html.icra-summary-collapsed #icraSummaryCards {
                             <i class="ti ti-wallet" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-remaining-debt">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;" id="kpi-remaining-debt">
                         <?= Helper::formattedMoney($stats['remaining_debt'] ?? 0); ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Kesilen: <strong class="text-success" id="kpi-total-deductions"><?= Helper::formattedMoney($stats['total_deductions'] ?? 0); ?></strong>
                         </span>
@@ -218,11 +218,11 @@ html.icra-summary-collapsed #icraSummaryCards {
     <!-- Main Table Card -->
     <div class="row row-cards">
         <div class="col-12">
-            <div class="card icra-table-card" style="border: 1px solid #dbe3ec !important; overflow: hidden; background: #ffffff;">
+            <div class="card icra-table-card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">
-                            <i class="ti ti-list text-secondary" style="font-size: 18px;"></i>
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-list" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
@@ -283,53 +283,59 @@ html.icra-summary-collapsed #icraSummaryCards {
     </div>
 </div>
 
-<!-- İcra Dosyası Ekle / Düzenle Modal (Modern & Kullanıcı Dostu Sekmeli Tasarım) -->
-<div class="modal modal-blur fade" id="icraFileModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 680px;">
-        <div class="modal-content shadow-lg border-0 icra-modal-content">
+<!-- İcra Dosyası Ekle / Düzenle Modal (Modern & Tabler ERP Standart Sekmeli Tasarım) -->
+<div class="modal modal-blur fade" id="icraFileModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 14px; overflow: hidden;">
             <form id="form-icra-file" enctype="multipart/form-data">
                 <input type="hidden" name="id" id="icra-file-id" value="">
                 
                 <!-- Modal Header -->
-                <div class="modal-header py-3 px-3.5 bg-light-subtle border-bottom">
-                    <div class="d-flex align-items-center gap-2.5">
-                        <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-xs" style="width: 38px; height: 38px;">
-                            <i class="ti ti-file-invoice font-20"></i>
+                <div class="modal-header py-3 px-4 bg-white border-bottom align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-none" style="width: 42px; height: 42px;">
+                            <i class="ti ti-file-invoice" style="font-size: 22px;"></i>
                         </div>
                         <div>
-                            <h5 class="modal-title fw-bold text-dark mb-0 font-15" id="modal-icra-title">
+                            <h4 class="modal-title fw-bold text-dark mb-0" id="modal-icra-title" style="font-size: 1.15rem; letter-spacing: -0.2px;">
                                 Yeni İcra Dosyası Ekle
-                            </h5>
-                            <div class="text-secondary font-11 mt-0.5">Personel icra takibi ve yasal maaş haczi detayları</div>
+                            </h4>
+                            <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                                Personel icra takibi ve yasal maaş haczi detayları
+                            </div>
                         </div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-                <!-- Modern Segmented Pill Tabs -->
-                <div class="px-3.5 pt-3 pb-1 bg-light-subtle border-bottom">
-                    <div class="icra-segmented-tabs nav nav-pills nav-fill p-1 bg-white rounded-3 border" role="tablist">
-                        <button type="button" class="nav-link active py-2 px-3 fw-semibold font-12 rounded-2 d-flex align-items-center justify-content-center gap-1.5" data-bs-toggle="pill" data-bs-target="#tab-icra-genel" role="tab">
-                            <i class="ti ti-file-text font-16 text-primary"></i>
-                            <span>Genel & Borç Bilgileri</span>
-                        </button>
-                        <button type="button" class="nav-link py-2 px-3 fw-semibold font-12 rounded-2 d-flex align-items-center justify-content-center gap-1.5" data-bs-toggle="pill" data-bs-target="#tab-icra-evrak" role="tab">
-                            <i class="ti ti-calendar font-16 text-info"></i>
-                            <span>Tarih, Evrak & Belgeler</span>
-                        </button>
-                    </div>
+                <!-- Nav Tabs Navigation -->
+                <div class="px-4 pt-3 pb-0 bg-light-subtle border-bottom">
+                    <ul class="nav nav-tabs nav-tabs-alt border-0 gap-2" id="icraModalTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-2 px-3 fw-semibold d-flex align-items-center gap-2" id="tab-icra-genel-btn" data-bs-toggle="tab" data-bs-target="#tab-icra-genel" type="button" role="tab" aria-selected="true">
+                                <i class="ti ti-file-text text-primary" style="font-size: 17px;"></i>
+                                <span>Genel & Borç Bilgileri</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2 px-3 fw-semibold d-flex align-items-center gap-2" id="tab-icra-evrak-btn" data-bs-toggle="tab" data-bs-target="#tab-icra-evrak" type="button" role="tab" aria-selected="false">
+                                <i class="ti ti-calendar-event text-info" style="font-size: 17px;"></i>
+                                <span>Tarih, Evrak & Belgeler</span>
+                            </button>
+                        </li>
+                    </ul>
                 </div>
 
-                <!-- Modal Body (Tab İçerikleri) -->
-                <div class="modal-body p-3.5">
-                    <div class="tab-content">
+                <!-- Modal Body with Tab Panes -->
+                <div class="modal-body p-4 bg-white" style="min-height: 380px;">
+                    <div class="tab-content" id="icraModalTabContent">
                         
                         <!-- TAB 1: GENEL & BORÇ BİLGİLERİ -->
-                        <div class="tab-pane active show" id="tab-icra-genel" role="tabpanel">
+                        <div class="tab-pane fade show active" id="tab-icra-genel" role="tabpanel" aria-labelledby="tab-icra-genel-btn">
                             <div class="row g-3">
                                 <!-- Personel Seçimi -->
                                 <div class="col-12">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-user me-1 text-primary"></i>Personel
                                     </label>
                                     <select class="form-select select2-modal" name="person_id" id="modal-person-id" required style="width: 100%;">
@@ -344,13 +350,13 @@ html.icra-summary-collapsed #icraSummaryCards {
                                 </div>
 
                                 <!-- İcra Dairesi & Dosya No -->
-                                <div class="col-sm-6">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-building-bank me-1 text-muted"></i>İcra Dairesi
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-building-bank text-muted font-15"></i>
+                                            <i class="ti ti-building-bank text-muted" style="font-size: 16px;"></i>
                                         </span>
                                         <input type="text" class="form-control" name="icra_dairesi" id="modal-icra-dairesi" list="icra-daireleri-list" placeholder="Örn: İstanbul 3. İcra Dairesi" required autocomplete="off">
                                         <datalist id="icra-daireleri-list">
@@ -360,45 +366,45 @@ html.icra-summary-collapsed #icraSummaryCards {
                                         </datalist>
                                     </div>
                                 </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-hash me-1 text-muted"></i>Dosya No
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-file-certificate text-muted font-15"></i>
+                                            <i class="ti ti-file-certificate text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control" name="dosya_no" id="modal-dosya-no" placeholder="Örn: 2026/1234 Esas" required>
+                                        <input type="text" class="form-control" name="dosya_no" id="modal-dosya-no" placeholder="Örn: 2026/1234 Esas" required autocomplete="off">
                                     </div>
                                 </div>
 
                                 <!-- Alacaklı / Avukat -->
                                 <div class="col-12">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-scale me-1 text-muted"></i>Alacaklı / Avukat / Kurum
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-briefcase text-muted font-15"></i>
+                                            <i class="ti ti-briefcase text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control" name="alacakli" id="modal-alacakli" placeholder="Alacaklı kişi, banka veya vekil adı" required>
+                                        <input type="text" class="form-control" name="alacakli" id="modal-alacakli" placeholder="Alacaklı kişi, banka veya vekil adı" required autocomplete="off">
                                     </div>
                                 </div>
 
                                 <!-- Toplam Borç Tutarı & Dosya Durumu -->
-                                <div class="col-sm-6">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-coin me-1 text-muted"></i>Toplam Borç Tutarı
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-currency-lira text-primary fw-bold font-15"></i>
+                                            <i class="ti ti-currency-lira text-primary fw-bold" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control money-input fw-bold text-dark" name="toplam_borc" id="modal-toplam-borc" placeholder="0,00" required>
+                                        <input type="text" class="form-control money-input fw-bold text-dark" name="toplam_borc" id="modal-toplam-borc" placeholder="0,00" required autocomplete="off">
                                     </div>
                                 </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-flag me-1 text-muted"></i>Dosya Durumu
                                     </label>
                                     <select class="form-select select2-modal" name="durum" id="modal-durum" required style="width:100%;">
@@ -411,125 +417,137 @@ html.icra-summary-collapsed #icraSummaryCards {
                                 </div>
 
                                 <!-- Kesinti Yöntemi & Oran/Tutar -->
-                                <div class="col-sm-6">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-adjustments-horizontal me-1 text-muted"></i>Kesinti Şekli
                                     </label>
-                                    <select class="form-select select2-modal" name="kesinti_yontemi" id="modal-kesinti-yontemi" style="width:100%;">
-                                        <option value="oran">Maaş Oranı (%25, 1/4 vb.)</option>
-                                        <option value="sabit">Sabit Tutar (₺)</option>
-                                    </select>
+                                    <div class="form-selectgroup w-100">
+                                        <label class="form-selectgroup-item flex-fill">
+                                            <input type="radio" name="kesinti_yontemi" value="oran" class="form-selectgroup-input" checked id="modal-kesinti-yontemi-oran">
+                                            <span class="form-selectgroup-label py-2 d-flex align-items-center justify-content-center gap-1.5">
+                                                <i class="ti ti-percentage text-primary" style="font-size: 16px;"></i>
+                                                <span class="fw-semibold">Maaş Oranı (%25 vb.)</span>
+                                            </span>
+                                        </label>
+                                        <label class="form-selectgroup-item flex-fill">
+                                            <input type="radio" name="kesinti_yontemi" value="sabit" class="form-selectgroup-input" id="modal-kesinti-yontemi-sabit">
+                                            <span class="form-selectgroup-label py-2 d-flex align-items-center justify-content-center gap-1.5">
+                                                <i class="ti ti-currency-lira text-success" style="font-size: 16px;"></i>
+                                                <span class="fw-semibold">Sabit Tutar (₺)</span>
+                                            </span>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="col-sm-6" id="wrapper-kesinti-orani">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-6" id="wrapper-kesinti-orani">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-percentage me-1 text-muted"></i>Kesinti Oranı
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-percentage text-muted font-15"></i>
+                                            <i class="ti ti-percentage text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control" name="kesinti_orani" id="modal-kesinti-orani" value="1/4" placeholder="Örn: 1/4 veya %25">
+                                        <input type="text" class="form-control" name="kesinti_orani" id="modal-kesinti-orani" value="1/4" placeholder="Örn: 1/4 veya %25" autocomplete="off">
                                     </div>
                                 </div>
-                                <div class="col-sm-6 d-none" id="wrapper-kesinti-tutari">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-6 d-none" id="wrapper-kesinti-tutari">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-currency-lira me-1 text-muted"></i>Aylık Sabit Tutar (₺)
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-currency-lira text-muted font-15"></i>
+                                            <i class="ti ti-currency-lira text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control money-input" name="kesinti_tutari" id="modal-kesinti-tutari" placeholder="0,00">
+                                        <input type="text" class="form-control money-input" name="kesinti_tutari" id="modal-kesinti-tutari" placeholder="0,00" autocomplete="off">
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- TAB 2: TARİH, EVRAK & BELGELER -->
-                        <div class="tab-pane" id="tab-icra-evrak" role="tabpanel">
+                        <div class="tab-pane fade" id="tab-icra-evrak" role="tabpanel" aria-labelledby="tab-icra-evrak-btn">
                             <div class="row g-3">
                                 <!-- İcra Sırası -->
-                                <div class="col-sm-4">
-                                    <label class="form-label required fw-semibold font-12 mb-1">
+                                <div class="col-md-4">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-list-numbers me-1 text-muted"></i>İcra Sırası
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-list-numbers text-muted font-15"></i>
+                                            <i class="ti ti-list-numbers text-muted" style="font-size: 16px;"></i>
                                         </span>
                                         <input type="number" class="form-control" name="icra_sirasi" id="modal-icra-sirasi" value="1" min="1" required>
                                     </div>
                                 </div>
                                 <!-- Başlama ve Bitiş Tarihleri -->
-                                <div class="col-sm-4">
-                                    <label class="form-label fw-semibold font-12 mb-1">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-calendar-event me-1 text-muted"></i>Başlama Tarihi
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-calendar text-muted font-15"></i>
+                                            <i class="ti ti-calendar text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control flatpickr-input" name="baslama_tarihi" id="modal-baslama-tarihi" placeholder="YYYY-AA-GG">
+                                        <input type="text" class="form-control flatpickr-input" name="baslama_tarihi" id="modal-baslama-tarihi" placeholder="GG.AA.YYYY" autocomplete="off">
                                     </div>
                                 </div>
-                                <div class="col-sm-4">
-                                    <label class="form-label fw-semibold font-12 mb-1">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-calendar-off me-1 text-muted"></i>Bitiş Tarihi
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-calendar-off text-muted font-15"></i>
+                                            <i class="ti ti-calendar-off text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control flatpickr-input" name="bitis_tarihi" id="modal-bitis-tarihi" placeholder="YYYY-AA-GG">
+                                        <input type="text" class="form-control flatpickr-input" name="bitis_tarihi" id="modal-bitis-tarihi" placeholder="GG.AA.YYYY" autocomplete="off">
                                     </div>
                                 </div>
 
                                 <!-- Gelen / Giden Evrak No -->
-                                <div class="col-sm-6">
-                                    <label class="form-label fw-semibold font-12 mb-1">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-mail-down me-1 text-muted"></i>Gelen Evrak No / Tarih
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-mail-down text-muted font-15"></i>
+                                            <i class="ti ti-mail-down text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control" name="gelen_evrak" id="modal-gelen-evrak" placeholder="Örn: 12345 / 15.01.2026">
+                                        <input type="text" class="form-control" name="gelen_evrak" id="modal-gelen-evrak" placeholder="Örn: 12345 / 15.01.2026" autocomplete="off">
                                     </div>
                                 </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label fw-semibold font-12 mb-1">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-mail-up me-1 text-muted"></i>Giden Evrak No / Tarih
                                     </label>
                                     <div class="input-icon">
                                         <span class="input-icon-addon">
-                                            <i class="ti ti-mail-up text-muted font-15"></i>
+                                            <i class="ti ti-mail-up text-muted" style="font-size: 16px;"></i>
                                         </span>
-                                        <input type="text" class="form-control" name="giden_evrak" id="modal-giden-evrak" placeholder="Örn: Cevap Yazısı 54321">
+                                        <input type="text" class="form-control" name="giden_evrak" id="modal-giden-evrak" placeholder="Örn: Cevap Yazısı 54321" autocomplete="off">
                                     </div>
                                 </div>
 
-                                <!-- İcra Belgesi Yükleme (Dropzone Box) -->
+                                <!-- İcra Belgesi Yükleme (Dropzone Box - ISO 27001) -->
                                 <div class="col-12">
-                                    <label class="form-label fw-semibold font-12 mb-1">
-                                        <i class="ti ti-paperclip me-1 text-muted"></i>İcra Belgesi (PDF / Görsel / Doküman)
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">
+                                        <i class="ti ti-shield-lock me-1 text-purple"></i>İcra Belgesi (PDF / Görsel / Doküman - ISO 27001)
                                     </label>
-                                    <div class="icra-file-upload-box p-3 bg-light-subtle rounded-3 border border-dashed text-center position-relative" id="modal-file-box">
-                                        <input type="file" class="form-control position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" name="belge_dosyasi" id="modal-belge-dosyasi" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="z-index: 2;">
+                                    <div class="icra-file-upload-box p-3 bg-light-subtle rounded-3 border border-dashed text-center position-relative" id="modal-file-box" style="border-radius: 10px; cursor: pointer; transition: all 0.2s ease;">
+                                        <input type="file" class="form-control position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" name="belge_dosyasi" id="modal-belge-dosyasi" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx" style="z-index: 2; cursor: pointer;">
                                         <div class="d-flex flex-column align-items-center pointer-events-none">
-                                            <div class="avatar avatar-sm bg-primary-lt text-primary rounded-circle mb-1.5" style="width: 32px; height: 32px;">
-                                                <i class="ti ti-cloud-upload font-18"></i>
+                                            <div class="avatar avatar-sm bg-primary-lt text-primary rounded-circle mb-1.5" style="width: 36px; height: 36px;">
+                                                <i class="ti ti-cloud-upload" style="font-size: 20px;"></i>
                                             </div>
                                             <div class="fw-semibold text-dark font-12" id="modal-file-label">Belge Seçmek İçin Tıklayın veya Sürükleyin</div>
-                                            <div class="text-muted font-11 mt-0.5">Maksimum 5MB • PDF, Word, Excel, Görsel</div>
+                                            <div class="text-muted font-11 mt-0.5">Maksimum 5MB • PDF, Word, Excel, Görsel (Otomatik AES-256 Şifrelenir)</div>
                                         </div>
                                     </div>
                                     <div id="modal-existing-file-container" class="mt-2 d-none">
-                                        <div class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-blue-lt border border-blue-subtle">
+                                        <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 bg-blue-lt border border-blue-subtle">
                                             <div class="d-flex align-items-center gap-2">
-                                                <i class="ti ti-file-check text-blue font-16"></i>
+                                                <i class="ti ti-file-check text-blue" style="font-size: 18px;"></i>
                                                 <span class="font-12 fw-medium text-blue">Bu dosyaya ait sisteme kayıtlı bir belge mevcut</span>
                                             </div>
-                                            <a href="javascript:void(0)" id="modal-existing-file-link" target="_blank" class="btn btn-sm btn-primary py-0.5 px-2.5 font-11 shadow-xs">
+                                            <a href="javascript:void(0)" id="modal-existing-file-link" target="_blank" class="btn btn-sm btn-primary py-1 px-3 font-11 shadow-xs fw-semibold">
                                                 <i class="ti ti-download me-1"></i>Belgeyi İndir / Aç
                                             </a>
                                         </div>
@@ -538,10 +556,10 @@ html.icra-summary-collapsed #icraSummaryCards {
 
                                 <!-- Açıklama / Notlar -->
                                 <div class="col-12">
-                                    <label class="form-label fw-semibold font-12 mb-1">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">
                                         <i class="ti ti-notes me-1 text-muted"></i>Açıklama / Notlar
                                     </label>
-                                    <textarea class="form-control" name="aciklama" id="modal-aciklama" rows="2" placeholder="Varsa ek açıklama, banka IBAN bilgisi veya takip notları..."></textarea>
+                                    <textarea class="form-control" name="aciklama" id="modal-aciklama" rows="3" placeholder="Varsa ek açıklama, banka IBAN bilgisi veya takip notları..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -550,9 +568,11 @@ html.icra-summary-collapsed #icraSummaryCards {
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="modal-footer py-2.5 px-3.5 bg-light-subtle border-top d-flex justify-content-between align-items-center">
-                    <button type="button" class="btn btn-link link-secondary px-2 text-decoration-none fw-medium" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-dark px-4 shadow-sm" id="btn-save-icra" style="background-color: #1e293b; border-color: #1e293b;">
+                <div class="modal-footer py-2.5 px-4 bg-light-subtle border-top d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-link link-secondary px-2 text-decoration-none" data-bs-dismiss="modal">
+                        Vazgeç
+                    </button>
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm fw-semibold" id="btn-save-icra">
                         <i class="ti ti-device-floppy me-1"></i> Kaydet
                     </button>
                 </div>
@@ -659,7 +679,8 @@ html.icra-summary-collapsed #icraSummaryCards {
     font-size: 18px !important;
 }
 
-#icraPage .icra-summary-card {
+html:not([data-bs-theme="dark"]) #icraPage .icra-summary-card,
+html:not([data-bs-theme="dark"]) .icra-summary-card {
     background: #ffffff !important;
     border: 1px solid #dbe3ec !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
@@ -674,7 +695,10 @@ html.icra-summary-collapsed #icraSummaryCards {
     transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
 }
 
-#icraPage .icra-table-card {
+html:not([data-bs-theme="dark"]) #icraPage .icra-table-card,
+html:not([data-bs-theme="dark"]) .icra-table-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
     overflow: hidden;
 }
@@ -1002,43 +1026,12 @@ tbody tr.context-menu-active td {
 }
 
 /* Modal & Input UX/UI Enhancement */
-.icra-modal-content {
-    border-radius: 14px !important;
-    overflow: hidden;
-    border: 1px solid #dbe3ec !important;
-    box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.18) !important;
-}
-
-.icra-segmented-tabs {
-    background: #f1f5f9 !important;
-    border-radius: 9px !important;
-    padding: 3px !important;
-    border: 1px solid #e2e8f0 !important;
-}
-.icra-segmented-tabs .nav-link {
-    color: #64748b !important;
-    border: none !important;
-    background: transparent !important;
-    border-radius: 7px !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.icra-segmented-tabs .nav-link:hover {
-    color: #1e293b !important;
-    background: rgba(255, 255, 255, 0.6) !important;
-}
-.icra-segmented-tabs .nav-link.active {
-    color: #0f172a !important;
-    background: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
-    font-weight: 700 !important;
-}
-
 #icraFileModal .form-control,
 #icraFileModal .form-select {
     border-color: #cbd5e1;
     border-radius: 8px;
     font-size: 13px;
-    background-color: #f8fafc;
+    background-color: #ffffff;
     min-height: 38px;
     transition: all 0.15s ease-in-out;
 }
@@ -1170,10 +1163,12 @@ tbody tr.context-menu-active td {
     color: #94a3b8;
     background: #334155;
 }
+[data-bs-theme="dark"] #icraPage .icra-summary-card,
 [data-bs-theme="dark"] .icra-summary-card,
+[data-bs-theme="dark"] #icraPage .icra-table-card,
 [data-bs-theme="dark"] .icra-table-card {
     background: #182433 !important;
-    border-color: #334155 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
 }
 
@@ -1266,13 +1261,6 @@ $(document).ready(function() {
             }
         });
 
-        $('#modal-kesinti-yontemi').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            dropdownParent: $('#icraFileModal'),
-            minimumResultsForSearch: Infinity
-        });
-
         $('#modal-person-id').select2({
             theme: 'bootstrap-5',
             width: '100%',
@@ -1335,8 +1323,8 @@ $(document).ready(function() {
     }
 
     // 3. Kesinti Yöntemi Değişimi
-    $('#modal-kesinti-yontemi').on('change', function() {
-        const val = $(this).val();
+    $(document).on('change', 'input[name="kesinti_yontemi"]', function() {
+        const val = $('input[name="kesinti_yontemi"]:checked').val();
         if (val === 'oran') {
             $('#wrapper-kesinti-orani').removeClass('d-none');
             $('#wrapper-kesinti-tutari').addClass('d-none');
@@ -1456,7 +1444,7 @@ $(document).ready(function() {
                                 <tr data-file="${fileJsonData}" data-id="${f.id}" data-person-id="${f.person_id}" data-person-name="${f.person_name}" data-dosya-no="${f.dosya_no}" data-has-belge="${f.has_belge ? '1' : '0'}">
                                     <td class="text-center font-weight-600 text-secondary">${idx + 1}</td>
                                     <td>
-                                        <a href="index.php?p=persons/manage&id=${f.person_id}&tab=icra" class="font-weight-700 text-reset text-decoration-none hover-primary">
+                                        <a href="/personel-duzenle?id=${f.person_id}&tab=icra" class="font-weight-700 text-reset text-decoration-none hover-primary">
                                             ${f.person_name}
                                         </a>
                                         <div class="small text-muted" style="font-size: 11px;">TC: ${f.person_tc || '-'} | Sicil: ${f.person_sicil || '-'}</div>
@@ -1482,7 +1470,7 @@ $(document).ready(function() {
                                             <button type="button" class="btn btn-sm btn-icon btn-ghost-primary btn-edit-icra" data-file="${fileJsonData}" title="Düzenle">
                                                 <i class="ti ti-edit"></i>
                                             </button>
-                                            <a href="index.php?p=persons/manage&id=${f.person_id}&tab=icra" class="btn btn-sm btn-icon btn-ghost-secondary" title="Personel Detayı">
+                                            <a href="/personel-duzenle?id=${f.person_id}&tab=icra" class="btn btn-sm btn-icon btn-ghost-secondary" title="Personel Detayı">
                                                 <i class="ti ti-external-link"></i>
                                             </a>
                                             <button type="button" class="btn btn-sm btn-icon btn-ghost-danger btn-delete-icra" data-id="${f.id}" title="Sil">
@@ -1575,12 +1563,18 @@ $(document).ready(function() {
         $('#modal-icra-title').html('Yeni İcra Dosyası Ekle');
         $('#modal-person-id').val('').trigger('change');
         $('#modal-durum').val('Kesilen').trigger('change');
-        $('#modal-kesinti-yontemi').val('oran').trigger('change');
+        $('input[name="kesinti_yontemi"][value="oran"]').prop('checked', true).trigger('change');
         $('#modal-kesinti-orani').val('1/4');
+        $('#modal-kesinti-tutari').val('');
         $('#modal-existing-file-container').addClass('d-none');
 
         // İlk sekmeye geçiş
-        $('#icraFileModal [data-bs-toggle="pill"]:first').tab('show');
+        var firstTabEl = document.querySelector('#tab-icra-genel-btn');
+        if (firstTabEl && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+            bootstrap.Tab.getOrCreateInstance(firstTabEl).show();
+        } else {
+            $('#tab-icra-genel-btn').tab('show');
+        }
         $('#modal-file-label').text('Belge Seçmek İçin Tıklayın veya Sürükleyin');
         $('#modal-file-box').removeClass('border-success bg-success-lt');
 
@@ -1620,7 +1614,9 @@ $(document).ready(function() {
             $('#modal-alacakli').val(f.alacakli);
             $('#modal-toplam-borc').val(f.toplam_borc_raw || f.toplam_borc);
             $('#modal-durum').val(f.durum).trigger('change');
-            $('#modal-kesinti-yontemi').val(f.kesinti_yontemi || 'oran').trigger('change');
+            
+            const method = f.kesinti_yontemi || 'oran';
+            $('input[name="kesinti_yontemi"][value="' + method + '"]').prop('checked', true).trigger('change');
             $('#modal-kesinti-orani').val(f.kesinti_orani || '1/4');
             $('#modal-kesinti-tutari').val(f.kesinti_tutari_raw || f.kesinti_tutari || '');
 
@@ -1650,7 +1646,12 @@ $(document).ready(function() {
             }
 
             // İlk sekmeye geçiş
-            $('#icraFileModal [data-bs-toggle="pill"]:first').tab('show');
+            var firstTabEl = document.querySelector('#tab-icra-genel-btn');
+            if (firstTabEl && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                bootstrap.Tab.getOrCreateInstance(firstTabEl).show();
+            } else {
+                $('#tab-icra-genel-btn').tab('show');
+            }
 
             $('#icraFileModal').modal('show');
         } catch(e) {
@@ -1876,7 +1877,7 @@ $(document).ready(function() {
             <div class="cm-header"><i class="ti ti-file-invoice"></i> <span class="text-truncate">${headerTitle}</span></div>
             <a href="javascript:void(0)" class="cm-action-edit" data-file="${rawData}"><i class="ti ti-edit"></i> Dosyayı Düzenle</a>
             <a href="javascript:void(0)" class="cm-action-deductions" data-file-id="${fileId}" data-person-id="${personId}"><i class="ti ti-receipt-2"></i> Kesintileri Gör</a>
-            ${personId ? `<a href="index.php?p=persons/manage&id=${personId}&tab=icra"><i class="ti ti-user"></i> Personel Sayfası</a>` : ''}
+            ${personId ? `<a href="/personel-duzenle?id=${personId}&tab=icra"><i class="ti ti-user"></i> Personel Sayfası</a>` : ''}
             ${hasBelge ? `<a href="api/persons/icra.php?action=download&id=${fileId}" target="_blank"><i class="ti ti-download"></i> Evrak İndir</a>` : ''}
             <div class="cm-divider"></div>
             <a href="pages/persons/icra-export-xls.php?id=${encodeURIComponent(fileId)}"><i class="ti ti-file-excel text-success"></i> Excel Raporu</a>

@@ -27,7 +27,17 @@ $(document).on("click", "#addNewProject", function (e) {
   $("#modal_project_id").val(0);
   $("#modal_is_home_gantt").prop("checked", false);
   $("#projectModalTitle").text("Yeni Proje Ekle");
-  $("#modal_project_town").html('<option value="">İlçe seçiniz</option>');
+  $("#modal_project_town").html('<option value="">İlçe seçiniz</option>').val('').trigger('change');
+  $("select[name='project_company']").val('0').trigger('change');
+  $("select[name='project_status']").val('').trigger('change');
+  $("select[name='project_city']").val('').trigger('change');
+  $("input[name='project_type'][value='1']").prop("checked", true);
+  
+  // İlk sekmeye dön
+  const firstTabBtn = document.getElementById('tab-project-general-btn');
+  if (firstTabBtn && window.bootstrap && window.bootstrap.Tab) {
+    window.bootstrap.Tab.getOrCreateInstance(firstTabBtn).show();
+  }
   
   // Re-init flatpickr if needed
   if (typeof flatpickr !== 'undefined') {
@@ -44,6 +54,12 @@ $(document).on("click", ".update-project", function (e) {
   formData.append("action", "getProject");
   formData.append("id", id);
 
+  // İlk sekmeye dön
+  const firstTabBtn = document.getElementById('tab-project-general-btn');
+  if (firstTabBtn && window.bootstrap && window.bootstrap.Tab) {
+    window.bootstrap.Tab.getOrCreateInstance(firstTabBtn).show();
+  }
+
   fetch(getApiPath("projects/projects.php"), {
     method: "POST",
     body: formData
@@ -53,7 +69,7 @@ $(document).on("click", ".update-project", function (e) {
       if (data.status == "success") {
         var p = data.data;
         $("#modal_project_id").val(p.id);
-        $("#projectModalTitle").text("Proje Güncelle: " + p.project_name);
+        $("#projectModalTitle").text("Proje Düzenle: " + p.project_name);
         $("input[name='project_name']").val(p.project_name);
         $("input[name='project_type'][value='" + p.type + "']").prop("checked", true);
         $("select[name='project_company']").val(p.company_id).trigger("change");
@@ -71,11 +87,25 @@ $(document).on("click", ".update-project", function (e) {
 
         // Set town
         var townOption = new Option(p.town_name, p.town, true, true);
-        $("#modal_project_town").append(townOption).trigger("change");
+        $("#modal_project_town").empty().append(townOption).trigger("change");
 
         showProjectModal();
       }
     });
+});
+
+$(document).on('shown.bs.modal', '#projectModal', function () {
+  if (typeof flatpickr !== 'undefined') {
+    flatpickr("#projectModal .flatpickr", { dateFormat: "d.m.Y", locale: "tr" });
+  }
+  if (typeof $.fn.select2 !== 'undefined') {
+    $('#projectModal .select2').each(function () {
+      $(this).select2({
+        dropdownParent: $('#projectModal'),
+        width: '100%'
+      });
+    });
+  }
 });
 
 $(document).on("submit", "#projectForm", function (e) {

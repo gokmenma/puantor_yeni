@@ -285,25 +285,25 @@ $userName = $_SESSION['user']->full_name ?? 'Yönetici';
                 <div class="col-auto ms-auto d-none d-md-block">
                     <div class="d-flex gap-2">
                         <?php if ($perm->hasPermission('personnel_add_update')): ?>
-                        <a href="index.php?p=persons/manage" class="quick-nav-card text-decoration-none">
+                        <a href="/personel-ekle" class="quick-nav-card text-decoration-none">
                             <i class="ti ti-user-plus text-primary"></i>
                             <span>Yeni Personel</span>
                         </a>
                         <?php endif; ?>
                         <?php if ($perm->hasPermission('project_add_update')): ?>
-                        <a href="index.php?p=projects/manage" class="quick-nav-card text-decoration-none">
+                        <a href="/proje-ekle" class="quick-nav-card text-decoration-none">
                             <i class="ti ti-plus text-success"></i>
                             <span>Yeni Proje</span>
                         </a>
                         <?php endif; ?>
                         <?php if ($perm->hasPermission('company_page')): ?>
-                        <a href="index.php?p=companies/list#new" class="quick-nav-card text-decoration-none">
+                        <a href="/firmalar#new" class="quick-nav-card text-decoration-none">
                             <i class="ti ti-building text-warning"></i>
                             <span>Yeni Firma</span>
                         </a>
                         <?php endif; ?>
                         <?php if ($perm->hasPermission('gorevler')): ?>
-                        <a href="index.php?p=gorevler/list" class="quick-nav-card text-decoration-none">
+                        <a href="/gorevler" class="quick-nav-card text-decoration-none">
                             <i class="ti ti-checkbox text-azure"></i>
                             <span>Görev Ekle</span>
                         </a>
@@ -339,7 +339,7 @@ $userName = $_SESSION['user']->full_name ?? 'Yönetici';
                                     <span class="badge bg-secondary-lt" style="font-size: 10px;">Pasif: <?php echo $passivePersons; ?></span>
                                 <?php endif; ?>
                             </div>
-                            <a href="index.php?p=persons/list" class="text-primary small text-decoration-none fw-semibold" style="font-size: 11px;">
+                            <a href="/personeller" class="text-primary small text-decoration-none fw-semibold" style="font-size: 11px;">
                                 Tümü <i class="ti ti-chevron-right"></i>
                             </a>
                         </div>
@@ -365,7 +365,7 @@ $userName = $_SESSION['user']->full_name ?? 'Yönetici';
                                 <span class="badge bg-warning-lt" style="font-size: 10px; font-weight: 600;">Devam: <?php echo $activeProjects; ?></span>
                                 <span class="badge bg-success-lt" style="font-size: 10px; font-weight: 600;">Biten: <?php echo $completedProjects; ?></span>
                             </div>
-                            <a href="index.php?p=projects/list" class="text-warning small text-decoration-none fw-semibold" style="font-size: 11px;">
+                            <a href="/projeler" class="text-warning small text-decoration-none fw-semibold" style="font-size: 11px;">
                                 Projeler <i class="ti ti-chevron-right"></i>
                             </a>
                         </div>
@@ -417,7 +417,7 @@ $userName = $_SESSION['user']->full_name ?? 'Yönetici';
                                 <span class="badge bg-orange-lt" style="font-size: 10px;">Avans: <?php echo $pendingAdvancesCount; ?></span>
                                 <span class="badge bg-warning-lt" style="font-size: 10px;">İzin: <?php echo $pendingLeavesCount; ?></span>
                             </div>
-                            <a href="index.php?p=avans-talepleri/list" class="badge bg-purple-lt text-purple text-decoration-none" style="font-size: 10px;">
+                            <a href="/avans-talepleri" class="badge bg-purple-lt text-purple text-decoration-none" style="font-size: 10px;">
                                 İşlemler
                             </a>
                         </div>

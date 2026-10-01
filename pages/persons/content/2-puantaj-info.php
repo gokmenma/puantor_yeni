@@ -646,7 +646,7 @@ $(document).ready(function() {
             const monthDiv = $('<div class="mini-month"></div>');
             const header = $(`<div class="mini-month-header d-flex align-items-center justify-content-between">
                 <span class="ps-2">${monthNames[m]} ${year}</span>
-                <a href="index.php?p=puantaj/list&months=${String(m + 1).padStart(2, '0')}&year=${year}" 
+                <a href="/puantaj?months=${String(m + 1).padStart(2, '0')}&year=${year}" 
                    class="btn-goto-month btn btn-icon btn-sm rounded-circle me-1" 
                    title="Puantaj Sayfasına Git"
                    style="width: 26px; height: 26px; padding: 0;">

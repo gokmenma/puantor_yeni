@@ -919,7 +919,7 @@
     };
 
     // Sayfadaki Sütun Menüsü Checkbox Değişim Dinleyicisi (Evrensel, Tekil ve Kesin Çalışan Handler)
-    $(document).off('change.dtColGlobalTrigger').on('change.dtColGlobalTrigger', '.bordro-col-trigger, .persons-col-trigger, .projects-col-trigger, .izin-col-trigger, input.dt-colvis-trigger, .col-toggle-cb', function (e) {
+    $(document).off('change.dtColGlobalTrigger').on('change.dtColGlobalTrigger', '.bordro-col-trigger, .persons-col-trigger, .projects-col-trigger, .izin-col-trigger, .transactions-col-trigger, input.dt-colvis-trigger, .col-toggle-cb', function (e) {
         var $chk = $(this);
         var origIdx = parseInt($chk.data('column') !== undefined ? $chk.data('column') : ($chk.data('orig-idx') !== undefined ? $chk.data('orig-idx') : $chk.data('column-idx')), 10);
         var isChecked = this.checked;
@@ -936,6 +936,8 @@
             $activeTable = $('#projectTable');
         } else if ($menu.attr('id') === 'izinColvisMenu') {
             $activeTable = $('#izin-table');
+        } else if ($menu.attr('id') === 'transactionColvisMenu') {
+            $activeTable = $('#transactionTable');
         } else {
             $activeTable = $chk.closest('.card, .page-wrapper, body').find('table.dataTable:visible:first');
             if (!$activeTable.length) $activeTable = $('table.dataTable:first');

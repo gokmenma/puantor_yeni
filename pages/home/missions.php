@@ -242,7 +242,7 @@ $loginRecords = $userObj->getLoginLogs($_SESSION["user"]->id);
                         if (count($missionHeaders) == 0) { ?>
                             <div class="col">
                                 <!-- static içindeki add-mission.svg'yi burada göster, Görev ekle yazısı ile beraber -->
-                                <img src="./static/illustrations/to-do.avif" height="300" width="300" class="d-block mx-auto" alt="">
+                                <img src="/static/illustrations/to-do.avif" height="300" width="300" class="d-block mx-auto" alt="">
                                 <h3 class="text-muted text-center">Firma için herhangi bir görev tanımlanmamış</h3>
                             </div>
                         <?php } ?>

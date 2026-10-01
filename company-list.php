@@ -33,7 +33,7 @@ if ($is_superadmin) {
     $rawReturn = $_GET['returnUrl'] ?? '';
     $returnUrl = !empty($rawReturn) ? urldecode($rawReturn) : '';
     if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
-        $redirectUri = 'index.php?p=home';
+        $redirectUri = '/anasayfa';
     } else {
         $redirectUri = $returnUrl;
     }
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['firm_id'])) {
         $rawReturn = $_GET['returnUrl'] ?? '';
         $returnUrl = !empty($rawReturn) ? urldecode($rawReturn) : '';
         if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
-            $redirectUri = 'index.php?p=home';
+            $redirectUri = '/anasayfa';
         } else {
             $redirectUri = $returnUrl;
         }
@@ -102,7 +102,7 @@ if (!$isExplicitSwitch) {
     $rawReturn = $_GET['returnUrl'] ?? '';
     $returnUrl = !empty($rawReturn) ? urldecode($rawReturn) : '';
     $defaultDest = (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) 
-        ? 'index.php?p=home' 
+        ? '/anasayfa' 
         : $returnUrl;
 
     if (count($myFirms) === 1) {
@@ -423,7 +423,7 @@ $userEmail = $_SESSION['user']->email ?? '';
     <!-- Minimalist & Independent Header (No ERP Topbar / Global Search) -->
     <header class="workspace-header">
         <div class="container-xl d-flex align-items-center justify-content-between">
-            <a href="index.php?p=home" class="workspace-logo">
+            <a href="/anasayfa" class="workspace-logo">
                 <div class="workspace-logo-icon">
                     <i class="ti ti-layout-grid"></i>
                 </div>

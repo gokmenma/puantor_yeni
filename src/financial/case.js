@@ -86,15 +86,22 @@ function buildCaseColvisMenu(api) {
     api.column(idx).visible(isVisible, false);
 
     menuHtml += `
-      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
-        <div class="form-check mb-0 w-100">
-          <input class="form-check-input case-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
-          <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-2.5 rounded-2" style="font-size: 13px;">
+        <div class="form-check mb-0 w-100 d-flex align-items-center gap-2" style="padding-left: 0;">
+          <input class="form-check-input m-0 case-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
+          <span class="form-check-label fw-medium text-secondary" style="user-select:none;">
             ${conf.label}
           </span>
         </div>
       </label>`;
   });
+
+  menuHtml += `
+    <div class="dropdown-divider my-1"></div>
+    <button type="button" class="dropdown-item text-danger py-1.5 px-2.5 rounded-2" id="resetCaseColumnsBtn" style="font-size: 12.5px;">
+      <i class="ti ti-rotate-2 me-1"></i> Görünümü Sıfırla
+    </button>
+  `;
 
   $menu.html(menuHtml);
   api.columns.adjust();
@@ -117,6 +124,30 @@ $(document).on("change", ".case-col-trigger", function () {
   var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
   visibilityState[colIdx] = isChecked;
   localStorage.setItem("case_column_visibility", JSON.stringify(visibilityState));
+});
+
+// Görünümü Sıfırla Butonu
+$(document).on("click", "#resetCaseColumnsBtn", function (e) {
+  e.preventDefault();
+  localStorage.removeItem("case_column_visibility");
+  if (!caseTable) {
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable("#caseTable")) {
+      caseTable = $("#caseTable").DataTable();
+    }
+  }
+  if (caseTable) {
+    if (typeof window.resetPuantorDTState === "function") {
+      window.resetPuantorDTState($("#caseTable"), caseTable, function () {
+        buildCaseColvisMenu(caseTable);
+      });
+    } else {
+      [1, 3, 4, 5, 6, 7, 8].forEach(function (idx) {
+        caseTable.column(idx).visible(true, false);
+      });
+      caseTable.columns.adjust().draw(false);
+      buildCaseColvisMenu(caseTable);
+    }
+  }
 });
 
 $(document).on("click", "#caseColvisMenu", function (e) {

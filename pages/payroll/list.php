@@ -672,7 +672,7 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                     data-project-id="<?= $project_id ?>"
                                     data-has-icra="<?= $icra_month_amount > 0 ? '1' : '0' ?>"
                                     data-icra-amount="<?= htmlspecialchars(Helper::formattedMoney($icra_month_amount), ENT_QUOTES, 'UTF-8') ?>"
-                                    data-slip-url="index.php?p=payroll/pay-slip&id=<?= $link ?>"
+                                    data-slip-url="/hesap-pusulasi?id=<?= $link ?>"
                                     data-can-pay="<?= $Auths->hasPermission('make_staff_payment') ? '1' : '0' ?>"
                                     data-can-income="<?= $Auths->hasPermission('income_expense_add_update') ? '1' : '0' ?>">
                                     <td class="text-center">
@@ -798,7 +798,7 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                                 <?php
                                                 $link = $id . "&month=" . Security::encrypt($month) . "&year=" . Security::encrypt($year);
                                                 ?>
-                                                <a class="dropdown-item" target="_blank" href="index.php?p=payroll/pay-slip&id=<?= $link ?>">
+                                                <a class="dropdown-item" target="_blank" href="/hesap-pusulasi?id=<?= $link ?>">
                                                     <i class="ti ti-file-dollar icon me-2 text-info"></i> Bordro Pusulası
                                                 </a>
 

@@ -25,7 +25,7 @@ $recentHires = $personnelModel->getRecentHires($firm_id, 5);
             </div>
             <span class="mac-title">İK & PERSONEL BAKIŞI</span>
             <div class="ms-auto d-flex align-items-center">
-                <a href="index.php?p=persons/list" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Personel Listesi</a>
+                <a href="/personeller" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Personel Listesi</a>
                 <i class="ti ti-grid-dots drag-handle text-muted"></i>
             </div>
         </div>

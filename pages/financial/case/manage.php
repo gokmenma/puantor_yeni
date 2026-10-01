@@ -38,13 +38,13 @@ $decrypted_id = Security::decrypt($raw_id);
 $id = $decrypted_id ? (int)$decrypted_id : (int)$raw_id;
 
 if ($id <= 0) {
-    header("Location: /index.php?p=financial/case/list");
+    header("Location: /kasalar");
     exit;
 }
 
 $case = $caseObj->find($id);
 if (!$case) {
-    header("Location: /index.php?p=financial/case/list");
+    header("Location: /kasalar");
     exit;
 }
 

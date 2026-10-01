@@ -134,7 +134,7 @@ html.projects-summary-collapsed #projectsSummaryCards {
     <div class="row row-cards g-3 mb-3" id="projectsSummaryCards">
         <!-- Kart 1: Toplam Proje -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border project-summary-card" style="border-radius: 12px; border-color: #e2e8f0 !important;">
+            <div class="card card-sm border project-summary-card" style="border-radius: 12px;">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM PROJE</span>
@@ -142,12 +142,12 @@ html.projects-summary-collapsed #projectsSummaryCards {
                             <i class="ti ti-building-community" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.85rem; letter-spacing: -0.5px;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.85rem; letter-spacing: -0.5px;">
                         <?= number_format($total_count, 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
-                            Tutar: <strong class="text-dark"><?= Helper::formattedMoney($total_budget); ?></strong>
+                            Tutar: <strong><?= Helper::formattedMoney($total_budget); ?></strong>
                         </span>
                         <label class="status-summary-filter mb-0" title="Tüm projeleri göster">
                             <input type="radio" name="project_type_filter" value="" class="project-type-filter" checked>
@@ -160,7 +160,7 @@ html.projects-summary-collapsed #projectsSummaryCards {
 
         <!-- Kart 2: Alınan Projeler -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border project-summary-card" style="border-radius: 12px; border-color: #e2e8f0 !important;">
+            <div class="card card-sm border project-summary-card" style="border-radius: 12px;">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">ALINAN PROJELER</span>
@@ -168,10 +168,10 @@ html.projects-summary-collapsed #projectsSummaryCards {
                             <i class="ti ti-download" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.85rem; letter-spacing: -0.5px;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.85rem; letter-spacing: -0.5px;">
                         <?= number_format($alinan_count, 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Tutar: <strong class="text-warning"><?= Helper::formattedMoney($alinan_budget); ?></strong>
                         </span>
@@ -186,7 +186,7 @@ html.projects-summary-collapsed #projectsSummaryCards {
 
         <!-- Kart 3: Verilen Projeler -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border project-summary-card" style="border-radius: 12px; border-color: #e2e8f0 !important;">
+            <div class="card card-sm border project-summary-card" style="border-radius: 12px;">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">VERİLEN PROJELER</span>
@@ -194,10 +194,10 @@ html.projects-summary-collapsed #projectsSummaryCards {
                             <i class="ti ti-upload" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.85rem; letter-spacing: -0.5px;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.85rem; letter-spacing: -0.5px;">
                         <?= number_format($verilen_count, 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Tutar: <strong class="text-success"><?= Helper::formattedMoney($verilen_budget); ?></strong>
                         </span>
@@ -212,7 +212,7 @@ html.projects-summary-collapsed #projectsSummaryCards {
 
         <!-- Kart 4: Devam Eden / Tamamlanan -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border project-summary-card" style="border-radius: 12px; border-color: #e2e8f0 !important;">
+            <div class="card card-sm border project-summary-card" style="border-radius: 12px;">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">DEVAM EDEN SÜREÇ</span>
@@ -220,10 +220,10 @@ html.projects-summary-collapsed #projectsSummaryCards {
                             <i class="ti ti-clock-play" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.85rem; letter-spacing: -0.5px;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.85rem; letter-spacing: -0.5px;">
                         <?= number_format($active_count, 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Aktif Süreçte
                         </span>
@@ -237,11 +237,11 @@ html.projects-summary-collapsed #projectsSummaryCards {
     <!-- Main Table Card -->
     <div class="row row-cards">
         <div class="col-12">
-            <div class="card projects-table-card" style="border-radius: 12px; border: 1px solid #dbe3ec !important; overflow: hidden; background: #ffffff;">
+            <div class="card projects-table-card" style="border-radius: 12px;">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">
-                            <i class="ti ti-building-community text-secondary" style="font-size: 18px;"></i>
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-building-community" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
@@ -472,12 +472,7 @@ html.projects-summary-collapsed #projectsSummaryCards {
     font-size: 18px !important;
 }
 
-.page-wrapper:has(#projectsPage) {
-    background: #eef3f8 !important;
-    min-height: calc(100vh - 56px);
-}
-
-.project-summary-card {
+html:not([data-bs-theme="dark"]) .project-summary-card {
     background: #ffffff !important;
     border: 1px solid #dbe3ec !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
@@ -491,7 +486,9 @@ html.projects-summary-collapsed #projectsSummaryCards {
     transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
 }
 
-.projects-table-card {
+html:not([data-bs-theme="dark"]) .projects-table-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
 }
 
@@ -719,13 +716,12 @@ div.dt-container .dt-layout-row:last-child {
     color: #94a3b8;
     background: #334155;
 }
-[data-bs-theme="dark"] .page-wrapper:has(#projectsPage) {
-    background: #0f172a !important;
-}
+[data-bs-theme="dark"] #projectsPage .project-summary-card,
 [data-bs-theme="dark"] .project-summary-card,
+[data-bs-theme="dark"] #projectsPage .projects-table-card,
 [data-bs-theme="dark"] .projects-table-card {
     background: #182433 !important;
-    border-color: #334155 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
 }
 

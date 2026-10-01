@@ -32,7 +32,7 @@ $pageTitle = "FİRMA DETAYLARI";
                         <i class="ti ti-plus icon me-2"></i> Ödeme Ekle
                     </button>
                     <?php } ?>
-                    <a href="index.php?p=companies/list" class="btn btn-outline-secondary">
+                    <a href="/firmalar" class="btn btn-outline-secondary">
                         <i class="ti ti-list icon me-2"></i>
                         Listeye Dön
                     </a>

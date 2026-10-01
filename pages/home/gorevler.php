@@ -25,7 +25,7 @@ $bugun = date('Y-m-d');
             </div>
             <span class="mac-title">YAKLAŞAN GÖREVLER</span>
             <div class="ms-auto d-flex align-items-center">
-                <a href="index.php?p=gorevler/list" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Tümünü Gör</a>
+                <a href="/gorevler" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Tümünü Gör</a>
                 <i class="ti ti-grid-dots drag-handle text-muted"></i>
             </div>
         </div>
@@ -361,7 +361,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Go to tasks page click handler
     $('#btn-home-task-go-to').click(function() {
-        window.location.href = 'index.php?p=gorevler/list';
+        window.location.href = '/gorevler';
     });
 });
 </script>

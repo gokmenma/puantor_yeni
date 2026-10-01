@@ -518,8 +518,10 @@ html[data-table-density="relaxed"] .data-table thead th {
     --theme-primary: #06b6d4;
     --theme-primary-hover: #0891b2;
     --theme-primary-shadow: rgba(6, 182, 212, 0.35);
-    --theme-primary-light: #ecfeff;
+    --theme-primary-light: rgba(6, 182, 212, 0.12);
     --focus-color: #06b6d4;
+    --tblr-primary: #06b6d4;
+    --tblr-primary-rgb: 6, 182, 212;
 }
 [data-theme-preset="tokyo-gece"] {
     --theme-primary: #7aa2f7;
@@ -628,6 +630,26 @@ body {
 
 [data-bs-theme="dark"] .page-wrapper {
     background: #0f172a !important;
+}
+
+[data-theme-preset="cyber-neon"] .page-wrapper,
+[data-theme-preset="cyber-neon"][data-bs-theme="dark"] .page-wrapper {
+    background: #070b14 !important;
+}
+
+[data-theme-preset="tokyo-gece"] .page-wrapper,
+[data-theme-preset="tokyo-gece"][data-bs-theme="dark"] .page-wrapper {
+    background: #101018 !important;
+}
+
+[data-theme-preset="dracula-pro"] .page-wrapper,
+[data-theme-preset="dracula-pro"][data-bs-theme="dark"] .page-wrapper {
+    background: #191a21 !important;
+}
+
+[data-theme-preset="midnight-sapphire"] .page-wrapper,
+[data-theme-preset="midnight-sapphire"][data-bs-theme="dark"] .page-wrapper {
+    background: #040a14 !important;
 }
 
 /* Genel Bağlantılar ve Tablo İçi Linkler */
@@ -2490,6 +2512,62 @@ html[data-sidebar-theme="platin-gri"] #navbar .dropdown-item.active-link {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Dark Mode Global Metin ve Başlık Düzeltmeleri */
+[data-bs-theme="dark"] .text-dark,
+body.theme-dark .text-dark {
+    color: #f1f5f9 !important;
+}
+
+[data-bs-theme="dark"] .page-title,
+body.theme-dark .page-title {
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .card-title,
+body.theme-dark .card-title {
+    color: #f1f5f9 !important;
+}
+
+[data-bs-theme="dark"] div[class*="-summary-card"],
+[data-bs-theme="dark"] [class*="-summary-card"],
+[data-bs-theme="dark"] [id$="Page"] div[class*="-summary-card"],
+[data-bs-theme="dark"] [id$="Page"] [class*="-summary-card"],
+[data-bs-theme="dark"] .personnel-summary-card,
+[data-bs-theme="dark"] .icra-summary-card,
+[data-bs-theme="dark"] .izin-summary-card,
+[data-bs-theme="dark"] .project-summary-card,
+[data-bs-theme="dark"] .roles-summary-card,
+[data-bs-theme="dark"] .push-summary-card,
+[data-bs-theme="dark"] .hakedis-summary-card,
+[data-bs-theme="dark"] .payment-summary-card {
+    background-color: #182433 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-bs-theme="dark"] .card [class*="border-top"],
+[data-bs-theme="dark"] .card .border-top,
+[data-bs-theme="dark"] div[class*="-summary-card"] .border-top {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .status-summary-filter span {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .status-summary-filter:hover span {
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+}
+
+[data-bs-theme="dark"] .status-summary-filter input:checked + span {
+    border-color: var(--theme-primary, #06b6d4) !important;
+    color: var(--theme-primary, #06b6d4) !important;
+    background: rgba(6, 182, 212, 0.15) !important;
+}
+
 .card > .card-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
     padding: 12px 18px !important;
@@ -2612,6 +2690,149 @@ table.dataTable tbody tr:last-child td {
 [data-bs-theme="dark"] table.dataTable tbody td {
     border-color: #334155 !important;
     color: #e2e8f0 !important;
+}
+
+/* ==============================================================
+   CYBER NEON PRESET ÖZEL RENK & GÖRÜNÜM UYUMU
+   ============================================================== */
+[data-theme-preset="cyber-neon"] .card,
+[data-theme-preset="cyber-neon"] div[class*="-summary-card"],
+[data-theme-preset="cyber-neon"] [class*="-summary-card"],
+[data-theme-preset="cyber-neon"] [class*="-table-card"],
+[data-theme-preset="cyber-neon"] [id$="Page"] div[class*="-summary-card"],
+[data-theme-preset="cyber-neon"] [id$="Page"] [class*="-summary-card"],
+[data-theme-preset="cyber-neon"] [id$="Page"] [class*="-table-card"] {
+    background: #0d1322 !important;
+    background-color: #0d1322 !important;
+    border: 1px solid rgba(6, 182, 212, 0.2) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 1px rgba(6, 182, 212, 0.25) !important;
+}
+
+[data-theme-preset="cyber-neon"] .card > .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(6, 182, 212, 0.15) !important;
+}
+
+[data-theme-preset="cyber-neon"] .card [class*="border-top"],
+[data-theme-preset="cyber-neon"] .card .border-top,
+[data-theme-preset="cyber-neon"] div[class*="-summary-card"] .border-top {
+    border-color: rgba(6, 182, 212, 0.12) !important;
+}
+
+[data-theme-preset="cyber-neon"] .card .table-responsive > .data-table,
+[data-theme-preset="cyber-neon"] .card .data-table,
+[data-theme-preset="cyber-neon"] table.dataTable.data-table,
+[data-theme-preset="cyber-neon"] table.dataTable {
+    border-color: rgba(6, 182, 212, 0.18) !important;
+    background-color: #0d1322 !important;
+}
+
+[data-theme-preset="cyber-neon"] .data-table thead th,
+[data-theme-preset="cyber-neon"] table.dataTable thead th {
+    background: #080d18 !important;
+    color: #67e8f9 !important;
+    border-color: rgba(6, 182, 212, 0.18) !important;
+}
+
+[data-theme-preset="cyber-neon"] .data-table tbody td,
+[data-theme-preset="cyber-neon"] table.dataTable tbody td {
+    border-color: rgba(6, 182, 212, 0.08) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme-preset="cyber-neon"] table.dataTable tbody tr:hover td,
+[data-theme-preset="cyber-neon"] .data-table tbody tr:hover td {
+    background-color: rgba(6, 182, 212, 0.06) !important;
+}
+
+[data-theme-preset="cyber-neon"] .card-header-icon {
+    background: rgba(6, 182, 212, 0.15) !important;
+    color: #06b6d4 !important;
+}
+
+[data-theme-preset="cyber-neon"] .avatar.bg-primary-lt {
+    background: rgba(6, 182, 212, 0.16) !important;
+    color: #22d3ee !important;
+}
+
+[data-theme-preset="cyber-neon"] .avatar.bg-secondary-lt {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme-preset="cyber-neon"] .avatar.bg-warning-lt {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme-preset="cyber-neon"] .avatar.bg-success-lt {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+}
+
+[data-theme-preset="cyber-neon"] .avatar.bg-info-lt {
+    background: rgba(6, 182, 212, 0.15) !important;
+    color: #22d3ee !important;
+}
+
+[data-theme-preset="cyber-neon"] .badge.bg-primary-lt {
+    background: rgba(6, 182, 212, 0.18) !important;
+    color: #22d3ee !important;
+}
+
+[data-theme-preset="cyber-neon"] .badge.bg-info-lt {
+    background: rgba(6, 182, 212, 0.18) !important;
+    color: #22d3ee !important;
+}
+
+[data-theme-preset="cyber-neon"] .badge.bg-warning-lt {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme-preset="cyber-neon"] .badge.bg-success-lt {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #34d399 !important;
+}
+
+[data-theme-preset="cyber-neon"] .status-summary-filter span {
+    background: #090e1a !important;
+    border-color: rgba(6, 182, 212, 0.25) !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme-preset="cyber-neon"] .status-summary-filter:hover span {
+    border-color: rgba(6, 182, 212, 0.5) !important;
+    color: #67e8f9 !important;
+}
+
+[data-theme-preset="cyber-neon"] .status-summary-filter input:checked + span {
+    border-color: #06b6d4 !important;
+    color: #06b6d4 !important;
+    background: rgba(6, 182, 212, 0.18) !important;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.25) !important;
+}
+
+[data-theme-preset="cyber-neon"] input[type="text"].form-control-sm,
+[data-theme-preset="cyber-neon"] input[type="search"].form-control-sm,
+[data-theme-preset="cyber-neon"] .form-control {
+    background-color: #080d18 !important;
+    border-color: rgba(6, 182, 212, 0.2) !important;
+    color: #e2e8f0 !important;
+}
+
+[data-theme-preset="cyber-neon"] input[type="text"].form-control-sm:focus,
+[data-theme-preset="cyber-neon"] input[type="search"].form-control-sm:focus,
+[data-theme-preset="cyber-neon"] .form-control:focus {
+    border-color: #06b6d4 !important;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25) !important;
+}
+
+[data-theme-preset="cyber-neon"] .persons-search-clear,
+[data-theme-preset="cyber-neon"] .icra-search-clear,
+[data-theme-preset="cyber-neon"] .izin-search-clear {
+    color: #67e8f9 !important;
+    background: rgba(6, 182, 212, 0.18) !important;
 }
 
 /* ========================================================================== 
@@ -3494,4 +3715,24 @@ body.theme-dark [class*="-kpi-toggle-btn"]:hover {
     background-color: #334155 !important;
     color: #ffffff !important;
 }
+
+/* ==============================================================
+   SELECT2 RESPONSIVE & BODY OVERFLOW PREVENTION
+   (Prevents select2 dropdown popup from forcing width:100% on body,
+    which caused horizontal scroll and page layout shift/gap)
+   ============================================================== */
+span.select2.select2-container {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.select2-container:not(.select2) {
+    max-width: 100vw;
+}
+
+body > .select2-container.select2-container--open {
+    width: auto;
+    max-width: calc(100vw - 20px);
+}
+
 

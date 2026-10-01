@@ -366,6 +366,11 @@ try {
         $amount = (float)($t->amount ?? 0);
         $formattedAmount = ($isIncome ? '+' : '-') . Helper::formattedMoney($amount, $moneyUnit);
         $formattedDate = Date::dmY($t->date);
+        $timeStr = !empty($t->created_at) && strtotime($t->created_at) ? date('H:i', strtotime($t->created_at)) : '';
+        $dateHtml = '<div class="d-flex flex-column align-items-center justify-content-center text-center">'
+            . '<span class="fw-medium text-dark" style="font-size: 12.5px;">' . htmlspecialchars($formattedDate, ENT_QUOTES, 'UTF-8') . '</span>'
+            . ($timeStr ? '<span class="text-secondary small mt-0.5" style="font-size: 11px; line-height: 1;"><i class="ti ti-clock me-0.5 text-muted" style="font-size: 10.5px;"></i>' . htmlspecialchars($timeStr, ENT_QUOTES, 'UTF-8') . '</span>' : '')
+            . '</div>';
 
         $typeBadge = $isIncome
             ? '<span class="badge bg-success-lt text-success fw-semibold" style="font-size: 11px;"><i class="ti ti-arrow-up-right me-0.5"></i>Gelir</span>'
@@ -388,7 +393,7 @@ try {
             $checkboxHtml,
             '<span class="text-muted fw-medium">' . ($start + $offset + 1) . '</span>',
             '<span class="d-inline-flex align-items-center fw-medium text-dark"><i class="ti ti-wallet text-muted me-1.5" style="font-size: 15px;"></i>' . htmlspecialchars($caseName, ENT_QUOTES, 'UTF-8') . '</span>',
-            '<span class="badge bg-secondary-lt text-secondary fw-medium" style="font-size: 11px;"><i class="ti ti-calendar me-1"></i>' . htmlspecialchars($formattedDate, ENT_QUOTES, 'UTF-8') . '</span>',
+            $dateHtml,
             '<div class="d-flex align-items-center flex-wrap gap-1">' . $typeBadge . '<span class="text-muted small sub-type-name">' . htmlspecialchars($subTypeName ?: '-', ENT_QUOTES, 'UTF-8') . '</span></div>',
             '<span class="fw-medium text-dark">' . htmlspecialchars($t->account_name ?: '-', ENT_QUOTES, 'UTF-8') . '</span>',
             '<span class="fw-bold ' . ($isIncome ? 'text-success' : 'text-danger') . '" style="font-size: 13.5px;">' . $formattedAmount . '</span>',

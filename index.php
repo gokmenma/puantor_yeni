@@ -23,7 +23,15 @@ date_default_timezone_set('Europe/Istanbul'); // Change to your timezone
 
 
 
-ob_start();// Çıktı tamponlamasını başlatır
+use App\Routing\Router;
+
+$route = Router::resolve(
+    (string) ($_SERVER['REQUEST_URI'] ?? ''),
+    (string) ($_SERVER['SCRIPT_NAME'] ?? '/index.php')
+);
+
+// Sayfa içinde üretilen eski ve katalogda karşılığı bulunan kullanıcı bağlantılarını temiz URL'ye çevir.
+ob_start([Router::class, 'rewriteHtml']);
 if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
     // Beni Hatırla Kontrolü (Cookie)
     if (isset($_COOKIE['remember_me'])) {
@@ -49,7 +57,7 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
         } else {
             $returnUrl = urlencode($_SERVER["REQUEST_URI"]);
             if (!isset($_GET["p"])) {
-                $returnUrl = urlencode("/index.php?p=home");
+                $returnUrl = urlencode("/anasayfa");
             }
             header("Location: sign-in.php?returnUrl={$returnUrl}");
             exit();
@@ -57,7 +65,7 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
     } else {
         $returnUrl = urlencode($_SERVER["REQUEST_URI"]);
         if (!isset($_GET["p"])) {
-            $returnUrl = urlencode("/index.php?p=home");
+            $returnUrl = urlencode("/anasayfa");
         }
         header("Location: sign-in.php?returnUrl={$returnUrl}");
         exit();
@@ -162,7 +170,20 @@ if (($user->superadmin ?? 0) == 1) {
 //     exit();
 // }
 
-$active_page = isset($_GET["p"]) ? $_GET["p"] : "";
+if ($route === null && empty($_GET['p']) && basename((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH)) !== 'index.php') {
+    http_response_code(404);
+    $active_page = '404';
+} else {
+    if ($route !== null) {
+        try {
+            Router::resolveParameters($route);
+        } catch (InvalidArgumentException $exception) {
+            http_response_code(404);
+            $active_page = '404';
+        }
+    }
+    $active_page = isset($_GET["p"]) ? $_GET["p"] : "home";
+}
 
 // Bordro, puantaj ve rapor ekranları aynı dönemi kullanır. Seçimi oturumda
 // saklayarak sayfa yenilemelerinde ve bu ekranlar arasındaki geçişlerde koru.
@@ -195,7 +216,7 @@ if (in_array($active_page, $period_pages, true)) {
 }
 
 if (($user->superadmin ?? 0) == 1 && ($active_page === '' || $active_page === 'home')) {
-    header('Location: index.php?p=admin-home');
+    header('Location: /admin-anasayfa');
     exit();
 }
 
@@ -203,14 +224,14 @@ if (($user->superadmin ?? 0) == 1 && ($active_page === '' || $active_page === 'h
 // Menü gizleme tek başına yeterli olmadığından doğrudan URL ve AJAX istekleri
 // de aynı merkezi listeyle burada engellenir.
 if (($user->superadmin ?? 0) == 1 && !$Auths->isSuperadminPageAllowed($active_page)) {
-    header("Location: index.php?p=authorize");
+    header("Location: /yetkisiz-erisim");
     exit();
 }
 
 // auths.superadmin = 1 olan yönetim sayfalarını yalnızca menüde gizlemek
 // yeterli değildir. Doğrudan URL ve AJAX sayfa yüklemelerini de burada kes.
 if (($user->superadmin ?? 0) != 1 && $Auths->isSuperadminOnlyPage($active_page)) {
-    header("Location: index.php?p=authorize");
+    header("Location: /yetkisiz-erisim");
     exit();
 }
 
@@ -258,7 +279,7 @@ if (($user->superadmin ?? 0) != 1) {
         if ($is_subscription_expired) {
             // Sadece ayarlar sayfasına ve çıkışa gitmeye izin ver, diğer sayfalarda ise yönlendir
             if ($active_page !== 'settings/manage' && $active_page !== 'logout') {
-                header("Location: index.php?p=settings/manage&view=profile&tab=edit-account&expired=1");
+                header("Location: /ayarlar?view=profile&tab=edit-account&expired=1");
                 exit();
             }
         }
@@ -497,7 +518,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
                                 </div>
                                 <div>
                                     Deneme sürenizin bitmesine kalan süre <strong class="text-warning"><?php echo $diff; ?></strong> gün, süreniz bitmeden önce
-                                    paketinizi <a href="index.php?p=settings/manage&tab=edit-account"
+                                    paketinizi <a href="/ayarlar?tab=edit-account"
                                         class="text-warning fw-bold"><u>güncelleyin.</u></a>
                                 </div>
                             </div>

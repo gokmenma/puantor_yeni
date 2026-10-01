@@ -377,29 +377,6 @@ if ($action == "payToPerson") {
     try {
         $lastInsertId = $ct->saveWithAttr($data);
 
-        // Bordro maas_gelir_kesinti kaydı
-        if ($person_id > 0 && $amount > 0) {
-            $dateObj = strtotime($date);
-            $p_year = (int)date('Y', $dateObj);
-            $p_month = (int)date('m', $dateObj);
-            $p_gun = (int)date('Ymd', $dateObj);
-
-            $bordro_data = [
-                'id' => 0,
-                'user_id' => (int)($_SESSION['user']->id ?? 0),
-                'person_id' => $person_id,
-                'case_id' => $case_id,
-                'gun' => $p_gun,
-                'ay' => $p_month,
-                'yil' => $p_year,
-                'kategori' => 7, // Personel Ödemesi
-                'turu' => !empty($description) ? $description : 'Personel Ödemesi',
-                'tutar' => $amount,
-                'aciklama' => $description,
-            ];
-            $Bordro->saveWithAttr($bordro_data);
-        }
-
         $status = "success";
         $message = $id == 0 ? "Ödeme başarıyla yapıldı" : "Ödeme başarıyla güncellendi";
 
@@ -495,22 +472,6 @@ if ($action == "payToPersons") {
                 "users_type_id" => 0,
             ];
             $ct->saveWithAttr($data);
-
-            // 2. Bordro / Maaş Hareketi (maas_gelir_kesinti)
-            $bordro_data = [
-                'id' => 0,
-                'user_id' => (int)($_SESSION['user']->id ?? 0),
-                'person_id' => $person_id,
-                'case_id' => $case,
-                'gun' => $p_gun,
-                'ay' => $p_month,
-                'yil' => $p_year,
-                'kategori' => 7, // Personel Ödemesi
-                'turu' => !empty($description) ? $description : 'Personel Ödemesi',
-                'tutar' => $amount_val,
-                'aciklama' => $description,
-            ];
-            $Bordro->saveWithAttr($bordro_data);
 
             if (class_exists('ActivityLogModel')) {
                 ActivityLogModel::log(

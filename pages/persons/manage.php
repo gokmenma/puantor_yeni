@@ -21,7 +21,7 @@ $new_id = isset($_GET["id"]) ? $_GET['id'] : 0;
 
 //Eğer manuel id yazılmışsa personel sayfasına gönder
 if ($id == null && isset($_GET["id"])) {
-    header('Location: index.php?p=persons/list');
+    header('Location: /personeller');
     exit();
 }
 
@@ -298,7 +298,7 @@ $(document).ready(function() {
     $('#headerPersonSelect').on('change', function() {
         var selectedId = $(this).val();
         if (selectedId && selectedId !== '<?php echo $new_id; ?>') {
-            window.location = 'index.php?p=persons/manage&id=' + selectedId;
+            window.location = '/personel-duzenle?id=' + selectedId;
         }
     });
 });

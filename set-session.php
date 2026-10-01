@@ -37,7 +37,15 @@ if (empty($redirectParams['p'])) {
     $redirectParams['p'] = 'home';
 }
 
+$page = $redirectParams['p'] ?? 'home';
+unset($redirectParams['p']);
+$path = \App\Routing\Router::pathForPage($page, $redirectParams);
+if ($path !== null) {
+    $queryString = !empty($redirectParams) ? '?' . http_build_query($redirectParams) : '';
+    header('Location: ' . $path . $queryString);
+    exit;
+}
 
-header('Location: index.php?' . http_build_query($redirectParams));
+header('Location: index.php?' . http_build_query(array_merge(['p' => $page], $redirectParams)));
 exit;
 

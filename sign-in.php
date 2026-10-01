@@ -34,7 +34,7 @@ function determineUserLoginRedirect($user, $rawReturn = ''): string
 {
     $returnUrl = safeLoginReturnUrl($rawReturn, '');
     if (empty($returnUrl) || strpos($returnUrl, 'company-list') !== false || strpos($returnUrl, 'sign-in') !== false || strpos($returnUrl, 'logout') !== false) {
-        $defaultDest = 'index.php?p=home';
+        $defaultDest = 'anasayfa';
     } else {
         $defaultDest = $returnUrl;
     }
@@ -249,7 +249,7 @@ login_processing_complete:
         var savedFont = localStorage.getItem('app_theme_font') || ((window.themePresetFonts && window.themePresetFonts[savedPreset]) ? window.themePresetFonts[savedPreset] : 'outfit');
         html.setAttribute('data-theme-font', savedFont);
 
-        var savedWeight = localStorage.getItem('app_theme_weight') || '400';
+        var savedWeight = localStorage.getItem('app_theme_weight') || ((window.themePresetWeights && window.themePresetWeights[savedPreset]) ? window.themePresetWeights[savedPreset] : '500');
         html.setAttribute('data-theme-weight', savedWeight);
 
         var savedPrimaryColor = localStorage.getItem('app_primary_color');

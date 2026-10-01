@@ -1642,7 +1642,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                                                   data-bs-trigger="hover" 
                                                   data-bs-placement="top" 
                                                   data-bs-content="Beyaz Yaka (Aylık Usul)">BY</span>
-                                            <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                            <a href="/personel-duzenle?id=<?php echo $id ?>"
                                                 target="_blank"
                                                 class="fw-semibold"
                                                 data-bs-toggle="popover"
@@ -1655,7 +1655,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                                                   data-bs-trigger="hover" 
                                                   data-bs-placement="top" 
                                                   data-bs-content="Mavi Yaka (Günlük Usul)">MY</span>
-                                            <a href="index.php?p=persons/manage&id=<?php echo $id ?>"
+                                            <a href="/personel-duzenle?id=<?php echo $id ?>"
                                                 target="_blank"
                                                 class="fw-semibold"><?php echo $person->full_name ?></a>
                                         <?php endif; ?>

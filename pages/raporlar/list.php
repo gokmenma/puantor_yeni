@@ -4,6 +4,7 @@ require_once 'App/Helper/date.php';
 require_once 'Model/Persons.php';
 require_once 'Model/Projects.php';
 require_once 'Model/Bordro.php';
+require_once 'Model/DefinesModel.php';
 require_once 'App/Helper/security.php';
 
 use App\Helper\Date;
@@ -33,7 +34,7 @@ $periodTitle = Date::monthName($month) . ' ' . $year;
 
 // Function to render report card
 function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $isActive = false) {
-    $btnClass = "btn-primary";
+    $btnClass = $isActive ? "btn-primary" : "btn-light";
     $cardOpacity = $isActive ? '' : 'opacity-75';
     $linkUrl = $isActive ? $viewUrl : 'javascript:void(0);';
     $badge = $isActive 
@@ -43,24 +44,24 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     $cursorStyle = $isActive ? '' : 'cursor: not-allowed; pointer-events: none;';
 
     echo '
-    <div class="card report-card h-100 shadow-none border ' . $cardOpacity . '">
+    <div class="card report-card h-100 border ' . $cardOpacity . '" style="border-radius: 12px;">
         <div class="card-body d-flex flex-column p-3">
             <div class="d-flex align-items-center mb-2">
                 <div class="avatar avatar-md rounded-2 ' . $colorClass . ' me-3">
                     <i class="ti ' . $icon . ' fs-2"></i>
                 </div>
                 <div class="d-flex flex-column">
-                    <h4 class="card-title text-dark fw-bold mb-0" style="font-size: 14.5px;">' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h4>
+                    <h4 class="card-title text-dark fw-bold mb-0" style="font-size: 15px; letter-spacing: -0.2px;">' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h4>
                 </div>
                 ' . $badge . '
             </div>
-            <p class="text-muted small mb-3 flex-grow-1" style="font-size: 12px; line-height: 1.4;">' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</p>
+            <p class="text-secondary mb-3 flex-grow-1" style="font-size: 13px; line-height: 1.45;">' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</p>
             <div class="d-flex gap-2 mt-auto pt-2 border-top">
-                <a href="' . $linkUrl . '" class="btn btn-sm ' . $btnClass . ' ' . $disabledClass . ' flex-fill fw-bold" style="height: 32px; font-size: 12.5px; ' . $cursorStyle . '">
+                <a href="' . $linkUrl . '" class="btn btn-sm ' . $btnClass . ' ' . $disabledClass . ' flex-fill fw-semibold" style="height: 34px; font-size: 13px; ' . $cursorStyle . '">
                     <i class="ti ti-eye me-1"></i> ' . ($isActive ? 'Görüntüle' : 'Hazırlanıyor') . '
                 </a>';
                 if ($isActive) {
-                    echo '<a href="' . $linkUrl . '" class="btn btn-sm btn-outline-secondary btn-icon" style="height: 32px; width: 32px;" title="Raporu Aç">
+                    echo '<a href="' . $linkUrl . '" class="btn btn-sm btn-outline-secondary btn-icon" style="height: 34px; width: 34px;" title="Raporu Aç">
                             <i class="ti ti-arrow-right"></i>
                           </a>';
                 }
@@ -70,7 +71,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
 }
 ?>
 
-<div class="container-xl mt-3">
+<div class="container-xl mt-1" id="raporlarPage">
 
 <?php if ($report_type == 'puantaj'): ?>
     <!-- ==========================================
@@ -154,71 +155,41 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     }
     ?>
 
-    <!-- KPI Özet Metrik Kartları -->
-    <div class="row row-deck row-cards mb-3 g-2">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-azure-lt text-azure avatar avatar-md rounded-2">
-                                <i class="ti ti-users fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= $total_person_count ?></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Toplam Personel</div>
+    <!-- Page Header (Standart Başlık Alanı) -->
+    <div class="page-header d-print-none mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-azure-lt text-azure shadow-sm" style="width: 44px; height: 44px;">
+                        <i class="ti ti-clock-check" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                            Puantaj İcmal Raporu
+                        </h2>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Personel bazlı çalışma günleri, saatlik mesailer, izinler ve proje dağılımı
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-primary-lt text-primary avatar avatar-md rounded-2">
-                                <i class="ti ti-calendar-check fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= number_format($total_normal_gun, 1, ',', '.') ?> <span class="fs-6 fw-normal text-muted">Gün</span></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Normal Çalışma</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-danger-lt text-danger avatar avatar-md rounded-2">
-                                <i class="ti ti-clock-bolt fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= number_format($total_fazla_mesai, 1, ',', '.') ?> <span class="fs-6 fw-normal text-muted">Saat</span></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Fazla Mesai</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-warning-lt text-warning avatar avatar-md rounded-2">
-                                <i class="ti ti-umbrella fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= number_format($total_izin_gun, 1, ',', '.') ?> <span class="fs-6 fw-normal text-muted">Gün</span></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">İzin / Rapor Toplamı</div>
+            <!-- Header Actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a href="/raporlar" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
+                    </a>
+                    <a href="pages/raporlar/puantaj-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-sm btn-outline-secondary" data-tooltip="Excel Dosyası İndir" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-file-excel text-success me-1"></i> Excel
+                    </a>
+                    <button type="button" id="customBtnPdf" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-file-type-pdf text-danger me-1"></i> PDF
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
+                            <i class="ti ti-layout-columns me-1"></i> Sütunlar
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-2" id="customColvisMenu" style="min-width: 210px; max-height: 350px; overflow-y: auto;">
                         </div>
                     </div>
                 </div>
@@ -226,40 +197,121 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
         </div>
     </div>
 
+    <!-- Dörtlü KPI / İstatistik Özet Kartları -->
+    <div class="row row-cards g-3 mb-3">
+        <!-- Kart 1: Toplam Personel -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM PERSONEL</span>
+                        <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-users" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_person_count, 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Dönem Personeli</span>
+                        <span class="badge bg-secondary-lt fw-semibold" style="font-size: 10px;"><?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 2: Normal Çalışma -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">NORMAL ÇALIŞMA</span>
+                        <div class="avatar avatar-sm rounded-2 bg-primary-lt text-primary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-calendar-check" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_normal_gun, 1, ',', '.') ?> <span class="fs-5 fw-normal text-muted">Gün</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Toplam Fiili Gün</span>
+                        <span class="badge bg-primary-lt fw-semibold" style="font-size: 10px;">Tam Çalışma</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 3: Fazla Mesai -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">FAZLA MESAİ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-danger-lt text-danger" style="width: 32px; height: 32px;">
+                            <i class="ti ti-clock-bolt" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_fazla_mesai, 1, ',', '.') ?> <span class="fs-5 fw-normal text-muted">Saat</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Ek Mesai Toplamı</span>
+                        <span class="badge bg-danger-lt fw-semibold" style="font-size: 10px;">Fazla Çalışma</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 4: İzin ve Rapor -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">İZİN VE RAPOR</span>
+                        <div class="avatar avatar-sm rounded-2 bg-warning-lt text-warning" style="width: 32px; height: 32px;">
+                            <i class="ti ti-umbrella" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_izin_gun, 1, ',', '.') ?> <span class="fs-5 fw-normal text-muted">Gün</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Ücretli / Ücretsiz / Rapor</span>
+                        <span class="badge bg-warning-lt fw-semibold" style="font-size: 10px;">Tüm İzinler</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tablo Kartı -->
-    <div class="row row-deck row-cards">
+    <div class="row row-cards">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 12px;">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="card-header-icon">
-                            <i class="ti ti-clock-check"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-clock-check" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
-                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Puantaj İcmal Raporu</h4>
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Puantaj İcmal Tablosu</h4>
                                 <span class="badge bg-blue-lt"><?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Personel bazlı çalışma günleri, mesai saatleri, izinler ve proje dağılımı</p>
                         </div>
                     </div>
 
+                    <!-- Fast Instant Search -->
                     <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
-                        <a href="index.php?p=raporlar/list" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
-                        </a>
-                        <a href="pages/raporlar/puantaj-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-sm btn-outline-secondary" data-tooltip="Excel Dosyası İndir" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-file-excel text-success me-1"></i> Excel
-                        </a>
-                        <button type="button" id="customBtnPdf" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-file-type-pdf text-danger me-1"></i> PDF
-                        </button>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                                <i class="ti ti-layout-columns me-1"></i> Sütunlar
+                        <div class="input-icon" style="min-width: 170px;">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-search text-muted"></i>
+                            </span>
+                            <input type="text" id="puantaj-fast-search" class="form-control form-control-sm" placeholder="Arayın..." autocomplete="off" style="height: 32px; font-size: 13px;">
+                            <button type="button" id="puantaj-search-clear" class="btn btn-sm btn-icon btn-ghost-secondary d-none position-absolute end-0 top-0" style="height: 32px; width: 32px;" aria-label="Aramayı temizle" title="Aramayı temizle">
+                                <i class="ti ti-x"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end p-2" id="customColvisMenu" style="min-width: 210px; max-height: 350px; overflow-y: auto;">
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -294,7 +346,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <span class="avatar avatar-xs rounded-circle bg-blue-lt text-blue fw-bold me-2" style="font-size: 11px;">
+                                        <span class="avatar avatar-xs rounded-circle bg-blue-lt text-blue fw-bold me-2" style="font-size: 12px;">
                                             <?= htmlspecialchars(mb_substr($r->full_name, 0, 1, 'UTF-8'), ENT_QUOTES, 'UTF-8') ?>
                                         </span>
                                         <span class="fw-semibold text-dark"><?= htmlspecialchars($r->full_name, ENT_QUOTES, 'UTF-8') ?></span>
@@ -306,7 +358,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                 <td><?= htmlspecialchars($r->job_end_date ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($r->team_name ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($r->project_name ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
-                                <td class="small text-secondary"><?= htmlspecialchars($r->job ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><span class="text-secondary"><?= htmlspecialchars($r->job ?? '-', ENT_QUOTES, 'UTF-8') ?></span></td>
                                 <td class="text-center"><span class="badge bg-azure-lt fw-bold"><?= (float) $r->n_calisma ?></span></td>
                                 <td class="text-center fw-medium"><?= (float) $r->s_calisma ?: '-' ?></td>
                                 <td class="text-center text-danger fw-bold"><?= (float) $r->f_mesai ?: '-' ?></td>
@@ -372,54 +424,41 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     $avg_bank_pay = $total_bank_persons > 0 ? ($total_bank_pay / $total_bank_persons) : 0;
     ?>
 
-    <!-- KPI Özet Metrik Kartları -->
-    <div class="row row-deck row-cards mb-3 g-2">
-        <div class="col-sm-6 col-lg-4">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-success-lt text-success avatar avatar-md rounded-2">
-                                <i class="ti ti-credit-card-pay fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= Helper::formattedMoney($total_bank_pay) ?></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Toplam Ödenecek Net Tutar</div>
+    <!-- Page Header (Standart Başlık Alanı) -->
+    <div class="page-header d-print-none mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-info-lt text-info shadow-sm" style="width: 44px; height: 44px;">
+                        <i class="ti ti-building-bank" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                            Banka Ödeme Listesi
+                        </h2>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Banka maaş transferleri için IBAN ve ödenecek net hak ediş listesi
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-azure-lt text-azure avatar avatar-md rounded-2">
-                                <i class="ti ti-users fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= $total_bank_persons ?></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Ödeme Yapılacak Personel</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-info-lt text-info avatar avatar-md rounded-2">
-                                <i class="ti ti-calculator fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= Helper::formattedMoney($avg_bank_pay) ?></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Ortalama Ödeme Tutarı</div>
+            <!-- Header Actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a href="/raporlar" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
+                    </a>
+                    <a href="pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-sm btn-outline-secondary" data-tooltip="Excel Dosyası İndir" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-file-excel text-success me-1"></i> Excel
+                    </a>
+                    <button type="button" id="customBankBtnPdf" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-file-type-pdf text-danger me-1"></i> PDF
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
+                            <i class="ti ti-layout-columns me-1"></i> Sütunlar
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-2" id="customBankColvisMenu" style="min-width: 210px; max-height: 350px; overflow-y: auto;">
                         </div>
                     </div>
                 </div>
@@ -427,40 +466,121 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
         </div>
     </div>
 
+    <!-- Dörtlü KPI / İstatistik Özet Kartları -->
+    <div class="row row-cards g-3 mb-3">
+        <!-- Kart 1: Toplam Ödenecek Net Tutar -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM NET TUTAR</span>
+                        <div class="avatar avatar-sm rounded-2 bg-success-lt text-success" style="width: 32px; height: 32px;">
+                            <i class="ti ti-credit-card-pay" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= Helper::formattedMoney($total_bank_pay) ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Ödenecek Net Tutar</span>
+                        <span class="badge bg-success-lt fw-semibold" style="font-size: 10px;">Net Maaş</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 2: Ödeme Yapılacak Personel -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">ÖDENECEK KİŞİ SAYISI</span>
+                        <div class="avatar avatar-sm rounded-2 bg-primary-lt text-primary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-users" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_bank_persons, 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Hak Edişli Personel</span>
+                        <span class="badge bg-primary-lt fw-semibold" style="font-size: 10px;">Aktif Liste</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 3: Ortalama Ödeme -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">ORTALAMA ÖDEME</span>
+                        <div class="avatar avatar-sm rounded-2 bg-info-lt text-info" style="width: 32px; height: 32px;">
+                            <i class="ti ti-calculator" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= Helper::formattedMoney($avg_bank_pay) ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Kişi Başı Ortalama</span>
+                        <span class="badge bg-info-lt fw-semibold" style="font-size: 10px;">Ortalama</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 4: Dönem Bilgisi -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">DÖNEM BİLGİSİ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-calendar" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Banka Ödeme Dönemi</span>
+                        <span class="badge bg-teal-lt fw-semibold" style="font-size: 10px;">Banka Listesi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tablo Kartı -->
-    <div class="row row-deck row-cards">
+    <div class="row row-cards">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 12px;">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="card-header-icon">
-                            <i class="ti ti-building-bank"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-building-bank" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
-                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Banka Ödeme Listesi</h4>
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Banka Ödeme Listesi Tablosu</h4>
                                 <span class="badge bg-info-lt"><?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Banka maaş transferleri için IBAN ve ödenecek net hak ediş listesi</p>
                         </div>
                     </div>
 
+                    <!-- Fast Instant Search -->
                     <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
-                        <a href="index.php?p=raporlar/list" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
-                        </a>
-                        <a href="pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-sm btn-outline-secondary" data-tooltip="Excel Dosyası İndir" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-file-excel text-success me-1"></i> Excel
-                        </a>
-                        <button type="button" id="customBankBtnPdf" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-file-type-pdf text-danger me-1"></i> PDF
-                        </button>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                                <i class="ti ti-layout-columns me-1"></i> Sütunlar
+                        <div class="input-icon" style="min-width: 170px;">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-search text-muted"></i>
+                            </span>
+                            <input type="text" id="bank-fast-search" class="form-control form-control-sm" placeholder="Arayın..." autocomplete="off" style="height: 32px; font-size: 13px;">
+                            <button type="button" id="bank-search-clear" class="btn btn-sm btn-icon btn-ghost-secondary d-none position-absolute end-0 top-0" style="height: 32px; width: 32px;" aria-label="Aramayı temizle" title="Aramayı temizle">
+                                <i class="ti ti-x"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end p-2" id="customBankColvisMenu" style="min-width: 210px; max-height: 350px; overflow-y: auto;">
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -483,7 +603,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <span class="avatar avatar-xs rounded-circle bg-info-lt text-info fw-bold me-2" style="font-size: 11px;">
+                                        <span class="avatar avatar-xs rounded-circle bg-info-lt text-info fw-bold me-2" style="font-size: 12px;">
                                             <?= htmlspecialchars(mb_substr($b->full_name, 0, 1, 'UTF-8'), ENT_QUOTES, 'UTF-8') ?>
                                         </span>
                                         <span class="fw-semibold text-dark"><?= htmlspecialchars($b->full_name, ENT_QUOTES, 'UTF-8') ?></span>
@@ -493,7 +613,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                 <td><code class="text-body fw-medium"><?= htmlspecialchars($b->iban_number ?: '-', ENT_QUOTES, 'UTF-8') ?></code></td>
                                 <td><?= htmlspecialchars($b->team_name ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($b->project_name ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
-                                <td class="small text-secondary"><?= htmlspecialchars($b->job ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><span class="text-secondary"><?= htmlspecialchars($b->job ?? '-', ENT_QUOTES, 'UTF-8') ?></span></td>
                                 <td class="text-end fw-bold text-success" data-order="<?= (float) $b->amount ?>"><?= Helper::formattedMoney($b->amount) ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -513,38 +633,119 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     $total_bordro_persons = count($personsForBordro);
     ?>
 
-    <!-- KPI Özet Metrik Kartları -->
-    <div class="row row-deck row-cards mb-3 g-2">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-teal-lt text-teal avatar avatar-md rounded-2">
-                                <i class="ti ti-users fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= $total_bordro_persons ?></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Toplam Bordro Personeli</div>
+    <!-- Page Header (Standart Başlık Alanı) -->
+    <div class="page-header d-print-none mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-teal-lt text-teal shadow-sm" style="width: 44px; height: 44px;">
+                        <i class="ti ti-file-invoice" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                            Bordro Yazdırma Listesi
+                        </h2>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Yazdırmak istediğiniz personelleri seçip toplu veya tekli ücret pusulası çıktısı alabilirsiniz
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- Header Actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a href="/raporlar" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
+                    </a>
+                    <button type="button" class="btn btn-sm btn-dark" id="btnPrintSelectedBordro" style="height: 32px; padding: 4px 14px; font-size: 12.5px; background-color: #1e293b; border-color: #1e293b;">
+                        <i class="ti ti-printer me-1"></i> Seçilileri Yazdır
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-primary-lt text-primary avatar avatar-md rounded-2">
-                                <i class="ti ti-checkbox fs-2"></i>
-                            </span>
+    </div>
+
+    <!-- Dörtlü KPI / İstatistik Özet Kartları -->
+    <div class="row row-cards g-3 mb-3">
+        <!-- Kart 1: Toplam Bordro Personeli -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM PERSONEL</span>
+                        <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-users" style="font-size: 18px;"></i>
                         </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark" id="selectedCountBadge">0</div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Seçilen Personel Sayısı</div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_bordro_persons, 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Bordro Hesaplanacak</span>
+                        <span class="badge bg-secondary-lt fw-semibold" style="font-size: 10px;">Toplam Liste</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 2: Seçilen Personel -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">SEÇİLEN PERSONEL</span>
+                        <div class="avatar avatar-sm rounded-2 bg-primary-lt text-primary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-checkbox" style="font-size: 18px;"></i>
                         </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <span id="selectedCountBadge">0</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Yazdırılacak Seçili Kişi</span>
+                        <span class="badge bg-primary-lt fw-semibold" style="font-size: 10px;">Seçim Durumu</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 3: Dönem Bilgisi -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">HESAP DÖNEMİ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-teal-lt text-teal" style="width: 32px; height: 32px;">
+                            <i class="ti ti-calendar" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Aktif Çalışma Periyodu</span>
+                        <span class="badge bg-teal-lt fw-semibold" style="font-size: 10px;">Maaş Ayı</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 4: Döküm Türü -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">DÖKÜM TÜRÜ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-info-lt text-info" style="width: 32px; height: 32px;">
+                            <i class="ti ti-file-text" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        Ücret Pusulası
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">A4 Formatında Toplu Çıktı</span>
+                        <span class="badge bg-info-lt fw-semibold" style="font-size: 10px;">Resmi Format</span>
                     </div>
                 </div>
             </div>
@@ -552,30 +753,34 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     </div>
 
     <!-- Tablo Kartı -->
-    <div class="row row-deck row-cards">
+    <div class="row row-cards">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 12px;">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="card-header-icon">
-                            <i class="ti ti-file-invoice"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-file-invoice" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
-                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Bordro Yazdırma Listesi</h4>
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Personel Seçim Tablosu</h4>
                                 <span class="badge bg-teal-lt"><?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Yazdırmak istediğiniz personelleri seçip toplu çıktı alabilirsiniz</p>
                         </div>
                     </div>
 
+                    <!-- Fast Instant Search -->
                     <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
-                        <a href="index.php?p=raporlar/list" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
-                        </a>
-                        <button type="button" class="btn btn-sm btn-primary" id="btnPrintSelectedBordro" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
-                            <i class="ti ti-printer me-1"></i> Seçilileri Yazdır
-                        </button>
+                        <div class="input-icon" style="min-width: 170px;">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-search text-muted"></i>
+                            </span>
+                            <input type="text" id="bordro-fast-search" class="form-control form-control-sm" placeholder="Arayın..." autocomplete="off" style="height: 32px; font-size: 13px;">
+                            <button type="button" id="bordro-search-clear" class="btn btn-sm btn-icon btn-ghost-secondary d-none position-absolute end-0 top-0" style="height: 32px; width: 32px;" aria-label="Aramayı temizle" title="Aramayı temizle">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -584,7 +789,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                         <thead>
                             <tr>
                                 <th style="width: 40px; min-width: 40px;" class="text-center no-export" data-orderable="false">
-                                    <input type="checkbox" class="form-check-input" id="selectAllBordro">
+                                    <input type="checkbox" class="form-check-input" id="selectAllBordro" style="width: 18px; height: 18px;">
                                 </th>
                                 <th>Personel Adı</th>
                                 <th>TC Kimlik No</th>
@@ -601,11 +806,11 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                 ?>
                                 <tr>
                                     <td class="text-center">
-                                        <input type="checkbox" class="form-check-input row-check" value="<?= Security::encrypt($p->id) ?>">
+                                        <input type="checkbox" class="form-check-input row-check" value="<?= Security::encrypt($p->id) ?>" style="width: 18px; height: 18px;">
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <span class="avatar avatar-xs rounded-circle bg-teal-lt text-teal fw-bold me-2" style="font-size: 11px;">
+                                            <span class="avatar avatar-xs rounded-circle bg-teal-lt text-teal fw-bold me-2" style="font-size: 12px;">
                                                 <?= htmlspecialchars(mb_substr($p->full_name, 0, 1, 'UTF-8'), ENT_QUOTES, 'UTF-8') ?>
                                             </span>
                                             <span class="fw-semibold text-dark"><?= htmlspecialchars($p->full_name, ENT_QUOTES, 'UTF-8') ?></span>
@@ -613,10 +818,10 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                                     </td>
                                     <td><?= htmlspecialchars(Security::safeDecrypt($p->kimlik_no ?? '') ?: '-', ENT_QUOTES, 'UTF-8') ?></td>
                                     <td><?= htmlspecialchars($p->ekip ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
-                                    <td class="small text-secondary"><?= htmlspecialchars($p->job ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><span class="text-secondary"><?= htmlspecialchars($p->job ?? '-', ENT_QUOTES, 'UTF-8') ?></span></td>
                                     <td class="text-center">
-                                        <a href="index.php?p=payroll/pay-slip&id=<?= Security::encrypt($p->id) ?>&month=<?= Security::encrypt($month) ?>&year=<?= Security::encrypt($year) ?>" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary" title="Pusula Önizle">
-                                            <i class="ti ti-eye"></i>
+                                        <a href="/hesap-pusulasi?id=<?= Security::encrypt($p->id) ?>&month=<?= Security::encrypt($month) ?>&year=<?= Security::encrypt($year) ?>" target="_blank" class="btn btn-sm btn-icon btn-ghost-primary" style="width: 28px; height: 28px;" title="Pusula Önizle">
+                                            <i class="ti ti-eye" style="font-size: 15px;"></i>
                                         </a>
                                     </td>
                                 </tr>
@@ -678,7 +883,7 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     }
                     
                     var ids = selected.join(',');
-                    var url = 'index.php?p=raporlar/bordro-yazdir&ids=' + encodeURIComponent(ids) + '&month=<?= Security::encrypt($month) ?>&year=<?= Security::encrypt($year) ?>';
+                    var url = '/bordro-yazdir?ids=' + encodeURIComponent(ids) + '&month=<?= Security::encrypt($month) ?>&year=<?= Security::encrypt($year) ?>';
                     window.open(url, '_blank');
                 });
             }
@@ -690,7 +895,6 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
          KESİNTİ DETAY RAPORU
          ========================================== -->
     <?php
-    require_once 'Model/DefinesModel.php';
     $definesObj = new DefinesModel();
     $db = $personObj->connect();
     $kesinti_ids = $definesObj->getExpenseTypes(2);
@@ -717,44 +921,131 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     $kesintiData = $stmt->fetchAll(PDO::FETCH_OBJ);
 
     $total_kesinti_tutari = 0;
+    $kesintiPersons = [];
     foreach ($kesintiData as $k) {
         $total_kesinti_tutari += (float) ($k->tutar ?? 0);
+        $kesintiPersons[$k->full_name] = true;
     }
     $total_kesinti_adedi = count($kesintiData);
+    $total_kesinti_person_count = count($kesintiPersons);
     ?>
 
-    <!-- KPI Özet Metrik Kartları -->
-    <div class="row row-deck row-cards mb-3 g-2">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-danger-lt text-danger avatar avatar-md rounded-2">
-                                <i class="ti ti-cash-off fs-2"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= Helper::formattedMoney($total_kesinti_tutari) ?></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Toplam Kesinti Tutarı</div>
+    <!-- Page Header (Standart Başlık Alanı) -->
+    <div class="page-header d-print-none mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-danger-lt text-danger shadow-sm" style="width: 44px; height: 44px;">
+                        <i class="ti ti-scissors" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                            Kesinti Detay Raporu
+                        </h2>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Personel bazlı avans, icra, nafaka ve özel kesinti hareketlerinin dökümü
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- Header Actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a href="/raporlar" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
+                    </a>
+                    <a href="pages/raporlar/kesinti-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-sm btn-outline-secondary" data-tooltip="Excel Dosyası İndir" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-file-excel text-success me-1"></i> Excel
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print();" style="height: 32px; padding: 4px 12px; font-size: 12.5px;">
+                        <i class="ti ti-printer me-1"></i> Yazdır
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card card-sm shadow-none border">
-                <div class="card-body py-2 px-3">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-warning-lt text-warning avatar avatar-md rounded-2">
-                                <i class="ti ti-list-check fs-2"></i>
-                            </span>
+    </div>
+
+    <!-- Dörtlü KPI / İstatistik Özet Kartları -->
+    <div class="row row-cards g-3 mb-3">
+        <!-- Kart 1: Toplam Kesinti Tutarı -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM KESİNTİ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-danger-lt text-danger" style="width: 32px; height: 32px;">
+                            <i class="ti ti-cash-off" style="font-size: 18px;"></i>
                         </div>
-                        <div class="col">
-                            <div class="fw-bold fs-3 text-dark"><?= $total_kesinti_adedi ?></div>
-                            <div class="text-muted small" style="font-size: 11.5px;">Toplam Kesinti Kaydı</div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= Helper::formattedMoney($total_kesinti_tutari) ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Netten Kesilen Toplam</span>
+                        <span class="badge bg-danger-lt fw-semibold" style="font-size: 10px;">Kesintiler</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 2: Toplam Kesinti Kaydı -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KESİNTİ HAREKETİ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-warning-lt text-warning" style="width: 32px; height: 32px;">
+                            <i class="ti ti-list-check" style="font-size: 18px;"></i>
                         </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_kesinti_adedi, 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">İşlem / Kayıt Sayısı</span>
+                        <span class="badge bg-warning-lt fw-semibold" style="font-size: 10px;">Hareketler</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 3: Kesinti Yapılan Kişi Sayısı -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KESİNTİLİ PERSONEL</span>
+                        <div class="avatar avatar-sm rounded-2 bg-primary-lt text-primary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-users" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($total_kesinti_person_count, 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Kesinti Uygulanan Kişi</span>
+                        <span class="badge bg-primary-lt fw-semibold" style="font-size: 10px;">Personel</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 4: Dönem Bilgisi -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">DÖNEM BİLGİSİ</span>
+                        <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-calendar" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Kesinti Takip Dönemi</span>
+                        <span class="badge bg-teal-lt fw-semibold" style="font-size: 10px;">Maaş Ayı</span>
                     </div>
                 </div>
             </div>
@@ -762,33 +1053,34 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     </div>
 
     <!-- Tablo Kartı -->
-    <div class="row row-deck row-cards">
+    <div class="row row-cards">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 12px;">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="card-header-icon">
-                            <i class="ti ti-scissors"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-scissors" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
-                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Kesinti Detay Raporu</h4>
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Kesinti Hareketleri Tablosu</h4>
                                 <span class="badge bg-danger-lt"><?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Personel bazlı avans, icra, nafaka ve özel kesinti hareketleri</p>
                         </div>
                     </div>
 
+                    <!-- Fast Instant Search -->
                     <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
-                        <a href="index.php?p=raporlar/list" class="btn btn-sm btn-outline-secondary" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-arrow-left me-1"></i> Raporlara Dön
-                        </a>
-                        <a href="pages/raporlar/kesinti-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-sm btn-outline-secondary" data-tooltip="Excel Dosyası İndir" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-file-excel text-success me-1"></i> Excel
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print();" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                            <i class="ti ti-printer me-1"></i> Yazdır
-                        </button>
+                        <div class="input-icon" style="min-width: 170px;">
+                            <span class="input-icon-addon">
+                                <i class="ti ti-search text-muted"></i>
+                            </span>
+                            <input type="text" id="kesinti-fast-search" class="form-control form-control-sm" placeholder="Arayın..." autocomplete="off" style="height: 32px; font-size: 13px;">
+                            <button type="button" id="kesinti-search-clear" class="btn btn-sm btn-icon btn-ghost-secondary d-none position-absolute end-0 top-0" style="height: 32px; width: 32px;" aria-label="Aramayı temizle" title="Aramayı temizle">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -809,16 +1101,16 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <span class="avatar avatar-xs rounded-circle bg-danger-lt text-danger fw-bold me-2" style="font-size: 11px;">
+                                        <span class="avatar avatar-xs rounded-circle bg-danger-lt text-danger fw-bold me-2" style="font-size: 12px;">
                                             <?= htmlspecialchars(mb_substr($k->full_name, 0, 1, 'UTF-8'), ENT_QUOTES, 'UTF-8') ?>
                                         </span>
                                         <span class="fw-semibold text-dark"><?= htmlspecialchars($k->full_name, ENT_QUOTES, 'UTF-8') ?></span>
                                     </div>
                                 </td>
                                 <td><?= date('d.m.Y', strtotime($k->gun)) ?></td>
-                                <td><span class="badge bg-light text-dark"><?= htmlspecialchars($k->kategori_adi ?? 'Diğer', ENT_QUOTES, 'UTF-8') ?></span></td>
-                                <td class="small text-secondary"><?= htmlspecialchars($k->turu, ENT_QUOTES, 'UTF-8') ?></td>
-                                <td class="small text-muted"><?= htmlspecialchars($k->aciklama ?: '-', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><span class="badge bg-light text-dark fw-semibold"><?= htmlspecialchars($k->kategori_adi ?? 'Diğer', ENT_QUOTES, 'UTF-8') ?></span></td>
+                                <td><span class="text-secondary"><?= htmlspecialchars($k->turu, ENT_QUOTES, 'UTF-8') ?></span></td>
+                                <td><span class="text-muted"><?= htmlspecialchars($k->aciklama ?: '-', ENT_QUOTES, 'UTF-8') ?></span></td>
                                 <td class="text-end fw-bold text-danger" data-order="<?= (float) $k->tutar ?>">-<?= Helper::formattedMoney($k->tutar) ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -833,17 +1125,144 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
     <!-- ==========================================
          RAPORLAR ANA SAYFA (DASHBOARD)
          ========================================== -->
-    <div class="row row-deck row-cards">
+    <?php
+    $db = $personObj->connect();
+    $activePersonsStmt = $db->prepare("SELECT COUNT(*) FROM persons WHERE firm_id = ? AND deleted_at IS NULL");
+    $activePersonsStmt->execute([$firm_id]);
+    $activePersonsCount = (int) $activePersonsStmt->fetchColumn();
+
+    $bordroPersons = $personObj->getPersonIdByFirmCurrentMonth($firm_id, $firstDayStr, $lastDayStr);
+    $totalBordroCount = count($bordroPersons);
+    ?>
+
+    <!-- Page Header (Standart Başlık Alanı) -->
+    <div class="page-header d-print-none mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-sm" style="width: 44px; height: 44px;">
+                        <i class="ti ti-chart-dots-3" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                            Raporlar & Analiz Merkezi
+                        </h2>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Maaş, bordro, puantaj, banka ödeme ve kesinti analiz raporları
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Header Actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge bg-blue-lt px-3 py-2 fw-semibold" style="font-size: 12.5px;">
+                        <i class="ti ti-calendar me-1"></i> <?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dörtlü KPI / İstatistik Özet Kartları -->
+    <div class="row row-cards g-3 mb-3">
+        <!-- Kart 1: Kayıtlı Personel -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">KAYITLI PERSONEL</span>
+                        <div class="avatar avatar-sm rounded-2 bg-secondary-lt text-secondary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-users" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($activePersonsCount, 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Firma Personel Sayısı</span>
+                        <span class="badge bg-secondary-lt fw-semibold" style="font-size: 10px;">Aktif Kadro</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 2: Dönem Bordro Sayısı -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">DÖNEM BORDROLARI</span>
+                        <div class="avatar avatar-sm rounded-2 bg-primary-lt text-primary" style="width: 32px; height: 32px;">
+                            <i class="ti ti-file-invoice" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        <?= number_format($totalBordroCount, 0, ',', '.') ?>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Hesaplanan Bordro</span>
+                        <span class="badge bg-primary-lt fw-semibold" style="font-size: 10px;"><?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 3: Aktif Modüller -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">HAZIR RAPORLAR</span>
+                        <div class="avatar avatar-sm rounded-2 bg-success-lt text-success" style="width: 32px; height: 32px;">
+                            <i class="ti ti-chart-bar" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        4 Modül
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Puantaj, Banka, Bordro, Kesinti</span>
+                        <span class="badge bg-success-lt fw-semibold" style="font-size: 10px;">Kullanıma Hazır</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kart 4: Dışa Aktarma -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card card-sm border" style="border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">DIŞA AKTARMA</span>
+                        <div class="avatar avatar-sm rounded-2 bg-info-lt text-info" style="width: 32px; height: 32px;">
+                            <i class="ti ti-download" style="font-size: 18px;"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                        Excel & PDF
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
+                        <span class="text-muted" style="font-size: 11.5px;">Tek Tıkla İndirme</span>
+                        <span class="badge bg-info-lt fw-semibold" style="font-size: 10px;">Hızlı Çıktı</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modüller Ana Kartı -->
+    <div class="row row-cards">
         <div class="col-12">
-            <div class="card">
+            <div class="card" style="border-radius: 12px;">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="card-header-icon">
-                            <i class="ti ti-chart-dots-3"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-layout-grid" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
-                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Raporlar & Analiz Merkezi</h4>
+                                <h4 class="card-title mb-0 fw-bold" style="font-size: 15px; letter-spacing: -0.2px;">Rapor Modülleri</h4>
                                 <span class="badge bg-blue-lt"><?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <p class="text-muted mb-0 font-11" style="font-size: 11.5px; line-height: 1.2;">Maaş, bordro, puantaj, banka ödeme ve kesinti analiz raporları</p>
@@ -855,16 +1274,16 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     <!-- Modül Kartları Izgarası -->
                     <div class="row row-cards g-3">
                         <div class="col-xl-4 col-md-6">
-                            <?php renderReportCard("Puantaj İcmal Raporu", "Toplam çalışma günleri, saatlik çalışma, fazla mesai, izin ve devamsızlık dökümü.", "ti-clock-check", "bg-purple-lt text-purple", "index.php?p=raporlar/list&report=puantaj&year=$year&months=$month", true) ?>
+                            <?php renderReportCard("Puantaj İcmal Raporu", "Toplam çalışma günleri, saatlik çalışma, fazla mesai, izin ve devamsızlık dökümü.", "ti-clock-check", "bg-purple-lt text-purple", "/raporlar?report=puantaj&year=$year&months=$month", true) ?>
                         </div>
                         <div class="col-xl-4 col-md-6">
-                            <?php renderReportCard("Banka Ödeme Listesi", "Bankaya gönderilecek personellere ait IBAN ve net maaş hakediş tutarları listesi.", "ti-building-bank", "bg-info-lt text-info", "index.php?p=raporlar/list&report=banka&year=$year&months=$month", true) ?>
+                            <?php renderReportCard("Banka Ödeme Listesi", "Bankaya gönderilecek personellere ait IBAN ve net maaş hakediş tutarları listesi.", "ti-building-bank", "bg-info-lt text-info", "/raporlar?report=banka&year=$year&months=$month", true) ?>
                         </div>
                         <div class="col-xl-4 col-md-6">
-                            <?php renderReportCard("Bordro Yazdırma", "Personel bazlı detaylı ücret pusulalarını görüntüleyin ve toplu olarak yazdırın.", "ti-file-invoice", "bg-teal-lt text-teal", "index.php?p=raporlar/list&report=bordro&year=$year&months=$month", true) ?>
+                            <?php renderReportCard("Bordro Yazdırma", "Personel bazlı detaylı ücret pusulalarını görüntüleyin ve toplu olarak yazdırın.", "ti-file-invoice", "bg-teal-lt text-teal", "/raporlar?report=bordro&year=$year&months=$month", true) ?>
                         </div>
                         <div class="col-xl-4 col-md-6">
-                            <?php renderReportCard("Kesinti Raporu", "Personel bazlı avans, icra, nafaka ve diğer kesinti hareketlerinin detaylı dökümü.", "ti-scissors", "bg-danger-lt text-danger", "index.php?p=raporlar/list&report=kesinti&year=$year&months=$month", true) ?>
+                            <?php renderReportCard("Kesinti Raporu", "Personel bazlı avans, icra, nafaka ve diğer kesinti hareketlerinin detaylı dökümü.", "ti-scissors", "bg-danger-lt text-danger", "/raporlar?report=kesinti&year=$year&months=$month", true) ?>
                         </div>
                         <div class="col-xl-4 col-md-6">
                             <?php renderReportCard("Maaş İcmal Raporu", "Dönem bazlı personel maaş özet raporu. Brüt hak ediş, kesintiler ve net bilgileri.", "ti-chart-bar", "bg-dark-lt text-dark") ?>
@@ -884,31 +1303,31 @@ function renderReportCard($title, $desc, $icon, $colorClass, $viewUrl = "#", $is
                     </div>
 
                     <!-- Hızlı İndirme Bölümü -->
-                    <div class="card shadow-none border mt-4">
+                    <div class="card border mt-4" style="border-radius: 10px;">
                         <div class="card-header bg-light py-2 px-3 border-bottom">
-                            <h4 class="card-title text-muted mb-0 small fw-bold" style="font-size: 12px;">
+                            <h4 class="card-title text-muted mb-0 small fw-bold" style="font-size: 12.5px;">
                                 <i class="ti ti-download me-1"></i> Tek Tıkla Hızlı Dışa Aktarma (<?= htmlspecialchars($periodTitle, ENT_QUOTES, 'UTF-8') ?>)
                             </h4>
                         </div>
                         <div class="card-body p-3">
                             <div class="row g-2">
                                 <div class="col-md-3 col-6">
-                                    <a href="pages/raporlar/puantaj-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-purple w-100 text-nowrap" style="height: 34px; font-size: 12.5px;">
+                                    <a href="pages/raporlar/puantaj-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-purple w-100 text-nowrap fw-semibold" style="height: 36px; font-size: 13px;">
                                         <i class="ti ti-file-spreadsheet me-1"></i> Puantaj İcmal (Excel)
                                     </a>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <a href="pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-info w-100 text-nowrap" style="height: 34px; font-size: 12.5px;">
+                                    <a href="pages/raporlar/bank-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-info w-100 text-nowrap fw-semibold" style="height: 36px; font-size: 13px;">
                                         <i class="ti ti-building-bank me-1"></i> Banka Listesi (Excel)
                                     </a>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <a href="pages/raporlar/kesinti-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-danger w-100 text-nowrap" style="height: 34px; font-size: 12.5px;">
+                                    <a href="pages/raporlar/kesinti-list-excel.php?month=<?= $month ?>&year=<?= $year ?>" class="btn btn-outline-danger w-100 text-nowrap fw-semibold" style="height: 36px; font-size: 13px;">
                                         <i class="ti ti-scissors me-1"></i> Kesinti Listesi (Excel)
                                     </a>
                                 </div>
                                 <div class="col-md-3 col-6">
-                                    <a href="index.php?p=raporlar/list&report=bordro&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-outline-dark w-100 text-nowrap" style="height: 34px; font-size: 12.5px;">
+                                    <a href="/raporlar?report=bordro&year=<?= $year ?>&months=<?= $month ?>" class="btn btn-outline-dark w-100 text-nowrap fw-semibold" style="height: 36px; font-size: 13px;">
                                         <i class="ti ti-printer me-1"></i> Bordroları Yazdır
                                     </a>
                                 </div>
@@ -974,6 +1393,7 @@ table.data-table thead th:last-child {
 table.data-table tbody td {
     padding: 8px 12px !important;
     font-size: 13.5px !important;
+    font-weight: 500 !important;
     color: #1e293b !important;
     vertical-align: middle !important;
     border-bottom: 1px solid #e2e8f0 !important;
@@ -993,22 +1413,21 @@ table.data-table tbody tr:hover td {
 
 /* Standart Card Header İkon Kutusu */
 .card-header-icon {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
     background: rgba(32, 107, 196, 0.1);
     color: var(--tblr-primary, #206bc4);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     flex-shrink: 0;
 }
 
 /* Rapor Kartları */
 .report-card {
     transition: all 0.2s ease-in-out;
-    border-radius: 10px !important;
 }
 .report-card:hover {
     transform: translateY(-3px);
@@ -1039,23 +1458,85 @@ table.data-table tbody tr:hover td {
 $(document).ready(function() {
     // Bordro Selection Table
     if ($("#bordroSelectionTable").length > 0 && typeof window.createDataTable === "function") {
-        window.createDataTable("#bordroSelectionTable", {
+        var bordroDt = window.createDataTable("#bordroSelectionTable", {
             pageLength: 25,
             order: [[1, "asc"]],
             columnDefs: [
                 { targets: [0, 5], orderable: false, searchable: false }
             ]
         });
+
+        $('#bordro-fast-search').on('keyup', function() {
+            bordroDt.search(this.value).draw();
+        });
+        $('#bordro-search-clear').on('click', function() {
+            $('#bordro-fast-search').val('');
+            bordroDt.search('').draw();
+            $(this).addClass('d-none');
+        });
+        $('#bordro-fast-search').on('input', function() {
+            $('#bordro-search-clear').toggleClass('d-none', !this.value);
+        });
     }
 
     // Kesinti Data Table
     if ($("#kesintiDataTable").length > 0 && typeof window.createDataTable === "function") {
-        window.createDataTable("#kesintiDataTable", {
+        var kesintiDt = window.createDataTable("#kesintiDataTable", {
             pageLength: 25,
             order: [[1, "desc"]],
             columnDefs: [
                 { targets: 5, className: "text-end" }
             ]
+        });
+
+        $('#kesinti-fast-search').on('keyup', function() {
+            kesintiDt.search(this.value).draw();
+        });
+        $('#kesinti-search-clear').on('click', function() {
+            $('#kesinti-fast-search').val('');
+            kesintiDt.search('').draw();
+            $(this).addClass('d-none');
+        });
+        $('#kesinti-fast-search').on('input', function() {
+            $('#kesinti-search-clear').toggleClass('d-none', !this.value);
+        });
+    }
+
+    // Puantaj Fast Search Binding
+    if ($("#puantajDataTable").length > 0) {
+        $('#puantaj-fast-search').on('keyup', function() {
+            if ($.fn.dataTable.isDataTable('#puantajDataTable')) {
+                $('#puantajDataTable').DataTable().search(this.value).draw();
+            }
+        });
+        $('#puantaj-search-clear').on('click', function() {
+            $('#puantaj-fast-search').val('');
+            if ($.fn.dataTable.isDataTable('#puantajDataTable')) {
+                $('#puantajDataTable').DataTable().search('').draw();
+            }
+            $(this).addClass('d-none');
+        });
+        $('#puantaj-fast-search').on('input', function() {
+            $('#puantaj-search-clear').toggleClass('d-none', !this.value);
+        });
+    }
+
+    // Banka Fast Search Binding
+    if ($("#bankDataTable").length > 0) {
+        $('#bank-fast-search').on('keyup', function() {
+            if ($.fn.dataTable.isDataTable('#bankDataTable')) {
+                $('#bankDataTable').DataTable().search(this.value).draw();
+            }
+        });
+        $('#bank-search-clear').on('click', function() {
+            $('#bank-fast-search').val('');
+            if ($.fn.dataTable.isDataTable('#bankDataTable')) {
+                $('#bankDataTable').DataTable().search('').draw();
+            }
+            $(this).addClass('d-none');
+        });
+        $('#bank-fast-search').on('input', function() {
+            $('#bank-search-clear').toggleClass('d-none', !this.value);
         });
     }
 });

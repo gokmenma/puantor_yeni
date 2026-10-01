@@ -517,7 +517,7 @@ $active_page_content = $tab_page_content[$active_tab];
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="ti ti-filter me-1"></i> Filtrele
                         </button>
-                        <a href="index.php?p=activities/index&amp;tab=<?php echo urlencode($active_tab); ?>" class="btn btn-outline-secondary" title="Sıfırla">
+                        <a href="/sistem-aktiviteleri?tab=<?php echo urlencode($active_tab); ?>" class="btn btn-outline-secondary" title="Sıfırla">
                             <i class="ti ti-refresh"></i>
                         </a>
                     </div>

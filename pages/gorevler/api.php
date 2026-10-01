@@ -445,7 +445,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $payload = [
                         'title' => '📋 Görev Hatırlatması',
                         'body' => $gorev->baslik . $saatStr . ' [' . $gorev->liste_adi . ']',
-                        'url' => 'index.php?p=gorevler/list'
+                        'url' => '/gorevler'
                     ];
 
                     // Görev hatırlatması için mail verisi

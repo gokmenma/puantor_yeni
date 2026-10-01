@@ -31,7 +31,7 @@ $pendingRequests = $advanceModel->getPendingRequestsByFirm($firm_id);
             </div>
             <span class="mac-title">BEKLEYEN AVANS TALEPLERİ</span>
             <div class="ms-auto d-flex align-items-center">
-                <a href="index.php?p=avans-talepleri/list" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Tümünü Gör</a>
+                <a href="/avans-talepleri" class="btn btn-sm btn-link me-2" style="font-size:10px; padding:0;">Tümünü Gör</a>
                 <i class="ti ti-grid-dots drag-handle text-muted"></i>
             </div>
         </div>

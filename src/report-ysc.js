@@ -58,7 +58,7 @@ $(document).on("click", "#ysc_rapor_kaydet", function () {
           title: "Başarılı",
           text: data.message,
         }).then((result) => {
-          window.location = "index.php?p=reports/ysc&id=" + data.lastid;
+          window.location = "/raporlar";
         });
         // $("#report_id").val(data.lastid);
       } else {

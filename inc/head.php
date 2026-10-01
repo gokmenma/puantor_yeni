@@ -1,7 +1,7 @@
 <?php
-$initThemePreset = $_COOKIE['app_theme_preset'] ?? 'kode';
-$initThemeFont = $_COOKIE['app_theme_font'] ?? 'inter';
-$initThemeWeight = $_COOKIE['app_theme_weight'] ?? '400';
+$initThemePreset = $_COOKIE['app_theme_preset'] ?? 'ersan-gold';
+$initThemeFont = $_COOKIE['app_theme_font'] ?? 'outfit';
+$initThemeWeight = $_COOKIE['app_theme_weight'] ?? '500';
 $initThemeRadius = $_COOKIE['app_theme_radius'] ?? 'default';
 $initTableDensity = $_COOKIE['app_table_density'] ?? 'normal';
 $initFontScale = $_COOKIE['app_font_scale'] ?? '100';
@@ -16,6 +16,7 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
 <html lang="tr" data-theme-preset="<?php echo htmlspecialchars($initThemePreset, ENT_QUOTES, 'UTF-8'); ?>" data-theme-font="<?php echo htmlspecialchars($initThemeFont, ENT_QUOTES, 'UTF-8'); ?>" data-theme-weight="<?php echo htmlspecialchars($initThemeWeight, ENT_QUOTES, 'UTF-8'); ?>" data-theme-radius="<?php echo htmlspecialchars($initThemeRadius, ENT_QUOTES, 'UTF-8'); ?>" data-table-density="<?php echo htmlspecialchars($initTableDensity, ENT_QUOTES, 'UTF-8'); ?>" data-font-size-scale="<?php echo htmlspecialchars($initFontScale, ENT_QUOTES, 'UTF-8'); ?>" data-icon-stroke="<?php echo htmlspecialchars($initIconStroke, ENT_QUOTES, 'UTF-8'); ?>" data-topbar-theme="<?php echo htmlspecialchars($initTopbarTheme, ENT_QUOTES, 'UTF-8'); ?>" data-sidebar-theme="<?php echo htmlspecialchars($initSidebarTheme, ENT_QUOTES, 'UTF-8'); ?>" data-sidebar-active="<?php echo htmlspecialchars($initSidebarActive, ENT_QUOTES, 'UTF-8'); ?>" data-bs-theme="<?php echo htmlspecialchars($initBsTheme, ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
+  <base href="/">
   <meta name="csrf-token" content="<?php echo htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -29,7 +30,7 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
   ?>
   <title><?php echo $title; ?></title>
 
-  <link rel="icon" href="./static/favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
 
   <!-- Meta Açıklama -->
   <meta name="description"
@@ -40,12 +41,12 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
     content="puantaj yazılımı, maaş hesaplama aracı, proje takibi, gelir gider takibi, personel yönetimi, işletme yönetim yazılımı, verimli iş yönetimi" />
 
   <!-- Early Theme Initialization (Zero Flicker) -->
-  <script src="./dist/js/theme-manager.js?v=<?php echo filemtime("./dist/js/theme-manager.js"); ?>"></script>
+  <script src="/dist/js/theme-manager.js?v=<?php echo file_exists(ROOT . "/dist/js/theme-manager.js") ? filemtime(ROOT . "/dist/js/theme-manager.js") : time(); ?>"></script>
   <script>
     (function() {
       try {
         var html = document.documentElement;
-        var savedPreset = localStorage.getItem('app_theme_preset') || 'kode';
+        var savedPreset = localStorage.getItem('app_theme_preset') || 'ersan-gold';
         html.setAttribute('data-theme-preset', savedPreset);
 
         var defaultMap = (window.presetTopbarSidebarMap && window.presetTopbarSidebarMap[savedPreset]) ? window.presetTopbarSidebarMap[savedPreset] : { topbar: 'beyaz', sidebar: 'klasik-koyu' };
@@ -63,10 +64,10 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
           html.style.setProperty('--sidebar-active-color', savedSidebarActiveColor);
         }
 
-        var savedFont = localStorage.getItem('app_theme_font') || ((window.themePresetFonts && window.themePresetFonts[savedPreset]) ? window.themePresetFonts[savedPreset] : 'inter');
+        var savedFont = localStorage.getItem('app_theme_font') || ((window.themePresetFonts && window.themePresetFonts[savedPreset]) ? window.themePresetFonts[savedPreset] : 'outfit');
         html.setAttribute('data-theme-font', savedFont);
 
-        var savedWeight = localStorage.getItem('app_theme_weight') || '400';
+        var savedWeight = localStorage.getItem('app_theme_weight') || ((window.themePresetWeights && window.themePresetWeights[savedPreset]) ? window.themePresetWeights[savedPreset] : '500');
         html.setAttribute('data-theme-weight', savedWeight);
 
         var savedRadius = localStorage.getItem('app_theme_radius') || 'default';
@@ -118,13 +119,13 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
-  <link href="./dist/css/style.css?v=<?php echo filemtime("./dist/css/style.css"); ?>" rel="stylesheet" />
-  <link href="./dist/css/menu.css?v=<?php echo filemtime("./dist/css/menu.css"); ?>" rel="stylesheet" />
-  <link href="./dist/css/premium-theme.css?v=<?php echo filemtime("./dist/css/premium-theme.css"); ?>" rel="stylesheet" />
-  <link href="./dist/libs/select2/css/select2.min.css?v=<?php echo filemtime("./dist/libs/select2/css/select2.min.css"); ?>" rel="stylesheet" />
+  <link href="/dist/css/style.css?v=<?php echo file_exists(ROOT . "/dist/css/style.css") ? filemtime(ROOT . "/dist/css/style.css") : time(); ?>" rel="stylesheet" />
+  <link href="/dist/css/menu.css?v=<?php echo file_exists(ROOT . "/dist/css/menu.css") ? filemtime(ROOT . "/dist/css/menu.css") : time(); ?>" rel="stylesheet" />
+  <link href="/dist/css/premium-theme.css?v=<?php echo file_exists(ROOT . "/dist/css/premium-theme.css") ? filemtime(ROOT . "/dist/css/premium-theme.css") : time(); ?>" rel="stylesheet" />
+  <link href="/dist/libs/select2/css/select2.min.css?v=<?php echo file_exists(ROOT . "/dist/libs/select2/css/select2.min.css") ? filemtime(ROOT . "/dist/libs/select2/css/select2.min.css") : time(); ?>" rel="stylesheet" />
 
-  <link href="./dist/css/flatpickr.min.css?v=<?php echo filemtime("./dist/css/flatpickr.min.css"); ?>" rel="stylesheet" />
-  <link href="./dist/css/flatpickr.monthSelect.css?v=<?php echo filemtime("./dist/css/flatpickr.monthSelect.css"); ?>" rel="stylesheet" />
+  <link href="/dist/css/flatpickr.min.css?v=<?php echo file_exists(ROOT . "/dist/css/flatpickr.min.css") ? filemtime(ROOT . "/dist/css/flatpickr.min.css") : time(); ?>" rel="stylesheet" />
+  <link href="/dist/css/flatpickr.monthSelect.css?v=<?php echo file_exists(ROOT . "/dist/css/flatpickr.monthSelect.css") ? filemtime(ROOT . "/dist/css/flatpickr.monthSelect.css") : time(); ?>" rel="stylesheet" />
 
   <!-- jQuery UI CSS -->
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -145,7 +146,7 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
     || $page == "duyurular/list"
     || $page == "mail-islemleri/index"
   ) {
-    echo '<link href="./dist/libs/summernote/summernote-lite.min.css" rel="stylesheet">';
+    echo '<link href="/dist/libs/summernote/summernote-lite.min.css" rel="stylesheet">';
   }
 
   if (
@@ -168,11 +169,11 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
     $page == 'defines/icra-daireleri/list' || $page == 'persons/icra-list' ||
     strpos($page, 'kvkk/') === 0 || $page == 'kvkk/index' || $page == 'kvkk/ihlaller' || $page == 'kvkk/talepler'
   ) {
-    echo '<link href="./dist/libs/datatable/datatables.min.css" rel="stylesheet" />';
+    echo '<link href="/dist/libs/datatable/datatables.min.css" rel="stylesheet" />';
   }
 
   if ($page == "supports/ticket-view" || $page == "supports/admin-ticket-view") {
-    echo '<link href="./dist/css/tickets.css" rel="stylesheet" />';
+    echo '<link href="/dist/css/tickets.css" rel="stylesheet" />';
   }
 
   if ($page == 'projects/manage' || $page == 'home') {
@@ -231,5 +232,5 @@ $initBsTheme = in_array($initThemePreset, $darkPresetsList, true) ? 'dark' : ($_
       height: 100% !important;
     }
   </style>
-  <script src="./dist/js/jquery.3.7.1.min.js"></script>
+  <script src="/dist/js/jquery.3.7.1.min.js"></script>
 </head>

@@ -7,240 +7,308 @@ $companyHelper = new CompanyHelper();
 $projectHelper = new ProjectHelper();
 $cityHelper = new Cities();
 ?>
-<div class="modal modal-blur fade" id="projectModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal modal-blur fade" id="projectModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content shadow-lg border-0">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fs-3 fw-bold text-primary" id="projectModalTitle">Yeni Proje Ekle</h5>
+        <div class="modal-content shadow-lg border-0" style="border-radius: 14px; overflow: hidden;">
+            
+            <!-- Modal Header -->
+            <div class="modal-header py-3 px-4 bg-white border-bottom align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 bg-primary-lt text-primary shadow-none" style="width: 42px; height: 42px;">
+                        <i class="ti ti-building-community" style="font-size: 22px;"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title fw-bold text-dark mb-0" id="projectModalTitle" style="font-size: 1.15rem; letter-spacing: -0.2px;">
+                            Yeni Proje Ekle
+                        </h4>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12px;">
+                            Proje genel bilgileri, tarih, bütçe, lokasyon ve ek ayarlar
+                        </div>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <form id="projectForm" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="saveProject">
                 <input type="hidden" name="id" id="modal_project_id" value="0">
-                <div class="modal-body pt-2">
-                    
-                    <!-- Bölüm 1: Temel Proje Bilgileri -->
-                    <div class="mb-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-primary-lt p-2 rounded-2 me-2">
-                                <i class="ti ti-info-circle text-primary fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Temel Proje Bilgileri</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label required">Proje Türü</label>
-                                <div class="form-selectgroup w-100">
-                                    <label class="form-selectgroup-item flex-fill">
-                                        <input type="radio" name="project_type" value="1" class="form-selectgroup-input" checked>
-                                        <span class="form-selectgroup-label py-2">
-                                            <i class="ti ti-arrow-down-left text-success me-1"></i> Alınan
+                
+                <!-- Nav Tabs Navigation -->
+                <div class="px-4 pt-3 pb-0 bg-light-subtle border-bottom">
+                    <ul class="nav nav-tabs nav-tabs-alt border-0 gap-2" id="projectModalTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-2 px-3 fw-semibold d-flex align-items-center gap-2" id="tab-project-general-btn" data-bs-toggle="tab" data-bs-target="#tab-project-general" type="button" role="tab" aria-selected="true">
+                                <i class="ti ti-file-analytics text-primary" style="font-size: 17px;"></i>
+                                <span>Genel & Finansal</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2 px-3 fw-semibold d-flex align-items-center gap-2" id="tab-project-location-btn" data-bs-toggle="tab" data-bs-target="#tab-project-location" type="button" role="tab" aria-selected="false">
+                                <i class="ti ti-map-pin text-warning" style="font-size: 17px;"></i>
+                                <span>Konum & İletişim</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2 px-3 fw-semibold d-flex align-items-center gap-2" id="tab-project-extra-btn" data-bs-toggle="tab" data-bs-target="#tab-project-extra" type="button" role="tab" aria-selected="false">
+                                <i class="ti ti-adjustments-horizontal text-info" style="font-size: 17px;"></i>
+                                <span>Notlar & Ayarlar</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Modal Body with Tab Panes -->
+                <div class="modal-body p-4 bg-white" style="min-height: 380px;">
+                    <div class="tab-content" id="projectModalTabContent">
+                        
+                        <!-- TAB 1: Genel & Finansal Bilgiler -->
+                        <div class="tab-pane fade show active" id="tab-project-general" role="tabpanel" aria-labelledby="tab-project-general-btn">
+                            <div class="row g-3">
+                                <!-- Proje Türü -->
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">Proje Türü</label>
+                                    <div class="form-selectgroup w-100">
+                                        <label class="form-selectgroup-item flex-fill">
+                                            <input type="radio" name="project_type" value="1" class="form-selectgroup-input" checked>
+                                            <span class="form-selectgroup-label py-2 d-flex align-items-center justify-content-center gap-1.5">
+                                                <i class="ti ti-arrow-down-left text-success" style="font-size: 16px;"></i>
+                                                <span class="fw-semibold">Alınan Proje</span>
+                                            </span>
+                                        </label>
+                                        <label class="form-selectgroup-item flex-fill">
+                                            <input type="radio" name="project_type" value="2" class="form-selectgroup-input">
+                                            <span class="form-selectgroup-label py-2 d-flex align-items-center justify-content-center gap-1.5">
+                                                <i class="ti ti-arrow-up-right text-danger" style="font-size: 16px;"></i>
+                                                <span class="fw-semibold">Verilen Proje</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Proje Durumu -->
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">Proje Durumu</label>
+                                    <?php echo $projectHelper->projectStatusSelect("project_status", ''); ?>
+                                </div>
+
+                                <!-- Proje Adı -->
+                                <div class="col-md-6">
+                                    <label class="form-label required fw-semibold" style="font-size: 13px;">Proje Adı</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <i class="ti ti-building text-muted"></i>
                                         </span>
-                                    </label>
-                                    <label class="form-selectgroup-item flex-fill">
-                                        <input type="radio" name="project_type" value="2" class="form-selectgroup-input">
-                                        <span class="form-selectgroup-label py-2">
-                                            <i class="ti ti-arrow-up-right text-danger me-1"></i> Verilen
+                                        <input type="text" class="form-control" name="project_name" placeholder="Örn: Kuzey Plaza İnşaatı" required autocomplete="off">
+                                    </div>
+                                </div>
+
+                                <!-- Yüklenici Firma -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Yüklenici / Müşteri Firması</label>
+                                    <?php echo $companyHelper->getCompanySelect("project_company", ''); ?>
+                                </div>
+
+                                <!-- Başlangıç Tarihi -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Başlangıç Tarihi</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <i class="ti ti-calendar text-muted"></i>
                                         </span>
-                                    </label>
+                                        <input type="text" class="form-control flatpickr" name="start_date" placeholder="GG.AA.YYYY" autocomplete="off">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label required">Proje Durumu</label>
-                                <?php echo $projectHelper->projectStatusSelect("project_status", ''); ?>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label required">Proje Adı</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-building"></i>
-                                    </span>
-                                    <input type="text" class="form-control" name="project_name" placeholder="Proje adını giriniz">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Yüklenici Firması</label>
-                                <?php echo $companyHelper->getCompanySelect("project_company", ''); ?>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Bölüm 2: Tarih ve Bütçe -->
-                    <div class="mb-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-success-lt p-2 rounded-2 me-2">
-                                <i class="ti ti-calendar-stats text-success fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Tarih ve Bütçe</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Başlangıç Tarihi</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-calendar"></i>
-                                    </span>
-                                    <input type="text" class="form-control flatpickr" name="start_date" placeholder="d.m.Y">
+                                <!-- Tahmini Bitiş Tarihi -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Tahmini Bitiş Tarihi</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <i class="ti ti-calendar-event text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control flatpickr" name="end_date" placeholder="GG.AA.YYYY" autocomplete="off">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Tahmini Bitiş Tarihi</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-calendar-event"></i>
-                                    </span>
-                                    <input type="text" class="form-control flatpickr" name="end_date" placeholder="d.m.Y">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Proje Bedeli</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-currency-lira"></i>
-                                    </span>
-                                    <input type="text" class="form-control money" name="budget" value="0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Bölüm 3: Konum ve İletişim -->
-                    <div class="mb-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-warning-lt p-2 rounded-2 me-2">
-                                <i class="ti ti-map-2 text-warning fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Konum ve İletişim</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Şehir</label>
-                                <?php echo $cityHelper->citySelect("project_city", '') ?>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">İlçe</label>
-                                <select class="form-control select2" name="project_town" id="modal_project_town" style="width:100%">
-                                    <option value="">İlçe seçiniz</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">E-posta</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-mail"></i>
-                                    </span>
-                                    <input type="email" class="form-control" name="email" placeholder="ornek@mail.com">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Telefon</label>
-                                <div class="input-icon">
-                                    <span class="input-icon-addon">
-                                        <i class="ti ti-phone"></i>
-                                    </span>
-                                    <input type="text" class="form-control" name="phone" placeholder="05XX XXX XX XX">
+                                <!-- Proje Bedeli -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Sözleşme / Proje Bedeli</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <i class="ti ti-currency-lira text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control money" name="budget" value="0" placeholder="0,00">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Bölüm 4: Ek Bilgiler -->
-                    <div>
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-info-lt p-2 rounded-2 me-2">
-                                <i class="ti ti-notes text-info fs-2"></i>
-                            </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Ek Bilgiler ve Dosyalar</h6>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Hesap Numarası / IBAN</label>
-                                <input type="text" class="form-control" name="account_number" placeholder="TR00...">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Sözleşme Dosyası</label>
-                                <input type="file" class="form-control" name="project_file">
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label">Açık Adres</label>
-                                <textarea class="form-control" name="address" rows="2" placeholder="Mahalle, sokak, no..."></textarea>
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label">Proje Notları</label>
-                                <textarea class="form-control" name="project" rows="2" placeholder="Proje hakkında önemli notlar..."></textarea>
-                            </div>
-                        </div>
-                    </div>
+                        <!-- TAB 2: Konum & İletişim -->
+                        <div class="tab-pane fade" id="tab-project-location" role="tabpanel" aria-labelledby="tab-project-location-btn">
+                            <div class="row g-3">
+                                <!-- Şehir -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Şehir / İl</label>
+                                    <?php echo $cityHelper->citySelect("project_city", '') ?>
+                                </div>
 
-                    <!-- Bölüm 5: Dashboard -->
-                    <div class="mt-3 pt-3 border-top">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-azure-lt p-2 rounded-2 me-2" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
-                                <i class="ti ti-layout-dashboard text-azure fs-2"></i>
+                                <!-- İlçe -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">İlçe</label>
+                                    <select class="form-control select2" name="project_town" id="modal_project_town" style="width:100%">
+                                        <option value="">İlçe seçiniz</option>
+                                    </select>
+                                </div>
+
+                                <!-- Telefon -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Şantiye / İletişim Telefonu</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <i class="ti ti-phone text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control" name="phone" placeholder="05XX XXX XX XX" autocomplete="off">
+                                    </div>
+                                </div>
+
+                                <!-- E-posta -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">İletişim E-posta</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <i class="ti ti-mail text-muted"></i>
+                                        </span>
+                                        <input type="email" class="form-control" name="email" placeholder="proje@firma.com" autocomplete="off">
+                                    </div>
+                                </div>
+
+                                <!-- Açık Adres -->
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Açık Adres / Lokasyon Tarifi</label>
+                                    <textarea class="form-control" name="address" rows="3" placeholder="Mahalle, cadde, sokak, kapı no, şantiye lokasyon bilgisi..."></textarea>
+                                </div>
                             </div>
-                            <h6 class="mb-0 fw-bold text-uppercase tracking-wider text-muted small">Dashboard Ayarları</h6>
                         </div>
-                        <label class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="is_home_gantt" id="modal_is_home_gantt" value="1">
-                            <span class="form-check-label">
-                                <i class="ti ti-chart-bar me-1 text-primary"></i>
-                                Ana sayfada varsayılan Gantt projesi olarak göster
-                            </span>
-                        </label>
-                        <div class="text-muted small mt-1 ms-4 ps-2">
-                            Firmada yalnızca bir proje varsayılan olarak ayarlanabilir; diğerleri otomatik temizlenir.
+
+                        <!-- TAB 3: Ek Bilgiler & Ayarlar -->
+                        <div class="tab-pane fade" id="tab-project-extra" role="tabpanel" aria-labelledby="tab-project-extra-btn">
+                            <div class="row g-3">
+                                <!-- IBAN -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Proje Banka Hesabı / IBAN</label>
+                                    <div class="input-icon">
+                                        <span class="input-icon-addon">
+                                            <i class="ti ti-credit-card text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control" name="account_number" placeholder="TR00 0000 0000 0000 0000 0000 00" autocomplete="off">
+                                    </div>
+                                </div>
+
+                                <!-- Sözleşme Dosyası -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Sözleşme / Teknik Dosya</label>
+                                    <input type="file" class="form-control" name="project_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
+                                </div>
+
+                                <!-- Proje Notları -->
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold" style="font-size: 13px;">Proje Notları & Açıklamalar</label>
+                                    <textarea class="form-control" name="project" rows="3" placeholder="Proje hakkında önemli hususlar, özel şartlar, taahhütler..."></textarea>
+                                </div>
+
+                                <!-- Dashboard Ayarı Kartı -->
+                                <div class="col-12">
+                                    <div class="card border bg-light-subtle shadow-none mb-0" style="border-radius: 10px;">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                                <div class="d-flex align-items-center gap-2.5">
+                                                    <div class="avatar avatar-sm rounded-2 bg-azure-lt text-azure">
+                                                        <i class="ti ti-layout-dashboard" style="font-size: 18px;"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold text-dark" style="font-size: 13px;">Dashboard Varsayılan Gantt Gösterimi</div>
+                                                        <div class="text-muted small" style="font-size: 11.5px;">Ana sayfada Gantt şemasında varsayılan olarak bu proje özetlensin mi?</div>
+                                                    </div>
+                                                </div>
+                                                <label class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" name="is_home_gantt" id="modal_is_home_gantt" value="1" style="cursor: pointer; width: 38px; height: 20px;">
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
                 </div>
-                <div class="modal-footer bg-light-lt border-0 rounded-bottom-4">
-                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
-                        <i class="ti ti-device-floppy icon me-2"></i>
-                        Değişiklikleri Kaydet
+
+                <!-- Modal Footer -->
+                <div class="modal-footer py-2.5 px-4 bg-light-subtle border-top d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-link link-secondary px-2 text-decoration-none" data-bs-dismiss="modal">
+                        Vazgeç
                     </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm fw-semibold" id="btnSaveProject">
+                            <i class="ti ti-device-floppy me-1.5" style="font-size: 16px;"></i>
+                            Değişiklikleri Kaydet
+                        </button>
+                    </div>
                 </div>
+
             </form>
         </div>
     </div>
 </div>
 
 <style>
-/* Modal tasarım iyileştirmeleri */
+/* Project Modal Özel Stilleri */
 #projectModal .modal-content {
-    border-radius: 1.25rem;
-    overflow: hidden;
+    border-radius: 14px;
 }
 #projectModal .form-label.required:after {
     content: " *";
     color: #d63f3f;
+    font-weight: bold;
 }
-#projectModal .bg-primary-lt, #projectModal .bg-success-lt, #projectModal .bg-warning-lt, #projectModal .bg-info-lt {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+#projectModal .nav-tabs-alt .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #64748b;
+    border-radius: 0;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+#projectModal .nav-tabs-alt .nav-link:hover {
+    color: #1e293b;
+    border-bottom-color: #cbd5e1;
+}
+#projectModal .nav-tabs-alt .nav-link.active {
+    color: #206bc4;
+    font-weight: 700 !important;
+    border-bottom-color: #206bc4;
+    background: transparent;
+}
+#projectModal .form-control:focus,
+#projectModal .form-select:focus {
+    border-color: #206bc4;
+    box-shadow: 0 0 0 0.2rem rgba(32, 107, 196, 0.15);
+}
+#projectModal .select2-container .select2-selection--single {
+    height: 36px !important;
+    padding: 4px 8px;
+    border: 1px solid #d9dbde;
+    border-radius: 6px;
+}
+#projectModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 26px !important;
+    color: #1e293b;
+    font-size: 13px;
+}
+#projectModal .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 34px !important;
 }
 #projectModal .input-icon-addon {
-    color: #94a3b8;
-}
-#projectModal .form-control:focus {
-    border-color: #206bc4;
-    box-shadow: 0 0 0 0.25rem rgba(32, 107, 196, 0.15);
-}
-#projectModal .modal-body {
-    max-height: 80vh;
-    overflow-y: auto;
-}
-/* Scrollbar özelleştirme */
-#projectModal .modal-body::-webkit-scrollbar {
-    width: 6px;
-}
-#projectModal .modal-body::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 10px;
-}
-#projectModal .modal-body::-webkit-scrollbar-track {
-    background: transparent;
+    min-width: 2.25rem;
 }
 </style>

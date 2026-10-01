@@ -23,7 +23,7 @@ $navbarBsTheme = $isLightSidebar ? 'light' : 'dark';
             <span class="navbar-toggler-icon"></span>
         </button>
         <h1 class="navbar-brand">
-            <a href="index.php?p=home" class="navbar-brand-link" aria-label="Puantor">
+            <a href="/anasayfa" class="navbar-brand-link" aria-label="Puantor">
                 <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 187" class="navbar-brand-svg" width="700" height="187">
                     <g id="katman 1">
                         <g id="&lt;Group&gt;">
@@ -264,8 +264,12 @@ $navbarBsTheme = $isLightSidebar ? 'light' : 'dark';
                     <!-- Menü oluşturulur -->
                     <li class="nav-item <?php echo $active_class; ?> <?php echo $dropdown_class; ?> <?php echo $show_class; ?>" data-id="<?php echo $menu->id; ?>">
 
+                        <?php
+                        $menuPath = $menu->page_link ? (\App\Routing\Router::pathForPage($menu->page_link) ?? $menu->page_link) : '';
+                        $menuHref = $has_dropdown ? 'javascript:;' : ($menuPath !== '' ? '/' . ltrim($menuPath, '/') : 'javascript:;');
+                        ?>
                         <a class="nav-link <?php echo $dropdown_toggle_class; ?> <?php echo $active_class; ?>" draggable="false"
-                            href="<?php echo $has_dropdown ? 'javascript:;' : 'index.php?p=' . htmlspecialchars($menu->page_link, ENT_QUOTES, 'UTF-8'); ?>"
+                            href="<?php echo htmlspecialchars($menuHref, ENT_QUOTES, 'UTF-8'); ?>"
                             data-bs-auto-close="false" role="button" aria-expanded="<?php echo $is_open ? 'true' : 'false'; ?>">
 
                             <span class="nav-link-icon" data-tooltip-location="right">
@@ -284,9 +288,11 @@ $navbarBsTheme = $isLightSidebar ? 'light' : 'dark';
                                     <?php foreach ($authorized_visible_submenus as $sub_menu):
                                         $is_sub_active = ($active_page == $sub_menu->page_link);
                                         $sub_active_class = $is_sub_active ? 'active active-link' : '';
+                                        $subPath = $sub_menu->page_link ? (\App\Routing\Router::pathForPage($sub_menu->page_link) ?? $sub_menu->page_link) : '';
+                                        $subHref = $subPath !== '' ? '/' . ltrim($subPath, '/') : 'javascript:;';
                                     ?>
                                         <a class="dropdown-item <?php echo $sub_active_class; ?>"
-                                            href="index.php?p=<?php echo htmlspecialchars($sub_menu->page_link, ENT_QUOTES, 'UTF-8'); ?>">
+                                            href="<?php echo htmlspecialchars($subHref, ENT_QUOTES, 'UTF-8'); ?>">
                                             <?php echo htmlspecialchars($sub_menu->page_name, ENT_QUOTES, 'UTF-8'); ?>
                                         </a>
                                     <?php endforeach; ?>
@@ -303,7 +309,7 @@ $navbarBsTheme = $isLightSidebar ? 'light' : 'dark';
     </div>
 </aside>
 
-<script src="./dist/js/Sortable.min.js"></script>
+<script src="/dist/js/Sortable.min.js"></script>
 <script>
 $(document).ready(function() {
     var $searchInput = $('#menu-search-input');

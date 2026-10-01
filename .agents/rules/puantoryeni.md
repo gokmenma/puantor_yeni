@@ -88,8 +88,58 @@ Bir liste sayfası tamamlanmadan önce aşağıdakiler doğrulanmalıdır:
 
 ---
 
+### 6. Modal Tasarım & Form Standartları (Modal Standards)
+Tüm ekleme, düzenleme ve detay modallarında Tabler ERP tasarım dili ve ferah sekmeli yapı uygulanacaktır. Proje modalı (`pages/projects/modals/project-modal.php`) bu standardın referans örneğidir.
+
+- **Modal Kapsayıcısı & Ölçüler:**
+  - Kapsamlı (5'ten fazla girdi içeren) form modalları daima `modal-lg` (veya çok geniş tablolarda `modal-xl`) ve `modal-dialog-centered` olmalıdır.
+  - Kart köşe yarıçapı 14px (`border-radius: 14px; overflow: hidden;`), çerçeve kaldırılmış ve derin gölgeli (`shadow-lg border-0`) olmalıdır.
+  - Form alanlarını alt alta tek bir dar sütunda yığarak dikey kaydırma çubuğu (scroll) oluşturan hantal düzenler **kullanılmayacaktır**.
+- **Sekmeli (Tabs) Düzen (`nav nav-tabs nav-tabs-alt`):**
+  - Çok alanlı formlar mantıksal olarak sekmelere bölünmelidir (Örn: *Genel & Finansal*, *Konum & İletişim*, *Notlar & Ayarlar*).
+  - Sekme çubuğu modal başlığının hemen altında `bg-light-subtle border-bottom` şeridinde yer almalı; ikon ve metin içermelidir (`ti ti-*`).
+  - Modal body alanı ferah (`p-4 bg-white`, `min-height: 380px`), form alanları dengeli 2 sütunlu (`col-md-6`) veya tam satır (`col-12`) gridde dizilmelidir.
+- **Modal Başlığı (Header):**
+  - Sol Taraf: 42x42px yumuşak zeminli modül ikonu (`avatar avatar-md rounded-3 bg-primary-lt text-primary`).
+  - Başlık: `h4.modal-title.fw-bold.text-dark` (yaklaşık 1.15rem / 18px, sıkı harf aralığı).
+  - Alt Açıklama: `.text-secondary.small` (Modaldaki formun amacını özetleyen gri mikro metin).
+  - Sağ Taraf: Standart `btn-close` kapatma butonu. Header altında ince çizgi (`border-bottom`) yer almalıdır.
+- **Form Girdileri & Kontroller:**
+  - Zorunlu alanlar `.form-label.required` (kırmızı yıldız `*`) ile gösterilmelidir.
+  - Metin, e-posta, telefon, tarih, para ve IBAN alanlarında Tabler `input-icon` ve gri `input-icon-addon` ikonu kullanılmalıdır.
+  - Durum ve tür seçimlerinde hantal dropdown yerine modern `form-selectgroup` radio butonları tercih edilmelidir.
+  - Açık/kapalı ayarlar için `card border bg-light-subtle` içinde switch ve açıklayıcı alt metin yer almalıdır.
+- **Modal Alt Bilgisi (Footer):**
+  - `modal-footer py-2.5 px-4 bg-light-subtle border-top` düzeninde olmalıdır.
+  - Sol Taraf: `btn btn-link link-secondary px-2 text-decoration-none` ("Vazgeç" / "İptal").
+  - Sağ Taraf: `btn btn-primary px-4 shadow-sm fw-semibold` (İçinde `ti ti-device-floppy` ikonu bulunan kaydet butonu).
+- **JS ve Bileşen Entegrasyonu (Select2 & Flatpickr):**
+  - Modal her açıldığında (`#addNew...` veya `.update-...`) form temizlenmeli ve ilk sekmeye odaklanılmalıdır (`Tab.show()`).
+  - Select2 alanları modal içerisinde `dropdownParent: $('#modalId')` ile açılmalı, z-index veya arama kutusu odaklanma sorunları önlenmelidir.
+  - Tarih seçiciler `shown.bs.modal` eventinde flatpickr ile (`dateFormat: 'd.m.Y', locale: 'tr'`) initialize edilmelidir.
+  - Form gönderimi AJAX ile yönetilmeli; kullanıcıya native `alert()` yerine daima `sweetalert2` ile sonuç bildirilmelidir.
+
+---
+
+### 7. Sağ Tık Bağlam Menüsü Standartları (Context Menu Standards)
+Tüm tablo ve liste yönetim sayfalarında fare ile satır üzerine sağ tıklandığında modern ve hızlı aksiyon sağlayan özel sağ tık bağlam menüsü (`.custom-context-menu`) yer alacaktır.
+
+- **Zorunlu Entegrasyon:** Tablodaki her veri satırında (`#tableId tbody tr`) `contextmenu` olayı yakalanmalı, varsayılan tarayıcı menüsü engellenmeli (`e.preventDefault()`) ve özel menü açılmalıdır.
+- **Aktif Satır Vurgusu:** Menü açıkken ilgili satıra `.context-menu-active` sınıfı eklenmeli; menü kapandığında kaldırılmalıdır.
+- **Menü Yapısı:**
+  - **Başlık (`.cm-header`):** İlgili kaydın adı (Örn: Abone adı, personel adı, proje adı) ve mikro ikon (`ti ti-*`).
+  - **Birincil Aksiyonlar:** Detay/Görüntüle, Düzenle/Güncelle (`<a href="#" class="route-link" data-page="...">` veya modal tetikleyicisi).
+  - **Hızlı / Modüler İşlemler:** İlgili kayda ait alt modül veya hareket sayfalarına doğrudan geçiş linkleri.
+  - **Ayırıcı Çizgi:** Gruplar arasında `.cm-divider` kullanılmalıdır.
+  - **Tehlikeli Aksiyonlar (`.cm-danger`):** Kırmızı renkle vurgulanmış silme/iptal aksiyonu (`ti ti-trash`).
+- **Ekran Sınır Taşma Kontrolü:** Menü konumu tıklandığı koordinata göre hesaplanmalı; ekranın sağına veya altına taştığında otomatik olarak görünür alanın içine çekilmelidir (`windowWidth`, `windowHeight` kontrolü).
+- **Otomatik Gizlenme:** Menü dışına tıklandığında, bir menü elemanı tıklandığında, sayfa kaydırıldığında (`scroll`), pencere yeniden boyutlandırıldığında (`resize`) veya odak kaybedildiğinde (`blur`) menü otomatik olarak gizlenmelidir (`$('#customContextMenu').hide()`).
+
+---
+
 ### Test ve Geliştirme Bilgileri
 - Web adresi: http://puantor.site
 - Kullanıcı adı: admin
 - Email: admin@admin.com
 - Şifre: 245963
+

@@ -109,7 +109,7 @@ html.izin-summary-collapsed #izinSummaryCards {
     <div class="row row-cards g-3 mb-3" id="izinSummaryCards">
         <!-- Kart 1: Toplam Talep -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border izin-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM TALEP</span>
@@ -117,12 +117,12 @@ html.izin-summary-collapsed #izinSummaryCards {
                             <i class="ti ti-calendar-event" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-total" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-total" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['total'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
-                            Onaylı: <strong class="text-dark" id="stat-toplam-gun"><?= $stats['toplam_onayli_gun'] ?> Gün</strong>
+                            Onaylı: <strong id="stat-toplam-gun"><?= $stats['toplam_onayli_gun'] ?> Gün</strong>
                         </span>
                         <label class="status-summary-filter mb-0" title="Tüm talepleri göster">
                             <input type="radio" name="filter_durum_group" value="" class="filter-durum-radio" <?= empty($initial_durum) ? 'checked' : '' ?>>
@@ -135,7 +135,7 @@ html.izin-summary-collapsed #izinSummaryCards {
 
         <!-- Kart 2: Bekleyen Talepler -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border izin-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">BEKLEYEN TALEPLER</span>
@@ -143,10 +143,10 @@ html.izin-summary-collapsed #izinSummaryCards {
                             <i class="ti ti-clock" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-beklemede" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-beklemede" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['beklemede'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Onay Bekliyor
                         </span>
@@ -161,7 +161,7 @@ html.izin-summary-collapsed #izinSummaryCards {
 
         <!-- Kart 3: Onaylanan Talepler -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border izin-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">ONAYLANAN TALEPLER</span>
@@ -169,10 +169,10 @@ html.izin-summary-collapsed #izinSummaryCards {
                             <i class="ti ti-circle-check" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-onaylandi" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-onaylandi" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['onaylandi'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Bu Ay: <strong class="text-success" id="stat-bu-ay-gun"><?= $stats['bu_ay_gun'] ?> Gün</strong>
                         </span>
@@ -187,7 +187,7 @@ html.izin-summary-collapsed #izinSummaryCards {
 
         <!-- Kart 4: Reddedilen Talepler -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border izin-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border izin-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">REDDEDİLEN TALEPLER</span>
@@ -195,10 +195,10 @@ html.izin-summary-collapsed #izinSummaryCards {
                             <i class="ti ti-circle-x" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" id="stat-reddedildi" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" id="stat-reddedildi" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['reddedildi'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             İşlem Yapılan
                         </span>
@@ -215,11 +215,11 @@ html.izin-summary-collapsed #izinSummaryCards {
     <!-- Main Table Card -->
     <div class="row row-cards">
         <div class="col-12">
-            <div class="card izin-table-card" style="border: 1px solid #dbe3ec !important; overflow: hidden; background: #ffffff;">
+            <div class="card izin-table-card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">
-                            <i class="ti ti-list text-secondary" style="font-size: 18px;"></i>
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-list" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
@@ -563,7 +563,8 @@ html.izin-summary-collapsed #izinSummaryCards {
     font-size: 18px !important;
 }
 
-#izinPage .izin-summary-card {
+html:not([data-bs-theme="dark"]) #izinPage .izin-summary-card,
+html:not([data-bs-theme="dark"]) .izin-summary-card {
     background: #ffffff !important;
     border: 1px solid #dbe3ec !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
@@ -579,7 +580,10 @@ html.izin-summary-collapsed #izinSummaryCards {
     transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
 }
 
-#izinPage .izin-table-card {
+html:not([data-bs-theme="dark"]) #izinPage .izin-table-card,
+html:not([data-bs-theme="dark"]) .izin-table-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
     border-radius: 12px !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
     overflow: hidden;
@@ -828,10 +832,12 @@ div#izin-table_wrapper .dt-layout-row:has(.dt-info) {
     color: #94a3b8;
     background: #334155;
 }
+[data-bs-theme="dark"] #izinPage .izin-summary-card,
 [data-bs-theme="dark"] .izin-summary-card,
+[data-bs-theme="dark"] #izinPage .izin-table-card,
 [data-bs-theme="dark"] .izin-table-card {
     background: #182433 !important;
-    border-color: #334155 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
 }
 </style>

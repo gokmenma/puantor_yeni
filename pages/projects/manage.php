@@ -23,7 +23,7 @@ $new_id=isset($_GET["id"]) ? ($_GET['id']) : 0;
 
 //Eğer url'den id yazılmışsa veya id boş ise projeler sayfasına gider
 if($id == null && isset($_GET['id'])) {
-    header("Location: /index.php?p=projects/list");
+    header("Location: /projeler");
     exit;
 }
 
@@ -81,7 +81,7 @@ $case_id = $Cases->getDefaultCaseIdByFirm();
                                 <h4 class="alert-title">Uyarı!</h4>
                                 <div class="text-secondary">Proje oluşturabilmek için öncelikle <b>Yüklenici firma</b> tanımlaması yapmalısınız.
                                     <br>
-                                    <a href="index.php?p=companies/list" class="btn btn-sm btn-link p-0 mt-2">
+                                    <a href="/firmalar" class="btn btn-sm btn-link p-0 mt-2">
                                         <i class="ti ti-plus icon me-1"></i>Yeni Yüklenici Firma Ekle
                                     </a>
                                 </div>

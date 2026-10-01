@@ -8,7 +8,7 @@ require_once 'Model/UserModel.php';
 
 // Yetki kontrolü (Sadece superadmin girebilir)
 if (($_SESSION['user']->superadmin ?? 0) != 1) {
-    header("Location: index.php?p=authorize");
+    header("Location: /yetkisiz-erisim");
     exit();
 }
 

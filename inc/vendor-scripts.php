@@ -44,7 +44,7 @@ if (
     $page == 'persons/icra-list' ||
     strpos($page, 'kvkk/') === 0 || $page == 'kvkk/index' || $page == 'kvkk/ihlaller' || $page == 'kvkk/talepler'
 ) {
-    echo '<script src="./dist/libs/datatable/datatables.min.js"></script>';
+    echo '<script src="/dist/libs/datatable/datatables.min.js"></script>';
 }
 
 //Summernote eklenecek sayfalar
@@ -56,172 +56,172 @@ if (
     || $page == "duyurular/list"
     || $page == "mail-islemleri/index"
 ) {
-    echo '<script src="./dist/libs/summernote/summernote-lite.min.js?1692870487"></script>';
-    echo '<script src="./dist/libs/summernote/lang/summernote-tr-TR.min.js"></script>';
-    echo '<script src="./src/summernote-init.js"></script>';
+    echo '<script src="/dist/libs/summernote/summernote-lite.min.js?1692870487"></script>';
+    echo '<script src="/dist/libs/summernote/lang/summernote-tr-TR.min.js"></script>';
+    echo '<script src="/src/summernote-init.js"></script>';
 }
 
 
 // Kullanıcı ekleme ve düzenleme sayfası
 if ($page == 'users/list' || $page == 'users/manage') {
-    echo '<script src="./src/users/users.js?v=' . filemtime(ROOT . '/src/users/users.js') . '"></script>';
+    echo '<script src="/src/users/users.js?v=' . filemtime(ROOT . '/src/users/users.js') . '"></script>';
 }
 
 // Kullanıcı rolü ekleme ve düzenleme sayfası
 if ($page == 'users/roles/list' || $page == 'users/roles/manage') {
-    echo '<script src="./src/users/roles.js"></script>';
+    echo '<script src="/src/users/roles.js"></script>';
 }
 
 //Role Yetkileri ekleme ve düzenleme sayfası
 if ($page == 'users/auths/auths') {
-    echo '<script src="./src/users/auths.js"></script>';
+    echo '<script src="/src/users/auths.js"></script>';
 }
 
 // Ürün ekleme ve düzenleme sayfası
 if ($page == 'products/list' || $page == 'products/manage') {
-    echo '<script src="./src/product.js"></script>';
+    echo '<script src="/src/product.js"></script>';
 }
 
 // Servis Konusu ekleme ve düzenleme sayfası
 if ($page == 'defines/service-head/list' || $page == 'defines/service-head/manage') {
-    echo '<script src="./src/defines/service-head.js"></script>';
+    echo '<script src="/src/defines/service-head.js"></script>';
 }
 // Personel Liste, ekleme ve düzenleme sayfası
 if ($page == 'persons/list' || $page == 'persons/manage') {
-    echo '<script src="./src/persons/persons.js?v=' . time() . '"></script>';
+    echo '<script src="/src/persons/persons.js?v=' . time() . '"></script>';
     if ($page == 'persons/list') {
-        echo '<script src="./src/bordro/bulk-wages.js?v=' . time() . '"></script>';
+        echo '<script src="/src/bordro/bulk-wages.js?v=' . time() . '"></script>';
     }
 }
 // Personel diğer bilgileri ekleme ve düzenleme sayfası
 if ($page == 'persons/manage') {
-    echo '<script src="./src/persons/payment.js"></script>';
-    echo '<script src="./src/persons/wages.js"></script>';
-    echo '<script src="./src/persons/income.js"></script>';
-    echo '<script src="./src/persons/wage-cut.js"></script>';
+    echo '<script src="/src/persons/payment.js"></script>';
+    echo '<script src="/src/persons/wages.js"></script>';
+    echo '<script src="/src/persons/income.js"></script>';
+    echo '<script src="/src/persons/wage-cut.js"></script>';
 }
 
 // Servis Konusu ekleme ve düzenleme sayfası
 if ($page == 'mycompany/list' || $page == 'mycompany/manage') {
-    echo '<script src="./src/companies/mycompanies.js?v=' . time() . '"></script>';
+    echo '<script src="/src/companies/mycompanies.js?v=' . time() . '"></script>';
 }
 
 if ($page == 'companies/list' || $page == 'companies/manage') {
-    echo '<script src="./src/companies/companies.js?v=' . time() . '"></script>';
+    echo '<script src="/src/companies/companies.js?v=' . time() . '"></script>';
 }
 
 // Kasa (kasa ekleme ve düzenleme sayfası)
 if ($page == 'financial/case/list' || $page == 'financial/case/manage') {
-    echo '<script src="./src/financial/case.js?v=' . time() . '"></script>';
+    echo '<script src="/src/financial/case.js?v=' . time() . '"></script>';
 }
 // Kasa İşlemleri(kasa ekleme ve düzenleme sayfası)
 if ($page == 'financial/transactions/list' || $page == 'financial/case/manage') {
-    echo '<script src="./src/financial/transactions.js?v=' . time() . '"></script>';
+    echo '<script src="/src/financial/transactions.js?v=' . time() . '"></script>';
 }
 // Proje Ekleme,güncelleme ve listeleme sayfası
 if ($page == 'projects/list' || $page == 'projects/manage') {
-    echo '<script src="./src/project/projects.js?v='.time().'"></script>';
-    echo '<script src="./src/project/progress-payment.js"></script>';
-    echo '<script src="./src/project/payment.js"></script>';
-    echo '<script src="./src/project/expense.js"></script>';
-    echo '<script src="./src/project/deduction.js"></script>';
-    echo '<script src="./src/project/tasks.js?v='.time().'"></script>';
+    echo '<script src="/src/project/projects.js?v='.time().'"></script>';
+    echo '<script src="/src/project/progress-payment.js"></script>';
+    echo '<script src="/src/project/payment.js"></script>';
+    echo '<script src="/src/project/expense.js"></script>';
+    echo '<script src="/src/project/deduction.js"></script>';
+    echo '<script src="/src/project/tasks.js?v='.time().'"></script>';
     if ($page == 'projects/manage') {
         echo '<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>';
     }
 }
 // Bordro sayfası
 if ($page == 'payroll/list') {
-    echo '<script src="./src/bordro/bordro.js?v=' . time() . '"></script>';
-    echo '<script src="./src/bordro/payment.js?v=' . time() . '"></script>';
-    echo '<script src="./src/bordro/wage_cut.js?v=' . time() . '"></script>';
-    echo '<script src="./src/bordro/income.js?v=' . time() . '"></script>';
-    echo '<script src="./src/bordro/bulk-import.js"></script>';
-    echo '<script src="./src/bordro/bulk-wages.js"></script>';
+    echo '<script src="/src/bordro/bordro.js?v=' . time() . '"></script>';
+    echo '<script src="/src/bordro/payment.js?v=' . time() . '"></script>';
+    echo '<script src="/src/bordro/wage_cut.js?v=' . time() . '"></script>';
+    echo '<script src="/src/bordro/income.js?v=' . time() . '"></script>';
+    echo '<script src="/src/bordro/bulk-import.js"></script>';
+    echo '<script src="/src/bordro/bulk-wages.js"></script>';
 
 }
 // Gelir Gider Türü Tanımlama
 if ($page == 'defines/incexp/list' || $page == 'defines/incexp/manage') {
-    echo '<script src="./src/defines/incexp.js"></script>';
+    echo '<script src="/src/defines/incexp.js"></script>';
 }
 
 
 // Misyon Ekleme,güncelleme ve listeleme sayfası
 if ($page == 'missions/list' || $page == 'missions/manage') {
-    echo '<script src="./src/missions/missions.js"></script>';
+    echo '<script src="/src/missions/missions.js"></script>';
 }
 
 // Misyon İşlem Ekleme,güncelleme ve listeleme sayfası
 if ($page == 'missions/process/manage') {
-    echo '<script src="./src/missions/process.js"></script>';
+    echo '<script src="/src/missions/process.js"></script>';
 }
 
 if ($page == 'missions/headers/manage' || $page == "home") {
-    echo '<script src="./dist/js/jquery-ui.js"></script>';
+    echo '<script src="/dist/js/jquery-ui.js"></script>';
 }
 
 
 if ($page == 'missions/headers/manage') {
-    echo '<script src="./src/missions/headers.js"></script>';
+    echo '<script src="/src/missions/headers.js"></script>';
 }
 
 if ($page == 'payroll/xls/payment-load-from-xls') {
-    echo '<script src="./src/bordro/payment-load.js"></script>';
+    echo '<script src="/src/bordro/payment-load.js"></script>';
 }
 //personlleri excel dosyasından yükleme
 if ($page == 'persons/xls/person-load') {
-    echo '<script src="./src/persons/persons-load.js"></script>';
+    echo '<script src="/src/persons/persons-load.js"></script>';
 }
 if ($page == 'defines/job-groups/list' || $page == 'defines/job-groups/manage') {
-    echo '<script src="./src/defines/job-groups.js"></script>';
+    echo '<script src="/src/defines/job-groups.js"></script>';
 }
 
 if ($page == 'defines/national-holidays/list' || $page == 'defines/national-holidays/manage') {
-    echo '<script src="./src/defines/national-holidays.js"></script>';
+    echo '<script src="/src/defines/national-holidays.js"></script>';
 }
 
 if ($page == 'defines/timesheet-types/list' || $page == 'defines/timesheet-types/manage') {
-    echo '<script src="./src/defines/timesheet-types.js"></script>';
+    echo '<script src="/src/defines/timesheet-types.js"></script>';
 }
 
 if ($page == 'defines/icra-daireleri/list') {
-    echo '<script src="./src/defines/icra-daireleri.js"></script>';
+    echo '<script src="/src/defines/icra-daireleri.js"></script>';
 }
 
 if ($page == 'settings/manage') {
-    echo '<script src="./src/settings/settings.js?v=' . time() . '"></script>';
-    echo '<script src="./src/settings/packages.js?v=' . time() . '"></script>';
+    echo '<script src="/src/settings/settings.js?v=' . time() . '"></script>';
+    echo '<script src="/src/settings/packages.js?v=' . time() . '"></script>';
 }
 
 if ($page == 'feedback/list') {
-    echo '<script src="./src/feedback.js"></script>';
+    echo '<script src="/src/feedback.js"></script>';
 }
 
 if ($page == 'supports/tickets' || $page == 'supports/ticket-view' || $page == 'supports/admin-tickets' || $page == 'supports/admin-ticket-view') {
-    echo '<script src="./src/supports/tickets.js"></script>';
+    echo '<script src="/src/supports/tickets.js"></script>';
 }
 
 //Proje durumları
 if ($page == 'defines/project-status/list' || $page == 'defines/project-status/manage') {
-    echo '<script src="./src/defines/project-status.js"></script>';
+    echo '<script src="/src/defines/project-status.js"></script>';
 }
 
 if ($page == 'gorevler/list') {
     echo '<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>';
     echo '<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>';
     echo '<link rel="stylesheet" type="type/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">';
-    echo '<script src="pages/gorevler/js/gorevler.js?v=' . time() . '"></script>';
+    echo '<script src="/pages/gorevler/js/gorevler.js?v=' . time() . '"></script>';
 }
 
 if ($page == 'home') {
     echo '<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>';
-    echo '<script src="./dist/libs/jsvectormap/dist/js/jsvectormap.min.js" defer></script>';
-    echo '<script src="./dist/libs/jsvectormap/dist/maps/world.js" defer></script>';
-    echo '<script src="./dist/libs/jsvectormap/dist/maps/world-merc.js" defer></script>';
-    echo '<script src="./src/charts.js" defer></script>';
-    echo '<script src="./src/home/missions.js"></script>';
+    echo '<script src="/dist/libs/jsvectormap/dist/js/jsvectormap.min.js" defer></script>';
+    echo '<script src="/dist/libs/jsvectormap/dist/maps/world.js" defer></script>';
+    echo '<script src="/dist/libs/jsvectormap/dist/maps/world-merc.js" defer></script>';
+    echo '<script src="/src/charts.js" defer></script>';
+    echo '<script src="/src/home/missions.js"></script>';
     echo '<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>';
-    echo '<script src="./src/home/project_gantt.js?v=' . time() . '"></script>';
+    echo '<script src="/src/home/project_gantt.js?v=' . time() . '"></script>';
 }
 
 if ($page == 'activities/index' || $page == 'admin-home') {
@@ -229,27 +229,27 @@ if ($page == 'activities/index' || $page == 'admin-home') {
 }
 ?>
 
-<script src="./dist/js/flatpickr.min.js"></script>
-<script src="./dist/js/flatpickr.tr.min.js"></script>
-<script src="./dist/js/flatpickr.monthSelect.js"></script>
+<script src="/dist/js/flatpickr.min.js"></script>
+<script src="/dist/js/flatpickr.tr.min.js"></script>
+<script src="/dist/js/flatpickr.monthSelect.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 <!-- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> -->
 <script src="https://npmcdn.com/flatpickr/dist/l10n/tr.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="./dist/libs/select2/js/select2.min.js?1724846371"></script>
+<script src="/dist/libs/select2/js/select2.min.js?1724846371"></script>
 <!-- Tabler Core -->
-<script src="./dist/js/tabler.min.js?1692870487"></script>
-<!-- <script src="./dist/js/demo.min.js?1692870487"></script> -->
-<script src="./src/jquery.inputmask.js"></script>
-<script src="./src/datatable-column-filter.js?v=<?php echo time(); ?>"></script>
-<script src="./src/datatable-col-manager.js?v=<?php echo time(); ?>"></script>
-<script src="./src/global-search.js?v=<?php echo file_exists(ROOT . '/src/global-search.js') ? filemtime(ROOT . '/src/global-search.js') : time(); ?>"></script>
-<script src="./dist/js/sidebar-animation.js?v=<?php echo file_exists(ROOT . '/dist/js/sidebar-animation.js') ? filemtime(ROOT . '/dist/js/sidebar-animation.js') : time(); ?>"></script>
-<script src="./src/app.js?v=<?php echo time(); ?>" defer></script>
+<script src="/dist/js/tabler.min.js?1692870487"></script>
+<!-- <script src="/dist/js/demo.min.js?1692870487"></script> -->
+<script src="/src/jquery.inputmask.js"></script>
+<script src="/src/datatable-column-filter.js?v=<?php echo time(); ?>"></script>
+<script src="/src/datatable-col-manager.js?v=<?php echo time(); ?>"></script>
+<script src="/src/global-search.js?v=<?php echo file_exists(ROOT . '/src/global-search.js') ? filemtime(ROOT . '/src/global-search.js') : time(); ?>"></script>
+<script src="/dist/js/sidebar-animation.js?v=<?php echo file_exists(ROOT . '/dist/js/sidebar-animation.js') ? filemtime(ROOT . '/dist/js/sidebar-animation.js') : time(); ?>"></script>
+<script src="/src/app.js?v=<?php echo time(); ?>" defer></script>
 <?php 
 if ($page == 'puantaj/list') {
-    echo '<script src="./src/puantaj/puantaj.js?v=' . time() . '"></script>';
+    echo '<script src="/src/puantaj/puantaj.js?v=' . time() . '"></script>';
 }
 ?>

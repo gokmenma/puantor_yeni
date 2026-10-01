@@ -169,15 +169,22 @@ function buildTransactionColvisMenu(api) {
     api.column(idx).visible(isVisible, false);
 
     menuHtml += `
-      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
-        <div class="form-check mb-0 w-100">
-          <input class="form-check-input transactions-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
-          <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+      <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-2.5 rounded-2" style="font-size: 13px;">
+        <div class="form-check mb-0 w-100 d-flex align-items-center gap-2" style="padding-left: 0;">
+          <input class="form-check-input m-0 transactions-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
+          <span class="form-check-label fw-medium text-secondary" style="user-select:none;">
             ${conf.label}
           </span>
         </div>
       </label>`;
   });
+
+  menuHtml += `
+    <div class="dropdown-divider my-1"></div>
+    <button type="button" class="dropdown-item text-danger py-1.5 px-2.5 rounded-2" id="resetTransactionColumnsBtn" style="font-size: 12.5px;">
+      <i class="ti ti-rotate-2 me-1"></i> Görünümü Sıfırla
+    </button>
+  `;
 
   $menu.html(menuHtml);
   api.columns.adjust();
@@ -200,6 +207,30 @@ $(document).on("change", ".transactions-col-trigger", function () {
   var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
   visibilityState[colIdx] = isChecked;
   localStorage.setItem("transactions_column_visibility", JSON.stringify(visibilityState));
+});
+
+// Görünümü Sıfırla Butonu
+$(document).on("click", "#resetTransactionColumnsBtn", function (e) {
+  e.preventDefault();
+  localStorage.removeItem("transactions_column_visibility");
+  if (!transactionTable) {
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable("#transactionTable")) {
+      transactionTable = $("#transactionTable").DataTable();
+    }
+  }
+  if (transactionTable) {
+    if (typeof window.resetPuantorDTState === "function") {
+      window.resetPuantorDTState($("#transactionTable"), transactionTable, function () {
+        buildTransactionColvisMenu(transactionTable);
+      });
+    } else {
+      [2, 3, 4, 5, 6, 7].forEach(function (idx) {
+        transactionTable.column(idx).visible(true, false);
+      });
+      transactionTable.columns.adjust().draw(false);
+      buildTransactionColvisMenu(transactionTable);
+    }
+  }
 });
 
 $(document).on("click", "#transactionColvisMenu", function (e) {
@@ -496,20 +527,72 @@ function initTransactionModals() {
       }
     });
   }
+
+  // general-modal açıldığında Select2'lerin dropdownParent ayarı ve odaklanma kontrolü
+  $("#general-modal").on("shown.bs.modal", function () {
+    if ($.fn.select2) {
+      $(this).find("select").each(function () {
+        if ($(this).hasClass("select2-hidden-accessible")) {
+          // Zaten init edilmişse dropdownParent kontrolü
+        }
+      });
+    }
+  });
 }
 
-//Genel modal kaydet butonuna basınca
+/**
+ * Tabloyu ve Özet Kartlarını Dinamik Yenileme Yardımcısı
+ */
+function reloadTransactionsTable(resetPaging = false) {
+  if (!transactionTable) {
+    if (typeof $ !== "undefined" && $.fn && $.fn.DataTable && $.fn.DataTable.isDataTable("#transactionTable")) {
+      transactionTable = $("#transactionTable").DataTable();
+    }
+  }
+  if (transactionTable && transactionTable.ajax) {
+    transactionTable.ajax.reload(null, !resetPaging);
+  } else if (transactionTable) {
+    transactionTable.draw(!resetPaging);
+  }
+}
+
+/**
+ * Genel Modal Formunu Temizle
+ */
+function resetGeneralModalForm() {
+  var $form = $("#transactionModalForm");
+  if ($form.length) {
+    $form[0].reset();
+    if (typeof $form.validate === "function") {
+      $form.validate().resetForm();
+    }
+    $form.find(".is-invalid").removeClass("is-invalid");
+    $form.find(".is-valid").removeClass("is-valid");
+  }
+  $("#transaction_id").val(0);
+  $("#gm_case_id").val("").trigger("change.select2");
+  $("#gm_project_id").val("").trigger("change.select2");
+  $("#gm_person_name").val("").trigger("change.select2");
+  $("#gm_company").val("").trigger("change.select2");
+  $("#gm_incexp_type").html("<option value=''>Tür Seçiniz</option>").trigger("change.select2");
+  $("input[name='transaction_type'][value='1']").prop("checked", true);
+  if ($('#general-modal a[href="#tabs-home-7"]').length) {
+    $('#general-modal a[href="#tabs-home-7"]').tab("show");
+  }
+}
+
+// Genel modal kaydet butonuna basınca
 $(document).on("click", "#saveTransaction", function () {
   var form = $("#transactionModalForm");
-  //Eğer tüm kontroller doğru ise
   if (form.valid()) {
+    var $btn = $(this);
+    var originalBtnHtml = $btn.html();
+    $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Kaydediliyor...');
+
     let formData = new FormData(form[0]);
     let id = $("#transaction_id").val();
     formData.append("transaction_id", id);
     formData.append("action", "saveTransaction");
-    // for (var pair of formData.entries()) {
-    //   console.log(pair[0] + ", " + pair[1]);
-    // }
 
     fetch("/api/financial/transaction.php", {
       method: "POST",
@@ -517,50 +600,116 @@ $(document).on("click", "#saveTransaction", function () {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
-
+        $btn.prop("disabled", false).html(originalBtnHtml);
         if (data.status == "success") {
-          title = "Başarılı!";
+          $("#general-modal").modal("hide");
+          resetGeneralModalForm();
+          reloadTransactionsTable(false);
+          Swal.fire({
+            title: "Başarılı!",
+            text: data.message,
+            icon: "success",
+            timer: 1800,
+            showConfirmButton: false
+          });
         } else {
-          title = "Hata!";
+          Swal.fire({
+            title: "Hata!",
+            text: data.message,
+            icon: "error",
+            confirmButtonText: "Tamam"
+          });
         }
-        Swal.fire({
-          title: title,
-          text: data.message,
-          icon: data.status,
-          confirmButtonText: "Tamam"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            //$("#amount").val("");
-            hasProcess = true;
-          }
-        });
       })
       .catch((error) => {
+        $btn.prop("disabled", false).html(originalBtnHtml);
         console.error("Error:", error);
+        Swal.fire({
+          title: "Hata!",
+          text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+          icon: "error",
+          confirmButtonText: "Tamam"
+        });
       });
   }
 });
 
-//general-modal veya diğer modallar kapatıldığında ID'yi sıfırla
+// Modallar kapatıldığında ID'yi ve formları sıfırla (Sayfa yenileme YOK)
+$("#general-modal").on("hidden.bs.modal", function () {
+  resetGeneralModalForm();
+});
+
 $(".modal").on("hidden.bs.modal", function () {
   $("#transaction_id").val(0);
-  //console.log(hasProcess);
-
-  if (hasProcess === true) {
-    window.location.reload();
+  var $form = $(this).find("form");
+  if ($form.length && typeof $form.validate === "function") {
+    $form.validate().resetForm();
+    $form.find(".is-invalid").removeClass("is-invalid");
+    $form.find(".is-valid").removeClass("is-valid");
   }
 });
 
-$(document).on("click", ".delete-transaction", function () {
-  //Tablo adı butonun içinde bulunduğu tablo
-  let action = "deleteTransaction";
-  let confirmMessage = "Kasa hareketi silinecektir!";
-  let type = $(this).data("type") || "";
-  let table = $(this).data("table") || "";
-  let url = "/api/financial/transaction.php?type=" + encodeURIComponent(type) + "&table=" + encodeURIComponent(table);
+// Tekli Kasa Hareketi Silme
+$(document).on("click", ".delete-transaction", function (e) {
+  e.preventDefault();
+  let button = this;
+  let id = $(button).data("id");
+  let type = $(button).data("type") || "";
+  let table = $(button).data("table") || "";
 
-  deleteRecord(this, action, confirmMessage, url);
+  Swal.fire({
+    title: "Emin misiniz?",
+    text: "Kasa hareketi silinecektir!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Evet, Sil!",
+    cancelButtonText: "Vazgeç"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      let formData = new FormData();
+      formData.append("action", "deleteTransaction");
+      formData.append("id", id);
+      formData.append("csrf_token", document.querySelector('meta[name="csrf-token"]')?.content || "");
+
+      let url = "/api/financial/transaction.php?type=" + encodeURIComponent(type) + "&table=" + encodeURIComponent(table);
+
+      fetch(url, {
+        method: "POST",
+        body: formData
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            Swal.fire({
+              title: "Başarılı!",
+              text: data.message || "İşlem başarıyla silindi.",
+              icon: "success",
+              timer: 1500,
+              showConfirmButton: false
+            });
+            reloadTransactionsTable(false);
+          } else {
+            Swal.fire({
+              title: "Hata!",
+              text: data.message || "Kayıt silinirken bir hata oluştu.",
+              icon: "error",
+              confirmButtonText: "Tamam"
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Delete error:", error);
+          Swal.fire({
+            title: "Hata!",
+            text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+            icon: "error",
+            confirmButtonText: "Tamam"
+          });
+        });
+    }
+  });
 });
 
 $('input[name="amount"]').keypress(function (e) {
@@ -680,6 +829,10 @@ $(document).on("click", "#savePaymentFromProject", function () {
   if (!form.valid()) {
     return;
   }
+  var $btn = $(this);
+  var originalBtnHtml = $btn.html();
+  $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Kaydediliyor...');
+
   let formData = new FormData(form[0]);
   formData.append("action", "getPaymentFromProject");
   formData.append("id", id);
@@ -690,27 +843,36 @@ $(document).on("click", "#savePaymentFromProject", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      // console.log(data);
-
+      $btn.prop("disabled", false).html(originalBtnHtml);
       if (data.status == "success") {
+        $("#get_payment_from_project-modal").modal("hide");
+        form[0].reset();
+        reloadTransactionsTable(false);
         Swal.fire({
           title: "Başarılı!",
           text: data.message,
-          icon: data.status,
-          confirmButtonText: "Tamam"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            location.reload();
-          }
+          icon: "success",
+          timer: 1800,
+          showConfirmButton: false
         });
       } else {
         Swal.fire({
           title: "Hata!",
           text: data.message,
-          icon: data.status,
+          icon: "error",
           confirmButtonText: "Tamam"
         });
       }
+    })
+    .catch((error) => {
+      $btn.prop("disabled", false).html(originalBtnHtml);
+      console.error("PaymentFromProject error:", error);
+      Swal.fire({
+        title: "Hata!",
+        text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+        icon: "error",
+        confirmButtonText: "Tamam"
+      });
     });
 });
 
@@ -1113,18 +1275,14 @@ $(document).ready(function () {
         .then((data) => {
           $btn.prop("disabled", false).html(originalBtnHtml);
           if (data.status === "success") {
+            $modal.modal("hide");
+            reloadTransactionsTable(false);
             Swal.fire({
               title: "Başarılı!",
               text: data.message || "Toplu personel ödemesi başarıyla kaydedildi.",
               icon: "success",
-              confirmButtonText: "Tamam"
-            }).then(() => {
-              $modal.modal("hide");
-              if (typeof transactionTable !== "undefined" && transactionTable && transactionTable.ajax) {
-                transactionTable.ajax.reload(null, false);
-              } else {
-                location.reload();
-              }
+              timer: 1800,
+              showConfirmButton: false
             });
           } else {
             Swal.fire({
@@ -1149,7 +1307,7 @@ $(document).ready(function () {
   }
 });
 
-///// GENEL MODALDA BİŞRLEŞTİRİLDİ//////////////////////
+///// GENEL MODALDA BİRLEŞTİRİLDİ //////////////////////
 
 //Personele ödeme yap
 $(document).ready(function () {
@@ -1200,8 +1358,10 @@ $(document).ready(function () {
 
   $("#savePayToPerson").on("click", function () {
     if ($("#payToPersonForm").valid()) {
-      // Form geçerliyse işlemleri yap
-      // Örneğin formu submit edebilirsiniz
+      var $btn = $(this);
+      var originalBtnHtml = $btn.html();
+      $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Kaydediliyor...');
+
       var form = $("#payToPersonForm");
       let formData = new FormData(form[0]);
       let id = $("#transaction_id").val();
@@ -1214,27 +1374,36 @@ $(document).ready(function () {
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log(data);
-
+          $btn.prop("disabled", false).html(originalBtnHtml);
           if (data.status == "success") {
+            $("#pay_to_person-modal").modal("hide");
+            form[0].reset();
+            reloadTransactionsTable(false);
             Swal.fire({
               title: "Başarılı!",
               text: data.message,
-              icon: data.status,
-              confirmButtonText: "Tamam"
-            }).then((result) => {
-              if (result.isConfirmed) {
-                location.reload();
-              }
+              icon: "success",
+              timer: 1800,
+              showConfirmButton: false
             });
           } else {
             Swal.fire({
               title: "Hata!",
               text: data.message,
-              icon: data.status,
+              icon: "error",
               confirmButtonText: "Tamam"
             });
           }
+        })
+        .catch((error) => {
+          $btn.prop("disabled", false).html(originalBtnHtml);
+          console.error("PayToPerson error:", error);
+          Swal.fire({
+            title: "Hata!",
+            text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+            icon: "error",
+            confirmButtonText: "Tamam"
+          });
         });
     }
   });
@@ -1284,14 +1453,13 @@ $(document).on("click", "#savePayToCompany", function () {
     return;
   }
 
-  let formData = new FormData(form[0]);
+  var $btn = $(this);
+  var originalBtnHtml = $btn.html();
+  $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Kaydediliyor...');
 
+  let formData = new FormData(form[0]);
   formData.append("action", "payToCompany");
   formData.append("id", id);
-
-  // for (var pair of formData.entries()) {
-  //   console.log(pair[0] + ", " + pair[1]);
-  // }
 
   fetch("api/financial/transaction.php", {
     method: "POST",
@@ -1299,27 +1467,36 @@ $(document).on("click", "#savePayToCompany", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      // console.log(data);
-
+      $btn.prop("disabled", false).html(originalBtnHtml);
       if (data.status == "success") {
+        $("#pay_to_company-modal").modal("hide");
+        form[0].reset();
+        reloadTransactionsTable(false);
         Swal.fire({
           title: "Başarılı!",
           text: data.message,
-          icon: data.status,
-          confirmButtonText: "Tamam"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            location.reload();
-          }
+          icon: "success",
+          timer: 1800,
+          showConfirmButton: false
         });
       } else {
         Swal.fire({
           title: "Hata!",
           text: data.message,
-          icon: data.status,
+          icon: "error",
           confirmButtonText: "Tamam"
         });
       }
+    })
+    .catch((error) => {
+      $btn.prop("disabled", false).html(originalBtnHtml);
+      console.error("PayToCompany error:", error);
+      Swal.fire({
+        title: "Hata!",
+        text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+        icon: "error",
+        confirmButtonText: "Tamam"
+      });
     });
 });
 
@@ -1367,14 +1544,13 @@ $(document).on("click", "#saveAddExpenseReceivedProject", function () {
     return;
   }
 
-  let formData = new FormData(form[0]);
+  var $btn = $(this);
+  var originalBtnHtml = $btn.html();
+  $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Kaydediliyor...');
 
+  let formData = new FormData(form[0]);
   formData.append("action", "addExpenseReceivedProject");
   formData.append("id", id);
-
-  // for (var pair of formData.entries()) {
-  //   console.log(pair[0] + ", " + pair[1]);
-  // }
 
   fetch("api/financial/transaction.php", {
     method: "POST",
@@ -1382,31 +1558,40 @@ $(document).on("click", "#saveAddExpenseReceivedProject", function () {
   })
     .then((response) => response.json())
     .then((data) => {
-      // console.log(data);
-
+      $btn.prop("disabled", false).html(originalBtnHtml);
       if (data.status == "success") {
+        $("#add_expense_received_project-modal").modal("hide");
+        form[0].reset();
+        reloadTransactionsTable(false);
         Swal.fire({
           title: "Başarılı!",
           text: data.message,
-          icon: data.status,
-          confirmButtonText: "Tamam"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            location.reload();
-          }
+          icon: "success",
+          timer: 1800,
+          showConfirmButton: false
         });
       } else {
         Swal.fire({
           title: "Hata!",
           text: data.message,
-          icon: data.status,
+          icon: "error",
           confirmButtonText: "Tamam"
         });
       }
+    })
+    .catch((error) => {
+      $btn.prop("disabled", false).html(originalBtnHtml);
+      console.error("AddExpenseReceivedProject error:", error);
+      Swal.fire({
+        title: "Hata!",
+        text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+        icon: "error",
+        confirmButtonText: "Tamam"
+      });
     });
 });
 
-///// GENEL MODALDA BİŞRLEŞTİRİLDİ//////////////////////
+///// GENEL MODALDA BİRLEŞTİRİLDİ //////////////////////
 
 //Güncelleme işlemi
 $(document).on("click", ".edit-transactions", function () {
@@ -1421,7 +1606,6 @@ $(document).on("click", ".edit-transactions", function () {
 
   // Alt tür bilgisini data attribute, class veya tablodan güvenli şekilde al
   let type = ($(this).data("sub-type-name") || $(this).closest("tr").find(".sub-type-name").text() || $(this).closest("tr").find("td:eq(3)").text()).trim();
-
 
   switch (type) {
     case "Proje(Alınan Ödeme)":
@@ -1553,8 +1737,10 @@ $(document).on("click", ".edit-transactions", function () {
 function processTransactionData() {}
 
 function customErrorPlacement(error, element) {
-  if (element.hasClass("select2")) {
-    error.insertAfter(element.next("span"));
+  if (element.closest(".input-group").length) {
+    error.insertAfter(element.closest(".input-group"));
+  } else if (element.hasClass("select2") || element.hasClass("select2-hidden-accessible")) {
+    error.insertAfter(element.next(".select2"));
   } else {
     error.insertAfter(element);
   }
@@ -1591,6 +1777,10 @@ $(document).on("change", "#it_from_cases", function () {
 //Virman modalindaki kaydet butonuna basınca
 $(document).on("click", "#add-case-transfer", function () {
   var form = $("#caseTransferForm");
+  var $btn = $(this);
+  var originalBtnHtml = $btn.html();
+  $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Kaydediliyor...');
+
   var formData = new FormData(form[0]);
   formData.append("action", "intercashTransfer");
 
@@ -1600,24 +1790,35 @@ $(document).on("click", "#add-case-transfer", function () {
   })
     .then((response) => response.json())
     .then((data) => {
+      $btn.prop("disabled", false).html(originalBtnHtml);
       if (data.status == "success") {
+        $("#intercash_transfer-modal").modal("hide");
+        form[0].reset();
+        reloadTransactionsTable(false);
         Swal.fire({
           title: "Başarılı!",
           text: data.message,
-          icon: data.status,
-          confirmButtonText: "Tamam"
-        }).then((result) => {
-          if (result.isConfirmed) {
-            location.reload();
-          }
+          icon: "success",
+          timer: 1800,
+          showConfirmButton: false
         });
       } else {
         Swal.fire({
           title: "Hata!",
           html: data.message,
-          icon: data.status,
+          icon: "error",
           confirmButtonText: "Tamam"
         });
       }
+    })
+    .catch((error) => {
+      $btn.prop("disabled", false).html(originalBtnHtml);
+      console.error("IntercashTransfer error:", error);
+      Swal.fire({
+        title: "Hata!",
+        text: "Sunucu ile iletişim kurulurken bir hata oluştu.",
+        icon: "error",
+        confirmButtonText: "Tamam"
+      });
     });
 });

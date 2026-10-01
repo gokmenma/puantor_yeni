@@ -641,7 +641,7 @@ function loadPuantajTable() {
 
   // Send AJAX request - use clean URL to avoid stale GET params (e.g. old project IDs)
   $.ajax({
-    url: 'index.php?p=puantaj%2Flist',
+    url: '/puantaj',
     type: 'POST',
     data: formData,
     headers: {
@@ -650,8 +650,9 @@ function loadPuantajTable() {
     success: function (response) {
       // Update URL query parameters in the address bar without page reload
       var queryParams = new URLSearchParams(formData);
-      queryParams.set('p', 'puantaj/list');
-      window.history.pushState({}, '', 'index.php?' + queryParams.toString());
+      queryParams.delete('p');
+      var qs = queryParams.toString();
+      window.history.pushState({}, '', '/puantaj' + (qs ? '?' + qs : ''));
 
       // 1. Destroy existing DataTable
       if ($.fn.DataTable.isDataTable('#puantajTable')) {

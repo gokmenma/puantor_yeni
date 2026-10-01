@@ -17,7 +17,7 @@ $new_id = isset($_GET["id"]) ? $_GET['id'] : 0;
 
 //Eğer url'den id yazılmışsa veya id boş ise projeler sayfasına gider
 if($id == null && isset($_GET['id'])) {
-    header("Location: /index.php?p=users/list");
+    header("Location: /kullanicilar");
     exit;
 }
 
@@ -26,7 +26,7 @@ if ($id == 0) {
     $subDetails = $userObj->getActiveSubscriptionDetails($owner_id);
     $currentSubUsers = $userObj->getSubUserCount($owner_id);
     if (($_SESSION["user"]->superadmin ?? 0) != 1 && $currentSubUsers >= $subDetails['alt_kullanici_hakki']) {
-        header("Location: index.php?p=users/list&limit_reached=1");
+        header("Location: /kullanicilar?limit_reached=1");
         exit;
     }
 }

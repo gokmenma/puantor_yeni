@@ -35,7 +35,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
                         <i class="ti ti-users" style="font-size: 24px;"></i>
                     </div>
                     <div>
-                        <h2 class="page-title fw-bold text-dark" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                        <h2 class="page-title fw-bold" style="font-size: 1.25rem; letter-spacing: -0.3px;">
                             Personel Yönetimi
                         </h2>
                         <div class="text-secondary small mt-0.5" style="font-size: 12px;">
@@ -56,7 +56,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
                             <!-- Checkboxes will be rendered dynamically by JS -->
                         </div>
                     </div>
-                    <a href="#" class="btn btn-sm btn-dark route-link shadow-sm persons-header-action" data-page="persons/manage" style="background-color: #1e293b; border-color: #1e293b;">
+                    <a href="#" class="btn btn-sm btn-primary route-link shadow-sm persons-header-action" data-page="persons/manage">
                         <i class="ti ti-plus me-1"></i> Yeni Personel Ekle
                     </a>
                     <div class="dropdown">
@@ -92,7 +92,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
     <div class="row row-cards g-3 mb-3" id="personnelSummaryCards">
         <!-- Kart 1: Toplam Personel -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border personnel-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border personnel-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">TOPLAM PERSONEL</span>
@@ -100,12 +100,12 @@ html.personnel-summary-collapsed #personnelSummaryCards {
                             <i class="ti ti-users" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['total'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
-                            Mavi: <strong class="text-dark"><?= $stats['daily_wage_count'] ?></strong> | Beyaz: <strong class="text-dark"><?= $stats['monthly_wage_count'] ?></strong>
+                            Mavi: <strong><?= $stats['daily_wage_count'] ?></strong> | Beyaz: <strong><?= $stats['monthly_wage_count'] ?></strong>
                         </span>
                         <label class="status-summary-filter mb-0" title="Tüm personelleri göster">
                             <input type="radio" name="person_status" value="" class="status-filter">
@@ -118,7 +118,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
 
         <!-- Kart 2: Aktif Personeller -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border personnel-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border personnel-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">AKTİF PERSONELLER</span>
@@ -126,10 +126,10 @@ html.personnel-summary-collapsed #personnelSummaryCards {
                             <i class="ti ti-hourglass-low" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['active'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Çalışan: <strong class="text-warning"><?= $stats['active'] ?> Personel</strong>
                         </span>
@@ -144,7 +144,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
 
         <!-- Kart 3: Pasif / Ayrılan -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border personnel-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border personnel-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">PASİF / AYRILAN</span>
@@ -152,10 +152,10 @@ html.personnel-summary-collapsed #personnelSummaryCards {
                             <i class="ti ti-check" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['passive'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Aktif Oranı: <strong class="text-success">%<?= $stats['active_percent'] ?></strong>
                         </span>
@@ -170,7 +170,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
 
         <!-- Kart 4: Bu Ay Giriş Yapan -->
         <div class="col-sm-6 col-xl-3">
-            <div class="card card-sm border personnel-summary-card" style="border-color: #e2e8f0 !important;">
+            <div class="card card-sm border personnel-summary-card">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.5px;">BU AY GİRİŞ YAPAN</span>
@@ -178,10 +178,10 @@ html.personnel-summary-collapsed #personnelSummaryCards {
                             <i class="ti ti-calendar" style="font-size: 18px;"></i>
                         </div>
                     </div>
-                    <div class="h1 mb-2 fw-bold text-dark" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
+                    <div class="h1 mb-2 fw-bold" style="font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.25;">
                         <?= number_format($stats['this_month_hires'], 0, ',', '.') ?>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between pt-1 border-top" style="border-color: #f1f5f9 !important;">
+                    <div class="d-flex align-items-center justify-content-between pt-1 border-top">
                         <span class="text-muted" style="font-size: 11.5px;">
                             Yeni Başlayanlar
                         </span>
@@ -195,11 +195,11 @@ html.personnel-summary-collapsed #personnelSummaryCards {
     <!-- Main Table Card -->
     <div class="row row-cards">
         <div class="col-12">
-            <div class="card personnel-table-card" style="border: 1px solid #dbe3ec !important; overflow: hidden; background: #ffffff;">
+            <div class="card personnel-table-card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2 px-3">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px;">
-                            <i class="ti ti-list text-secondary" style="font-size: 18px;"></i>
+                        <div class="card-header-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                            <i class="ti ti-list" style="font-size: 18px;"></i>
                         </div>
                         <div>
                             <div class="d-flex align-items-center gap-2">
@@ -296,7 +296,8 @@ html.personnel-summary-collapsed #personnelSummaryCards {
     font-size: 18px !important;
 }
 
-#personnelPage .personnel-summary-card {
+html:not([data-bs-theme="dark"]) #personnelPage .personnel-summary-card,
+html:not([data-bs-theme="dark"]) .personnel-summary-card {
     background: #ffffff !important;
     border: 1px solid #dbe3ec !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
@@ -311,7 +312,10 @@ html.personnel-summary-collapsed #personnelSummaryCards {
     transition: max-height .3s ease, opacity .2s ease, transform .3s ease, margin-bottom .3s ease;
 }
 
-#personnelPage .personnel-table-card {
+html:not([data-bs-theme="dark"]) #personnelPage .personnel-table-card,
+html:not([data-bs-theme="dark"]) .personnel-table-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ec !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07) !important;
     overflow: hidden;
 }
@@ -608,10 +612,12 @@ div#persons_wrapper .dt-layout-row:has(.dt-info) {
     color: #94a3b8;
     background: #334155;
 }
+[data-bs-theme="dark"] #personnelPage .personnel-summary-card,
 [data-bs-theme="dark"] .personnel-summary-card,
+[data-bs-theme="dark"] #personnelPage .personnel-table-card,
 [data-bs-theme="dark"] .personnel-table-card {
     background: #182433 !important;
-    border-color: #334155 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 3px 12px rgba(0, 0, 0, .22) !important;
 }
 

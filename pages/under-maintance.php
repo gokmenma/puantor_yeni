@@ -4,7 +4,7 @@
             
             <!-- Logo Section -->
             <div class="mb-4">
-                <img src="./static/Logo-ai.svg" height="80" alt="Puantor" class="navbar-brand-image">
+                <img src="/static/Logo-ai.svg" height="80" alt="Puantor" class="navbar-brand-image">
             </div>
             
             <!-- Animated Maintenance Badge -->

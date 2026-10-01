@@ -36,7 +36,7 @@ $yaklasan_hakedisler = $izinHakedisModel->getYaklasanHakedisler($firm_id);
 
             <!-- İstatistik rozetleri -->
             <div class="d-flex gap-2 flex-wrap p-3 border-bottom">
-                <a href="index.php?p=izin/list&durum=beklemede" class="badge bg-warning-lt text-warning border border-warning-subtle text-decoration-none px-3 py-2">
+                <a href="/izin-talepleri?durum=beklemede" class="badge bg-warning-lt text-warning border border-warning-subtle text-decoration-none px-3 py-2">
                     <i class="ti ti-clock me-1"></i> <?= $bekleyen_sayi ?> Bekleyen Talep
                 </a>
                 <span class="badge bg-blue-lt px-3 py-2">
@@ -91,10 +91,10 @@ $yaklasan_hakedisler = $izinHakedisModel->getYaklasanHakedisler($firm_id);
 
         </div>
         <div class="card-footer d-flex gap-2">
-            <a href="index.php?p=izin/list" class="btn btn-sm btn-outline-secondary flex-fill">
+            <a href="/izin-talepleri" class="btn btn-sm btn-outline-secondary flex-fill">
                 <i class="ti ti-list me-1"></i> Talepler
             </a>
-            <a href="index.php?p=izin/hakedis" class="btn btn-sm btn-outline-success flex-fill">
+            <a href="/izin-hakedisleri" class="btn btn-sm btn-outline-success flex-fill">
                 <i class="ti ti-calendar-check me-1"></i> Hakedişler
             </a>
         </div>

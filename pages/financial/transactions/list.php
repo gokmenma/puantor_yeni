@@ -607,8 +607,7 @@ table#transactionTable.data-table > tbody > tr:last-child > * {
     border-bottom: 0 !important;
     box-shadow: none !important;
 }
-/* Shadcn / Modern UI Checkbox Standardı */
-#transactionsPage .form-check-input,
+/* Shadcn / Modern UI Checkbox Standardı (Yalnızca Tablo Hücreleri ve Başlık İçin) */
 table#transactionTable .form-check-input {
     width: 16px !important;
     min-width: 16px !important;
@@ -630,18 +629,15 @@ table#transactionTable .form-check-input {
     outline: none !important;
 }
 
-#transactionsPage .form-check-input:hover,
 table#transactionTable .form-check-input:hover {
     border-color: #94a3b8 !important;
 }
 
-#transactionsPage .form-check-input:focus,
 table#transactionTable .form-check-input:focus {
     box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12) !important;
     border-color: #0f172a !important;
 }
 
-#transactionsPage .form-check-input:checked,
 table#transactionTable .form-check-input:checked {
     background-color: #0f172a !important;
     border-color: #0f172a !important;
@@ -651,12 +647,78 @@ table#transactionTable .form-check-input:checked {
     background-size: 11px 11px !important;
 }
 
-#transactionsPage .form-check-input:disabled,
 table#transactionTable .form-check-input:disabled {
     opacity: 0.45 !important;
     cursor: not-allowed !important;
     background-color: #f1f5f9 !important;
     border-color: #e2e8f0 !important;
+}
+
+/* Sütunlar Açılır Menüsü Stilleri */
+#transactionColvisMenu {
+    min-width: 200px !important;
+    padding: 6px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12) !important;
+    border: 1px solid #dbe3ec !important;
+}
+#transactionColvisMenu .dropdown-item {
+    display: flex !important;
+    align-items: center !important;
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+    color: #334155 !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+    margin-bottom: 2px !important;
+}
+#transactionColvisMenu .dropdown-item:hover {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+#transactionColvisMenu .form-check {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    padding-left: 0 !important;
+    cursor: pointer !important;
+}
+#transactionColvisMenu .form-check-input {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    display: inline-block !important;
+    float: none !important;
+}
+#transactionColvisMenu .form-check-input:checked {
+    background-color: #0f172a !important;
+    border-color: #0f172a !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 4.5'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 11px 11px !important;
+}
+#transactionColvisMenu .form-check-label {
+    margin: 0 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    color: #475569 !important;
+    flex-grow: 1 !important;
+}
+#transactionColvisMenu .dropdown-item:hover .form-check-label {
+    color: #0f172a !important;
 }
 
 /* Tablo Altı Sayfalama ve Bilgi Alanı */
@@ -787,17 +849,41 @@ div#transactionTable_wrapper .dt-layout-row:has(.dt-info) {
 [data-bs-theme="dark"] .custom-context-menu .cm-divider {
     background: #334155;
 }
-[data-bs-theme="dark"] #transactionsPage .form-check-input,
 [data-bs-theme="dark"] table#transactionTable .form-check-input {
     background-color: #1e293b !important;
     border-color: #475569 !important;
 }
-[data-bs-theme="dark"] #transactionsPage .form-check-input:hover,
 [data-bs-theme="dark"] table#transactionTable .form-check-input:hover {
     border-color: #94a3b8 !important;
 }
-[data-bs-theme="dark"] #transactionsPage .form-check-input:checked,
 [data-bs-theme="dark"] table#transactionTable .form-check-input:checked {
+    background-color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 4.5'/%3e%3c/svg%3e") !important;
+}
+[data-bs-theme="dark"] #transactionColvisMenu {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+[data-bs-theme="dark"] #transactionColvisMenu .dropdown-item {
+    color: #e2e8f0 !important;
+}
+[data-bs-theme="dark"] #transactionColvisMenu .dropdown-item:hover {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] #transactionColvisMenu .form-check-label {
+    color: #cbd5e1 !important;
+}
+[data-bs-theme="dark"] #transactionColvisMenu .dropdown-item:hover .form-check-label {
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] #transactionColvisMenu .form-check-input {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+}
+[data-bs-theme="dark"] #transactionColvisMenu .form-check-input:checked {
     background-color: #38bdf8 !important;
     border-color: #38bdf8 !important;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 4.5'/%3e%3c/svg%3e") !important;
