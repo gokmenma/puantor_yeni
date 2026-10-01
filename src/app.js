@@ -327,6 +327,7 @@ $(function() {
 if ($.fn && $.fn.dataTable) {
   $.fn.dataTable.ext.errMode = 'none';
   $.extend(true, $.fn.dataTable.defaults, {
+    colReorder: true,
     columnDefs: [
       { targets: "_all", defaultContent: "" }
     ],
@@ -1667,7 +1668,7 @@ window.createDataTable = function (selector, userOptions) {
     $thead.find('.search-input-row').remove();
 
     var config = $.extend(true, {
-        ordering:      false,
+        ordering:      true,
         autoWidth:     false,
         colReorder:    true,
         pagingType:    'simple_numbers',
@@ -1767,6 +1768,12 @@ window.createDataTable = function (selector, userOptions) {
 $(document).on('init.dt', function (e, settings) {
     var api = new $.fn.dataTable.Api(settings);
     var $table = $(settings.nTable);
+    if ($table.is('#puantajTable, #puantajDataTable, #puantaj_info_table, .no-col-filter, [data-no-col-filter="true"]') || $table.closest('#puantajPage, .puantaj-cetveli-card').length) {
+        return;
+    }
+    if (typeof window.initDataTableColumnFilters === 'function') {
+        window.initDataTableColumnFilters($table, api);
+    }
     if (typeof window.initPuantorDTManager === 'function') {
         window.initPuantorDTManager($table, api);
     }

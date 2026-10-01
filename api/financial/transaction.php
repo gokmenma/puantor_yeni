@@ -162,13 +162,26 @@ if ($action == "deleteTransaction") {
     $type = $_GET["type"] ?? $_POST["type"] ?? '';
     $table = $_GET["table"] ?? $_POST["table"] ?? '';
 
+    $decrypted_id = Security::safeDecrypt($id);
+
     try {
-        if ($table === 'project_gelir_gider' || in_array($type, [5, 6, 10, 11, 12])) {
-            $ProjectIncExp->delete($id);
-        } elseif ($table === 'maas_gelir_kesinti' || $type == 7) {
-            $Bordro->delete($id);
+        if ($table === 'project_gelir_gider') {
+            $ProjectIncExp->delete($decrypted_id);
+        } elseif ($table === 'maas_gelir_kesinti') {
+            $Bordro->delete($decrypted_id);
+        } elseif ($table === 'case_transactions') {
+            $ct->delete($decrypted_id);
         } else {
-            $ct->delete($id);
+            // Tablo belirtilmemişse var olduğu tablodan sil
+            if ($ct->find($decrypted_id)) {
+                $ct->delete($decrypted_id);
+            } elseif ($Bordro->find($decrypted_id)) {
+                $Bordro->delete($decrypted_id);
+            } elseif ($ProjectIncExp->find($decrypted_id)) {
+                $ProjectIncExp->delete($decrypted_id);
+            } else {
+                $ct->delete($decrypted_id);
+            }
         }
         $status = "success";
         $message = "Kasa hareketi başarıyla silindi.";
@@ -226,15 +239,27 @@ if ($action == "bulkDeleteTransactions") {
         }
 
         try {
-            if ($table === 'project_gelir_gider' || in_array($type, [5, 6, 10, 11, 12])) {
+            if ($table === 'project_gelir_gider') {
                 $ProjectIncExp->delete($decrypted_id);
                 $deleted_count++;
-            } elseif ($table === 'maas_gelir_kesinti' || $type == 7) {
+            } elseif ($table === 'maas_gelir_kesinti') {
                 $Bordro->delete($decrypted_id);
                 $deleted_count++;
-            } else {
+            } elseif ($table === 'case_transactions') {
                 $ct->delete($decrypted_id);
                 $deleted_count++;
+            } else {
+                // Tablo belirtilmemişse var olduğu tablodan sil
+                if ($ct->find($decrypted_id)) {
+                    $ct->delete($decrypted_id);
+                    $deleted_count++;
+                } elseif ($Bordro->find($decrypted_id)) {
+                    $Bordro->delete($decrypted_id);
+                    $deleted_count++;
+                } elseif ($ProjectIncExp->find($decrypted_id)) {
+                    $ProjectIncExp->delete($decrypted_id);
+                    $deleted_count++;
+                }
             }
         } catch (Throwable $e) {
             error_log("Bulk delete transaction error for ID {$decrypted_id}: " . $e->getMessage());
@@ -396,33 +421,64 @@ if ($action == "payToPerson") {
 //Personellere Ödeme Yap
 if ($action == "payToPersons") {
 
-    //gelen değeri virgülden ayırarak diziye çevir
-    $person_ids = explode(",", $_POST["person_ids"]);
-    $case = Security::decrypt($_POST["tps_cases"]);
-    $date = Date::ymd($_POST["tps_action_date"]);
-    $description = Security::escape($_POST["tps_amount_description"]);
-    $amounts = explode(",", $_POST["amounts"]);
+    $case = Security::decrypt($_POST["tps_cases"] ?? '');
+    $date = Date::ymd($_POST["tps_action_date"] ?? date('d.m.Y'));
+    $description = Security::escape($_POST["tps_amount_description"] ?? '');
+
+    // Ödeme listesini parse et
+    $payments = [];
+    if (!empty($_POST["payments_json"])) {
+        $decoded = json_decode($_POST["payments_json"], true);
+        if (is_array($decoded)) {
+            $payments = $decoded;
+        }
+    } else {
+        $person_ids = !empty($_POST["person_ids"]) ? explode(",", (string)$_POST["person_ids"]) : [];
+        $amounts = !empty($_POST["amounts"]) ? explode(",", (string)$_POST["amounts"]) : [];
+        foreach ($person_ids as $idx => $pid) {
+            $amt = isset($amounts[$idx]) ? Helper::formattedMoneyToNumber($amounts[$idx]) : 0;
+            if ((int)$pid > 0 && $amt > 0) {
+                $payments[] = [
+                    'person_id' => (int)$pid,
+                    'amount' => $amt
+                ];
+            }
+        }
+    }
+
+    // Dönem bilgisi: Eğer formdan geldiyse onu kullan, yoksa işlem tarihinden al
+    $period_month = !empty($_POST["period_month"]) ? (int)$_POST["period_month"] : (!empty($_POST["month"]) ? (int)$_POST["month"] : 0);
+    $period_year = !empty($_POST["period_year"]) ? (int)$_POST["period_year"] : (!empty($_POST["year"]) ? (int)$_POST["year"] : 0);
 
     // Personel ödemesi yetkisi kontrolü
     $Auths->hasPermissionReturn("make_staff_payment");
 
     try {
         $dateObj = strtotime($date);
-        $p_year = (int)date('Y', $dateObj);
-        $p_month = (int)date('m', $dateObj);
-        $p_gun = (int)date('Ymd', $dateObj);
+        $action_year = (int)date('Y', $dateObj);
+        $action_month = (int)date('m', $dateObj);
+        $action_day = (int)date('d', $dateObj);
 
-        $i = 0;
-        foreach ($person_ids as $person) {
-            $person_id = (int)$person;
-            $person_obj = $Person->getPersonName($person_id);
-            $full_name = $person_obj ? $person_obj->full_name : '';
-            $amount_val = Helper::formattedMoneyToNumber($amounts[$i]);
-            $i++;
+        $p_year = $period_year > 0 ? $period_year : $action_year;
+        $p_month = $period_month > 0 ? $period_month : $action_month;
 
-            if ($amount_val <= 0) {
+        // Bordro hareketinin günü (gun alanı): Bordro döneminin ayı/yılı ile eşleşmeli
+        $lastDayOfPeriod = (int)date('t', strtotime(sprintf('%04d-%02d-01', $p_year, $p_month)));
+        $p_day = min($action_day, $lastDayOfPeriod);
+        $p_gun = (int)sprintf('%04d%02d%02d', $p_year, $p_month, $p_day);
+
+        require_once ROOT . "/Model/ActivityLogModel.php";
+
+        foreach ($payments as $payItem) {
+            $person_id = (int)($payItem['person_id'] ?? 0);
+            $amount_val = (float)($payItem['amount'] ?? 0);
+
+            if ($person_id <= 0 || $amount_val <= 0) {
                 continue;
             }
+
+            $person_obj = $Person->getPersonName($person_id);
+            $full_name = $person_obj ? $person_obj->full_name : '';
 
             // 1. Kasa Hareketi (case_transactions)
             $data = [
@@ -455,6 +511,21 @@ if ($action == "payToPersons") {
                 'aciklama' => $description,
             ];
             $Bordro->saveWithAttr($bordro_data);
+
+            if (class_exists('ActivityLogModel')) {
+                ActivityLogModel::log(
+                    'payroll',
+                    'bulk_payment_item',
+                    sprintf(
+                        'Toplu ödeme yapıldı. Personel: %s (#%d), dönem: %04d-%02d, tutar: %s TL',
+                        $full_name,
+                        $person_id,
+                        $p_year,
+                        $p_month,
+                        Helper::formattedMoney($amount_val)
+                    )
+                );
+            }
         }
 
         $status = "success";

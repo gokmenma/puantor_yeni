@@ -85,7 +85,7 @@ foreach ($users as $u) {
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon users-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle" style="height: 32px; width: 32px;">
-                            <i class="ti ti-columns" style="font-size: 16px;"></i>
+                            <i class="ti ti-layout-columns" style="font-size: 16px;"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="usersColvisMenu" style="min-width: 210px; max-height: 350px; overflow-y: auto;">
                             <!-- Checkboxlar JS ile dinamik yüklenecek -->

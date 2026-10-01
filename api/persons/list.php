@@ -199,7 +199,7 @@ try {
         return Helper::searchContains($cellValueStr, $searchValue);
     };
 
-    $orderColumn = (int) ($_POST['order'][0]['column'] ?? 1);
+    $orderColumn = (int) ($_POST['order'][0]['column'] ?? 2);
     $orderDirection = strtolower((string) ($_POST['order'][0]['dir'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
     $orderFields = [
         1 => 'id',
@@ -213,7 +213,7 @@ try {
         18 => 'address',
         19 => 'description',
     ];
-    $orderField = $orderFields[$orderColumn] ?? 'id';
+    $orderField = $orderFields[$orderColumn] ?? 'full_name';
 
     $counts = $personsModel->getPersonsServerSideCounts($firm_id, $authorizedIds, $status);
     $useCompatibilitySearch = $search !== '' || !empty($columnSearches);

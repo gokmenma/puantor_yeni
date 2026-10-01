@@ -61,7 +61,7 @@ html.hakedis-summary-collapsed #hakedisSummaryCards {
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon hakedis-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="hakedisColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">

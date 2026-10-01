@@ -108,14 +108,14 @@
         gap: 5px !important;
         min-width: 0 !important;
         flex: 1 1 auto !important;
-        white-space: normal !important;
+        white-space: nowrap !important;
         word-break: keep-all !important;
         overflow-wrap: normal !important;
         word-wrap: normal !important;
         hyphens: none !important;
     }
     .dt-header-title {
-        white-space: normal !important;
+        white-space: nowrap !important;
         word-break: keep-all !important;
         overflow-wrap: normal !important;
         word-wrap: normal !important;
@@ -247,6 +247,15 @@
         border-color: #38bdf8 !important;
         color: #0284c7 !important;
         opacity: 1;
+    }
+    #puantajTable .dt-col-filter-btn,
+    #puantajTable .dt-column-order,
+    #puantajTable .dt-col-resizer,
+    #puantajTable_active_filters_bar,
+    .no-col-filter .dt-col-filter-btn,
+    .no-col-filter .dt-column-order,
+    .no-col-filter .dt-col-resizer {
+        display: none !important;
     }
     #dt-col-filter-popover {
         width: 290px !important;
@@ -1144,6 +1153,11 @@
     window.initDataTableColumnFilters = function ($table, dtInstance) {
         if (!$table || !$table.length || !dtInstance) return;
 
+        // Puantaj tablolarında ve filtre istenmeyen tablolarda başlık filtrelerini kesinlikle çalıştırma
+        if ($table.is('#puantajTable, #puantajDataTable, #puantaj_info_table, .no-col-filter, [data-no-col-filter="true"]') || $table.closest('#puantajPage, .puantaj-cetveli-card').length) {
+            return;
+        }
+
         var pop = getPopover();
         var tableId = $table.attr('id') || 'table';
         tableInstances[tableId] = dtInstance;
@@ -1248,7 +1262,19 @@
                 var detectedType = detectColumnType(header, title);
                 $th.attr('data-filter-type', detectedType);
 
-                var isOrderable = $th.hasClass('dt-orderable-asc') || $th.hasClass('dt-orderable-desc') || $th.hasClass('dt-ordering-asc') || $th.hasClass('dt-ordering-desc') || $th.hasClass('sorting') || $th.hasClass('sorting_asc') || $th.hasClass('sorting_desc');
+                var dtSettings = dtInstance.settings()[0];
+                var colSettings = (dtSettings && dtSettings.aoColumns) ? dtSettings.aoColumns[colIdx] : null;
+                var isOrderable = true;
+                if (colSettings && colSettings.bSortable === false) {
+                    isOrderable = false;
+                }
+                if ($th.hasClass('no-sort') || $th.hasClass('no-export') || $th.hasClass('actions-column') || $th.attr('data-orderable') === 'false' || $th.find('input[type="checkbox"]').length > 0) {
+                    isOrderable = false;
+                }
+                if (dtSettings && dtSettings.oFeatures && dtSettings.oFeatures.bSort === false) {
+                    isOrderable = false;
+                }
+
                 var currentHtml = $th.html();
                 var $clean = $('<div>').html(currentHtml);
                 $clean.find('.dt-column-order, .dt-col-filter-btn').remove();
@@ -1259,7 +1285,7 @@
                 if (isOrderable) {
                     $titleWrap.append('<span class="dt-column-order"></span>');
                 }
-                var $titleSpan = $('<span class="dt-header-title text-wrap"></span>').html(cleanTitleHtml);
+                var $titleSpan = $('<span class="dt-header-title text-nowrap"></span>').html(cleanTitleHtml);
                 $titleWrap.append($titleSpan);
 
                 var $actionsSpan = $('<span class="dt-header-actions d-inline-flex align-items-center gap-1 ms-auto flex-shrink-0"></span>');
@@ -1347,7 +1373,7 @@
 
         renderHeaderFilters();
 
-        $table.off('column-visibility.dt.colFilter').on('column-visibility.dt.colFilter', function () {
+        $table.off('column-visibility.dt.colFilter column-reorder.dt.colFilter').on('column-visibility.dt.colFilter column-reorder.dt.colFilter', function () {
             setTimeout(renderHeaderFilters, 50);
         });
 

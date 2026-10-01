@@ -14,6 +14,12 @@
 
     window.PuantorDTManager = window.PuantorDTManager || {};
 
+    // Merkezi DataTables ColReorder Varsayılanı
+    if ($.fn && $.fn.dataTable) {
+        if (!$.fn.dataTable.defaults) $.fn.dataTable.defaults = {};
+        $.fn.dataTable.defaults.colReorder = true;
+    }
+
     var stateCache = {};
     var saveTimers = {};
 
@@ -236,6 +242,8 @@
     table.dtcr-cloned.data-table,
     table#bordroTable.dtcr-cloned,
     table#persons.dtcr-cloned,
+    table#projectTable.dtcr-cloned,
+    table#izin-table.dtcr-cloned,
     .dtcr-cloned,
     .dtcr-cloned table,
     div.dt-colreorder-drag,
@@ -861,6 +869,21 @@
     window.initPuantorDTManager = function ($table, dtInstance) {
         if (!$table || !$table.length || !dtInstance) return;
 
+        // Puantaj tablolarında ve sütun yöneticisi istenmeyen tablolarda çalıştırma
+        if ($table.is('#puantajTable, #puantajDataTable, #puantaj_info_table, .no-dt-manager, [data-no-dt-manager="true"]') || $table.closest('#puantajPage, .puantaj-cetveli-card').length) {
+            return;
+        }
+
+        // Merkezi Güvence: Tabloda ColReorder etkin değilse otomatik başlat
+        try {
+            var settings = dtInstance.settings()[0];
+            if (settings && !settings._colReorder && $.fn.dataTable && $.fn.dataTable.ColReorder) {
+                new $.fn.dataTable.ColReorder(dtInstance);
+            }
+        } catch (e) {
+            console.warn('[PuantorDTManager] ColReorder auto-init error:', e);
+        }
+
         var tableKey = getTableKey($table);
 
         loadStateFromDB(tableKey, function (savedState) {
@@ -896,7 +919,7 @@
     };
 
     // Sayfadaki Sütun Menüsü Checkbox Değişim Dinleyicisi (Evrensel, Tekil ve Kesin Çalışan Handler)
-    $(document).off('change.dtColGlobalTrigger').on('change.dtColGlobalTrigger', '.bordro-col-trigger, .persons-col-trigger, input.dt-colvis-trigger', function (e) {
+    $(document).off('change.dtColGlobalTrigger').on('change.dtColGlobalTrigger', '.bordro-col-trigger, .persons-col-trigger, .projects-col-trigger, .izin-col-trigger, input.dt-colvis-trigger, .col-toggle-cb', function (e) {
         var $chk = $(this);
         var origIdx = parseInt($chk.data('column') !== undefined ? $chk.data('column') : ($chk.data('orig-idx') !== undefined ? $chk.data('orig-idx') : $chk.data('column-idx')), 10);
         var isChecked = this.checked;
@@ -909,6 +932,10 @@
             $activeTable = $('#bordroTable');
         } else if ($menu.attr('id') === 'personsColvisMenu') {
             $activeTable = $('#persons');
+        } else if ($menu.attr('id') === 'projectsColvisMenu') {
+            $activeTable = $('#projectTable');
+        } else if ($menu.attr('id') === 'izinColvisMenu') {
+            $activeTable = $('#izin-table');
         } else {
             $activeTable = $chk.closest('.card, .page-wrapper, body').find('table.dataTable:visible:first');
             if (!$activeTable.length) $activeTable = $('table.dataTable:first');

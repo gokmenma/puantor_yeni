@@ -40,8 +40,6 @@ try {
                FROM maas_gelir_kesinti m
                INNER JOIN persons p ON p.id = m.person_id
               WHERE m.id = :id
-                AND m.ay = :month
-                AND m.yil = :year
                 AND p.firm_id = :firm_id
               LIMIT 1'
         );
@@ -51,8 +49,6 @@ try {
                FROM case_transactions c
                INNER JOIN persons p ON p.id = c.person_id
               WHERE c.id = :id
-                AND MONTH(c.date) = :month
-                AND YEAR(c.date) = :year
                 AND p.firm_id = :firm_id
               LIMIT 1'
         );
@@ -60,8 +56,6 @@ try {
 
     $recordSql->execute([
         ':id' => $id,
-        ':month' => $month,
-        ':year' => $year,
         ':firm_id' => $firmId
     ]);
     $record = $recordSql->fetch(PDO::FETCH_OBJ);

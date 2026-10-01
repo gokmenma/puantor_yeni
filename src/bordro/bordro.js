@@ -276,8 +276,15 @@ $(document).on("click", ".delete-payroll-transaction", async function () {
       $(detailTrigger).trigger("click");
     }
 
+    if (window.recalculatePayrollKPISummaries) {
+      window.recalculatePayrollKPISummaries();
+    }
+
     if ($.fn.DataTable && $.fn.DataTable.isDataTable("#bordroTable")) {
-      $("#bordroTable").DataTable().ajax.reload(null, false);
+      var dt = $("#bordroTable").DataTable();
+      if (dt && dt.ajax && typeof dt.ajax.reload === "function" && typeof dt.ajax.url === "function" && dt.ajax.url()) {
+        dt.ajax.reload(null, false);
+      }
     }
 
     await Swal.fire({
@@ -296,6 +303,86 @@ $(document).on("click", ".delete-payroll-transaction", async function () {
     $(button).prop("disabled", false);
   }
 });
+
+// Dinamik Tablo ve KPI Güncelleme Fonksiyonları
+window.updatePayrollTableRow = function (encId, data) {
+  if (!encId || !data) return;
+
+  var $tr = $('tr[data-id="' + encId + '"]');
+  if (!$tr.length) return;
+
+  var net = Number(data.net) || 0;
+
+  // Satır özniteliklerini güncelle
+  $tr.attr("data-balance", data.formatted_net);
+  $tr.attr("data-balance-raw", net);
+
+  // Satırdaki buton ve linklerin özniteliklerini güncelle
+  $tr.find(".add-payment").attr("data-balance", data.formatted_net).attr("data-balance-raw", net);
+
+  // Ödenen / Kesinti hücresi (İcra hariç)
+  var $odemeTd = $tr.find("td.view-payroll-detail").first();
+  if ($odemeTd.length) {
+    $odemeTd.find("span.fw-semibold").text(data.formatted_expense);
+  }
+
+  // Ödenecek / Kalan hücresi
+  var $kalanTd = $tr.find("td.payroll-balance");
+  if ($kalanTd.length) {
+    $kalanTd.removeClass("text-danger text-success text-warning text-dark");
+    if (net < 0) {
+      $kalanTd.addClass("text-danger");
+    } else if (net > 0) {
+      $kalanTd.addClass("text-success");
+    } else {
+      $kalanTd.addClass("text-dark");
+    }
+    $kalanTd.find("span.view-payroll-detail").text(data.formatted_net);
+  }
+
+  // Sayfa üstündeki KPI özet kartlarını yeniden hesapla
+  window.recalculatePayrollKPISummaries();
+};
+
+window.recalculatePayrollKPISummaries = function () {
+  var totalIncome = 0;
+  var totalExpense = 0;
+  var totalIcra = 0;
+
+  $("#bordroTable tbody tr[data-id]").each(function () {
+    var $row = $(this);
+    
+    // Gelir
+    var gelirText = $row.find("td.gross-salary-popover span.fw-semibold").text() || "";
+    var gelirNum = parseFloat(gelirText.replace(/[^\d,-]/g, "").replace(",", ".")) || 0;
+
+    // İcra
+    var icraText = $row.find("td.btn-view-icra-deductions").text() || "";
+    var icraNum = parseFloat(icraText.replace(/[^\d,-]/g, "").replace(",", ".")) || 0;
+
+    // Ödeme / Kesinti
+    var odemeText = $row.find("td.view-payroll-detail span.fw-semibold").first().text() || "";
+    var odemeNum = parseFloat(odemeText.replace(/[^\d,-]/g, "").replace(",", ".")) || 0;
+
+    totalIncome += gelirNum;
+    totalExpense += odemeNum;
+    totalIcra += icraNum;
+  });
+
+  var totalNet = totalIncome - (totalExpense + totalIcra);
+
+  var formatMoney = function (amt) {
+    var val = Math.abs(amt) < 0.005 ? 0 : amt;
+    return new Intl.NumberFormat("tr-TR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(val) + " ₺";
+  };
+
+  $("#payroll-total-income").attr("data-amount", totalIncome).text(formatMoney(totalIncome));
+  $("#payroll-total-expense").attr("data-amount", totalExpense).text(formatMoney(totalExpense));
+  $("#payroll-total-net").attr("data-amount", totalNet).text(formatMoney(totalNet));
+};
 
 // Bordro detayını yazdır
 $(document).on("click", "#print-detailed-payroll", function () {
@@ -339,7 +426,7 @@ $(document).ready(function () {
     ordering: true,
     pageLength: 25,
     lengthMenu: [10, 25, 50, 100],
-    order: [[1, 'asc']],
+    order: [[2, 'asc']],
     columnDefs: [
       { targets: [0, 13], orderable: false, searchable: false },
       { targets: [0, 1], className: 'text-center' },

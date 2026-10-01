@@ -80,7 +80,7 @@ html.cari-summary-collapsed #cariSummaryCards {
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon cari-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="cariColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">
@@ -739,6 +739,7 @@ $(document).ready(function() {
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
         autoWidth: false,
+        colReorder: true,
         columnDefs: [
             { targets: [0, 7], orderable: false, searchable: false },
             { targets: 0, className: 'text-center' },
@@ -775,6 +776,9 @@ $(document).ready(function() {
 
             if (typeof window.initDataTableColumnFilters === 'function') {
                 window.initDataTableColumnFilters($('#cariTable'), api);
+            }
+            if (typeof window.initPuantorDTManager === 'function') {
+                window.initPuantorDTManager($('#cariTable'), api);
             }
 
             api.columns.adjust().draw(false);

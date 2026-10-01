@@ -1429,7 +1429,7 @@ window.isPeriodClosed = <?php echo $is_period_closed ? 'true' : 'false'; ?>;
                 </div>
 
                 <div class='table-responsive <?php echo $is_period_closed ? "period-closed-table" : ""; ?>' style='padding: 4px !important;'>
-                    <table id='puantajTable' class='table card-table text-nowrap datatable'>
+                    <table id='puantajTable' class='table card-table text-nowrap datatable no-col-filter no-dt-manager' data-no-col-filter='true' data-no-dt-manager='true'>
                         <thead class='sticky'>
                             <tr>
                                 <th class='ld cursor-pointer' onclick='sortPuantaj(0)'>Adı Soyadı</th>

@@ -273,6 +273,24 @@ html[data-sidebar-theme="platin-gri"] #navbar .navbar-brand-svg .s2,
   align-items: center !important;
   gap: 8px !important;
   flex-shrink: 0 !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  border-bottom: 1px solid transparent !important;
+}
+
+/* Aşağı kaydırılınca aktifleşen opak arka plan (Alttan geçen menüleri temizce örter) */
+.sidebar-search-wrap.is-scrolled,
+#menu-search-container.is-scrolled {
+  background-color: var(--sidebar-bg, #1e1e2d) !important;
+  background: var(--sidebar-bg, #1e1e2d) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+html[data-sidebar-theme="sade-beyaz"] #menu-search-container.is-scrolled,
+html[data-sidebar-theme="slate-light"] #menu-search-container.is-scrolled,
+html[data-sidebar-theme="platin-gri"] #menu-search-container.is-scrolled {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
 }
 
 .sidebar-search-wrap .sidebar-search {

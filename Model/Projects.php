@@ -116,7 +116,8 @@ class Projects extends Model
                                         FROM 
                                             persons p
                                         WHERE 
-                                            p.deleted_at IS NULL;');
+                                            p.deleted_at IS NULL
+                                        ORDER BY p.full_name ASC, p.id ASC;');
         $sql->execute([$project_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
@@ -126,7 +127,8 @@ class Projects extends Model
         $sql = $this->db->prepare('SELECT pp.*
                                             FROM project_person pp
                                             JOIN persons p ON p.id = pp.person_id
-                                            WHERE pp.project_id = ? AND p.deleted_at IS NULL');
+                                            WHERE pp.project_id = ? AND p.deleted_at IS NULL
+                                            ORDER BY p.full_name ASC, p.id ASC');
         $sql->execute([$project_id]);
         return $sql->fetchAll(PDO::FETCH_OBJ);
     }
@@ -305,6 +307,8 @@ class Projects extends Model
             $sql .= ' AND p.ekip = ?';
             $params[] = $team_id;
         }
+
+        $sql .= ' ORDER BY p.full_name ASC, p.id ASC';
 
         $query = $this->db->prepare($sql);
         $query->execute($params);

@@ -89,11 +89,11 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
 <style>
     /* Modal Genel ve Özel Scroll Tablo Stilleri */
     #pay_to_persons-modal .modal-dialog {
-        max-width: 960px;
+        max-width: 980px;
     }
     
     #pay_to_persons-modal .table-responsive-custom {
-        max-height: 380px;
+        max-height: 420px;
         overflow-y: auto;
         border-radius: 0 0 8px 8px;
     }
@@ -104,6 +104,42 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
         z-index: 2;
         background: #f8fafc !important;
         box-shadow: inset 0 -1px 0 #e2e8f0;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    
+    #pay_to_persons-modal .bulk-pay-row td {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        vertical-align: middle;
+    }
+
+    #pay_to_persons-modal .person-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    #pay_to_persons-modal .person-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    #pay_to_persons-modal .person-name {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.3;
+    }
+
+    #pay_to_persons-modal .person-subtext {
+        font-size: 11.5px;
+        color: #64748b;
+        line-height: 1.2;
     }
     
     #pay_to_persons-modal .table-responsive-custom::-webkit-scrollbar {
@@ -179,6 +215,8 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
             <!-- Modal Body -->
             <div class="modal-body p-4 bg-white">
                 <form action="" id="payToPersonsForm" onsubmit="return false;">
+                    <input type="hidden" name="period_month" value="<?= (int)$curMonth ?>">
+                    <input type="hidden" name="period_year" value="<?= (int)$curYear ?>">
                     
                     <!-- Form Üst Parametreleri (Kasa, Tarih, Açıklama) -->
                     <div class="card border mb-3 shadow-xs" style="border-radius: 10px; border-color: #e2e8f0; background: #f8fafc;">
@@ -224,14 +262,18 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                         
                         <!-- Tablo Başlık & Hızlı Aksiyon Araç Çubuğu -->
                         <div class="card-header bg-light py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2" style="border-bottom: 1px solid #e2e8f0;">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="ti ti-users text-primary" style="font-size: 17px;"></i>
-                                <span class="fw-bold text-dark small text-uppercase" style="letter-spacing: 0.4px;">Personel Listesi</span>
-                                <span class="badge bg-secondary-lt text-dark rounded-pill fw-semibold px-2 py-0.5" id="totalPersonBadge" style="font-size: 11px;">
-                                    <?= count($modalPersonList) ?> Personel
-                                </span>
+                            <!-- Sol Taraf: Canlı Arama Inputu -->
+                            <div class="position-relative" style="width: 240px;">
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-search text-muted"></i>
+                                    </span>
+                                    <input type="text" id="payToPersonsSearch" class="form-control form-control-sm" placeholder="Personel ara..." style="height: 32px; padding-right: 26px; font-size: 12.5px;">
+                                </div>
+                                <i class="ti ti-x search-clear-btn" id="clearPaySearch" title="Aramayı Temizle"></i>
                             </div>
 
+                            <!-- Sağ Taraf: Filtre & Aksiyon Butonları (Sağa Yaslı) -->
                             <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
                                 <!-- Filtre: Yalnızca Bakiyesi Olanlar -->
                                 <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5" id="btnToggleBalanceFilter" style="height: 32px; font-size: 12px;">
@@ -250,17 +292,6 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                                     <i class="ti ti-trash"></i>
                                     <span>Sıfırla</span>
                                 </button>
-
-                                <!-- Canlı Arama Inputu -->
-                                <div class="position-relative" style="width: 200px;">
-                                    <div class="input-icon">
-                                        <span class="input-icon-addon">
-                                            <i class="ti ti-search text-muted"></i>
-                                        </span>
-                                        <input type="text" id="payToPersonsSearch" class="form-control form-control-sm" placeholder="Personel ara..." style="height: 32px; padding-right: 26px; font-size: 12.5px;">
-                                    </div>
-                                    <i class="ti ti-x search-clear-btn" id="clearPaySearch" title="Aramayı Temizle"></i>
-                                </div>
                             </div>
                         </div>
 
@@ -372,7 +403,7 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                         <!-- Tablo Alt Bilgisi -->
                         <div class="card-footer bg-light py-2 px-3 d-flex justify-content-between align-items-center text-muted small" style="border-top: 1px solid #e2e8f0; font-size: 11.5px;">
                             <div>
-                                <span id="visibleRowCount"><?= count($modalPersonList) ?></span> / <?= count($modalPersonList) ?> kayıt gösteriliyor
+                                <span id="visibleRowCount"><?= count($modalPersonList) ?></span> / <span id="totalRowCount"><?= count($modalPersonList) ?></span> kayıt gösteriliyor
                             </div>
                             <div>
                                 <i class="ti ti-info-circle me-1"></i> Tutar girilen satırlar yeşil renk ile vurgulanır.

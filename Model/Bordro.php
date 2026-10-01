@@ -278,13 +278,15 @@ class Bordro extends Model
 
         $gelir = $this->Defines->getExpenseTypes(1);
         $kesinti = $this->Defines->getExpenseTypes(2);
+        $gelirStr = is_array($gelir) ? implode(',', array_map('intval', $gelir)) : (string)$gelir;
+        $kesintiStr = is_array($kesinti) ? implode(',', array_map('intval', $kesinti)) : (string)$kesinti;
         $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
 
         $sql = $this->db->prepare("
             SELECT
                 person_id,
-                COALESCE(SUM(CASE WHEN kategori IN ($gelir) THEN tutar END), 0)
-                - COALESCE(SUM(CASE WHEN kategori IN ($kesinti) THEN tutar END), 0) AS balance
+                COALESCE(SUM(CASE WHEN kategori IN ($gelirStr) THEN tutar END), 0)
+                - COALESCE(SUM(CASE WHEN kategori IN ($kesintiStr) THEN tutar END), 0) AS balance
             FROM $this->sql_table
             WHERE person_id IN ($placeholders)
             GROUP BY person_id
@@ -297,6 +299,54 @@ class Bordro extends Model
         }
 
         return $balances;
+    }
+
+    public function getOverallPersonsSummary(array $person_ids)
+    {
+        $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
+        if (empty($person_ids)) {
+            return [];
+        }
+
+        $gelir = $this->Defines->getExpenseTypes(1);
+        $kesinti = $this->Defines->getExpenseTypes(2);
+        $gelirStr = is_array($gelir) ? implode(',', array_map('intval', $gelir)) : (string)$gelir;
+        $kesintiStr = is_array($kesinti) ? implode(',', array_map('intval', $kesinti)) : (string)$kesinti;
+        $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
+
+        $sql = $this->db->prepare("
+            SELECT
+                person_id,
+                COALESCE(SUM(CASE WHEN kategori IN ($gelirStr) THEN tutar END), 0) AS total_income,
+                COALESCE(SUM(CASE WHEN kategori IN ($kesintiStr) THEN tutar END), 0) AS total_expense
+            FROM $this->sql_table
+            WHERE person_id IN ($placeholders)
+            GROUP BY person_id
+        ");
+        $sql->execute($person_ids);
+
+        $results = [];
+        foreach ($person_ids as $pid) {
+            $results[$pid] = (object) [
+                'total_income' => 0.0,
+                'total_expense' => 0.0,
+                'balance' => 0.0,
+            ];
+        }
+
+        foreach ($sql->fetchAll(PDO::FETCH_OBJ) as $row) {
+            $pid = (int) $row->person_id;
+            $inc = (float) $row->total_income;
+            $exp = (float) $row->total_expense;
+            $bal = $inc - $exp;
+            $results[$pid] = (object) [
+                'total_income' => $inc,
+                'total_expense' => $exp,
+                'balance' => $bal,
+            ];
+        }
+
+        return $results;
     }
 
     //Personelin maaşı eklenmiş mi kontrol eder

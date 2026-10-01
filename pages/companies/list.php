@@ -93,7 +93,7 @@ html.companies-summary-collapsed #companySummaryCards {
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon companies-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="companiesColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">
@@ -1080,6 +1080,7 @@ $(document).ready(function() {
 
     var tableOptions = {
         autoWidth: false,
+        colReorder: true,
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
         order: [],
@@ -1121,6 +1122,9 @@ $(document).ready(function() {
 
             if (typeof window.initDataTableColumnFilters === 'function') {
                 window.initDataTableColumnFilters($('#companiesTable'), api);
+            }
+            if (typeof window.initPuantorDTManager === 'function') {
+                window.initPuantorDTManager($('#companiesTable'), api);
             }
 
             // Dil dosyasi ve DOM verileri tamamen yuklendikten sonra ciz.

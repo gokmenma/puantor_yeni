@@ -49,7 +49,7 @@ html.personnel-summary-collapsed #personnelSummaryCards {
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon persons-header-icon-action" id="personsColvisDropdownBtn" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="personsColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">
@@ -667,7 +667,7 @@ $(document).ready(function() {
         searchDelay: 400,
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
-        order: [[1, 'asc']],
+        order: [[2, 'asc']],
         ajax: {
             url: 'api/persons/list.php',
             type: 'POST',

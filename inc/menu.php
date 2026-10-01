@@ -476,6 +476,36 @@ $(document).ready(function() {
         });
     });
 
+    // Sidebar aşağı kaydırıldığında arama alanını opaklaştır
+    function updateSidebarSearchScroll() {
+        var sidebarMenuEl = document.getElementById('sidebar-menu');
+        var searchWrapEl = document.getElementById('menu-search-container');
+        if (!searchWrapEl) return;
+        
+        var scrollTop = 0;
+        if (sidebarMenuEl) {
+            scrollTop = Math.max(scrollTop, sidebarMenuEl.scrollTop || 0);
+        }
+        var navbarEl = document.getElementById('navbar');
+        if (navbarEl) {
+            scrollTop = Math.max(scrollTop, navbarEl.scrollTop || 0);
+        }
+        
+        if (scrollTop > 2) {
+            searchWrapEl.classList.add('is-scrolled');
+        } else {
+            searchWrapEl.classList.remove('is-scrolled');
+        }
+    }
+
+    var sidebarMenuEl = document.getElementById('sidebar-menu');
+    if (sidebarMenuEl) {
+        sidebarMenuEl.addEventListener('scroll', updateSidebarSearchScroll, { passive: true });
+    }
+    window.addEventListener('scroll', updateSidebarSearchScroll, { passive: true });
+    $('#sidebar-menu').on('scroll', updateSidebarSearchScroll);
+    updateSidebarSearchScroll();
+
     // Menü sürükle-bırak sıralama
     var sortableEl = document.getElementById('sortable-menu');
     if (sortableEl) {

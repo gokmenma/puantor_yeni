@@ -77,7 +77,7 @@ html.izin-summary-collapsed #izinSummaryCards {
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon izin-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="izinColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">
@@ -257,15 +257,15 @@ html.izin-summary-collapsed #izinSummaryCards {
                             <tr>
                                 <th>Personel</th>
                                 <th>İzin Türü</th>
-                                <th style="width: 95px; max-width: 95px;">Başlangıç</th>
-                                <th style="width: 95px; max-width: 95px;">Bitiş</th>
-                                <th class="text-center" style="width: 80px; max-width: 80px;">Toplam Gün</th>
-                                <th class="text-center" style="width: 90px; max-width: 90px;">Düşülecek Gün</th>
-                                <th class="text-center" style="width: 95px; max-width: 95px;">Durum</th>
-                                <th style="width: 95px; max-width: 95px;">Talep Tarihi</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th class="text-center">Toplam Gün</th>
+                                <th class="text-center">Düşülecek Gün</th>
+                                <th class="text-center">Durum</th>
+                                <th>Talep Tarihi</th>
                                 <th>Onaylayan</th>
                                 <th>Açıklama</th>
-                                <th class="text-end no-export" data-orderable="false" style="width: 105px; min-width: 105px;">İşlem</th>
+                                <th class="text-end no-export actions-column" data-orderable="false" style="width: 105px; min-width: 105px;">İşlem</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -956,6 +956,20 @@ $(document).ready(function() {
         return `<div class="d-flex align-items-center justify-content-end gap-1 text-nowrap">${html}</div>`;
     }
 
+    // Sütunların yapılandırması
+    var izinColumnConfig = {
+        0: 'Personel',
+        1: 'İzin Türü',
+        2: 'Başlangıç',
+        3: 'Bitiş',
+        4: 'Toplam Gün',
+        5: 'Düşülecek Gün',
+        6: 'Durum',
+        7: 'Talep Tarihi',
+        8: 'Onaylayan',
+        9: 'Açıklama'
+    };
+
     // ---------- DataTable ----------
     const dt = window.createDataTable('#izin-table', {
         data: [],
@@ -964,8 +978,8 @@ $(document).ready(function() {
             { data: 'tur_adi' },
             { data: 'baslangic_tarihi', render: fmtDate },
             { data: 'bitis_tarihi',     render: fmtDate },
-            { data: 'toplam_gun', className: 'text-center', width: '80px', render: d => `<strong>${d ?? '—'}</strong>` },
-            { data: 'gun_sayisi', className: 'text-center', width: '90px', render: d => `<strong>${d ?? '—'}</strong>` },
+            { data: 'toplam_gun', className: 'text-center', render: d => `<strong>${d ?? '—'}</strong>` },
+            { data: 'gun_sayisi', className: 'text-center', render: d => `<strong>${d ?? '—'}</strong>` },
             { data: 'durum', className: 'text-center', render: durumBadge },
             { data: 'olusturma_tarihi', render: fmtDate },
             { data: 'onaylayan_adi', render: d => d || '<span class="text-muted">—</span>' },
@@ -975,55 +989,68 @@ $(document).ready(function() {
         order: [[7, 'desc']],
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
-        skipSearch: ['İşlem']
+        skipSearch: ['İşlem'],
+        initComplete: function() {
+            renderIzinColvisMenu();
+        }
     });
 
-    // Sütunların varsayılan durumları ve etiketleri (Colvis)
-    var columnConfig = {
-        0: { label: 'Personel', default: true },
-        1: { label: 'İzin Türü', default: true },
-        2: { label: 'Başlangıç', default: true },
-        3: { label: 'Bitiş', default: true },
-        4: { label: 'Toplam Gün', default: true },
-        5: { label: 'Düşülecek Gün', default: true },
-        6: { label: 'Durum', default: true },
-        7: { label: 'Talep Tarihi', default: true },
-        8: { label: 'Onaylayan', default: false },
-        9: { label: 'Açıklama', default: false }
-    };
+    // Dinamik Sütun Menüsü Oluşturucu
+    function renderIzinColvisMenu() {
+        var menuHtml = '';
+        var settings = dt ? dt.settings()[0] : null;
 
-    var savedVisibility = localStorage.getItem('izin_column_visibility');
-    var visibilityState = savedVisibility ? JSON.parse(savedVisibility) : {};
+        $.each(izinColumnConfig, function (origIdxStr, label) {
+            var origIdx = parseInt(origIdxStr, 10);
+            var isVisible = true;
 
-    var menuHtml = '';
-    $.each(columnConfig, function(idx, conf) {
-        var isVisible = visibilityState.hasOwnProperty(idx) ? visibilityState[idx] : conf.default;
-        dt.column(idx).visible(isVisible, false);
+            if (settings && settings.aoColumns) {
+                for (var c = 0; c < settings.aoColumns.length; c++) {
+                    var colCfg = settings.aoColumns[c];
+                    var cOrig = colCfg._crOriginalIdx !== undefined ? colCfg._crOriginalIdx : c;
+                    if (cOrig === origIdx) {
+                        isVisible = colCfg.bVisible !== false;
+                        break;
+                    }
+                }
+            } else if (dt) {
+                try {
+                    isVisible = dt.column(origIdx).visible();
+                } catch(e) {
+                    isVisible = true;
+                }
+            }
+
+            menuHtml += `
+                <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
+                    <div class="form-check mb-0 w-100">
+                        <input class="form-check-input izin-col-trigger" type="checkbox" id="colCheck_${origIdx}" data-column="${origIdx}" data-orig-idx="${origIdx}" ${isVisible ? "checked" : ""}>
+                        <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+                            ${label}
+                        </span>
+                    </div>
+                </label>`;
+        });
 
         menuHtml += `
-            <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
-                <div class="form-check mb-0 w-100">
-                    <input class="form-check-input izin-col-trigger" type="checkbox" id="colCheck_${idx}" data-column="${idx}" ${isVisible ? "checked" : ""}>
-                    <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
-                        ${conf.label}
-                    </span>
-                </div>
-            </label>`;
-    });
+            <div class="dropdown-divider my-1"></div>
+            <button type="button" class="dropdown-item text-danger py-1.5 px-3 rounded-2" id="resetTableColumnsBtn" style="font-size: 0.8rem;">
+                <i class="ti ti-rotate-2 me-1"></i> Görünümü Sıfırla
+            </button>
+        `;
 
-    $('#izinColvisMenu').html(menuHtml);
-    dt.columns.adjust();
+        $('#izinColvisMenu').html(menuHtml);
+    }
 
-    $(document).on('change', '.izin-col-trigger', function() {
-        var colIdx = parseInt($(this).data('column'));
-        var isChecked = this.checked;
-        dt.column(colIdx).visible(isChecked);
-        visibilityState[colIdx] = isChecked;
-        localStorage.setItem('izin_column_visibility', JSON.stringify(visibilityState));
-    });
+    renderIzinColvisMenu();
 
-    $(document).on('click', '#izinColvisMenu', function(e) {
-        e.stopPropagation();
+    // Görünümü Sıfırla Butonu
+    $(document).on('click', '#resetTableColumnsBtn', function() {
+        if (typeof window.resetPuantorDTState === 'function') {
+            window.resetPuantorDTState($('#izin-table'), dt, function() {
+                renderIzinColvisMenu();
+            });
+        }
     });
 
     function getSelectedDurum() {

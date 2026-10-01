@@ -324,10 +324,11 @@ try {
     border: 1px solid #e2e8f0;
     border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
 }
 
 .transaction-sub-panel-head {
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-bottom: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
@@ -335,7 +336,7 @@ try {
 }
 
 .transaction-sub-item {
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-bottom: 1px solid #f1f5f9;
     display: flex;
     align-items: center;
@@ -686,6 +687,20 @@ try {
     foreach ($incomes as $inc) { $total_income += $inc->tutar; }
     foreach ($expenses as $exp) { $total_expense += $exp->tutar; }
     ?>
+    <?php
+    $formatTxDate = function($item) {
+        if (!empty($item->created_at) && $item->created_at !== '0000-00-00 00:00:00' && $item->created_at !== 'null') {
+            $ts = strtotime($item->created_at);
+            if ($ts > 0) {
+                return date('d.m.Y', $ts);
+            }
+        }
+        if (!empty($item->gun)) {
+            return Date::dmY($item->gun);
+        }
+        return '';
+    };
+    ?>
     <div class="col-12">
         <div class="card modal-section-card">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -700,7 +715,7 @@ try {
                 </div>
             </div>
             
-            <div class="p-3.5">
+            <div class="p-4">
                 <div class="row g-3">
                     <!-- Sol Kolon: Gelirler (Hakedişler) -->
                     <div class="col-md-6">
@@ -714,12 +729,14 @@ try {
                                     +₺<?= Helper::formattedMoneyWithoutCurrency($total_income) ?>
                                 </span>
                             </div>
-                            <div style="max-height: 220px; overflow-y: auto;">
+                            <div style="max-height: 250px; overflow-y: auto;">
                                 <?php if (!empty($incomes)): ?>
                                     <?php foreach ($incomes as $income): 
                                         $incomeNameRaw = (string) ($income->turu ?: 'Gelir');
                                         $income_name = htmlspecialchars($incomeNameRaw, ENT_QUOTES, 'UTF-8');
                                         $incomeDescription = trim((string) ($income->aciklama ?? ''));
+                                        $incomeDate = $formatTxDate($income);
+                                        $isPuantaj = ((int) ($income->kategori ?? 0) === 14);
                                         $canDeleteIncome = $showTransactionActions && $canDeleteIncomeExpense
                                              && ($income->tablename ?? '') === 'maas_gelir_kesinti'
                                              && !in_array((int) ($income->kategori ?? 0), [14, 16, 17], true)
@@ -727,13 +744,24 @@ try {
                                      ?>
                                         <div class="transaction-sub-item">
                                             <div style="min-width: 0; flex: 1;" class="pe-2">
-                                                <div class="fw-semibold text-dark text-truncate" style="font-size: 12.5px;"><?= $income_name ?></div>
-                                                <?php if ($incomeDescription !== '' && $incomeDescription !== $incomeNameRaw): ?>
-                                                    <div class="text-muted small mt-0.5" style="font-size: 11px;"><?= htmlspecialchars($incomeDescription, ENT_QUOTES, 'UTF-8') ?></div>
-                                                <?php endif; ?>
+                                                <div class="fw-semibold text-dark text-truncate" style="font-size: 13px;"><?= $income_name ?></div>
+                                                <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                                                    <?php if (!$isPuantaj && !empty($incomeDate)): ?>
+                                                        <span class="text-secondary small d-inline-flex align-items-center gap-1" style="font-size: 11px; font-weight: 500;">
+                                                            <i class="ti ti-calendar text-muted" style="font-size: 12px;"></i>
+                                                            <span>Tarih:</span>
+                                                            <strong class="text-dark"><?= htmlspecialchars($incomeDate, ENT_QUOTES, 'UTF-8') ?></strong>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <?php if ($incomeDescription !== '' && $incomeDescription !== $incomeNameRaw): ?>
+                                                        <span class="text-muted small" style="font-size: 11px;">
+                                                            <?= (!$isPuantaj && !empty($incomeDate)) ? '• ' : '' ?><?= htmlspecialchars($incomeDescription, ENT_QUOTES, 'UTF-8') ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
-                                            <div class="d-flex align-items-center gap-1.5 flex-shrink-0 text-end">
-                                                <span class="fw-bold text-success" style="font-size: 12.5px;">+₺<?= Helper::formattedMoneyWithoutCurrency($income->tutar) ?></span>
+                                            <div class="d-flex align-items-center gap-2 flex-shrink-0 text-end">
+                                                <span class="fw-bold text-success" style="font-size: 13px;">+₺<?= Helper::formattedMoneyWithoutCurrency($income->tutar) ?></span>
                                                 <?php if ($canDeleteIncome): ?>
                                                     <button type="button" class="modal-action-btn delete-payroll-transaction"
                                                         data-id="<?= htmlspecialchars(Security::encrypt($income->id), ENT_QUOTES, 'UTF-8') ?>"
@@ -767,7 +795,7 @@ try {
                                     -₺<?= Helper::formattedMoneyWithoutCurrency($total_expense) ?>
                                 </span>
                             </div>
-                            <div style="max-height: 220px; overflow-y: auto;">
+                            <div style="max-height: 250px; overflow-y: auto;">
                                 <?php if (!empty($expenses)): ?>
                                     <?php foreach ($expenses as $expense): 
                                         $is_icra = (!empty($expense->turu) && strpos($expense->turu, 'İcra') !== false);
@@ -776,27 +804,40 @@ try {
                                         $description = trim((string) ($expense->aciklama ?? ''));
                                         $expenseCategory = (int) ($expense->kategori ?? 0);
                                         $expenseSource = (string) ($expense->tablename ?? '');
+                                        $expenseDate = $formatTxDate($expense);
+                                        $isPayment = ($expenseCategory === 7 || mb_stripos($name, 'Ödeme') !== false || mb_stripos($name, 'Maaş') !== false);
                                         $isSystemDeduction = $is_icra || in_array($expenseCategory, [14, 16, 17], true);
                                         $hasDeletePermission = $expenseCategory === 7 ? $canDeletePayment : $canDeleteIncomeExpense;
                                         $canDeleteExpense = $showTransactionActions && $hasDeletePermission
-                                            && in_array($expenseSource, ['maas_gelir_kesinti', 'case_transactions'], true)
-                                            && !$isSystemDeduction
-                                            && !empty($expense->id);
-                                    ?>
+                                             && in_array($expenseSource, ['maas_gelir_kesinti', 'case_transactions'], true)
+                                             && !$isSystemDeduction
+                                             && !empty($expense->id);
+                                     ?>
                                         <div class="transaction-sub-item">
                                             <div style="min-width: 0; flex: 1;" class="pe-2">
-                                                <div class="d-flex align-items-center gap-1.5">
-                                                    <span class="fw-semibold text-dark text-truncate" style="font-size: 12.5px;"><?= $name ?></span>
+                                                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                                    <span class="fw-semibold text-dark text-truncate" style="font-size: 13px;"><?= $name ?></span>
                                                     <?php if ($is_icra): ?>
-                                                        <span class="badge bg-purple-lt text-purple" style="font-size: 9px; padding: 1px 4px;">İcra</span>
+                                                        <span class="badge bg-purple-lt text-purple" style="font-size: 9.5px; padding: 2px 6px;">İcra</span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <?php if ($description !== '' && $description !== html_entity_decode($name, ENT_QUOTES, 'UTF-8')): ?>
-                                                    <div class="text-muted small mt-0.5 text-truncate" style="font-size: 11px;"><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?></div>
-                                                <?php endif; ?>
+                                                <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                                                    <?php if (!empty($expenseDate)): ?>
+                                                        <span class="text-secondary small d-inline-flex align-items-center gap-1" style="font-size: 11px; font-weight: 500;">
+                                                            <i class="ti ti-calendar text-muted" style="font-size: 12px;"></i>
+                                                            <span><?= $isPayment ? 'Ödeme Tarihi:' : 'Tarih:' ?></span>
+                                                            <strong class="text-dark"><?= htmlspecialchars($expenseDate, ENT_QUOTES, 'UTF-8') ?></strong>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <?php if ($description !== '' && $description !== html_entity_decode($name, ENT_QUOTES, 'UTF-8') && !str_starts_with($description, html_entity_decode($name, ENT_QUOTES, 'UTF-8'))): ?>
+                                                        <span class="text-muted small" style="font-size: 11px;">
+                                                            <?= !empty($expenseDate) ? '• ' : '' ?><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
-                                            <div class="d-flex align-items-center gap-1.5 flex-shrink-0 text-end">
-                                                <span class="fw-bold text-danger" style="font-size: 12.5px;">-₺<?= Helper::formattedMoneyWithoutCurrency($expense->tutar) ?></span>
+                                            <div class="d-flex align-items-center gap-2 flex-shrink-0 text-end">
+                                                <span class="fw-bold text-danger" style="font-size: 13px;">-₺<?= Helper::formattedMoneyWithoutCurrency($expense->tutar) ?></span>
                                                 <?php if ($canDeleteExpense): ?>
                                                     <button type="button" class="modal-action-btn delete-payroll-transaction"
                                                         data-id="<?= htmlspecialchars(Security::encrypt($expense->id), ENT_QUOTES, 'UTF-8') ?>"
@@ -1145,6 +1186,17 @@ try {
     $('#modal-total-expense').text('₺<?php echo Helper::formattedMoneyWithoutCurrency($total_expense); ?>');
     $('#modal-net-payment').text('₺<?php echo Helper::formattedMoneyWithoutCurrency(max(0, $total_income - $total_expense)); ?>');
     $('#payroll-detail-period').text(<?= json_encode(Date::monthName((int) $ay) . ' ' . $yil . ' dönemi', JSON_UNESCAPED_UNICODE) ?>);
+    
+    if (typeof window.updatePayrollTableRow === 'function') {
+        window.updatePayrollTableRow('<?= htmlspecialchars($id_raw, ENT_QUOTES, 'UTF-8') ?>', {
+            income: <?= (float)$total_income ?>,
+            expense: <?= (float)$total_expense ?>,
+            net: <?= (float)($total_income - $total_expense) ?>,
+            formatted_income: '<?= Helper::formattedMoney($total_income) ?>',
+            formatted_expense: '<?= Helper::formattedMoney($total_expense) ?>',
+            formatted_net: '<?= Helper::formattedMoney($total_income - $total_expense) ?>'
+        });
+    }
     
     window.togglePuantajView = function(view) {
         if (view === 'list') {

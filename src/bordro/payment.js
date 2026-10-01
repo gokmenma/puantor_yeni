@@ -1,11 +1,83 @@
-$(document).on("click", ".add-payment", function () {
-  let personel_id = $(this).data("id");
-  let personel_name = $(this).attr("data-name") || $(this).data("name") || $(this).closest("tr").attr("data-person-name") || $(this).closest("tr").find("td:eq(2)").text().trim() || $(this).closest("tr").find("td:eq(1)").text().trim();
-  let balance = $(this).attr("data-balance") || "";
-  $("#person_id_payment").val(personel_id);
-  $("#person_name_payment").text(personel_name);
+window.lastAddPaymentTarget = null;
 
-  $("#person_payment_balance").text("Bakiye :" + balance);
+function fillPaymentModalData(sourceEl) {
+  if (!sourceEl) return;
+  let $el = $(sourceEl);
+  let $tr = $el.closest("tr");
+
+  let personel_id = $el.attr("data-id") || $el.data("id") || $tr.attr("data-id") || $tr.data("id");
+  let personel_name = $el.attr("data-name") || $el.data("name") || $tr.attr("data-person-name") || $tr.find("td:eq(2)").text().trim() || $tr.find("td:eq(1)").text().trim();
+  let balance = $el.attr("data-balance") || $el.data("balance") || $tr.attr("data-balance") || "";
+  let rawBalance = $el.attr("data-balance-raw") || $el.data("balance-raw") || $tr.attr("data-balance-raw") || $tr.data("balance-raw");
+
+  if (personel_id) {
+    $("#person_id_payment").val(personel_id);
+  }
+  if (personel_name) {
+    $("#person_name_payment").text(personel_name);
+  }
+  if (balance) {
+    $("#person_payment_balance").text(balance);
+  }
+
+  // Bakiyeyi doğrudan ödeme tutarı alanına aktar (negatif tutarlar da mutlak değer olarak aktarılır)
+  let balanceNumber = NaN;
+  if (rawBalance !== undefined && rawBalance !== null && rawBalance !== "") {
+    balanceNumber = parseFloat(rawBalance);
+  } else if (balance) {
+    let clean = String(balance).replace(/[^\d,-]/g, "").replace(",", ".");
+    balanceNumber = parseFloat(clean);
+  }
+
+  let absAmount = Math.abs(balanceNumber);
+
+  if (!isNaN(absAmount) && absAmount > 0) {
+    let formattedVal = new Intl.NumberFormat('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(absAmount);
+    let simpleVal = absAmount.toFixed(2).replace(".", ",");
+
+    let $amountInput = $("#payment_amount");
+    $amountInput.val(formattedVal);
+    if (!$amountInput.val()) {
+      $amountInput.val(simpleVal);
+    }
+    $amountInput.trigger("input").trigger("change");
+
+    let $typeInput = $("#payment_type");
+    if (!$typeInput.val() || $typeInput.val() === "Maaş / Bakiye Ödemesi" || $typeInput.val() === "Bakiye Ödemesi") {
+      $typeInput.val("Maaş / Bakiye Ödemesi");
+    }
+  } else {
+    $("#payment_amount").val("0,00").trigger("input");
+    let $typeInput = $("#payment_type");
+    if (!$typeInput.val()) {
+      $typeInput.val("Maaş / Bakiye Ödemesi");
+    }
+  }
+}
+
+$(document).on("click", ".add-payment", function (e) {
+  if (e) {
+    e.stopPropagation();
+  }
+  window.lastAddPaymentTarget = this;
+  fillPaymentModalData(this);
+});
+
+$(document).on("show.bs.modal", "#payment-modal", function (e) {
+  let target = e.relatedTarget || window.lastAddPaymentTarget;
+  if (target) {
+    fillPaymentModalData(target);
+  }
+});
+
+$(document).on("shown.bs.modal", "#payment-modal", function (e) {
+  let target = e.relatedTarget || window.lastAddPaymentTarget;
+  if (target) {
+    fillPaymentModalData(target);
+  }
 });
 
 $(document).on("click", "#payment_addButton", function () {
@@ -81,15 +153,25 @@ $(document).on("click", "#payment_addButton", function () {
 $(document).on("click", "#person_payment_balance", function () {
   let balanceText = $(this).text();
   let balanceNumber = parseFloat(
-    balanceText.replace(/[^\d,-]/g, "").replace(",", ".")
+    String(balanceText).replace(/[^\d,-]/g, "").replace(",", ".")
   );
 
-  if (balanceNumber < 0) {
+  let absAmount = Math.abs(balanceNumber);
+  if (isNaN(absAmount) || absAmount <= 0) {
     return;
   }
-  let formattedVal = balanceNumber.toFixed(2).replace(".", ",");
-  $("#payment_amount").val(formattedVal).trigger("input");
-  $("#payment_type").val("Bakiye Ödemesi").focus();
+  let formattedVal = new Intl.NumberFormat('tr-TR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(absAmount);
+  let simpleVal = absAmount.toFixed(2).replace(".", ",");
+  let $amountInput = $("#payment_amount");
+  $amountInput.val(formattedVal);
+  if (!$amountInput.val()) {
+    $amountInput.val(simpleVal);
+  }
+  $amountInput.trigger("input").trigger("change");
+  $("#payment_type").val("Maaş / Bakiye Ödemesi").focus();
 });
 
 // Toplu Personel Ödemesi Yap
@@ -293,7 +375,151 @@ $(document).ready(function () {
       updatePayToPersonsSummary();
     });
 
+    function escapeHtml(text) {
+      if (!text) return "";
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Modal açıldığında canlı / güncel verileri sunucudan yükleme
+    function loadPayToPersonsLiveBalances() {
+      var month = $modal.find('input[name="period_month"]').val() || $("#months").val() || "";
+      var year = $modal.find('input[name="period_year"]').val() || $("#year").val() || "";
+      var projectId = $("#projects").val() || "";
+      var teamId = $("#team_id").val() || "";
+
+      var $tbody = $("#payToPersonsTableBody");
+      $tbody.html(`
+        <tr id="bulkPayLoadingRow">
+          <td colspan="5" class="text-center py-4 text-muted small">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            Güncel personel hakediş ve bakiye bilgileri yükleniyor...
+          </td>
+        </tr>
+      `);
+
+      $.ajax({
+        url: "api/bordro/get-bulk-pay-data.php",
+        type: "POST",
+        data: {
+          month: month,
+          year: year,
+          project_id: projectId,
+          team_id: teamId
+        },
+        dataType: "json",
+        success: function (res) {
+          if (res.status === "success" && Array.isArray(res.persons)) {
+            if (res.persons.length === 0) {
+              $tbody.html(`
+                <tr>
+                  <td colspan="5" class="text-center py-4 text-muted small">
+                    <i class="ti ti-info-circle fs-2 d-block mb-1 text-secondary"></i>
+                    Bu dönem için listelenecek personel bulunamadı.
+                  </td>
+                </tr>
+              `);
+              $("#totalPersonBadge").text("0 Personel");
+              $("#visibleRowCount").text("0");
+              updatePayToPersonsSummary();
+              return;
+            }
+
+            var rowsHtml = "";
+            res.persons.forEach(function (person) {
+              var hasBalance = person.has_balance;
+              var rawBalanceStr = Number(person.kalan).toFixed(2);
+              var jobOrTc = person.job_name 
+                ? `<div class="person-subtext">${escapeHtml(person.job_name)}</div>`
+                : (person.tc_no ? `<div class="person-subtext">TC: ${escapeHtml(person.tc_no)}</div>` : "");
+
+              rowsHtml += `
+                <tr class="bulk-pay-row" 
+                    data-person-id="${person.id}" 
+                    data-balance="${rawBalanceStr}"
+                    data-has-balance="${hasBalance ? '1' : '0'}"
+                    data-search="${escapeHtml(person.search_data)}">
+                    
+                    <td class="ps-3.5 py-2.5">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="avatar rounded-circle bg-${person.color}-lt person-avatar shadow-xs">
+                                ${escapeHtml(person.initials)}
+                            </span>
+                            <div class="person-info">
+                                <div class="person-name">
+                                    ${escapeHtml(person.full_name)}
+                                </div>
+                                ${jobOrTc}
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="text-end py-2.5 text-muted small fw-medium d-none d-md-table-cell" style="font-size: 13px;">
+                        ${escapeHtml(person.formatted_gelir)}
+                    </td>
+
+                    <td class="text-end py-2.5 text-muted small fw-medium d-none d-md-table-cell" style="font-size: 13px;">
+                        ${escapeHtml(person.formatted_odenen)}
+                    </td>
+
+                    <td class="text-end py-2.5">
+                        <div class="d-flex align-items-center justify-content-end gap-2">
+                            <span class="balance-text ${hasBalance ? 'fw-bold text-dark' : 'text-muted'}" style="font-size: 13px;">
+                                ${escapeHtml(person.formatted_kalan)}
+                            </span>
+                            ${hasBalance ? `
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-transfer-balance py-1 px-1.5 shadow-none" 
+                                    title="Bu bakiyeyi ödeme tutarına aktar" 
+                                    style="border-radius: 6px; font-size: 11px; height: 26px; min-width: 26px;">
+                                    <i class="ti ti-arrow-right" style="font-size: 13px;"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+
+                    <td class="pe-3 py-2.5">
+                        <div class="input-icon ms-auto" style="max-width: 140px;">
+                            <span class="input-icon-addon text-muted fw-bold" style="font-size: 13px; left: 8px; min-width: auto;">₺</span>
+                            <input type="text" class="form-control text-end money bulk-pay-input" 
+                                placeholder="0,00" 
+                                data-person-id="${person.id}"
+                                data-raw-balance="${rawBalanceStr}"
+                                style="font-size: 13px; font-weight: 600; height: 32px; padding-left: 24px; padding-right: 10px;">
+                        </div>
+                    </td>
+                </tr>
+              `;
+            });
+
+            $tbody.html(rowsHtml);
+            $("#totalRowCount").text(res.persons.length);
+            initPayToPersonsMasks();
+            updatePayToPersonsSummary();
+            applyPayFilters();
+          }
+        },
+        error: function () {
+          $tbody.html(`
+            <tr>
+              <td colspan="5" class="text-center py-4 text-danger small">
+                <i class="ti ti-alert-triangle fs-2 d-block mb-1"></i>
+                Güncel veriler yüklenirken bir hata oluştu.
+              </td>
+            </tr>
+          `);
+        }
+      });
+    }
+
     // Modal Açıldığında
+    $modal.on("show.bs.modal", function () {
+      loadPayToPersonsLiveBalances();
+    });
+
     $modal.on("shown.bs.modal", function () {
       if ($.fn.select2) {
         $modal.find(".select2").select2({
@@ -315,8 +541,7 @@ $(document).ready(function () {
         return;
       }
 
-      var person_ids = [];
-      var amounts = [];
+      var payments = [];
 
       $modal.find("tbody tr.bulk-pay-row").each(function () {
         var $row = $(this);
@@ -327,13 +552,15 @@ $(document).ready(function () {
         if (val && val.trim() !== "") {
           var cleanAmount = parseFloat(val.replace(/\./g, "").replace(",", ".")) || 0;
           if (cleanAmount > 0) {
-            person_ids.push(personId);
-            amounts.push(val);
+            payments.push({
+              person_id: parseInt(personId, 10),
+              amount: cleanAmount
+            });
           }
         }
       });
 
-      if (person_ids.length === 0) {
+      if (payments.length === 0) {
         Swal.fire({
           title: "Uyarı",
           text: "Lütfen en az bir personel için ödenecek tutar giriniz.",
@@ -348,8 +575,7 @@ $(document).ready(function () {
       $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-1.5" role="status" aria-hidden="true"></span> Kaydediliyor...');
 
       var formData = new FormData($form[0]);
-      formData.append("person_ids", person_ids.join(","));
-      formData.append("amounts", amounts.join(","));
+      formData.append("payments_json", JSON.stringify(payments));
       formData.append("action", "payToPersons");
 
       fetch("api/financial/transaction.php", {

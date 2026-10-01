@@ -80,7 +80,7 @@ html.incexp-summary-collapsed #incExpSummaryCards {
                     <!-- Sütunlar Butonu -->
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon incexp-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="incExpColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">

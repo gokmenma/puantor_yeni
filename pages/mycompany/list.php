@@ -183,7 +183,7 @@ foreach ($myfirms as $mf) {
                         </a>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" style="height: 32px; padding: 4px 10px; font-size: 12.5px;">
-                                <i class="ti ti-columns me-1"></i> Sütunlar
+                                <i class="ti ti-layout-columns me-1"></i> Sütunlar
                             </button>
                             <div class="dropdown-menu dropdown-menu-end p-2" id="mycompaniesColvisMenu"
                                 style="min-width: 210px; max-height: 350px; overflow-y: auto;">

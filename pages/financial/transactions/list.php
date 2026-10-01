@@ -101,7 +101,7 @@ html.transactions-summary-collapsed #transactionSummaryCards {
                     <!-- Sütunlar Butonu -->
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon transactions-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="transactionColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">
@@ -607,8 +607,56 @@ table#transactionTable.data-table > tbody > tr:last-child > * {
     border-bottom: 0 !important;
     box-shadow: none !important;
 }
-table#transactionTable.data-table tbody tr:hover td {
-    background-color: #f8fafc !important;
+/* Shadcn / Modern UI Checkbox Standardı */
+#transactionsPage .form-check-input,
+table#transactionTable .form-check-input {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
+    border-radius: 4px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    cursor: pointer !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+    outline: none !important;
+}
+
+#transactionsPage .form-check-input:hover,
+table#transactionTable .form-check-input:hover {
+    border-color: #94a3b8 !important;
+}
+
+#transactionsPage .form-check-input:focus,
+table#transactionTable .form-check-input:focus {
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12) !important;
+    border-color: #0f172a !important;
+}
+
+#transactionsPage .form-check-input:checked,
+table#transactionTable .form-check-input:checked {
+    background-color: #0f172a !important;
+    border-color: #0f172a !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 4.5'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 11px 11px !important;
+}
+
+#transactionsPage .form-check-input:disabled,
+table#transactionTable .form-check-input:disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
 }
 
 /* Tablo Altı Sayfalama ve Bilgi Alanı */
@@ -738,6 +786,21 @@ div#transactionTable_wrapper .dt-layout-row:has(.dt-info) {
 }
 [data-bs-theme="dark"] .custom-context-menu .cm-divider {
     background: #334155;
+}
+[data-bs-theme="dark"] #transactionsPage .form-check-input,
+[data-bs-theme="dark"] table#transactionTable .form-check-input {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+[data-bs-theme="dark"] #transactionsPage .form-check-input:hover,
+[data-bs-theme="dark"] table#transactionTable .form-check-input:hover {
+    border-color: #94a3b8 !important;
+}
+[data-bs-theme="dark"] #transactionsPage .form-check-input:checked,
+[data-bs-theme="dark"] table#transactionTable .form-check-input:checked {
+    background-color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='3.5 8.5 6.5 11.5 12.5 4.5'/%3e%3c/svg%3e") !important;
 }
 </style>
 

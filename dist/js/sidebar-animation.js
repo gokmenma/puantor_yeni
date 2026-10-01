@@ -401,6 +401,26 @@
         });
         themeObserver.observe(document.documentElement, { attributes: true });
 
+        // Sidebar scroll kontrolü (Aşağı kaydırılınca arama alanını opaklaştır)
+        function checkSidebarScroll() {
+            var sidebarMenuEl = document.getElementById('sidebar-menu');
+            var searchWrapEl = document.getElementById('menu-search-container') || document.querySelector('.sidebar-search-wrap');
+            if (!searchWrapEl) return;
+            var st = (sidebarMenuEl ? sidebarMenuEl.scrollTop : 0) || (sidebar ? sidebar.scrollTop : 0) || 0;
+            if (st > 2) {
+                searchWrapEl.classList.add('is-scrolled');
+            } else {
+                searchWrapEl.classList.remove('is-scrolled');
+            }
+        }
+
+        var sidebarMenu = document.getElementById('sidebar-menu');
+        if (sidebarMenu) {
+            sidebarMenu.addEventListener('scroll', checkSidebarScroll, { passive: true });
+        }
+        window.addEventListener('scroll', checkSidebarScroll, { passive: true });
+        checkSidebarScroll();
+
         // Başlat
         setEffect(currentEffect, false);
     }

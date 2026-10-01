@@ -116,7 +116,7 @@ class Persons extends Model
 
     public function getPersonsByFirm($firm_id)
     {
-        $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and deleted_at IS NULL');
+        $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and deleted_at IS NULL ORDER BY full_name ASC, id ASC');
         $query->execute([$firm_id]);
         $results = $query->fetchAll(PDO::FETCH_OBJ);
         $results = $this->attachCurrentWages($results);
@@ -131,7 +131,7 @@ class Persons extends Model
         }
 
         $placeholders = implode(',', array_fill(0, count($person_ids), '?'));
-        $query = $this->db->prepare("SELECT * FROM persons WHERE id IN ($placeholders) AND deleted_at IS NULL");
+        $query = $this->db->prepare("SELECT * FROM persons WHERE id IN ($placeholders) AND deleted_at IS NULL ORDER BY full_name ASC, id ASC");
         $query->execute($person_ids);
         $results = $this->attachCurrentWages($query->fetchAll(PDO::FETCH_OBJ));
 
@@ -186,7 +186,7 @@ class Persons extends Model
         int $start,
         int $length,
         string $status = '',
-        string $order_field = 'id',
+        string $order_field = 'full_name',
         string $order_direction = 'asc'
     ): array {
         $person_ids = array_values(array_unique(array_filter(array_map('intval', $person_ids))));
@@ -199,7 +199,7 @@ class Persons extends Model
             'job_group', 'job', 'ekip', 'address', 'description',
         ];
         if (!in_array($order_field, $allowedOrderFields, true)) {
-            $order_field = 'id';
+            $order_field = 'full_name';
         }
         $order_direction = strtolower($order_direction) === 'desc' ? 'DESC' : 'ASC';
         $start = max(0, $start);
@@ -311,7 +311,7 @@ class Persons extends Model
     //Aktif personelleri getir
     public function getPersonsByActive()
     {
-        $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and job_end_date IS NOT NULL');
+        $query = $this->db->prepare('SELECT * FROM persons WHERE firm_id = ? and job_end_date IS NOT NULL ORDER BY full_name ASC, id ASC');
         $query->execute([$_SESSION['firm_id']]);
         $results = $query->fetchAll(PDO::FETCH_OBJ);
         $results = $this->attachCurrentWages($results);
@@ -320,7 +320,7 @@ class Persons extends Model
 
     public function getPersonIdByFirm($firm_id)
     {
-        $query = $this->db->prepare('SELECT id FROM persons WHERE firm_id = ? and deleted_at IS NULL');
+        $query = $this->db->prepare('SELECT id FROM persons WHERE firm_id = ? and deleted_at IS NULL ORDER BY full_name ASC, id ASC');
         $query->execute([$firm_id]);
         return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
@@ -338,6 +338,8 @@ class Persons extends Model
             $params[] = $team_id;
         }
 
+        $sql .= ' ORDER BY p.full_name ASC, p.id ASC';
+
         $query = $this->db->prepare($sql);
         $query->execute($params);
 
@@ -345,7 +347,7 @@ class Persons extends Model
     }
     public function getPersonIdByFirmBlueCollar($firm_id)
     {
-        $query = $this->db->prepare('SELECT id FROM persons WHERE firm_id = ? AND wage_type = ? and deleted_at IS NULL');
+        $query = $this->db->prepare('SELECT id FROM persons WHERE firm_id = ? AND wage_type = ? and deleted_at IS NULL ORDER BY full_name ASC, id ASC');
         $query->execute([$firm_id,2]);
         return $this->filterPersons($query->fetchAll(PDO::FETCH_OBJ));
     }
@@ -381,6 +383,8 @@ class Persons extends Model
             $sql .= ' AND p.ekip = ?';
             $params[] = $team_id;
         }
+
+        $sql .= ' ORDER BY p.full_name ASC, p.id ASC';
 
         $query = $this->db->prepare($sql);
         $query->execute($params);

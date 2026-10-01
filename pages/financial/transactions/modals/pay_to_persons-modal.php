@@ -29,55 +29,64 @@ if (!isset($case_id)) {
     $case_id = $Cases->getDefaultCaseIdByFirm();
 }
 
-$curMonth = isset($month) ? (int)$month : (int)date('m');
-$curYear = isset($year) ? (int)$year : (int)date('Y');
-$periodTitle = Date::monthName($curMonth) . ' ' . $curYear;
-
-$modalPersonList = [];
-$rawPersons = $Persons->getPersonsByActive();
-foreach ($rawPersons as $pObj) {
-    $modalPersonList[] = [
-        'id' => $pObj->id,
-        'full_name' => $pObj->full_name ?? '',
-        'tc_no' => $pObj->tc_no ?? '',
-        'job_name' => $pObj->job_name ?? $pObj->duty_name ?? '',
-        'gelir' => 0,
-        'odenen' => 0,
-        'kalan' => 0
-    ];
-}
-
-if (!function_exists('getInitials')) {
-    function getInitials($name) {
-        $words = preg_split('/\s+/', trim($name));
-        $initials = "";
-        foreach ($words as $w) {
-            if (!empty($w)) {
-                $initials .= mb_substr($w, 0, 1, 'UTF-8');
-            }
-        }
-        return mb_strtoupper(mb_substr($initials, 0, 2, 'UTF-8'), 'UTF-8');
-    }
-}
-
 $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yellow', 'lime', 'green', 'teal', 'cyan'];
 ?>
 <style>
+    /* Modal Genel ve Özel Scroll Tablo Stilleri */
     #pay_to_persons-modal .modal-dialog {
-        max-width: 960px;
+        max-width: 980px;
     }
+    
     #pay_to_persons-modal .table-responsive-custom {
-        max-height: 380px;
+        max-height: 420px;
         overflow-y: auto;
         border-radius: 0 0 8px 8px;
     }
+    
     #pay_to_persons-modal .table-sticky-header thead th {
         position: sticky;
         top: 0;
         z-index: 2;
         background: #f8fafc !important;
         box-shadow: inset 0 -1px 0 #e2e8f0;
+        padding-top: 10px;
+        padding-bottom: 10px;
     }
+    
+    #pay_to_persons-modal .bulk-pay-row td {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        vertical-align: middle;
+    }
+
+    #pay_to_persons-modal .person-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    #pay_to_persons-modal .person-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    #pay_to_persons-modal .person-name {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.3;
+    }
+
+    #pay_to_persons-modal .person-subtext {
+        font-size: 11.5px;
+        color: #64748b;
+        line-height: 1.2;
+    }
+    
     #pay_to_persons-modal .table-responsive-custom::-webkit-scrollbar {
         width: 6px;
     }
@@ -91,13 +100,25 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
     #pay_to_persons-modal .table-responsive-custom::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
     }
+
     #pay_to_persons-modal .bulk-pay-row.row-has-amount {
         background-color: #f0fdf4 !important;
     }
+    
     #pay_to_persons-modal .bulk-pay-input:focus {
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15) !important;
     }
+
+    #pay_to_persons-modal .btn-transfer-balance {
+        transition: all 0.15s ease;
+    }
+    #pay_to_persons-modal .btn-transfer-balance:hover {
+        background-color: #dbeafe !important;
+        color: #1d4ed8 !important;
+        border-color: #bfdbfe !important;
+    }
+    
     #pay_to_persons-modal .search-clear-btn {
         position: absolute;
         right: 8px;
@@ -126,8 +147,11 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                     <div>
                         <div class="d-flex align-items-center gap-2">
                             <h4 class="modal-title fw-bold text-dark mb-0" style="font-size: 1.15rem; letter-spacing: -0.3px;">Toplu Personel Ödemesi Yap</h4>
+                            <span class="badge bg-blue-lt text-primary fw-semibold px-2 py-0.5 rounded-pill" id="payPeriodBadge" style="font-size: 11px;">
+                                <i class="ti ti-wallet me-1"></i><span id="payPeriodBadgeText">Genel Bakiye</span>
+                            </span>
                         </div>
-                        <div class="text-secondary small mt-0.5" style="font-size: 12.5px;">Birden fazla personele tek seferde kasa çıkışlı maaş / avans ödemesi gerçekleştirin</div>
+                        <div class="text-secondary small mt-0.5" style="font-size: 12.5px;">Personellerin güncel toplam bakiyelerine göre toplu kasa çıkışlı ödeme gerçekleştirin</div>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
@@ -136,6 +160,7 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
             <!-- Modal Body -->
             <div class="modal-body p-4 bg-white">
                 <form action="" id="payToPersonsForm" onsubmit="return false;">
+                    <input type="hidden" name="is_overall" value="1">
                     
                     <!-- Form Üst Parametreleri (Kasa, Tarih, Açıklama) -->
                     <div class="card border mb-3 shadow-xs" style="border-radius: 10px; border-color: #e2e8f0; background: #f8fafc;">
@@ -168,7 +193,8 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                                             <i class="ti ti-file-description text-muted"></i>
                                         </span>
                                         <input type="text" name="tps_amount_description" id="tps_amount_description" class="form-control" 
-                                            placeholder="Ödeme açıklaması giriniz (Opsiyonel)">
+                                            value="Personel Bakiye Ödemesi" 
+                                            placeholder="Açıklama giriniz...">
                                     </div>
                                 </div>
                             </div>
@@ -177,104 +203,71 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
 
                     <!-- Personel Listesi Tablosu -->
                     <div class="card border shadow-xs" style="border-radius: 10px; border-color: #e2e8f0;">
+                        
+                        <!-- Tablo Başlık & Hızlı Aksiyon Araç Çubuğu -->
                         <div class="card-header bg-light py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2" style="border-bottom: 1px solid #e2e8f0;">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="ti ti-users text-primary" style="font-size: 17px;"></i>
-                                <span class="fw-bold text-dark small text-uppercase" style="letter-spacing: 0.4px;">Personel Listesi</span>
-                                <span class="badge bg-secondary-lt text-dark rounded-pill fw-semibold px-2 py-0.5" style="font-size: 11px;">
-                                    <?= count($modalPersonList) ?> Personel
-                                </span>
+                            <!-- Sol Taraf: Canlı Arama Inputu -->
+                            <div class="position-relative" style="width: 240px;">
+                                <div class="input-icon">
+                                    <span class="input-icon-addon">
+                                        <i class="ti ti-search text-muted"></i>
+                                    </span>
+                                    <input type="text" id="payToPersonsSearch" class="form-control form-control-sm" placeholder="Personel ara..." style="height: 32px; padding-right: 26px; font-size: 12.5px;">
+                                </div>
+                                <i class="ti ti-x search-clear-btn" id="clearPaySearch" title="Aramayı Temizle"></i>
                             </div>
 
+                            <!-- Sağ Taraf: Filtre & Aksiyon Butonları (Sağa Yaslı) -->
                             <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+                                <!-- Filtre: Yalnızca Bakiyesi Olanlar -->
+                                <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5" id="btnToggleBalanceFilter" style="height: 32px; font-size: 12px;">
+                                    <i class="ti ti-filter text-muted"></i>
+                                    <span id="filterBtnText">Yalnızca Alacağı Olanlar</span>
+                                </button>
+
+                                <!-- Aksiyon: Tüm Bakiyeleri Doldur -->
+                                <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1.5" id="btnFillAllBalances" style="height: 32px; font-size: 12px;" title="Alacağı olan tüm personellerin tutar alanını otomatik doldur">
+                                    <i class="ti ti-bolt text-primary"></i>
+                                    <span>Tüm Bakiyeleri Doldur</span>
+                                </button>
+
+                                <!-- Aksiyon: Tutarları Temizle -->
                                 <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" id="btnResetAllAmounts" style="height: 32px; font-size: 12px;" title="Girilen tüm tutarları sıfırla">
                                     <i class="ti ti-trash"></i>
                                     <span>Sıfırla</span>
                                 </button>
-
-                                <div class="position-relative" style="width: 200px;">
-                                    <div class="input-icon">
-                                        <span class="input-icon-addon">
-                                            <i class="ti ti-search text-muted"></i>
-                                        </span>
-                                        <input type="text" id="payToPersonsSearch" class="form-control form-control-sm" placeholder="Personel ara..." style="height: 32px; padding-right: 26px; font-size: 12.5px;">
-                                    </div>
-                                    <i class="ti ti-x search-clear-btn" id="clearPaySearch" title="Aramayı Temizle"></i>
-                                </div>
                             </div>
                         </div>
 
+                        <!-- Tablo Gövdesi -->
                         <div class="card-body p-0">
                             <div class="table-responsive-custom">
                                 <table class="table table-vcenter card-table table-hover table-striped mb-0 table-sticky-header" id="payToPersonsTableCustom">
                                     <thead>
                                         <tr>
-                                            <th class="fw-semibold text-secondary small ps-3 py-2">PERSONEL</th>
-                                            <th class="text-end fw-semibold text-secondary small pe-3 py-2" style="width: 220px;">ÖDENECEK TUTAR</th>
+                                            <th class="fw-semibold text-secondary small ps-3.5 py-2.5" style="min-width: 240px;">PERSONEL</th>
+                                            <th class="text-end fw-semibold text-secondary small py-2.5 d-none d-md-table-cell" style="width: 140px;">TOPLAM HAKEDİŞ</th>
+                                            <th class="text-end fw-semibold text-secondary small py-2.5 d-none d-md-table-cell" style="width: 140px;">TOPLAM ÖDENEN</th>
+                                            <th class="text-end fw-semibold text-secondary small py-2.5" style="width: 170px;">GÜNCEL BAKİYE</th>
+                                            <th class="text-end fw-semibold text-secondary small pe-3 py-2.5" style="width: 180px;">ÖDENECEK TUTAR</th>
                                         </tr>
                                     </thead>
                                     <tbody id="payToPersonsTableBody">
-                                        <?php if (empty($modalPersonList)): ?>
-                                            <tr>
-                                                <td colspan="2" class="text-center py-4 text-muted small">
-                                                    <i class="ti ti-info-circle fs-2 d-block mb-1 text-secondary"></i>
-                                                    Listelenecek personel bulunamadı.
-                                                </td>
-                                            </tr>
-                                        <?php else: ?>
-                                            <?php foreach ($modalPersonList as $idx => $person): 
-                                                $color = $colors[$person['id'] % count($colors)];
-                                                $initials = getInitials($person['full_name']);
-                                                $searchData = mb_strtolower($person['full_name'] . ' ' . $person['tc_no'] . ' ' . $person['job_name'], 'UTF-8');
-                                            ?>
-                                                <tr class="bulk-pay-row" 
-                                                    data-person-id="<?= (int)$person['id'] ?>" 
-                                                    data-balance="0.00"
-                                                    data-has-balance="0"
-                                                    data-search="<?= htmlspecialchars($searchData, ENT_QUOTES, 'UTF-8') ?>">
-                                                    
-                                                    <td class="ps-3 py-2">
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="avatar avatar-sm rounded-circle bg-<?= $color ?>-lt me-2.5 fw-bold text-uppercase shadow-xs" style="width: 32px; height: 32px; font-size: 11.5px; flex-shrink: 0;">
-                                                                <?= $initials ?>
-                                                            </span>
-                                                            <div style="line-height: 1.2;">
-                                                                <div class="fw-semibold text-dark person-name" style="font-size: 13px;">
-                                                                    <?= htmlspecialchars($person['full_name'], ENT_QUOTES, 'UTF-8') ?>
-                                                                </div>
-                                                                <?php if (!empty($person['job_name'])): ?>
-                                                                    <div class="text-muted small mt-0.5" style="font-size: 11px;">
-                                                                        <?= htmlspecialchars($person['job_name'], ENT_QUOTES, 'UTF-8') ?>
-                                                                    </div>
-                                                                <?php elseif (!empty($person['tc_no'])): ?>
-                                                                    <div class="text-muted small mt-0.5" style="font-size: 11px;">
-                                                                        TC: <?= htmlspecialchars($person['tc_no'], ENT_QUOTES, 'UTF-8') ?>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-
-                                                    <td class="pe-3 py-2">
-                                                        <div class="input-group input-group-flat input-group-sm ms-auto" style="max-width: 170px; border-radius: 6px; overflow: hidden;">
-                                                            <input type="text" class="form-control text-end money bulk-pay-input py-1 pe-2" 
-                                                                placeholder="0,00" 
-                                                                data-person-id="<?= (int)$person['id'] ?>"
-                                                                style="font-size: 13px; font-weight: 600;">
-                                                            <span class="input-group-text bg-light text-muted fw-bold py-1 px-2" style="font-size: 12px;">₺</span>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted small">
+                                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                                                Personel ve bakiye bilgileri yükleniyor...
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
+                        <!-- Tablo Alt Bilgisi -->
                         <div class="card-footer bg-light py-2 px-3 d-flex justify-content-between align-items-center text-muted small" style="border-top: 1px solid #e2e8f0; font-size: 11.5px;">
                             <div>
-                                <span id="visibleRowCount"><?= count($modalPersonList) ?></span> / <?= count($modalPersonList) ?> kayıt gösteriliyor
+                                <span id="visibleRowCount">0</span> / <span id="totalRowCount">0</span> kayıt gösteriliyor
                             </div>
                             <div>
                                 <i class="ti ti-info-circle me-1"></i> Tutar girilen satırlar yeşil renk ile vurgulanır.
@@ -284,7 +277,7 @@ $colors = ['primary', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yel
                 </form>
             </div>
 
-            <!-- Modal Footer -->
+            <!-- Modal Footer: Dinamik Toplam Göstergesi ve Aksiyon Butonları -->
             <div class="modal-footer d-flex justify-content-between align-items-center bg-light px-4 py-3" style="border-top: 1px solid #e2e8f0;">
                 <div class="d-flex align-items-center gap-3">
                     <div class="d-flex align-items-center bg-white border rounded-3 px-3 py-1.5 shadow-xs" style="border-color: #dbe3ec !important;">

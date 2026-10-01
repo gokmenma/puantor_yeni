@@ -17,7 +17,7 @@ Tüm sayfa geliştirmelerinde Tabler ERP UI standardı ve tasarım sürekliliği
   - Sayfa Başlığı: `h2.page-title.fw-bold` (1.25rem / 20px, harf aralığı sıkı).
   - Alt Açıklama: `.text-secondary.small` (Modülün amacını özetleyen gri kısa metin).
 - **Sağ Taraf (Aksiyon Butonları Grubu):**
-  1. **Sütunlar:** Birincil aksiyonun solunda, yalnızca `ti ti-columns` ikonu bulunan 32x32px outline buton. İkon yaklaşık 18px olmalıdır. Metin yazılmamalı; `title` ve `aria-label` eklenmelidir.
+  1. **Sütunlar:** Birincil aksiyonun solunda, yalnızca `ti ti-layout-columns` ikonu bulunan 32x32px outline buton. İkon yaklaşık 18px olmalıdır. Metin yazılmamalı; `title` ve `aria-label` eklenmelidir.
   2. **Birincil Aksiyon:** `[+ Yeni ... Ekle/Oluştur]` (`btn btn-dark`), 32px yükseklikte olmalıdır.
   3. **İşlemler:** Birincil aksiyonun hemen sağında 32px yükseklikte outline dropdown olmalıdır.
 - Dashboard ve Yenile gibi genel butonlar liste sayfası başlığında yer almamalıdır.

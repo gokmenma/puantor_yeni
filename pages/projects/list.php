@@ -105,7 +105,7 @@ html.projects-summary-collapsed #projectsSummaryCards {
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon projects-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="projectsColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">
@@ -308,14 +308,15 @@ html.projects-summary-collapsed #projectsSummaryCards {
                                     $date_range = ($proje_gunu > 0) ? round(($elapsed / $proje_gunu) * 100) : 0;
                                     if ($date_range > 100) $date_range = 100;
                                 } else {
-                                    $date_range = 100;
+                                    $date_range = 0;
                                 }
 
                                 if ($has_end_date && $proje_gunu > 0 && is_numeric($kalan_gun) && $kalan_gun <= 0) {
                                     $date_range = 100;
                                     $progress_color = "bg-success";
                                     $sub_text = "Proje Tamamlandı";
-                                } else {
+                                    $sort_order = 0;
+                                } else if ($has_end_date) {
                                     if (is_numeric($kalan_gun) && $kalan_gun < 10) {
                                         $progress_color = "bg-danger";
                                     } else if (is_numeric($kalan_gun) && $kalan_gun < 30) {
@@ -324,6 +325,9 @@ html.projects-summary-collapsed #projectsSummaryCards {
                                         $progress_color = "bg-primary";
                                     }
                                     $sub_text = "Proje Devam Ediyor";
+                                    $sort_order = is_numeric($kalan_gun) ? $kalan_gun : 999;
+                                } else {
+                                    $sort_order = 9999;
                                 }
                                 ?>
                                 <tr data-project-id="<?php echo $id ?>" data-project-type="<?php echo $project->type ?>" data-project-name="<?php echo htmlspecialchars($project->project_name ?? '', ENT_QUOTES, 'UTF-8'); ?>">
@@ -345,35 +349,40 @@ html.projects-summary-collapsed #projectsSummaryCards {
                                     <td><?php echo htmlspecialchars($cities->getTownName($project->town) ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td class="text-center font-monospace small"><?php echo htmlspecialchars($project->start_date ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td class="text-center font-monospace small"><?php echo htmlspecialchars($project->end_date ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td>
-                                        <div class="progress progress-sm mb-1" style="height: 6px; border-radius: 4px; background: rgba(0,0,0,0.06);">
-                                            <div class="progress-bar <?php echo $progress_color ?>"
-                                                style="width: <?php echo $date_range ?>%; border-radius: 4px;" 
-                                                role="progressbar" 
-                                                aria-valuenow="<?php echo $date_range ?>" 
-                                                aria-valuemin="0" 
-                                                aria-valuemax="100"
-                                                data-bs-toggle="tooltip" 
-                                                title="%<?php echo $date_range ?> tamamlandı"></div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center" style="font-size: 11px; line-height: 1.2;">
-                                            <span class="text-muted">
-                                                <?php 
-                                                if ($has_end_date && is_numeric($kalan_gun)) {
-                                                    if ($kalan_gun > 0) {
-                                                        echo '<strong class="text-dark">' . $kalan_gun . '</strong> Gün';
-                                                    } else {
-                                                        echo '<span class="text-success fw-bold">' . $sub_text . '</span>';
+                                    <td data-order="<?php echo $sort_order; ?>">
+                                        <?php if ($has_end_date): ?>
+                                            <div class="progress progress-sm mb-1" style="height: 6px; border-radius: 4px; background: rgba(0,0,0,0.06);">
+                                                <div class="progress-bar <?php echo $progress_color ?>"
+                                                    style="width: <?php echo $date_range ?>%; border-radius: 4px;" 
+                                                    role="progressbar" 
+                                                    aria-valuenow="<?php echo $date_range ?>" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="100"
+                                                    data-bs-toggle="tooltip" 
+                                                    title="%<?php echo $date_range ?> tamamlandı"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center" style="font-size: 11px; line-height: 1.2;">
+                                                <span class="text-muted">
+                                                    <?php 
+                                                    if (is_numeric($kalan_gun)) {
+                                                        if ($kalan_gun > 0) {
+                                                            echo '<strong class="text-dark">' . $kalan_gun . '</strong> Gün Kaldı';
+                                                        } else {
+                                                            echo '<span class="text-success fw-bold">' . $sub_text . '</span>';
+                                                        }
                                                     }
-                                                } else {
-                                                    echo $sub_text;
-                                                }
-                                                ?>
-                                            </span>
-                                            <?php if ($has_end_date): ?>
+                                                    ?>
+                                                </span>
                                                 <span class="fw-bold text-dark">%<?php echo $date_range ?></span>
-                                            <?php endif; ?>
-                                        </div>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <span class="badge bg-primary-lt text-primary fw-semibold px-2 py-1" style="font-size: 11px;">
+                                                    <i class="ti ti-clock-play me-1"></i> Proje Devam Ediyor
+                                                </span>
+                                                <span class="text-muted small">Süresiz</span>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="text-center">
                                         <a href="#" class="btn btn-ghost-primary btn-sm route-link py-1 px-2" data-page="projects/manage&id=<?php echo $id ?>#tabs-personnel-3" style="font-size: 12px;">
@@ -833,34 +842,22 @@ $(document).ready(function() {
     });
 
     // Sütunların yapılandırması
-    var columnConfig = {
-        1: { label: 'Türü', default: true },
-        2: { label: 'Firma Adı', default: true },
-        3: { label: 'Proje Adı', default: true },
-        4: { label: 'Proje Bedeli', default: true },
-        5: { label: 'Şehir', default: true },
-        6: { label: 'İlçe', default: true },
-        7: { label: 'Başlama Tarihi', default: true },
-        8: { label: 'Tahmini Bitiş Tarihi', default: true },
-        9: { label: 'Kalan Gün / İlerleme', default: true },
-        10: { label: 'Personel', default: true }
+    var projectColumnConfig = {
+        1: 'Türü',
+        2: 'Firma Adı',
+        3: 'Proje Adı',
+        4: 'Proje Bedeli',
+        5: 'Şehir',
+        6: 'İlçe',
+        7: 'Başlama Tarihi',
+        8: 'Tahmini Bitiş Tarihi',
+        9: 'Kalan Gün',
+        10: 'Personel'
     };
-
-    var savedVisibility = {};
-    try {
-        var rawStored = localStorage.getItem('projects_column_visibility');
-        if (rawStored) {
-            var parsed = JSON.parse(rawStored);
-            if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-                savedVisibility = parsed;
-            }
-        }
-    } catch(e) {
-        savedVisibility = {};
-    }
 
     var tableOptions = {
         autoWidth: false,
+        colReorder: true,
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
         order: [],
@@ -893,21 +890,17 @@ $(document).ready(function() {
         initComplete: function() {
             var api = this.api();
 
-            $.each(columnConfig, function(colIdx, conf) {
-                colIdx = parseInt(colIdx, 10);
-                var isVisible = (typeof savedVisibility[colIdx] === 'boolean')
-                    ? savedVisibility[colIdx]
-                    : conf.default;
-                api.column(colIdx).visible(isVisible, false);
-            });
-
             if (typeof window.initDataTableColumnFilters === 'function') {
                 window.initDataTableColumnFilters($('#projectTable'), api);
             }
+            if (typeof window.initPuantorDTManager === 'function') {
+                window.initPuantorDTManager($('#projectTable'), api);
+            }
+
+            renderProjectsColvisMenu();
 
             // Dil dosyasi yuklenip DOM satirlari DataTables'a aktarildiktan
-            // sonra olculendir ve ciz. Bundan once draw() cagirmak tbody'yi
-            // bos durum satiriyla degistiriyordu.
+            // sonra olculendir ve ciz.
             api.columns.adjust().draw(false);
         }
     };
@@ -916,43 +909,60 @@ $(document).ready(function() {
         ? $projectTable.DataTable()
         : $projectTable.DataTable(tableOptions);
 
-    var $colvisMenu = $('#projectsColvisMenu');
-    $colvisMenu.empty();
+    // Dinamik Sütun Menüsü Oluşturucu (Gizli sütunlarda da %100 güvenli okuma)
+    function renderProjectsColvisMenu() {
+        var menuHtml = '';
+        var settings = table ? table.settings()[0] : null;
 
-    if (table) {
-        $.each(columnConfig, function(colIdx, conf) {
-            colIdx = parseInt(colIdx, 10);
-            var isVisible = (savedVisibility && typeof savedVisibility[colIdx] === 'boolean') ? savedVisibility[colIdx] : conf.default;
+        $.each(projectColumnConfig, function (origIdxStr, label) {
+            var origIdx = parseInt(origIdxStr, 10);
+            var isVisible = true;
 
-            var $item = $(
-                '<label class="dropdown-item d-flex align-items-center py-1.5 px-3 rounded-2 cursor-pointer" style="font-size: 0.85rem;">' +
-                '<div class="form-check mb-0 w-100">' +
-                '<input class="form-check-input me-2 mt-0 col-toggle-cb" type="checkbox" data-column="' + colIdx + '"' + (isVisible ? ' checked' : '') + '>' +
-                '<span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">' + conf.label + '</span>' +
-                '</div>' +
-                '</label>'
-            );
-            $colvisMenu.append($item);
+            if (settings && settings.aoColumns) {
+                for (var c = 0; c < settings.aoColumns.length; c++) {
+                    var colCfg = settings.aoColumns[c];
+                    var cOrig = colCfg._crOriginalIdx !== undefined ? colCfg._crOriginalIdx : c;
+                    if (cOrig === origIdx) {
+                        isVisible = colCfg.bVisible !== false;
+                        break;
+                    }
+                }
+            } else if (table) {
+                try {
+                    isVisible = table.column(origIdx).visible();
+                } catch(e) {
+                    isVisible = true;
+                }
+            }
+
+            menuHtml += `
+                <label class="dropdown-item d-flex align-items-center cursor-pointer py-1.5 px-3 rounded-2" style="font-size: 0.85rem;">
+                    <div class="form-check mb-0 w-100">
+                        <input class="form-check-input projects-col-trigger" type="checkbox" id="colCheck_${origIdx}" data-column="${origIdx}" data-orig-idx="${origIdx}" ${isVisible ? "checked" : ""}>
+                        <span class="form-check-label fw-medium ms-2 text-secondary" style="user-select:none;">
+                            ${label}
+                        </span>
+                    </div>
+                </label>`;
         });
 
+        menuHtml += `
+            <div class="dropdown-divider my-1"></div>
+            <button type="button" class="dropdown-item text-danger py-1.5 px-3 rounded-2" id="resetTableColumnsBtn" style="font-size: 0.8rem;">
+                <i class="ti ti-rotate-2 me-1"></i> Görünümü Sıfırla
+            </button>
+        `;
+
+        $('#projectsColvisMenu').html(menuHtml);
     }
 
-    // Checkbox değiştiğinde sütunu göster/gizle ve kaydet
-    $colvisMenu.on('change', '.col-toggle-cb', function(e) {
-        e.stopPropagation();
-        var colIdx = parseInt($(this).data('column'), 10);
-        var isChecked = $(this).is(':checked');
-
-        table.column(colIdx).visible(isChecked, true);
-
-        savedVisibility[colIdx] = isChecked;
-        try {
-            localStorage.setItem('projects_column_visibility', JSON.stringify(savedVisibility));
-        } catch(err) {}
-    });
-
-    $colvisMenu.on('click', function(e) {
-        e.stopPropagation();
+    // Görünümü Sıfırla Butonu
+    $(document).on('click', '#resetTableColumnsBtn', function() {
+        if (typeof window.resetPuantorDTState === 'function') {
+            window.resetPuantorDTState($('#projectTable'), table, function() {
+                renderProjectsColvisMenu();
+            });
+        }
     });
 
     // Özet Kartı Radyo Filtreleri

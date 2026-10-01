@@ -60,15 +60,30 @@ use App\Helper\Helper;
                     <div class="tab-content mb-3">
                         <div class="tab-pane active show" id="tabs-home-7" role="tabpanel">
                             <label class="form-label fw-medium text-secondary small mb-1" style="font-size: 12px;">Proje Seçimi <span class="text-muted fw-normal">(Opsiyonel)</span></label>
-                            <?php echo $projectHelper->getProjectSelect("gm_project_id") ?>
+                            <div class="input-icon">
+                                <span class="input-icon-addon text-muted">
+                                    <i class="ti ti-building" style="font-size: 17px;"></i>
+                                </span>
+                                <?php echo $projectHelper->getProjectSelect("gm_project_id") ?>
+                            </div>
                         </div>
                         <div class="tab-pane" id="tabs-profile-7" role="tabpanel">
                             <label class="form-label fw-medium text-secondary small mb-1" style="font-size: 12px;">Personel Seçimi <span class="text-muted fw-normal">(Opsiyonel)</span></label>
-                            <?php echo $personHelper->getPersonSelect(name: "gm_person_name") ?>
+                            <div class="input-icon">
+                                <span class="input-icon-addon text-muted">
+                                    <i class="ti ti-user" style="font-size: 17px;"></i>
+                                </span>
+                                <?php echo $personHelper->getPersonSelect(name: "gm_person_name") ?>
+                            </div>
                         </div>
                         <div class="tab-pane" id="tabs-activity-7" role="tabpanel">
                             <label class="form-label fw-medium text-secondary small mb-1" style="font-size: 12px;">Firma / Cari Seçimi <span class="text-muted fw-normal">(Opsiyonel)</span></label>
-                            <?php echo $CompanyHelper->getCompanySelect(name: "gm_company") ?>
+                            <div class="input-icon">
+                                <span class="input-icon-addon text-muted">
+                                    <i class="ti ti-building-store" style="font-size: 17px;"></i>
+                                </span>
+                                <?php echo $CompanyHelper->getCompanySelect(name: "gm_company") ?>
+                            </div>
                         </div>
                     </div>
 
@@ -124,13 +139,23 @@ use App\Helper\Helper;
                             <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12.5px;">
                                 Kasa <span class="text-danger">*</span>
                             </label>
-                            <?php echo $financial->getCasesSelectByUser("gm_case_id", $case_id) ?>
+                            <div class="input-icon">
+                                <span class="input-icon-addon text-muted">
+                                    <i class="ti ti-wallet" style="font-size: 17px;"></i>
+                                </span>
+                                <?php echo $financial->getCasesSelectByUser("gm_case_id", $case_id) ?>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-dark mb-1" style="font-size: 12.5px;">
                                 Gelir / Gider Türü <span class="text-danger">*</span>
                             </label>
-                            <?php echo $financial->getIncExpTypeSelect("gm_incexp_type"); ?>
+                            <div class="input-icon">
+                                <span class="input-icon-addon text-muted">
+                                    <i class="ti ti-category" style="font-size: 17px;"></i>
+                                </span>
+                                <?php echo $financial->getIncExpTypeSelect("gm_incexp_type"); ?>
+                            </div>
                         </div>
                     </div>
 
@@ -238,19 +263,46 @@ use App\Helper\Helper;
     display: inline-block;
 }
 
-/* Select2 in General Modal */
+/* Input Icon & Select2 in General Modal */
+#general-modal .input-icon {
+    position: relative;
+    width: 100%;
+}
+#general-modal .input-icon-addon {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    pointer-events: none;
+    z-index: 3;
+}
+#general-modal .input-icon .form-control {
+    padding-left: 36px !important;
+}
+#general-modal .input-icon .select2-container--default .select2-selection--single {
+    padding-left: 36px !important;
+}
 #general-modal .select2-container--default .select2-selection--single {
-    height: 34px !important;
-    padding: 3px 8px !important;
+    height: 36px !important;
+    padding: 4px 10px !important;
     font-size: 13px !important;
     border-radius: 6px !important;
     border-color: #dbe3ec !important;
+    display: flex !important;
+    align-items: center !important;
 }
 #general-modal .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 26px !important;
+    line-height: normal !important;
+    color: #1e293b !important;
+    padding-left: 0 !important;
 }
 #general-modal .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 32px !important;
+    height: 34px !important;
 }
 
 /* Dark Mode */

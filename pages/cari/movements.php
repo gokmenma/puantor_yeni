@@ -216,7 +216,7 @@ html.cari-movements-summary-collapsed #cariMovementsSummaryCards {
                     </a>
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary btn-icon cari-movements-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle">
-                            <i class="ti ti-columns"></i>
+                            <i class="ti ti-layout-columns"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end p-2" id="movementsColvisMenu"
                             style="min-width: 210px; max-height: 350px; overflow-y: auto;">
@@ -939,6 +939,7 @@ $(document).ready(function() {
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
         autoWidth: false,
+        colReorder: true,
         columnDefs: [
             { targets: [0, 8], orderable: false, searchable: false },
             { targets: 0, className: 'text-center' },
@@ -975,6 +976,9 @@ $(document).ready(function() {
 
             if (typeof window.initDataTableColumnFilters === 'function') {
                 window.initDataTableColumnFilters($('#movementsTable'), api);
+            }
+            if (typeof window.initPuantorDTManager === 'function') {
+                window.initPuantorDTManager($('#movementsTable'), api);
             }
 
             api.columns.adjust().draw(false);

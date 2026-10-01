@@ -393,7 +393,7 @@ html.payroll-summary-collapsed #payrollSummaryCards {
 
                         <div class="dropdown">
                             <button type="button" class="btn btn-sm btn-outline-secondary btn-icon payroll-header-icon-action" data-bs-toggle="dropdown" title="Sütunları Göster / Gizle" aria-label="Sütunları göster veya gizle" id="colvisDropdownBtn">
-                                <i class="ti ti-columns"></i>
+                                <i class="ti ti-layout-columns"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end p-2" id="bordroColvisMenu" style="min-width: 210px; max-height: 350px; overflow-y: auto;">
                                 <!-- Checkboxes will be rendered dynamically by JS -->
@@ -567,16 +567,6 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                             </div>
                         </div>
 
-                        <!-- Filtre Seçimleri -->
-                        <div class="d-flex align-items-center flex-wrap gap-2 my-1 my-md-0">
-                            <div style="min-width: 170px;">
-                                <?= $projectHelper->getProjectSelect('projects', $project_id, 'Tüm Projeler') ?>
-                            </div>
-                            <div style="min-width: 150px;">
-                                <?= $Teams->teamsSelect('team_id', $team_id, 'Tüm Ekipler') ?>
-                            </div>
-                        </div>
-
                         <!-- Actions & Search -->
                         <div class="d-flex align-items-center flex-wrap gap-2 ms-auto">
                             <!-- Fast Instant Search -->
@@ -742,15 +732,31 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                     </td>
 
                                     <!-- Ödenecek / Kalan Bakiye -->
-                                    <td class="text-end payroll-balance <?= Helper::balanceColor($kalan) ?> view-payroll-detail fw-bold"
-                                        data-id="<?= $id ?>"
-                                        data-month="<?= $month ?>"
-                                        data-year="<?= $year ?>"
-                                        role="button" tabindex="0" title="Bordro detayını görüntüle"
-                                        style="cursor: pointer;"
-                                        data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
-                                        <?= Helper::formattedMoney($kalan ?? 0) ?>
-                                        <i class="ti ti-credit-card-pay icon ms-1"></i>
+                                    <td class="text-end payroll-balance <?= Helper::balanceColor($kalan) ?> fw-bold">
+                                        <span class="view-payroll-detail cursor-pointer"
+                                            data-id="<?= $id ?>"
+                                            data-month="<?= $month ?>"
+                                            data-year="<?= $year ?>"
+                                            role="button" tabindex="0" title="Bordro detayını görüntüle"
+                                            data-bs-toggle="modal" data-bs-target="#payroll-detail-modal">
+                                            <?= Helper::formattedMoney($kalan ?? 0) ?>
+                                        </span>
+                                        <?php if ($Auths->hasPermission('make_staff_payment')): ?>
+                                            <a href="javascript:void(0);" 
+                                               class="add-payment text-decoration-none ms-1 cursor-pointer align-middle"
+                                               data-id="<?= $id ?>"
+                                               data-name="<?= htmlspecialchars($person->full_name ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                               data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>"
+                                               data-balance-raw="<?= (float)($kalan ?? 0) ?>"
+                                               data-bs-toggle="modal" 
+                                               data-bs-target="#payment-modal"
+                                               title="Ödeme Yap"
+                                               style="color: inherit;">
+                                                <i class="ti ti-credit-card-pay icon"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <i class="ti ti-credit-card-pay icon ms-1 text-muted opacity-50"></i>
+                                        <?php endif; ?>
                                     </td>
 
                                     <!-- İşlem Sütunu -->
@@ -763,7 +769,9 @@ html.payroll-summary-collapsed #payrollSummaryCards {
                                                 <?php if ($Auths->hasPermission('make_staff_payment')): ?>
                                                     <a class="dropdown-item add-payment" data-id="<?= $id ?>"
                                                         data-name="<?= htmlspecialchars($person->full_name ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                        data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>" href="#"
+                                                        data-balance="<?= htmlspecialchars(Helper::formattedMoney($kalan ?? 0), ENT_QUOTES, 'UTF-8') ?>"
+                                                        data-balance-raw="<?= (float)($kalan ?? 0) ?>"
+                                                        href="#"
                                                         data-bs-toggle="modal" data-bs-target="#payment-modal">
                                                         <i class="ti ti-cash-register icon me-2 text-success"></i> Ödeme Yap
                                                     </a>
