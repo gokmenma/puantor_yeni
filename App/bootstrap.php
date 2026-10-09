@@ -13,6 +13,10 @@ date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? 'Europe/Istanbul');
 
 require_once __DIR__ . '/Logging/SystemLogger.php';
 
+if (!class_exists(\App\Routing\Router::class) && file_exists(__DIR__ . '/Routing/Router.php')) {
+    require_once __DIR__ . '/Routing/Router.php';
+}
+
 \App\Logging\SystemLogger::register();
 
 if (!function_exists('system_log_error')) {
