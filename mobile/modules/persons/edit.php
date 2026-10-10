@@ -767,7 +767,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_person'])) {
                 $is_income = ($type_info->type_id == 1);
             }
           ?>
-            <div class="person-item-wrapper mobile-card p-0 mb-2 border border-0 shadow-sm overflow-hidden" style="border-radius: 16px; background: #ffffff;">
+            <div class="person-item-wrapper mobile-card p-0 mb-2 border border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
               <?php if (!$is_hakedis): ?>
                 <div class="person-item-actions">
                   <button class="btn-swipe-delete btn-delete-payment" data-id="<?php echo Security::encrypt($item->id); ?>" data-type="<?php echo $item->tablename ?? 'Diger'; ?>">

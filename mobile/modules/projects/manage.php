@@ -173,6 +173,15 @@ body[data-bs-theme="dark"] {
 body[data-bs-theme="dark"] .text-dark {
     color: #f4f6fa !important;
 }
+
+.financial-item-wrapper,
+.financial-item-content {
+    background: #ffffff;
+}
+body[data-bs-theme="dark"] .financial-item-wrapper,
+body[data-bs-theme="dark"] .financial-item-content {
+    background: #1e293b !important;
+}
 </style>
 
 <div class="container px-0 pb-5">
@@ -450,7 +459,7 @@ body[data-bs-theme="dark"] .text-dark {
             $is_income = ($item->turu == 5 || $item->turu == 1); // 5: Projeden Alınan Ödeme, 1: Gelir
             $is_editable = !empty($item->id);
           ?>
-            <div class="financial-item-wrapper" style="position: relative; overflow: hidden; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <div class="financial-item-wrapper" style="position: relative; overflow: hidden; border-bottom: 1px solid rgba(0,0,0,0.05);">
               <?php if($is_editable): ?>
               <div class="financial-item-actions" style="position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; background: #d63f3f; z-index: 1;">
                 <button class="btn-swipe-delete btn-delete-project-action" data-id="<?php echo $item_id; ?>" data-project="<?php echo Security::encrypt($item->project_id); ?>" style="color: white; width: 70px; height: 100%; border: none; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">
@@ -459,7 +468,7 @@ body[data-bs-theme="dark"] .text-dark {
                 </button>
               </div>
               <?php endif; ?>
-              <div class="financial-item-content <?php echo $is_editable ? 'swipe-content btn-edit-project-transaction' : ''; ?>" data-id="<?php echo $item_id; ?>" style="position: relative; background: #fff; z-index: 2; transition: transform 0.2s ease-out; width: 100%; <?php echo $is_editable ? 'cursor: pointer;' : ''; ?>">
+              <div class="financial-item-content <?php echo $is_editable ? 'swipe-content btn-edit-project-transaction' : ''; ?>" data-id="<?php echo $item_id; ?>" style="position: relative; z-index: 2; transition: transform 0.2s ease-out; width: 100%; <?php echo $is_editable ? 'cursor: pointer;' : ''; ?>">
                 <div class="list-group-item py-3 px-3">
                   <div class="d-flex align-items-center justify-content-between w-100">
                     <div class="d-flex align-items-center gap-3">

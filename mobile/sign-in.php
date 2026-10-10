@@ -27,25 +27,40 @@ if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['r
         $User->setMobileToken($cookie_user->id, bin2hex(random_bytes(32)));
         $loginSecurity->event((int) $cookie_user->id, 'mobile_superadmin_remember_rejected', 'Mobil superadmin kalıcı oturumu reddedildi.');
     } elseif ($cookie_user && $cookie_user->status == 1) {
-        session_regenerate_id(true);
-        $_SESSION['user'] = $cookie_user;
-        $_SESSION['firm_id'] = $cookie_user->firm_id;
-        $_SESSION['full_name'] = $cookie_user->full_name;
-        $_SESSION['user_role'] = $cookie_user->user_roles;
-        // Refresh cookie expiry
-        setcookie('remember_me_mobile', $token, [
-            'expires' => time() + 30 * 24 * 3600, 'path' => '/',
-            'secure' => puantorIsHttps(), 'httponly' => true, 'samesite' => 'Lax',
-        ]);
+        if (!$User->hasActiveSubscriptionOrTrial($cookie_user)) {
+            puantorExpireCookie('remember_me_mobile');
+            $User->setMobileToken($cookie_user->id, bin2hex(random_bytes(32)));
+            $error = 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.';
+        } else {
+            session_regenerate_id(true);
+            $_SESSION['user'] = $cookie_user;
+            $_SESSION['firm_id'] = $cookie_user->firm_id;
+            $_SESSION['full_name'] = $cookie_user->full_name;
+            $_SESSION['user_role'] = $cookie_user->user_roles;
+            // Refresh cookie expiry
+            setcookie('remember_me_mobile', $token, [
+                'expires' => time() + 30 * 24 * 3600, 'path' => '/',
+                'secure' => puantorIsHttps(), 'httponly' => true, 'samesite' => 'Lax',
+            ]);
+        }
     }
 }
 
 if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
-    header("Location: index.php");
-    exit();
+    if (!$User->hasActiveSubscriptionOrTrial($_SESSION['user'])) {
+        puantorExpireCookie('remember_me_mobile');
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        $error = 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.';
+    } else {
+        header("Location: index.php");
+        exit();
+    }
 }
 
-$error = "";
+$error = $error ?: (isset($_GET['expired']) ? 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.' : '');
 $success_message = "";
 $view = $_GET['view'] ?? 'login';
 
@@ -90,6 +105,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             goto mobile_login_complete;
                         }
                     }
+
+                    // Deneme süresi ve abonelik kontrolü
+                    if (!$User->hasActiveSubscriptionOrTrial($user)) {
+                        $error = 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.';
+                        goto mobile_login_complete;
+                    }
+
                     session_regenerate_id(true);
                     $_SESSION['user'] = $user;
                     $_SESSION['firm_id'] = $user->firm_id; // Varsayılan firmayı ata

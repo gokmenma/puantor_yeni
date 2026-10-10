@@ -50,7 +50,7 @@ try {
 
   <?php if (empty($duyurular)): ?>
     <!-- Boş Bildirim Ekranı -->
-    <div class="mobile-card text-center py-5 px-3 d-flex flex-column align-items-center justify-content-center" style="border-radius: 20px; background: #fff; min-height: 250px;">
+    <div class="mobile-card text-center py-5 px-3 d-flex flex-column align-items-center justify-content-center" style="border-radius: 20px; min-height: 250px;">
       <div class="avatar avatar-xl rounded-circle bg-secondary-lt mb-3 text-secondary" style="width: 72px; height: 72px;">
         <i class="ti ti-bell-off" style="font-size: 2.2rem;"></i>
       </div>

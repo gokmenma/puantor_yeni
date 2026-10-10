@@ -34,6 +34,12 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
             header("Location: sign-in.php");
             exit();
         } elseif ($cookie_user && $cookie_user->status == 1) {
+            if (!$User->hasActiveSubscriptionOrTrial($cookie_user)) {
+                puantorExpireCookie('remember_me_mobile');
+                $User->setMobileToken($cookie_user->id, bin2hex(random_bytes(32)));
+                header("Location: sign-in.php?expired=1");
+                exit();
+            }
             session_regenerate_id(true);
             $_SESSION['user'] = $cookie_user;
             $_SESSION['firm_id'] = $cookie_user->firm_id;
@@ -65,6 +71,17 @@ if (!$user) {
 
 $_SESSION["user"] = $user;
 $is_superadmin = (int) ($user->superadmin ?? 0) === 1;
+
+// Abonelik ve Deneme Süresi Kontrolü
+if (!$is_superadmin && !$User->hasActiveSubscriptionOrTrial($user)) {
+    puantorExpireCookie('remember_me_mobile');
+    $_SESSION = [];
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+    header("Location: sign-in.php?expired=1");
+    exit();
+}
 
 // Kullanıcının yetkili firmalarını çek
 $myFirmObj = new MyFirmModel();

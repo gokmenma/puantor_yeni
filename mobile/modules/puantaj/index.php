@@ -365,6 +365,31 @@ $months = [
         border-color: var(--mobile-card-border-dark) !important;
     }
 
+    #datePicker, #monthSelector, #yearSelector {
+        color: inherit;
+    }
+    body[data-bs-theme="dark"] #datePicker,
+    body[data-bs-theme="dark"] #monthSelector,
+    body[data-bs-theme="dark"] #yearSelector {
+        color: #f4f6fa !important;
+        background-color: #1e293b !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
+    body[data-bs-theme="dark"] #monthSelector option,
+    body[data-bs-theme="dark"] #yearSelector option {
+        background-color: #1e293b !important;
+        color: #f4f6fa !important;
+    }
+    body[data-bs-theme="dark"] .btn.bg-secondary-lt {
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    body[data-bs-theme="dark"] .btn.bg-secondary-lt:hover {
+        background-color: #243049 !important;
+        color: #f4f6fa !important;
+    }
+
     /* Checkbox & Selection */
     .person-row.selected {
         background-color: rgba(32, 107, 196, 0.05) !important;
@@ -556,9 +581,9 @@ $months = [
                         <i class="ti ti-chevron-left fs-3"></i>
                     </a>
                     <div class="position-relative d-inline-block">
-                        <input type="text" id="datePicker" class="form-control form-control-sm border-0 bg-secondary-lt text-bold text-center" 
+                        <input type="text" id="datePicker" class="form-control form-control-sm border-0 text-bold text-center" 
                                  value="<?php echo date('d.m.Y', strtotime($selected_date)); ?>" 
-                                 style="width: 100px; height: 34px; border-radius: 10px; cursor: pointer; padding-right: 1.6rem; font-size: 0.82rem; color: #1d273b !important; min-height: auto !important;">
+                                 style="width: 100px; height: 34px; border-radius: 10px; cursor: pointer; padding-right: 1.6rem; font-size: 0.82rem; min-height: auto !important;">
                          <i class="ti ti-calendar position-absolute text-muted" style="right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 0.85rem;"></i>
                     </div>
                     <?php if (!$is_today_or_future): ?>
@@ -588,12 +613,12 @@ $months = [
                             <i class="ti ti-chevron-left fs-3"></i>
                         </a>
                         <div class="d-flex gap-1">
-                            <select id="monthSelector" class="form-select form-select-sm border-0 bg-secondary-lt text-bold text-center" style="width: 110px; height: 34px; border-radius: 10px; font-size: 0.82rem; color: #1d273b !important; padding: 0 8px; min-height: auto !important;">
+                            <select id="monthSelector" class="form-select form-select-sm border-0 text-bold text-center" style="width: 110px; height: 34px; border-radius: 10px; font-size: 0.82rem; padding: 0 8px; min-height: auto !important;">
                                 <?php foreach ($months as $m => $name): ?>
                                     <option value="<?php echo $m; ?>" <?php echo $m == $month ? 'selected' : ''; ?>><?php echo $name; ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <select id="yearSelector" class="form-select form-select-sm border-0 bg-secondary-lt text-bold text-center" style="width: 80px; height: 34px; border-radius: 10px; font-size: 0.82rem; color: #1d273b !important; padding: 0 8px; min-height: auto !important;">
+                            <select id="yearSelector" class="form-select form-select-sm border-0 text-bold text-center" style="width: 80px; height: 34px; border-radius: 10px; font-size: 0.82rem; padding: 0 8px; min-height: auto !important;">
                                 <?php for ($y = date('Y') - 5; $y <= date('Y') + 2; $y++): ?>
                                     <option value="<?php echo $y; ?>" <?php echo $y == $year ? 'selected' : ''; ?>><?php echo $y; ?></option>
                                 <?php endfor; ?>

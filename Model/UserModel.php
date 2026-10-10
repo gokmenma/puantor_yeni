@@ -269,6 +269,22 @@ class UserModel extends Model
     }
 
     /**
+     * Check if the user (or their owner) has an active subscription or valid trial.
+     */
+    public function hasActiveSubscriptionOrTrial($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        if ((int) ($user->superadmin ?? 0) === 1) {
+            return true;
+        }
+        $owner_id = empty($user->parent_id) ? (int)$user->id : (int)$user->parent_id;
+        $subDetails = $this->getActiveSubscriptionDetails($owner_id);
+        return !empty($subDetails['has_sub']);
+    }
+
+    /**
      * Get the active subscription details and limits for the main user.
      */
     public function getActiveSubscriptionDetails($owner_id) {

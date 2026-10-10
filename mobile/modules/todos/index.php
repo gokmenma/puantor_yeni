@@ -272,7 +272,7 @@ foreach ($todos as $todo) {
                 <i class="ti ti-square" style="font-size: 1.25rem;"></i>
               </div>
               <div onclick="editTodo('<?php echo $todo_id_encrypted; ?>')" style="cursor: pointer;">
-                <div class="text-bold text-sm" style="color: #1d273b;"><?php echo htmlspecialchars($todo->baslik); ?></div>
+                <div class="text-bold text-sm"><?php echo htmlspecialchars($todo->baslik); ?></div>
                 <div class="text-muted text-xs d-flex align-items-center gap-1 mt-0.5">
                   <?php if (!empty($todo->liste_adi)): ?>
                     <span><?php echo htmlspecialchars($todo->liste_adi); ?></span>

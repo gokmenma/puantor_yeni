@@ -128,7 +128,7 @@ body[data-bs-theme="dark"] .transaction-item-content {
     </div>
 
     <div class="px-2">
-        <div class="mobile-card p-0 mb-4 overflow-hidden shadow-sm border-0" style="background: #fff; border-radius: 18px;">
+        <div class="mobile-card p-0 mb-4 overflow-hidden shadow-sm border-0" style="border-radius: 18px;">
             <div id="cari-list">
                 <?php if (empty($cariler)): ?>
                     <div class="text-center py-5">
@@ -147,13 +147,13 @@ body[data-bs-theme="dark"] .transaction-item-content {
                                     <span>Sil</span>
                                 </button>
                             </div>
-                            <a href="cari-movements?id=<?php echo $id; ?>" class="transaction-item-content p-3" style="background: #fff; display: flex; width: 100%;">
+                            <a href="cari-movements?id=<?php echo $id; ?>" class="transaction-item-content p-3" style="display: flex; width: 100%;">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(32, 107, 196, 0.1); color: #206bc4;">
                                         <i class="ti ti-user" style="font-size: 1.25rem;"></i>
                                     </div>
                                     <div>
-                                        <div class="text-bold text-sm" style="color: #1d273b;">
+                                        <div class="text-bold text-sm">
                                             <?php echo htmlspecialchars($cari->FirmaAdi); ?>
                                             <?php if ($cari->YetkiliAdi): ?>
                                                 <span class="text-muted font-weight-normal" style="font-size: 0.75rem;">(<?php echo htmlspecialchars($cari->YetkiliAdi); ?>)</span>

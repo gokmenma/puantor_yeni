@@ -77,25 +77,40 @@ if ((!isset($_SESSION['user']) || empty($_SESSION['user'])) && isset($_COOKIE['r
         $User->setToken($cookie_user->id, bin2hex(random_bytes(32)));
         $loginSecurity->event((int) $cookie_user->id, 'superadmin_remember_rejected', 'Superadmin kalıcı oturum girişimi reddedildi.');
     } elseif ($cookie_user && $cookie_user->status == 1) {
-        session_regenerate_id(true);
-        $_SESSION['user'] = $cookie_user;
-        $_SESSION['firm_id'] = $cookie_user->firm_id;
-        $_SESSION['full_name'] = $cookie_user->full_name;
-        $_SESSION['user_role'] = $cookie_user->user_roles;
-        $_SESSION["log_id"] = $User->loginLog($cookie_user->id);
-        
-        $rawReturn = $_GET['returnUrl'] ?? '';
-        $redirectUri = determineUserLoginRedirect($cookie_user, $rawReturn);
-        header("Location: {$redirectUri}");
-        exit();
+        if (!$User->hasActiveSubscriptionOrTrial($cookie_user)) {
+            puantorExpireCookie('remember_me');
+            $User->setToken($cookie_user->id, bin2hex(random_bytes(32)));
+            $error = 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.';
+        } else {
+            session_regenerate_id(true);
+            $_SESSION['user'] = $cookie_user;
+            $_SESSION['firm_id'] = $cookie_user->firm_id;
+            $_SESSION['full_name'] = $cookie_user->full_name;
+            $_SESSION['user_role'] = $cookie_user->user_roles;
+            $_SESSION["log_id"] = $User->loginLog($cookie_user->id);
+            
+            $rawReturn = $_GET['returnUrl'] ?? '';
+            $redirectUri = determineUserLoginRedirect($cookie_user, $rawReturn);
+            header("Location: {$redirectUri}");
+            exit();
+        }
     }
 }
 
 if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
-    $rawReturn = $_GET['returnUrl'] ?? '';
-    $redirectUri = determineUserLoginRedirect($_SESSION['user'], $rawReturn);
-    header("Location: {$redirectUri}");
-    exit();
+    if (!$User->hasActiveSubscriptionOrTrial($_SESSION['user'])) {
+        puantorExpireCookie('remember_me');
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        $error = 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.';
+    } else {
+        $rawReturn = $_GET['returnUrl'] ?? '';
+        $redirectUri = determineUserLoginRedirect($_SESSION['user'], $rawReturn);
+        header("Location: {$redirectUri}");
+        exit();
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
@@ -145,22 +160,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submitForm'])) {
                         goto login_processing_complete;
                     }
                 }
-                // Deneme süresi kontrolü
-                $days = Date::getDateDiff($demo_date);
-                $has_active_sub = false;
-                if (($user->superadmin ?? 0) != 1) {
-                    $owner_id = ($user->parent_id == 0) ? $user->id : $user->parent_id;
-                    $owner_user = ($owner_id == $user->id) ? $user : $User->find($owner_id);
-                    if ($owner_user && ($owner_user->superadmin ?? 0) == 1) {
-                        $has_active_sub = true;
-                    } else {
-                        $dbCheck = $User->getDb();
-                        $stmtCheck = $dbCheck->prepare("SELECT COUNT(*) FROM kullanici_abonelikleri WHERE kullanici_id = ? AND durum = 'aktif' AND bitis_tarihi >= ?");
-                        $stmtCheck->execute([$owner_id, date('Y-m-d')]);
-                        $has_active_sub = $stmtCheck->fetchColumn() > 0;
-                    }
-                }
-                if ($days >= 15 && $user->user_type == 1 && !$has_active_sub && ($user->superadmin ?? 0) != 1) {
+                // Deneme süresi ve abonelik kontrolü
+                if (!$User->hasActiveSubscriptionOrTrial($user)) {
                     $error = 'Deneme süreniz dolmuştur. Lütfen iletişime geçiniz.';
                 } else {
                     session_regenerate_id(true);

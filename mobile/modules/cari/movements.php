@@ -157,7 +157,7 @@ body[data-bs-theme="dark"] .transaction-item-content {
     </div>
 
     <div class="px-2">
-        <div class="mobile-card p-0 mb-4 overflow-hidden shadow-sm border-0" style="background: #fff; border-radius: 18px;">
+        <div class="mobile-card p-0 mb-4 overflow-hidden shadow-sm border-0" style="border-radius: 18px;">
             <div id="movements-list">
                 <?php if (empty($movements)): ?>
                     <div class="text-center py-5">
@@ -176,13 +176,13 @@ body[data-bs-theme="dark"] .transaction-item-content {
                                     <span>Sil</span>
                                 </button>
                             </div>
-                            <div class="transaction-item-content p-3" style="background: #fff; display: flex; width: 100%;">
+                            <div class="transaction-item-content p-3" style="display: flex; width: 100%;">
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: <?php echo $is_borc ? 'rgba(214, 63, 63, 0.1)' : 'rgba(47, 179, 68, 0.1)'; ?>; color: <?php echo $is_borc ? '#d63f3f' : '#2fb344'; ?>;">
                                         <i class="ti <?php echo $is_borc ? 'ti-arrow-down-left' : 'ti-arrow-up-right'; ?>" style="font-size: 1.25rem;"></i>
                                     </div>
                                     <div>
-                                        <div class="text-bold text-sm" style="color: #1d273b;"><?php echo htmlspecialchars($m->aciklama ?: ($is_borc ? 'Borç İşlemi' : 'Alacak İşlemi')); ?></div>
+                                        <div class="text-bold text-sm"><?php echo htmlspecialchars($m->aciklama ?: ($is_borc ? 'Borç İşlemi' : 'Alacak İşlemi')); ?></div>
                                         <div class="text-muted text-xs"><?php echo Date::dmY($m->islem_tarihi); ?> <?php echo $m->belge_no ? ' | No: '.$m->belge_no : ''; ?></div>
                                     </div>
                                 </div>
